@@ -1,6 +1,7 @@
 #include "LinkedList.h"
 #include "../../framework.h"
 #include "zend_interfaces.h"
+#include "ext/spl/spl_iterators.h"
 #include <ext/spl/spl_functions.h>
 
 DEFINE_CLASS(ION_Data_LinkedList);
@@ -340,6 +341,7 @@ CLASS_METHODS_END;
 PHP_MINIT_FUNCTION(ION_Data_LinkedList) {
     REGISTER_CLASS(ION_Data_LinkedList, "ION\\Data\\LinkedList", _ion_llist_ctor);
     zend_class_implements(CE(ION_Data_LinkedList) TSRMLS_CC, 1, zend_ce_iterator);
+    zend_class_implements(CE(ION_Data_LinkedList) TSRMLS_CC, 1, spl_ce_Countable);
     CE(ION_Data_LinkedList)->get_iterator = ion_llist_get_iterator;
     return SUCCESS;
 }
