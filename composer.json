@@ -1,0 +1,22 @@
+{
+  "name": "bzick/php-ion",
+  "description": "PHP extension for asynchronous IO and other notifications",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Ivan Shalganov",
+      "email": "a.cobest@gmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=5.4"
+  },
+  "require-dev": {
+    "ext-posix": "*",
+    "ext-pcntl": "*",
+    "phpunit/phpunit": "*"
+  },
+  "autoload": {
+    "classmap": ["tests/"]
+  }
+}

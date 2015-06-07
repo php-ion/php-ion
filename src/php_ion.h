@@ -14,11 +14,16 @@ extern zend_module_entry ion_module_entry;
 #define PHP_ION_VERSION "0.2.0"
 
 PHP_MINIT_FUNCTION(ion);
+PHP_MSHUTDOWN_FUNCTION(ion);
+
+PHP_MINIT_FUNCTION(ION_Data_LinkedList);
+PHP_MSHUTDOWN_FUNCTION(ION_Data_LinkedList);
 
 PHP_MINFO_FUNCTION(ion);
-PHP_RINIT_FUNCTION(ion);
 
+PHP_RINIT_FUNCTION(ion);
 PHP_RSHUTDOWN_FUNCTION(ion);
+
 
 #define STARTUP_MODULE(module)   \
     ZEND_MODULE_STARTUP_N(module)(INIT_FUNC_ARGS_PASSTHRU)

@@ -3,7 +3,7 @@
 CMakeCache.txt
 CMakeFiles
 Makefile
-Makefile.global
+Makefile.*
 mkinstalldirs
 cmake_install.cmake
 install_manifest.txt
@@ -24,6 +24,7 @@ install_manifest.txt
 *.lib
 *.a
 *.la
+*.lai
 *.lo
 *.loT
 
@@ -40,6 +41,10 @@ install_manifest.txt
 *.i*86
 *.x86_64
 *.hex
+
+# Other
+
+.deps
 
 
 ### Autotools template
@@ -60,6 +65,7 @@ stamp-h1
 acinclude*
 config.sub
 ltmain.sh
+libtool
 
 ### NetBeans template
 nbproject
@@ -124,4 +130,7 @@ out/
 # mpeltonen/sbt-idea plugin
 .idea_modules/
 
+### phpize
+config.*
+!config.m4
 run-tests.php

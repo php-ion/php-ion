@@ -8,9 +8,9 @@
 #  include "TSRM.h"
 #endif
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif
+//#ifdef HAVE_CONFIG_H
+#include "config.h"
+//#endif
 
 /* Libevent */
 #include <event.h>
@@ -18,7 +18,12 @@
 #include "php_ion.h"
 #include "framework.h"
 
+
 IONBase *ionBase;
+
+#ifdef COMPILE_DL_ION
+ZEND_GET_MODULE(ion)
+#endif
 
 static const zend_module_dep ion_depends[] = {
         ZEND_MOD_REQUIRED("SPL")
@@ -44,6 +49,14 @@ zend_module_entry ion_module_entry = {
 
 /* Init module callback */
 PHP_MINIT_FUNCTION(ion) {
+    STARTUP_MODULE(ION_Data_LinkedList);
+
+    return SUCCESS;
+}
+
+PHP_MSHUTDOWN_FUNCTION(ion) {
+    SHUTDOWN_MODULE(ION_Data_LinkedList);
+
     return SUCCESS;
 }
 
@@ -64,15 +77,15 @@ PHP_RSHUTDOWN_FUNCTION(ion) {
 }
 
 
+
+
 PHP_MINFO_FUNCTION(ion) {
-    char engine[64], poll[32], available[16];
+    char engine[64], poll[32], available[16] = "";
     int features = 0;
     struct event_base *base = event_base_new();
-
     features = event_base_get_features(base);
     snprintf(engine, sizeof(engine) - 1, "libevent-%s", event_get_version());
     snprintf(poll, sizeof(poll) - 1, "%s", event_base_get_method(base));
-
     event_base_free(base);
 
     if(features & EV_FEATURE_ET) {
@@ -86,7 +99,6 @@ PHP_MINFO_FUNCTION(ion) {
     if(features & EV_FEATURE_FDS) {
         strcat(available, "FDS ");
     }
-
     php_info_print_table_start();
     php_info_print_table_header(2, "ION support", "enabled");
     php_info_print_table_row(2, "ION version", PHP_ION_VERSION);
@@ -105,5 +117,5 @@ PHP_MINFO_FUNCTION(ion) {
 
     php_info_print_table_row(2, "Features", available);
     php_info_print_table_end();
-
+    PHPDBG("2");
 }
