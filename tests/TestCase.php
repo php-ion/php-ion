@@ -9,10 +9,10 @@ class TestCase extends \PHPUnit_Framework_TestCase
 	}
 
 	public function tearDown() {
-		$method = new \ReflectionMethod($this, $this->getName());
+		$method = new \ReflectionMethod($this, $this->getName(false));
 
 		if(strpos($method->getDocComment(), "@memcheck")) {
-			$memory = 0;
+			$memory = 0; // reserve variable
 			$r = array(0, 0);
 
 			for($i=0; $i<2; $i++) {
@@ -27,13 +27,14 @@ class TestCase extends \PHPUnit_Framework_TestCase
 		}
 	}
 
-	public function assertException($excetption, $message = null, $code = null) {
-		$this->assertInstanceOf('Exception', $excetption);
+	public function assertException($exception, $message = null, $code = null) {
+		$this->assertInstanceOf('Exception', $exception);
+		/* @var \Exception $exception */
 		if(null !== $message) {
-			$this->assertSame($message, $excetption->getMessage());
+			$this->assertSame($message, $exception->getMessage());
 		}
 		if(null !== $code) {
-			$this->assertSame($code, $excetption->getCode());
+			$this->assertSame($code, $exception->getCode());
 		}
 	}
 

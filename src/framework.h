@@ -36,7 +36,9 @@ typedef struct _ion_base {
     retval.handle = zend_objects_store_put(object, (zend_objects_store_dtor_t) zend_objects_destroy_object, (zend_objects_free_object_storage_t) dtor, NULL TSRMLS_CC); \
     retval.handlers = &h ## class;
 
-#define FETCH_HANDLE()   zend_object_store_get_object(this_ptr TSRMLS_CC)
+#define this_get_object()   zend_object_store_get_object(this_ptr TSRMLS_CC)
+
+#define this_get_object_ex(obj_type)   ((obj_type) this_get_object())
 
 #define PARSE_ARGS(format, ...)                                                 \
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, format, ##__VA_ARGS__) == FAILURE) {    \
@@ -52,16 +54,22 @@ typedef struct _ion_base {
 
 #define ZEND_ME_END      {NULL, NULL, NULL}
 
-#define ZEND_ME_ARG(class, method, flags) \
+#define ZEND_ME_ARG(class, method, flags)                \
     ZEND_ME(class, method, arginfo_ ## method, flags)
 
 
-#define ZEND_ME_NOARG(class, method, flags) \
+#define ZEND_ME_NOARG(class, method, flags)              \
     ZEND_ME(class, method, arginfo_noargs, flags)
 
-#define REGISTER_CLASS(class, class_name, obj_ctor) \
-    spl_register_std_class(&c ## class, class_name, obj_ctor, m ## class TSRMLS_CC); \
+#define REGISTER_CLASS(class, class_name, obj_ctor)                                    \
+    spl_register_std_class(&c ## class, class_name, obj_ctor, m ## class TSRMLS_CC);   \
     memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
+
+#define RETURN_THIS()                           \
+    if(return_value_used) {                     \
+        RETVAL_ZVAL(this_ptr, 1, NULL);          \
+    }                                           \
+    return;
 
 
 /* Fetch FD from ZVAL resource */
@@ -75,5 +83,16 @@ int php_stream_get_fd(zval *);
     printf("%s: ", __func__); \
     printf(msg, ##__VA_ARGS__); \
     printf("\n");
+
+#define ZVAL_DUMP_PP(zvar)  ZVAL_DUMP_P(*zvar)
+
+#define ZVAL_DUMP_P(zvar)  \
+    php_printf("DUMP: "); \
+    php_var_dump(&(zvar), 1 TSRMLS_CC);
+
+#define ZVAL_DUMPF(zvar, format, ...)  \
+    php_printf(format, ##__VA_ARGS__); \
+    php_var_dump(&zvar, 1 TSRMLS_CC);
+
 
 #endif //ION_FRAMEWORK_H

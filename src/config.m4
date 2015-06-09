@@ -64,7 +64,7 @@ if test "$PHP_ION" != "no"; then
     AC_CHECK_FUNCS(waitpid, [ AC_DEFINE(HAVE_WAITPID,1,[ ]) ],)
     AC_CHECK_FUNCS(inotify_init, [ AC_DEFINE(HAVE_INOTIFY,1, [ ]) ],)
     AC_CHECK_FUNCS(setproctitle, [ AC_DEFINE(HAVE_SETPROCTITLE,1,[ ]) ],)
-    ion_src="framework.c ION/Data/LinkedList.c php_ion.c"
+    ion_src="framework.c ION/Data/LinkedList.c SkipList/skiplist.c ION/Data/SkipList.c php_ion.c"
     PHP_NEW_EXTENSION(ion, $ion_src, $ext_shared,, $CFLAGS)
 
     PHP_SUBST(ION_SHARED_LIBADD)

@@ -1,0 +1,3 @@
+[submodule "src/SkipList"]
+	path = src/SkipList
+	url = git://github.com/silentbicycle/skiplist

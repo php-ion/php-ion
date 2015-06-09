@@ -50,12 +50,14 @@ zend_module_entry ion_module_entry = {
 /* Init module callback */
 PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_Data_LinkedList);
+    STARTUP_MODULE(ION_Data_SkipList);
 
     return SUCCESS;
 }
 
 PHP_MSHUTDOWN_FUNCTION(ion) {
     SHUTDOWN_MODULE(ION_Data_LinkedList);
+    SHUTDOWN_MODULE(ION_Data_SkipList);
 
     return SUCCESS;
 }
@@ -100,22 +102,22 @@ PHP_MINFO_FUNCTION(ion) {
         strcat(available, "FDS ");
     }
     php_info_print_table_start();
-    php_info_print_table_header(2, "ION support", "enabled");
-    php_info_print_table_row(2, "ION version", PHP_ION_VERSION);
-    php_info_print_table_row(2, "ION engine", engine);
-    php_info_print_table_row(2, "DNS support", "enabled");
-    php_info_print_table_row(2, "DNS resolve.conf file", "/etc/resolve.conf");
-    php_info_print_table_row(2, "SSL support", "disabled");
-    php_info_print_table_row(2, "Event poll", poll);
+    php_info_print_table_header(2, "ION.support", "enabled");
+    php_info_print_table_row(2, "ION.version", PHP_ION_VERSION);
+    php_info_print_table_row(2, "ION.engine", engine);
+    php_info_print_table_row(2, "ION.engine.built-in", "no");
+    php_info_print_table_row(2, "ION.DNS.support", "enabled");
+    php_info_print_table_row(2, "ION.DNS.resolve.config", "/etc/resolve.conf");
+    php_info_print_table_row(2, "ION.SSL.support", "disabled");
+    php_info_print_table_row(2, "ION.event.poll", poll);
 #ifdef _EVENT_HAVE_SENDFILE
-    php_info_print_table_row(2, "Send file engine", "sendfile");
+    php_info_print_table_row(2, "ION.sendfile.engine", "sendfile");
 #elif _EVENT_HAVE_MMAP
     php_info_print_table_row(2, "Send file engine", "mmap");
 #else
     php_info_print_table_row(2, "Send file engine", "none");
 #endif
 
-    php_info_print_table_row(2, "Features", available);
+    php_info_print_table_row(2, "ION.event.features", available);
     php_info_print_table_end();
-    PHPDBG("2");
 }

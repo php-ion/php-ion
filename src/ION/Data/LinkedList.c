@@ -1,7 +1,6 @@
 #include "LinkedList.h"
-#include "../../framework.h"
-#include "zend_interfaces.h"
-#include "ext/spl/spl_iterators.h"
+#include <zend_interfaces.h>
+#include <ext/spl/spl_iterators.h>
 #include <ext/spl/spl_functions.h>
 
 DEFINE_CLASS(ION_Data_LinkedList);
@@ -205,7 +204,7 @@ zend_object_iterator *ion_llist_get_iterator(zend_class_entry *ce, zval *object,
 
 // PHP API
 PHP_METHOD(ION_Data_LinkedList, rPush) {
-    IONLinkedList *llist = FETCH_HANDLE();
+    IONLinkedList *llist = this_get_object();
     zval *zitem = NULL;
     PARSE_ARGS("z/", &zitem);
 
@@ -220,7 +219,7 @@ ZEND_END_ARG_INFO();
 
 
 PHP_METHOD(ION_Data_LinkedList, lPush) {
-    IONLinkedList *llist = FETCH_HANDLE();
+    IONLinkedList *llist = this_get_object();
     zval *zitem = NULL;
     PARSE_ARGS("z/", &zitem);
 
@@ -234,7 +233,7 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_lPush, 0, 0, 1)
 ZEND_END_ARG_INFO();
 
 PHP_METHOD(ION_Data_LinkedList, rPop) {
-    IONLinkedList *llist = FETCH_HANDLE();
+    IONLinkedList *llist = this_get_object();
     zval *zitem = NULL;
     if(llist->current && !llist->current->next) {
         llist->current = NULL;
@@ -251,7 +250,7 @@ PHP_METHOD(ION_Data_LinkedList, rPop) {
 }
 
 PHP_METHOD(ION_Data_LinkedList, lPop) {
-    IONLinkedList *llist = FETCH_HANDLE();
+    IONLinkedList *llist = this_get_object();
     zval *zitem = NULL;
     if(llist->current && !llist->current->prev) {
         if(llist->current->next) {
@@ -272,12 +271,12 @@ PHP_METHOD(ION_Data_LinkedList, lPop) {
 }
 
 PHP_METHOD(ION_Data_LinkedList, count) {
-    IONLinkedList *llist = FETCH_HANDLE();
+    IONLinkedList *llist = this_get_object();
     RETURN_LONG(llist->count);
 }
 
 PHP_METHOD(ION_Data_LinkedList, rewind) {
-    IONLinkedList *llist = FETCH_HANDLE();
+    IONLinkedList *llist = this_get_object();
     if(llist->list->head) {
         llist->current = llist->list->head;
     } else {
@@ -287,7 +286,7 @@ PHP_METHOD(ION_Data_LinkedList, rewind) {
 }
 
 PHP_METHOD(ION_Data_LinkedList, current) {
-    IONLinkedList *llist = FETCH_HANDLE();
+    IONLinkedList *llist = this_get_object();
     if(llist->current) {
         zval *item = (zval *)llist->current->data;
         RETURN_ZVAL(item, 0, 0);
@@ -297,7 +296,7 @@ PHP_METHOD(ION_Data_LinkedList, current) {
 }
 
 PHP_METHOD(ION_Data_LinkedList, key) {
-    IONLinkedList *llist = FETCH_HANDLE();
+    IONLinkedList *llist = this_get_object();
     if(llist->current) {
         RETURN_LONG(llist->key);
     } else {
@@ -306,7 +305,7 @@ PHP_METHOD(ION_Data_LinkedList, key) {
 }
 
 PHP_METHOD(ION_Data_LinkedList, next) {
-    IONLinkedList *llist = FETCH_HANDLE();
+    IONLinkedList *llist = this_get_object();
     LListItem     *item;
     if(llist->current) {
         llist->key++;
@@ -316,7 +315,7 @@ PHP_METHOD(ION_Data_LinkedList, next) {
 }
 
 PHP_METHOD(ION_Data_LinkedList, valid) {
-    IONLinkedList *llist = FETCH_HANDLE();
+    IONLinkedList *llist = this_get_object();
 
     RETURN_BOOL(llist->current != NULL);
 }

@@ -1,12 +1,13 @@
 <?php
 
-namespace ION\Util;
+namespace ION\Data;
 
 /**
  * Implementation of doubly linked list
  * @see http://en.wikipedia.org/wiki/Doubly_linked_list
+ * @package php-ion
  */
-class LinkedList implements \Iterator, \Countable, \JsonSerializable, \Serializable {
+class LinkedList implements \Iterator, \Countable {
 
 	/**
 	 * Append one or multiple values to a list
@@ -37,6 +38,9 @@ class LinkedList implements \Iterator, \Countable, \JsonSerializable, \Serializa
 	public function __clone() {}
 
 	/* Countable method */
+	/**
+	 * @return int
+	 */
 	public function count() {}
 
 	/* Iterator methods */
@@ -47,9 +51,9 @@ class LinkedList implements \Iterator, \Countable, \JsonSerializable, \Serializa
 	public function valid() {}
 
 	/* JsonSerializable method */
-	public function jsonSerialize() {}
+//	public function jsonSerialize() {}
 
 	/* Serializable method */
-	public function serialize() {}
-	public function unserialize($serialized) {}
+//	public function serialize() {}
+//	public function unserialize($serialized) {}
 }
