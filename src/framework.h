@@ -45,12 +45,40 @@ typedef struct _ion_base {
         return;                                                                 \
     }
 
-#define CLASS_METHODS_START(class) \
-    static const zend_function_entry m ## class[] = {
+#define NOT_NULL 0
+#define ALLOW_NULL 1
+
+#define NOT_REF  0
+#define IS_REF  1
+
+
+#define CLASS_METHODS_START(class_name) \
+    ZEND_BEGIN_ARG_INFO_EX(noargs_ ## class_name, 0, 0, 0) \
+    ZEND_END_ARG_INFO(); \
+    static const zend_function_entry m ## class_name[] = {
 
 #define CLASS_METHODS_END \
         ZEND_ME_END \
     }
+
+#define METHOD PHP_METHOD
+
+#define METHOD_ARGS_LIST_BEGIN(class_name, method_name, required_num_args) ZEND_BEGIN_ARG_INFO_EX(args_ ## class_name ## _ ## method_name, 0, 0, required_num_args)
+
+// method return reference
+#define METHOD_REF_ARGS_LIST(class_name, method_name, required_num_args) ZEND_BEGIN_ARG_INFO_EX(arg ## class_name ## _ ## method_name, 0, return_ref, required_num_args)
+
+#define METHOD_ARGS(class_name, method_name, flags) ZEND_ME(class_name, method_name, args_ ## class_name ## _ ## method_name, flags)
+#define METHOD_NOARGS(class_name, method_name, flags) ZEND_ME(class_name, method_name, noargs_ ## class_name, flags)
+
+#define METHOD_ARGS_LIST_END() ZEND_END_ARG_INFO()
+#define METHOD_ARG(name, pass_by_ref)  ZEND_ARG_INFO(pass_by_ref, name)
+#define METHOD_ARG_TYPE(name, type_hint, allow_null, pass_by_ref)     ZEND_ARG_TYPE_INFO(pass_by_ref, name, type_hint, allow_null)
+
+
+#define ARGUMENT(is_ref, name)  ZEND_ARG_INFO(is_ref, name)
+
+
 
 #define ZEND_ME_END      {NULL, NULL, NULL}
 

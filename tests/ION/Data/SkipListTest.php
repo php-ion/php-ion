@@ -62,14 +62,37 @@ class SkipListTest extends TestCase {
 		$this->assertEquals(2, $list->get("two"));
 		$this->assertEquals(3, $list->get("three"));
 		$this->assertTrue(in_array($list->get("one"),  [1, "more 1"]), "get from multiple variants");
-		unset($list);
 	}
 
 	/**
-	 * @mem check
-	 * @group testDuplicates
+	 * @memcheck
+	 * @group testGetAll
 	 */
-	public function testDuplicates() {
+	public function testGetAll() {
+		$list = new SkipList();
+		$list->add(1, "one");
+		$list->add(2, "two");
+		$list->add(1, "uno");
+		$list->add(3, "three");
+		$list->add(1, "один");
 
+		$this->assertEquals(["один", "uno", "one"], $list->get(1, true));
+		$this->assertEquals(["two"], $list->get(2, true));
+		$this->assertEquals(["three"], $list->get(3, true));
+	}
+
+	/**
+	 * @memcheck
+	 * @group testToArray
+	 */
+	public function testToArray() {
+		$list = new SkipList();
+		$list->add(1, "one");
+		$list->add(2, "two");
+		$list->add(1, "uno");
+		$list->add(3, "three");
+		$list->add(1, "один");
+
+		$this->assertSame(["один", "uno", "one", "two", "three"], $list->toArray());
 	}
 }

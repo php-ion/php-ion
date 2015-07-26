@@ -68,13 +68,20 @@ class SkipList implements \Countable {
 
 	/**
 	 * @param mixed $key
+	 * @param bool $all
 	 * @return mixed
 	 */
-	public function get($key) {}
+	public function get($key, $all = false) {}
 
-	public function delete($key) {}
-	public function deleteAll($key) {}
-	public function slice($key) {}
+	/**
+	 * @param string $key
+	 * @return array
+	 */
+	public function getAll($key) {}
+
+	public function delete($key, $all = false) {}
+	public function clear() {}
+	public function getRange($min, $max = null) {}
 
 	/**
 	 * @param mixed $key

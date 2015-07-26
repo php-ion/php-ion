@@ -1,10 +1,34 @@
 cmake_minimum_required(VERSION 3.2)
 project(ion)
 
+include(CheckIncludeFiles)
+include(CheckLibraryExists)
+include(FindPkgConfig)
+
 set(CMAKE_SOURCE_DIR ./src)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -g3 -ggdb -O0")
 
-set(SOURCE_FILES src/framework.c src/php_ion.c)
-add_executable(ion ${SOURCE_FILES} src/php_ion.h src/php_ion.c src/framework.h src/framework.c src/ION/Data/LinkedList.h src/ION/Data/LinkedList.c src/ION/Data/SkipList.h src/ION/Data/SkipList.c)
-include_directories("/opt/local/include" "/opt/local/include" "/opt/local/include/php56/php" "/opt/local/include/php56/php/main" "/opt/local/include/php56/php/Zend")
+
+add_custom_command(
+   OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/ion.so
+   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src
+   COMMAND make -f ${CMAKE_CURRENT_SOURCE_DIR}/src/Makefile
+   COMMENT "Running io makefile"
+)
+
+add_custom_target(
+   external_ion ALL
+   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/ion.so
+)
+
+set(ION_SOURCE_FILES
+    src/php_ion.c
+    src/framework.c
+    src/ION/Data/LinkedList.c
+    src/ION/Data/SkipList.c
+)
+
+add_library(ion ${ION_SOURCE_FILES})
+add_dependencies(ion external_ion)
+include_directories("/opt/local/include" "/opt/local/include/php56/php" "/opt/local/include/php56/php/main" "/opt/local/include/php56/php/Zend" "/opt/local/include/php56/php/TSRM")

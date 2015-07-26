@@ -22,7 +22,7 @@
 IONBase *ionBase;
 
 #ifdef COMPILE_DL_ION
-ZEND_GET_MODULE(ion)
+ZEND_GET_MODULE(ion);
 #endif
 
 static const zend_module_dep ion_depends[] = {
@@ -86,6 +86,7 @@ PHP_MINFO_FUNCTION(ion) {
     int features = 0;
     struct event_base *base = event_base_new();
     features = event_base_get_features(base);
+
     snprintf(engine, sizeof(engine) - 1, "libevent-%s", event_get_version());
     snprintf(poll, sizeof(poll) - 1, "%s", event_base_get_method(base));
     event_base_free(base);
