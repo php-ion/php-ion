@@ -4,7 +4,7 @@
 #include <php.h>
 #include <zend.h>
 #include "../../pion.h"
-#include "../../SkipList/skiplist.h"
+#include "../../externals/SkipList/skiplist.h"
 
 // LinkedList PHP object
 typedef struct _ion_skiplist {

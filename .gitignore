@@ -114,9 +114,9 @@ vendor/
 
 ### JetBrains template
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm
-#*.iml
+*.iml
 ## Directory-based project format:
-#.idea/
+.idea/
 
 ## File-based project format:
 *.ipr
