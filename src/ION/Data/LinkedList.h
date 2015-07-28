@@ -3,35 +3,16 @@
 
 #include <php.h>
 #include <zend.h>
-#include "../../framework.h"
-
-// Linked list C API
-typedef struct _linked_list_item {
-    struct _linked_list_item *prev;
-    struct _linked_list_item *next;
-    void                     *data;
-} LListItem;
-
-typedef struct _linked_list {
-    LListItem   *head;
-    LListItem   *tail;
-} LList;
-
-
-LList* ion_llist_ctor();
-void ion_llist_dtor(LList *list);
-void ion_llist_rpush(LList *list, void *data);
-void ion_llist_lpush(LList *list, void *data);
-void* ion_llist_lpop(LList *list);
-void* ion_llist_rpop(LList *list);
+#include "../../pion.h"
+#include "../../pion/linkedlist.h"
 
 // LinkedList PHP object
 typedef struct _php_linkedlist {
     zend_object std;
-    LList       *list;
+    pionLList *list;
     long        count;
     long        key;
-    LListItem   *current;
+    pionLListItem *current;
 } IONLinkedList;
 
 

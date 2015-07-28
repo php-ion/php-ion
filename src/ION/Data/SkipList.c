@@ -1,7 +1,6 @@
 #include "SkipList.h"
 #include <ext/spl/spl_iterators.h>
 #include <ext/spl/spl_functions.h>
-#include <ext/standard/php_var.h>
 
 
 DEFINE_CLASS(ION_Data_SkipList);
@@ -121,8 +120,8 @@ METHOD(ION_Data_SkipList, set) {
 }
 
 METHOD_ARGS_LIST_BEGIN(ION_Data_SkipList, set, 2)
-    METHOD_ARG(key, NOT_REF)
-    METHOD_ARG(value, NOT_REF)
+    METHOD_ARG(key, IS_NOT_REF)
+    METHOD_ARG(value, IS_NOT_REF)
 METHOD_ARGS_LIST_END();
 
 METHOD(ION_Data_SkipList, add) {
@@ -137,8 +136,8 @@ METHOD(ION_Data_SkipList, add) {
 }
 
 METHOD_ARGS_LIST_BEGIN(ION_Data_SkipList, add, 2)
-    METHOD_ARG(key, NOT_REF)
-    METHOD_ARG(value, NOT_REF)
+    METHOD_ARG(key, IS_NOT_REF)
+    METHOD_ARG(value, IS_NOT_REF)
 METHOD_ARGS_LIST_END();
 
 /* ION\Data\SkipList::exists(mixed $key) : bool */
@@ -155,7 +154,7 @@ METHOD(ION_Data_SkipList, exists) {
 }
 
 METHOD_ARGS_LIST_BEGIN(ION_Data_SkipList, exists, 1)
-    METHOD_ARG(key, NOT_REF)
+    METHOD_ARG(key, IS_NOT_REF)
 METHOD_ARGS_LIST_END();
 
 /* ION\Data\SkipList::get(mixed $key, bool $all = false) : mixed */
@@ -183,8 +182,8 @@ METHOD(ION_Data_SkipList, get) {
 }
 
 METHOD_ARGS_LIST_BEGIN(ION_Data_SkipList, get, 1)
-    METHOD_ARG(key, NOT_REF)
-    METHOD_ARG(all, NOT_REF)
+    METHOD_ARG(key, IS_NOT_REF)
+    METHOD_ARG(all, IS_NOT_REF)
 METHOD_ARGS_LIST_END();
 
 

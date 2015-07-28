@@ -24,9 +24,15 @@ add_custom_target(
 
 set(ION_SOURCE_FILES
     src/php_ion.c
-    src/framework.c
+    src/pion/exceptions.h
+    src/pion/debug.c
+    src/pion/callback.c
+    src/pion/zend.c
+    src/pion/linkedlist.c
+    src/pion.c
     src/ION/Data/LinkedList.c
     src/ION/Data/SkipList.c
+    src/Defer.c
 )
 
 add_library(ion ${ION_SOURCE_FILES})

@@ -1,8 +1,8 @@
 
 #include "php.h"
-#include "framework.h"
+#include "pion.h"
 
-BEGIN_EXTERN_C();
+BEGIN_EXTERN_C()
 
 int php_stream_get_fd(zval *zfd) {
 
@@ -16,4 +16,4 @@ int php_stream_get_fd(zval *zfd) {
     return -1;
 }
 
-END_EXTERN_C();
+END_EXTERN_C()

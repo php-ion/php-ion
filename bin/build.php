@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-$options = getopt("hacimdt::g:", ["help", "clean", "info", "make", "build", "test::", "group:"]);
+$options = getopt("hacimdtp::g:", ["help", "phpize", "clean", "info", "make", "build", "test::", "group:"]);
 extract($options);
 
 if(isset($help) || isset($h)) {

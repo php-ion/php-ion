@@ -2,7 +2,7 @@
 #define	ION_DEFER_H
 
 #include <php.h>
-#include "framework.h"
+#include "pion.h"
 BEGIN_EXTERN_C();
 
 #define DEFER_DONE      1
@@ -22,10 +22,10 @@ PHP_RSHUTDOWN_FUNCTION(ion_defer);
 DEFINE_CLASS(Defer);
 
 
-typedef void (*cancel_func)(zval *error, void *arg TSRMLS_DC);
+typedef void (*cancel_func)(zval* error, void* arg TSRMLS_DC);
 
 typedef struct _ion_defer_callback {
-    phpCb *cb;
+    pionCb *cb;
     zval *arg;
 #ifdef ZTS
 	void ***thread_ctx;
@@ -51,20 +51,17 @@ typedef struct _ion_defer {
 // Shortcuts
 #define Z_DEFER_P(zobj)     ((IONDefer *)zend_object_store_get_object(zobj TSRMLS_CC))
 
-#define DEFERCB_FREE(callback) \
-    CB_FREE(callback->cb);    \
-    zval_ptr_dtor(&callback->arg); \
-    efree(callback);
-
 
 // C API
-zval* _ion_defer_ctor(cancel_func fn, void *data);
+zval* _ion_defer_new(cancel_func fn, void *data);
+void  _ion_defer_free(IONDefer *defer);
 void  ion_defer_set_cancel_cb(IONDefer *defer, cancel_func fn, void *data);
 void  _ion_defer_cancel(IONDefer *defer, char *msg TSRMLS_DC);
 void  _ion_defer_finish(short type, IONDefer *defer, zval *result TSRMLS_DC);
 
-#define ion_defer_ctor(cancel_func, data)     _ion_defer_ctor(cancel_func, (void *)data TSRMLS_CC)
+#define ion_defer_new(cancel_func, data)     _ion_defer_new(cancel_func, (void *)data TSRMLS_CC)
 #define ion_defer_init()                      ion_defer_ctor(NULL, NULL)
+#define ion_defer_free(defer)                 ion_defer_free(IONDefer *defer TSRMLS_CC)
 
 #define ion_defer_cancel(defer, msg)          _ion_defer_cancel(defer, msg TSRMLS_CC)
 #define ion_zdefer_cancel(zdefer, msg)        ion_defer_cancel(Z_DEFER_P(zdefer), msg)

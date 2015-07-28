@@ -1,27 +1,5 @@
-
-#ifndef ION_FRAMEWORK_H
-#define ION_FRAMEWORK_H
-
-/** main structure (class ION) */
-typedef struct _ion_base {
-    struct event_base *base;     // event base
-    struct evdns_base *evdns;    // event DNS base
-    struct event_config *config; // event config
-//    zval *dns;                   // DNS instance
-    long  i;                     // internal counter of timers
-    HashTable *signals;          // array of listening signals
-    HashTable *timers;           // array of timers
-    HashTable *execs;            // array of process childs
-    short has_fatals;            // flag, fatal error occured
-    struct event *sigsegv;
-//    LList *queue;                // queue of defers object
-#ifdef ZTS
-    void ***thread_ctx;
-#endif
-} IONBase;
-
-#define ION(prop) \
-    ionBase->prop
+#ifndef PION_ZEND_H
+#define PION_ZEND_H
 
 #define CE(class) \
     c ## class
@@ -37,8 +15,10 @@ typedef struct _ion_base {
     retval.handlers = &h ## class;
 
 #define this_get_object()   zend_object_store_get_object(this_ptr TSRMLS_CC)
+#define this_object()   zend_object_store_get_object(this_ptr TSRMLS_CC)
 
 #define this_get_object_ex(obj_type)   ((obj_type) this_get_object())
+#define this_object_ex(obj_type)   ((obj_type) this_get_object())
 
 #define PARSE_ARGS(format, ...)                                                 \
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, format, ##__VA_ARGS__) == FAILURE) {    \
@@ -48,9 +28,8 @@ typedef struct _ion_base {
 #define NOT_NULL 0
 #define ALLOW_NULL 1
 
-#define NOT_REF  0
+#define IS_NOT_REF  0
 #define IS_REF  1
-
 
 #define CLASS_METHODS_START(class_name) \
     ZEND_BEGIN_ARG_INFO_EX(noargs_ ## class_name, 0, 0, 0) \
@@ -100,27 +79,22 @@ typedef struct _ion_base {
     return;
 
 
-/* Fetch FD from ZVAL resource */
-int php_stream_get_fd(zval *);
+#define ALLOC_STRING_ZVAL(var, str, dup)     \
+    ALLOC_INIT_ZVAL(var);   \
+    ZVAL_STRING(var, str, dup);
 
-/**
- * For debug
- */
+#define ALLOC_STRINGL_ZVAL(var, str, len, dup)     \
+    ALLOC_INIT_ZVAL(var);   \
+    ZVAL_STRINGL(var, str, len, dup);
 
-#define PHPDBG(msg, ...)    \
-    printf("%s: ", __func__); \
-    printf(msg, ##__VA_ARGS__); \
-    printf("\n");
+#define ALLOC_EMPTY_STRING_ZVAL(var)     \
+    ALLOC_INIT_ZVAL(var);   \
+    ZVAL_EMPTY_STRING(var);
 
-#define ZVAL_DUMP_PP(zvar)  ZVAL_DUMP_P(*zvar)
-
-#define ZVAL_DUMP_P(zvar)  \
-    php_printf("DUMP: "); \
-    php_var_dump(&(zvar), 1 TSRMLS_CC);
-
-#define ZVAL_DUMPF(zvar, format, ...)  \
-    php_printf(format, ##__VA_ARGS__); \
-    php_var_dump(&zvar, 1 TSRMLS_CC);
+#define ALLOC_LONG_ZVAL(var, num)   \
+    ALLOC_INIT_ZVAL(var);   \
+    ZVAL_LONG(var, num);
 
 
-#endif //ION_FRAMEWORK_H
+
+#endif //PION_ZEND_H

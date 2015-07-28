@@ -5,91 +5,15 @@
 
 DEFINE_CLASS(ION_Data_LinkedList);
 
-
-LList* ion_llist_ctor() {
-    LList *list = emalloc(sizeof(LList));
-    list->tail = list->head = NULL;
-    return list;
-}
-
-void ion_llist_dtor(LList *list) {
-    efree(list);
-}
-
-void ion_llist_rpush(LList *list, void *data) {
-    LListItem *item = emalloc(sizeof(LListItem));
-    item->data = data;
-    item->next  = NULL;
-    if(list->tail) { // append item
-        item->prev = list->tail;
-        list->tail->next = item;
-        list->tail = item;
-    } else { // push first item
-        item->prev = NULL;
-        list->tail = list->head = item;
-    }
-}
-
-void ion_llist_lpush(LList *list, void *data) {
-    LListItem *item = emalloc(sizeof(LListItem));
-    item->data = data;
-    item->prev  = NULL;
-    if(list->head) { // prepend item
-        item->next = list->head;
-        list->head->prev = item;
-        list->head = item;
-    } else { // push first item
-        item->next = NULL;
-        list->tail = list->head = item;
-    }
-
-}
-
-void* ion_llist_lpop(LList *list) {
-    LListItem *item;
-    void *data = NULL;
-    if(list->head == NULL) {
-        return NULL;
-    }
-    item = list->head;
-    if(item->next) { // pop item
-        list->head = item->next;
-        item->next->prev = NULL;
-    } else { // pop last item
-        list->head = list->tail = NULL;
-    }
-    data = item->data;
-    efree(item);
-    return data;
-}
-
-void* ion_llist_rpop(LList *list) {
-    LListItem *item;
-    void *data = NULL;
-    if(list->tail == NULL) {
-        return NULL;
-    }
-    item = list->tail;
-    if(item->prev) { // pop item
-        list->tail = item->prev;
-        item->prev->next = NULL;
-    } else { // pop last item
-        list->head = list->tail = NULL;
-    }
-    data = item->data;
-    efree(item);
-    return data;
-}
-
 static void _ion_llist_dtor(void *object TSRMLS_DC) {
     IONLinkedList *llist = (IONLinkedList *) object;
     zval *item;
     if(llist->count) {
-        while(item = ion_llist_lpop(llist->list)) {
+        while(item = pionLListLPop(llist->list)) {
             zval_ptr_dtor(&item);
         }
     }
-    ion_llist_dtor(llist->list);
+    pionLListFree(llist->list);
     efree(llist);
 }
 
@@ -97,7 +21,7 @@ static zend_object_value _ion_llist_ctor(zend_class_entry *ce TSRMLS_DC) {
     zend_object_value retval;
     IONLinkedList *llist = emalloc(sizeof(IONLinkedList));
     memset(llist, 0, sizeof(IONLinkedList));
-    llist->list = ion_llist_ctor();
+    llist->list = pionLListInit();
     llist->count = 0;
     llist->key = 0;
     OBJECT_INIT(retval, ION_Data_LinkedList, llist, _ion_llist_dtor);
@@ -152,7 +76,7 @@ static void ion_llist_it_get_current_key(zend_object_iterator *iter, zval *key T
 static void ion_llist_it_move_forward(zend_object_iterator *iter TSRMLS_DC) {
     ion_llist_it  *iterator = (ion_llist_it *)iter;
     IONLinkedList *object   = iterator->object;
-    LListItem     *item;
+    pionLListItem *item;
     if(object->current != NULL) {
         object->key++;
         item = object->current;
@@ -208,7 +132,7 @@ PHP_METHOD(ION_Data_LinkedList, rPush) {
     zval *zitem = NULL;
     PARSE_ARGS("z/", &zitem);
 
-    ion_llist_rpush(llist->list, zitem);
+    pionLListRPush(llist->list, zitem);
     zval_add_ref(&zitem);
     RETURN_LONG(++llist->count);
 }
@@ -223,7 +147,7 @@ PHP_METHOD(ION_Data_LinkedList, lPush) {
     zval *zitem = NULL;
     PARSE_ARGS("z/", &zitem);
 
-    ion_llist_lpush(llist->list, zitem);
+    pionLListLPush(llist->list, zitem);
     zval_add_ref(&zitem);
     RETURN_LONG(++llist->count);
 }
@@ -239,7 +163,7 @@ PHP_METHOD(ION_Data_LinkedList, rPop) {
         llist->current = NULL;
     }
 
-    zitem = ion_llist_rpop(llist->list);
+    zitem = pionLListRPop(llist->list);
     if(zitem) {
         llist->count--;
         RETURN_ZVAL(zitem, 0, 1);
@@ -260,7 +184,7 @@ PHP_METHOD(ION_Data_LinkedList, lPop) {
         }
     }
 
-    zitem = ion_llist_lpop(llist->list);
+    zitem = pionLListLPop(llist->list);
     if(zitem) {
         llist->count--;
         RETURN_ZVAL(zitem, 0, 1);
@@ -306,7 +230,7 @@ PHP_METHOD(ION_Data_LinkedList, key) {
 
 PHP_METHOD(ION_Data_LinkedList, next) {
     IONLinkedList *llist = this_get_object();
-    LListItem     *item;
+    pionLListItem *item;
     if(llist->current) {
         llist->key++;
         item = llist->current;
