@@ -71,7 +71,7 @@ if test "$PHP_ION" != "no"; then
     pion/linkedlist.c
     pion.c
     ION/Data/LinkedList.c
-    SkipList/skiplist.c
+    externals/SkipList/skiplist.c
     ION/Data/SkipList.c"
     PHP_NEW_EXTENSION(ion, $ion_src, $ext_shared,, $CFLAGS)
 

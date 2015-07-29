@@ -1,64 +1,94 @@
 #!/usr/bin/env php
 <?php
 
-$options = getopt("hacimdtp::g:", ["help", "phpize", "clean", "info", "make", "build", "test::", "group:"]);
-extract($options);
+$builder = new BuildRunner();
 
-if(isset($help) || isset($h)) {
-	echo "Usage: ".basename(__FILE__)." [--help|-h] [--clean|-c] [--make|-m] [--phpize|-p] [--build|-b] [--info|-i] [--test[=TEST_PATH] [--group=GROUP_LIST]]\n";
-	exit;
-}
+$builder->run();
 
-chdir(dirname(__DIR__).'/src');
+class BuildRunner {
 
-if(isset($build) || isset($b)) {
-	$phpize = true;
-	$clean  = true;
-	$make   = true;
-}
-
-if(isset($phpize) || isset($p)) {
-	run('phpize');
-	run('./configure --with-ion');
-}
-
-if(isset($clean) || isset($c)) {
-	run('make clean');
-}
-
-if(isset($make) || isset($m)) {
-	run('make');
-}
-
-if(isset($info) || isset($i)) {
-	run(PHP_BINARY . ' -dextension=modules/ion.so --ri ION');
-}
-
-if(isset($test) || isset($t)) {
-	chdir(dirname(__DIR__));
-	if(isset($group) || isset($g)) {
-		$group = "--group=".select($group, $g);
-	} else {
-		$group = "";
+	public function hasOption($long, $short) {
+		$options = getopt($short, [$long]);
+		return isset($options[ $long ]) || isset($options[ $short ]);
 	}
-	if(getenv('CLION_BUILD')) {
-		$colorize = '--colors=never';
-	} else {
-		$colorize = '--colors=always';
+
+	public function getOption($long, $short, $default = null) {
+		$options = getopt($short."::", [$long."::"]);
+		if(isset($options[ $long ])) {
+			return $options[ $long ];
+		} elseif(isset($options[ $short ])) {
+			return $options[ $short ];
+		} else {
+			return $default;
+		}
 	}
-	run(PHP_BINARY." -dextension=".dirname(__DIR__)."/src/modules/ion.so vendor/bin/phpunit $group $colorize ".select($test, $t));
-}
 
+	public function run() {
+		$this->chdir('src');
 
-function select(&$long, &$short) {
-	if($long === null) {
-		return $short;
-	} else {
-		return $long;
+		if($this->hasOption("help", "h")) {
+			$this->help();
+			return;
+		}
+
+		if($this->hasOption('phpize', 'p')) {
+			$this->exec('phpize');
+			$this->exec('./configure --with-ion');
+		}
+
+		if($this->hasOption('clean', 'c')) {
+			$this->exec('make clean');
+		}
+
+		if($this->hasOption('make', 'm')) {
+			$this->exec('make');
+		}
+
+		if($this->hasOption('info', 'i')) {
+			$this->exec(PHP_BINARY . ' -dextension=modules/ion.so --ri ION');
+		}
+
+		if($this->hasOption('test', 't')) {
+			$this->chdir();
+			$group = $this->getOption('group', 'g');
+			if($group) {
+				$group = "--group=".$group;
+			} else {
+				$group = "";
+			}
+			$this->exec(PHP_BINARY." -dextension=".dirname(__DIR__)."/src/modules/ion.so vendor/bin/phpunit $group ".$this->getOption('test', 't', ''));
+		}
+
+	}
+
+	public function chdir($rel_path = "") {
+		chdir(dirname(__DIR__).($rel_path ? "/" : "").$rel_path);
+	}
+
+	public function exec($cmd) {
+		echo "\n** ".getcwd().": $cmd\n";
+		passthru($cmd.' 2>&1', $code);
+		if($code) {
+			throw new RuntimeException("Command $cmd failed");
+		}
+	}
+
+	public function help() {
+		echo "Usage: ".basename(__FILE__)." OPTIONS\n
+Build:
+  --help,    -h   — show help
+  --clean,   -c   — make clean
+  --make,    -m   — make
+  --install, -l   — install module
+  --phpize,  -p   — phpize and configure project
+  --build,   -b   — alias: --phpize --clean --make
+  --info,    -i   - print info about module
+
+Testing:
+  --test[=TEST_PATH], -t  — run tests, all or only by path
+  --group=GROUP_LIST, -g  - only runs tests from the specified group(s). Option --test required
+  ";
 	}
 }
 
-function run($cmd) {
-	passthru($cmd.' 2>&1', $code);
-	return $code == 0;
-}
+

@@ -31,6 +31,7 @@ set(ION_SOURCE_FILES
     src/pion/linkedlist.c
     src/pion.c
     src/ION/Data/LinkedList.c
+    src/externals/SkipList/skiplist.c
     src/ION/Data/SkipList.c
     src/Defer.c
 )
