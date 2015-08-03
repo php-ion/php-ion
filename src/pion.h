@@ -5,7 +5,7 @@
 #include "pion/exceptions.h"
 #include "pion/debug.h"
 #include "pion/callback.h"
-#include "pion/zend.h"
+#include "pion/engine.h"
 
 /** main structure (class ION) */
 typedef struct _ion_base {

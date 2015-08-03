@@ -27,13 +27,13 @@ set(ION_SOURCE_FILES
     src/pion/exceptions.h
     src/pion/debug.c
     src/pion/callback.c
-    src/pion/zend.c
+    src/pion/engine.c
     src/pion/linkedlist.c
     src/pion.c
     src/ION/Data/LinkedList.c
     src/externals/SkipList/skiplist.c
     src/ION/Data/SkipList.c
-    src/Defer.c
+    src/ION/Deferred.c
 )
 
 add_library(ion ${ION_SOURCE_FILES})

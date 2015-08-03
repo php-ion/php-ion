@@ -1,12 +1,11 @@
 #include "LinkedList.h"
 #include <zend_interfaces.h>
 #include <ext/spl/spl_iterators.h>
-#include <ext/spl/spl_functions.h>
 
 DEFINE_CLASS(ION_Data_LinkedList);
 
-static void _ion_llist_dtor(void *object TSRMLS_DC) {
-    IONLinkedList *llist = (IONLinkedList *) object;
+CLASS_INSTANCE_DTOR(ION_Data_LinkedList) {
+    IONLinkedList *llist = getInstanceObject(IONLinkedList *);
     zval *item;
     if(llist->count) {
         while(item = pionLListLPop(llist->list)) {
@@ -17,15 +16,14 @@ static void _ion_llist_dtor(void *object TSRMLS_DC) {
     efree(llist);
 }
 
-static zend_object_value _ion_llist_ctor(zend_class_entry *ce TSRMLS_DC) {
-    zend_object_value retval;
+CLASS_INSTANCE_CTOR(ION_Data_LinkedList) {
     IONLinkedList *llist = emalloc(sizeof(IONLinkedList));
     memset(llist, 0, sizeof(IONLinkedList));
     llist->list = pionLListInit();
     llist->count = 0;
     llist->key = 0;
-    OBJECT_INIT(retval, ION_Data_LinkedList, llist, _ion_llist_dtor);
-    return retval;
+
+    RETURN_INSTANCE(ION_Data_LinkedList, llist);
 }
 
 typedef struct {
@@ -127,8 +125,9 @@ zend_object_iterator *ion_llist_get_iterator(zend_class_entry *ce, zval *object,
 }
 
 // PHP API
-PHP_METHOD(ION_Data_LinkedList, rPush) {
-    IONLinkedList *llist = this_get_object();
+/* public function ION\Dat\LinkedList::rPush(mixed item) : int */
+CLASS_METHOD(ION_Data_LinkedList, rPush, ZEND_ACC_PUBLIC) {
+    IONLinkedList *llist = getThisInstance(IONLinkedList *);
     zval *zitem = NULL;
     PARSE_ARGS("z/", &zitem);
 
@@ -137,13 +136,13 @@ PHP_METHOD(ION_Data_LinkedList, rPush) {
     RETURN_LONG(++llist->count);
 }
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_rPush, 0, 0, 1)
-                ZEND_ARG_INFO(0, item)
-ZEND_END_ARG_INFO();
+METHOD_ARGS_BEGIN(ION_Data_LinkedList, rPush, 1)
+    METHOD_ARG(item, 0)
+METHOD_ARGS_END();
 
-
-PHP_METHOD(ION_Data_LinkedList, lPush) {
-    IONLinkedList *llist = this_get_object();
+/* public function ION\Dat\LinkedList::lPush(mixed item) : int */
+CLASS_METHOD(ION_Data_LinkedList, lPush, ZEND_ACC_PUBLIC) {
+    IONLinkedList *llist = getThisInstance(IONLinkedList *);
     zval *zitem = NULL;
     PARSE_ARGS("z/", &zitem);
 
@@ -152,12 +151,14 @@ PHP_METHOD(ION_Data_LinkedList, lPush) {
     RETURN_LONG(++llist->count);
 }
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_lPush, 0, 0, 1)
-    ZEND_ARG_INFO(0, item)
-ZEND_END_ARG_INFO();
+METHOD_ARGS_BEGIN(ION_Data_LinkedList, lPush, 1)
+    METHOD_ARG(item, 0)
+METHOD_ARGS_END();
 
-PHP_METHOD(ION_Data_LinkedList, rPop) {
-    IONLinkedList *llist = this_get_object();
+
+/* public function ION\Dat\LinkedList::rPop() : mixed */
+CLASS_METHOD(ION_Data_LinkedList, rPop, ZEND_ACC_PUBLIC) {
+    IONLinkedList *llist = getThisInstance(IONLinkedList *);
     zval *zitem = NULL;
     if(llist->current && !llist->current->next) {
         llist->current = NULL;
@@ -173,8 +174,11 @@ PHP_METHOD(ION_Data_LinkedList, rPop) {
     }
 }
 
-PHP_METHOD(ION_Data_LinkedList, lPop) {
-    IONLinkedList *llist = this_get_object();
+METHOD_WITHOUT_ARGS(ION_Data_LinkedList, rPop);
+
+/* public function ION\Dat\LinkedList::lPop() : mixed */
+CLASS_METHOD(ION_Data_LinkedList, lPop, ZEND_ACC_PUBLIC) {
+    IONLinkedList *llist = getThisInstance(IONLinkedList *);
     zval *zitem = NULL;
     if(llist->current && !llist->current->prev) {
         if(llist->current->next) {
@@ -194,13 +198,21 @@ PHP_METHOD(ION_Data_LinkedList, lPop) {
     }
 }
 
-PHP_METHOD(ION_Data_LinkedList, count) {
-    IONLinkedList *llist = this_get_object();
+METHOD_WITHOUT_ARGS(ION_Data_LinkedList, lPop);
+
+
+/* public function ION\Dat\LinkedList::count() : int */
+CLASS_METHOD(ION_Data_LinkedList, count, ZEND_ACC_PUBLIC) {
+    IONLinkedList *llist = getThisInstance(IONLinkedList *);
     RETURN_LONG(llist->count);
 }
 
-PHP_METHOD(ION_Data_LinkedList, rewind) {
-    IONLinkedList *llist = this_get_object();
+METHOD_WITHOUT_ARGS(ION_Data_LinkedList, count);
+
+
+/* public function ION\Dat\LinkedList::rewind() : void */
+CLASS_METHOD(ION_Data_LinkedList, rewind, ZEND_ACC_PUBLIC) {
+    IONLinkedList *llist = getThisInstance(IONLinkedList *);
     if(llist->list->head) {
         llist->current = llist->list->head;
     } else {
@@ -209,8 +221,11 @@ PHP_METHOD(ION_Data_LinkedList, rewind) {
     llist->key = 0;
 }
 
-PHP_METHOD(ION_Data_LinkedList, current) {
-    IONLinkedList *llist = this_get_object();
+METHOD_WITHOUT_ARGS(ION_Data_LinkedList, rewind);
+
+/* public function ION\Dat\LinkedList::current() : mixed */
+CLASS_METHOD(ION_Data_LinkedList, current, ZEND_ACC_PUBLIC) {
+    IONLinkedList *llist = getThisInstance(IONLinkedList *);
     if(llist->current) {
         zval *item = (zval *)llist->current->data;
         RETURN_ZVAL(item, 0, 0);
@@ -219,8 +234,12 @@ PHP_METHOD(ION_Data_LinkedList, current) {
     }
 }
 
-PHP_METHOD(ION_Data_LinkedList, key) {
-    IONLinkedList *llist = this_get_object();
+METHOD_WITHOUT_ARGS(ION_Data_LinkedList, current);
+
+
+/* public function ION\Dat\LinkedList::key() : mixed */
+CLASS_METHOD(ION_Data_LinkedList, key, ZEND_ACC_PUBLIC) {
+    IONLinkedList *llist = getThisInstance(IONLinkedList *);
     if(llist->current) {
         RETURN_LONG(llist->key);
     } else {
@@ -228,8 +247,12 @@ PHP_METHOD(ION_Data_LinkedList, key) {
     }
 }
 
-PHP_METHOD(ION_Data_LinkedList, next) {
-    IONLinkedList *llist = this_get_object();
+METHOD_WITHOUT_ARGS(ION_Data_LinkedList, key);
+
+
+/* public function ION\Dat\LinkedList::next() : void */
+CLASS_METHOD(ION_Data_LinkedList, next, ZEND_ACC_PUBLIC) {
+    IONLinkedList *llist = getThisInstance(IONLinkedList *);
     pionLListItem *item;
     if(llist->current) {
         llist->key++;
@@ -238,31 +261,34 @@ PHP_METHOD(ION_Data_LinkedList, next) {
     }
 }
 
-PHP_METHOD(ION_Data_LinkedList, valid) {
-    IONLinkedList *llist = this_get_object();
+METHOD_WITHOUT_ARGS(ION_Data_LinkedList, next);
+
+
+/* public function ION\Dat\LinkedList::valid() : bool */
+CLASS_METHOD(ION_Data_LinkedList, valid, ZEND_ACC_PUBLIC) {
+    IONLinkedList *llist = getThisInstance(IONLinkedList *);
 
     RETURN_BOOL(llist->current != NULL);
 }
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_noargs, 0, 0, 0)
-ZEND_END_ARG_INFO();
+METHOD_WITHOUT_ARGS(ION_Data_LinkedList, valid);
+
 
 CLASS_METHODS_START(ION_Data_LinkedList)
-ZEND_ME_ARG(ION_Data_LinkedList, rPush,  ZEND_ACC_PUBLIC)
-ZEND_ME_ARG(ION_Data_LinkedList, lPush,  ZEND_ACC_PUBLIC)
-ZEND_ME_NOARG(ION_Data_LinkedList, rPop,   ZEND_ACC_PUBLIC)
-ZEND_ME_NOARG(ION_Data_LinkedList, lPop,   ZEND_ACC_PUBLIC)
-ZEND_ME_NOARG(ION_Data_LinkedList, count,  ZEND_ACC_PUBLIC)
-/* Iterator */
-ZEND_ME_NOARG(ION_Data_LinkedList, rewind,  ZEND_ACC_PUBLIC)
-ZEND_ME_NOARG(ION_Data_LinkedList, current, ZEND_ACC_PUBLIC)
-ZEND_ME_NOARG(ION_Data_LinkedList, key,     ZEND_ACC_PUBLIC)
-ZEND_ME_NOARG(ION_Data_LinkedList, next,    ZEND_ACC_PUBLIC)
-ZEND_ME_NOARG(ION_Data_LinkedList, valid,   ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_LinkedList, rPush)
+    METHOD(ION_Data_LinkedList, lPush)
+    METHOD(ION_Data_LinkedList, rPop)
+    METHOD(ION_Data_LinkedList, lPop)
+    METHOD(ION_Data_LinkedList, count)
+    METHOD(ION_Data_LinkedList, rewind)
+    METHOD(ION_Data_LinkedList, current)
+    METHOD(ION_Data_LinkedList, key)
+    METHOD(ION_Data_LinkedList, next)
+    METHOD(ION_Data_LinkedList, valid)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Data_LinkedList) {
-    REGISTER_CLASS(ION_Data_LinkedList, "ION\\Data\\LinkedList", _ion_llist_ctor);
+    PION_REGISTER_CLASS(ION_Data_LinkedList, "ION\\Data\\LinkedList");
     zend_class_implements(CE(ION_Data_LinkedList) TSRMLS_CC, 1, zend_ce_iterator);
     zend_class_implements(CE(ION_Data_LinkedList) TSRMLS_CC, 1, spl_ce_Countable);
     CE(ION_Data_LinkedList)->get_iterator = ion_llist_get_iterator;

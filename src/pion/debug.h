@@ -18,6 +18,6 @@
     php_printf(format, ##__VA_ARGS__); \
     php_var_dump(&zvar, 1 TSRMLS_CC);
 
-
+#define IONF(msg, ...)
 
 #endif //ION_DEBUG_H

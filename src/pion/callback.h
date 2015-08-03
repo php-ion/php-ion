@@ -2,6 +2,9 @@
 #define PION_CALLBACK_H
 
 #include <php.h>
+#ifdef ZTS
+#  include "TSRM.h"
+#endif
 
 /* PHP callback */
 typedef struct _pionCb {

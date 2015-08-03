@@ -26,6 +26,15 @@ class BuildRunner {
 	public function run() {
 		$this->chdir('src');
 
+        if($this->hasOption('system', 's')) {
+            $this->printSystemInfo();
+        }
+
+        if($this->hasOption('diagnostic', "")) {
+            $this->printInfo();
+            return;
+        }
+
 		if($this->hasOption("help", "h")) {
 			$this->help();
 			return;
@@ -45,7 +54,7 @@ class BuildRunner {
 		}
 
 		if($this->hasOption('info', 'i')) {
-			$this->exec(PHP_BINARY . ' -dextension=modules/ion.so --ri ION');
+			$this->exec(PHP_BINARY . ' -dextension=modules/ion.so '.__FILE__." --diagnostic");
 		}
 
 		if($this->hasOption('test', 't')) {
@@ -65,6 +74,55 @@ class BuildRunner {
 		chdir(dirname(__DIR__).($rel_path ? "/" : "").$rel_path);
 	}
 
+
+    public function printInfo() {
+        $info = [];
+        $ion = new \ReflectionExtension('ion');
+        $info[] = $ion->info();
+        foreach($ion->getINIEntries() as $ini => $value) {
+            $info[] = "ini $ini = ".var_export($value, true);
+        }
+        foreach($ion->getConstants() as $constant => $value) {
+            $info[] = "const $constant = ".var_export($value, true);
+        }
+        foreach($ion->getFunctions() as $function) {
+            $info[] = "function {$function->name}()";
+        }
+        foreach($ion->getClasses() as $class) {
+            $info[] = "class {$class->name} {";
+            if($class->getParentClass()) {
+                $info[] = "  extends {$class->getParentClass()->name}";
+            }
+            foreach($class->getInterfaceNames() as $interface) {
+                $info[] = "  implements {$interface}";
+            }
+            foreach($class->getTraitNames() as $trait) {
+                $info[] = "  use {$trait}";
+            }
+            foreach($class->getConstants() as $constant => $value) {
+                $info[] = "  const {$class->name}::{$constant} = ".var_export($value, true);
+            }
+            foreach($class->getMethods() as $method) {
+                $params = [];
+                foreach($method->getParameters() as $param) {
+                    if($param->isOptional()) {
+                        $params[] = '[ $'.$param->name.' ]';
+                    } else {
+                        $params[] = '$'.$param->name;
+                    }
+                }
+                $info[] = "  method ".implode(' ', Reflection::getModifierNames($method->getModifiers()))." {$method->class}::{$method->name}(".implode(", ", $params).")";
+            }
+
+            $info[] = "}";
+        }
+        echo implode("\n", $info)."\n";
+    }
+
+    public function printSystemInfo() {
+
+    }
+
 	public function exec($cmd) {
 		echo "\n** ".getcwd().": $cmd\n";
 		passthru($cmd.' 2>&1', $code);
@@ -83,6 +141,7 @@ Build:
   --phpize,  -p   — phpize and configure project
   --build,   -b   — alias: --phpize --clean --make
   --info,    -i   - print info about module
+  --system,  -s   — print information about system
 
 Testing:
   --test[=TEST_PATH], -t  — run tests, all or only by path

@@ -51,6 +51,7 @@ zend_module_entry ion_module_entry = {
 PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_Data_LinkedList);
     STARTUP_MODULE(ION_Data_SkipList);
+    STARTUP_MODULE(ION_Deferred);
 
     return SUCCESS;
 }

@@ -1,10 +1,10 @@
 <?php
-
+namespace ION;
 /**
  * Ticket for deferred actions
  * @todo more doc
  */
-final class Defer {
+final class Deferred {
 
 	/**
 	 * @todo more doc
