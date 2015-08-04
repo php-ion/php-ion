@@ -5,13 +5,6 @@
 
 DEFINE_CLASS(ION_Data_SkipList);
 
-#ifdef ZTS
-TSRMLS_D ## _local;
-#define SYNC_TSRMLS() TSRMLS_D ## _local = TSRMLS_C;
-#else
-#define SYNC_TSRMLS();
-#endif
-
 static int php_skiplist_cmp(void *keyA, void *keyB) {
     zval result;
     TSRMLS_FETCH();
@@ -32,7 +25,7 @@ static int php_skiplist_to_array(void *key, void *value, void *udata) {
 static int php_skiplist_range(void *key, void *value, void *udata) {
     zval result;
     IONSkipListRange *range = (IONSkipListRange *)udata;
-    TSRMLS_FETCH();
+    TSRMLS_FETCH_FROM_CTX(range->thread_ctx);
     if(range->to) {
         compare_function(&result, (zval *)key, range->to TSRMLS_CC);
         if(Z_LVAL(result) > 0) {
@@ -44,12 +37,13 @@ static int php_skiplist_range(void *key, void *value, void *udata) {
     return 0;
 }
 
-static IONSkipListRange *get_range(int flags, zval *result, zval *to) {
+static IONSkipListRange *get_range(int flags, zval *result, zval *to TSRMLS_DC) {
     IONSkipListRange *range = emalloc(sizeof(IONSkipListRange));
     memset(range, 0, sizeof(IONSkipListRange));
     range->flags = flags;
     range->result = result;
     range->to = to;
+    TSRMLS_SET_CTX(range->thread_ctx);
     return range;
 }
 
@@ -181,7 +175,7 @@ CLASS_METHOD(ION_Data_SkipList, get) {
     PARSE_ARGS("z|b", &key, &all);
     if(all) { // get all values by key
         array_init(return_value);
-        IONSkipListRange *range = get_range(ION_SKIPLIST_RANGE_WITHOUT_KEYS, return_value, key);
+        IONSkipListRange *range = get_range(ION_SKIPLIST_RANGE_WITHOUT_KEYS, return_value, key TSRMLS_CC);
         skiplist_iter_from(
                 (getThisInstance(IONSkipList *))->list,
                 (void *) key,

@@ -18,6 +18,9 @@ typedef struct _ion_skiplist_range {
     zval    *result;
     zval    *prev_key;
     zval    *to;
+#ifdef ZTS
+    void ***thread_ctx;
+#endif
 } IONSkipListRange;
 
 static IONSkipListRange *get_range(int flags, zval *result, zval *to);

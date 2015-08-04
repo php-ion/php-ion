@@ -21,7 +21,7 @@ typedef struct _ion_base {
     struct event *sigsegv;
 //    pionLList *queue;                // queue of defers object
 #ifdef ZTS
-    TSRMLS_D;
+    void ***thread_ctx;
 #endif
 } IONBase;
 
