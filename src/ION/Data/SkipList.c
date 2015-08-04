@@ -37,7 +37,7 @@ static int php_skiplist_range(void *key, void *value, void *udata) {
     return 0;
 }
 
-static IONSkipListRange *get_range(int flags, zval *result, zval *to TSRMLS_DC) {
+static IONSkipListRange *IONSListGetRange(int flags, zval *result, zval *to TSRMLS_DC) {
     IONSkipListRange *range = emalloc(sizeof(IONSkipListRange));
     memset(range, 0, sizeof(IONSkipListRange));
     range->flags = flags;
@@ -175,7 +175,7 @@ CLASS_METHOD(ION_Data_SkipList, get) {
     PARSE_ARGS("z|b", &key, &all);
     if(all) { // get all values by key
         array_init(return_value);
-        IONSkipListRange *range = get_range(ION_SKIPLIST_RANGE_WITHOUT_KEYS, return_value, key TSRMLS_CC);
+        IONSkipListRange *range = IONSListGetRange(ION_SKIPLIST_RANGE_WITHOUT_KEYS, return_value, key TSRMLS_CC);
         skiplist_iter_from(
                 (getThisInstance(IONSkipList *))->list,
                 (void *) key,

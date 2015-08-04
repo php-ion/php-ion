@@ -23,7 +23,7 @@ typedef struct _ion_skiplist_range {
 #endif
 } IONSkipListRange;
 
-static IONSkipListRange *get_range(int flags, zval *result, zval *to);
+static IONSkipListRange *IONSListGetRange(int flags, zval *result, zval *to TSRMLS_DC);
 
 #define ION_SKIPLIST_RANGE_WITH_KEYS 1
 #define ION_SKIPLIST_RANGE_WITHOUT_KEYS  0
