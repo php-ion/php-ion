@@ -201,7 +201,7 @@ zval* pionNewObject(zend_class_entry *ce, int args_num, zval ***args TSRMLS_DC) 
     ALLOC_INIT_ZVAL(object);
     object_init_ex(object, ce TSRMLS_CC);
     if(ce->constructor) {
-        if(pionCallConstructor(ce, object, args_num, args) == FAILURE) {
+        if(pionCallConstructor(ce, object, args_num, args TSRMLS_CC) == FAILURE) {
             zval_ptr_dtor(&object);
             return NULL;
         }
