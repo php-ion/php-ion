@@ -28,7 +28,7 @@
     static const zend_function_entry m ## class_name[] = {
 
 #define CLASS_METHODS_END \
-        ZEND_ME_END \
+        {NULL, NULL, NULL} \
     }
 
 #define RETURN_THIS()                           \
@@ -93,6 +93,10 @@
 
 #define METHOD_ARGS_BEGIN(class_name, method_name, required_num_args) \
     ZEND_BEGIN_ARG_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args)
+
+#define METHOD_ARG(name, pass_by_ref)  ZEND_ARG_INFO(pass_by_ref, name)
+
+#define METHOD_ARG_TYPE(name, type_hint, allow_null, pass_by_ref)     ZEND_ARG_TYPE_INFO(pass_by_ref, name, type_hint, allow_null)
 
 #define METHOD_ARGS_END() \
     ZEND_END_ARG_INFO()

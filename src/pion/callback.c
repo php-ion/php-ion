@@ -92,38 +92,38 @@ int pionCbVoidCall(pionCb *cb, int num, zval ***args TSRMLS_DC) {
     }
 }
 
-int pionCbVoidWithoutArgs(pionCb * cb) {
-    return pionCbVoidCall(cb, 0, NULL);
+int pionCbVoidWithoutArgs(pionCb * cb TSRMLS_DC) {
+    return pionCbVoidCall(cb, 0, NULL TSRMLS_CC);
 }
 
-int pionCbVoidWith1Arg(pionCb * cb, zval* arg1) {
+int pionCbVoidWith1Arg(pionCb * cb, zval* arg1 TSRMLS_DC) {
     zval **args[1];
     args[0] = &arg1;
-    return pionCbVoidCall(cb, 1, args);
+    return pionCbVoidCall(cb, 1, args TSRMLS_CC);
 }
 
-int pionCbVoidWith2Args(pionCb *cb, zval *arg1, zval *arg2) {
+int pionCbVoidWith2Args(pionCb *cb, zval *arg1, zval *arg2 TSRMLS_DC) {
     zval **args[2];
     args[0] = &arg1;
     args[1] = &arg2;
-    return pionCbVoidCall(cb, 2, args);
+    return pionCbVoidCall(cb, 2, args TSRMLS_CC);
 }
 
-int pionCbVoidWith3Args(pionCb *cb, zval *arg1, zval *arg2, zval *arg3) {
+int pionCbVoidWith3Args(pionCb *cb, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC) {
     zval **args[3];
     args[0] = &arg1;
     args[1] = &arg2;
     args[2] = &arg3;
-    return pionCbVoidCall(cb, 3, args);
+    return pionCbVoidCall(cb, 3, args TSRMLS_CC);
 }
 
-int pionCbVoidWith4Args(pionCb *cb, zval *arg1, zval *arg2, zval *arg3, zval *arg4) {
+int pionCbVoidWith4Args(pionCb *cb, zval *arg1, zval *arg2, zval *arg3, zval *arg4 TSRMLS_DC) {
     zval **args[4];
     args[0] = &arg1;
     args[1] = &arg2;
     args[2] = &arg3;
     args[3] = &arg4;
-    return pionCbVoidCall(cb, 4, args);
+    return pionCbVoidCall(cb, 4, args TSRMLS_CC);
 }
 
 /**
@@ -134,7 +134,7 @@ int pionCbVoidWith4Args(pionCb *cb, zval *arg1, zval *arg2, zval *arg3, zval *ar
  * @param zval*** args
  * @return
  */
-int pionCallConstructor(zend_class_entry *cls, zval *this_ptr, int args_num, zval ***args) {
+int pionCallConstructor(zend_class_entry *cls, zval *this_ptr, int args_num, zval ***args TSRMLS_DC) {
     zval *retval_ptr = NULL;
     zend_fcall_info fci;
     zend_fcall_info_cache fcc;
@@ -173,28 +173,28 @@ int pionCallConstructor(zend_class_entry *cls, zval *this_ptr, int args_num, zva
     return SUCCESS;
 }
 
-int pionCallConstructorWith1Arg(zend_class_entry *cls, zval *this_ptr, zval *arg1) {
+int pionCallConstructorWith1Arg(zend_class_entry *cls, zval *this_ptr, zval *arg1 TSRMLS_DC) {
     zval **args[1];
     args[0] = &arg1;
-    return pionCallConstructor(cls, this_ptr, 1, args);
+    return pionCallConstructor(cls, this_ptr, 1, args TSRMLS_CC);
 }
 
-int pionCallConstructorWith2Args(zend_class_entry *cls, zval *this_ptr, zval *arg1, zval *arg2) {
+int pionCallConstructorWith2Args(zend_class_entry *cls, zval *this_ptr, zval *arg1, zval *arg2 TSRMLS_DC) {
     zval **args[2];
     args[0] = &arg1;
     args[1] = &arg2;
-    return pionCallConstructor(cls, this_ptr, 2, args);
+    return pionCallConstructor(cls, this_ptr, 2, args TSRMLS_CC);
 }
 
-int pionCallConstructorWith3Args(zend_class_entry *cls, zval *this_ptr, zval *arg1, zval *arg2, zval *arg3) {
+int pionCallConstructorWith3Args(zend_class_entry *cls, zval *this_ptr, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC) {
     zval **args[3];
     args[0] = &arg1;
     args[1] = &arg2;
     args[2] = &arg3;
-    return pionCallConstructor(cls, this_ptr, 3, args);
+    return pionCallConstructor(cls, this_ptr, 3, args TSRMLS_CC);
 }
 
-zval* pionNewObject(zend_class_entry *ce, int args_num, zval ***args) {
+zval* pionNewObject(zend_class_entry *ce, int args_num, zval ***args TSRMLS_DC) {
     zval *object = NULL;
     ALLOC_INIT_ZVAL(object);
     object_init_ex(object, ce);
@@ -208,47 +208,47 @@ zval* pionNewObject(zend_class_entry *ce, int args_num, zval ***args) {
     return object;
 }
 
-zval* pionNewObjectWithoutArgs(zend_class_entry *ce) {
-    return pionNewObject(ce, 0, NULL);
+zval* pionNewObjectWithoutArgs(zend_class_entry *ce TSRMLS_DC) {
+    return pionNewObject(ce, 0, NULL TSRMLS_CC);
 }
 
-zval* pionNewObjectWith1Arg(zend_class_entry *ce, zval *arg1) {
+zval* pionNewObjectWith1Arg(zend_class_entry *ce, zval *arg1 TSRMLS_DC) {
     zval **args[1];
     args[0] = &arg1;
-    return pionNewObject(ce, 1, args);
+    return pionNewObject(ce, 1, args TSRMLS_CC);
 }
 
-zval* pionNewObjectWith2Args(zend_class_entry *ce, zval *arg1, zval *arg2) {
+zval* pionNewObjectWith2Args(zend_class_entry *ce, zval *arg1, zval *arg2 TSRMLS_DC) {
     zval **args[2];
     args[0] = &arg1;
     args[1] = &arg2;
-    return pionNewObject(ce, 2, args);
+    return pionNewObject(ce, 2, args TSRMLS_CC);
 }
 
-zval* pionNewObjectWith3Args(zend_class_entry *ce, zval *arg1, zval *arg2, zval *arg3) {
+zval* pionNewObjectWith3Args(zend_class_entry *ce, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC) {
     zval **args[3];
     args[0] = &arg1;
     args[1] = &arg2;
     args[2] = &arg3;
-    return pionNewObject(ce, 3, args);
+    return pionNewObject(ce, 3, args TSRMLS_CC);
 }
 
-zval* pionInitException(zend_class_entry *cls, char *message, int code) {
+zval* pionInitException(zend_class_entry *cls, char *message, int code TSRMLS_DC) {
     zval *msg, *c, *exception;
     ALLOC_STRING_ZVAL(msg, message, 1);
     ALLOC_LONG_ZVAL(c, code);
-    exception = pionNewObjectWith2Args(cls, msg, c);
+    exception = pionNewObjectWith2Args(cls, msg, c TSRMLS_CC);
     zval_ptr_dtor(&msg);
     zval_ptr_dtor(&c);
     return exception;
 }
 
-zval*pionCallFunction(const char *function_name, int num_args, zval **args) {
+zval* pionCallFunction(const char *function_name, int num_args, zval **args TSRMLS_DC) {
     zval *zfunc, *retval = NULL;
     ALLOC_INIT_ZVAL(retval);
     ALLOC_INIT_ZVAL(zfunc);
     ZVAL_STRING(zfunc, function_name, 1);
-    if(call_user_function(EG(function_table), NULL, zfunc, retval, num_args, args) == FAILURE) {
+    if(call_user_function(EG(function_table), NULL, zfunc, retval, (zend_uint)num_args, args TSRMLS_CC) == FAILURE) {
         zval_ptr_dtor(&zfunc);
         zval_ptr_dtor(&retval);
         return NULL;
@@ -258,23 +258,23 @@ zval*pionCallFunction(const char *function_name, int num_args, zval **args) {
     }
 }
 
-zval*pionCallFunctionWith1Arg(const char *function_name, zval *arg1) {
+zval* pionCallFunctionWith1Arg(const char *function_name, zval *arg1 TSRMLS_DC) {
     zval *args[1];
     args[0] = arg1;
-    return pionCallFunction(function_name, 1, args);
+    return pionCallFunction(function_name, 1, args TSRMLS_CC);
 }
 
-zval*pionCallFunctionWith2Args(const char *function_name, zval *arg1, zval *arg2) {
+zval* pionCallFunctionWith2Args(const char *function_name, zval *arg1, zval *arg2 TSRMLS_DC) {
     zval *args[2];
     args[0] = arg1;
     args[1] = arg2;
-    return pionCallFunction(function_name, 2, args);
+    return pionCallFunction(function_name, 2, args TSRMLS_CC);
 }
 
-zval*pionCallFunctionWith3Args(const char *function_name, zval *arg1, zval *arg2, zval *arg3) {
+zval* pionCallFunctionWith3Args(const char *function_name, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC) {
     zval *args[3];
     args[0] = arg1;
     args[1] = arg2;
     args[2] = arg3;
-    return pionCallFunction(function_name, 3, args);
+    return pionCallFunction(function_name, 3, args TSRMLS_CC);
 }

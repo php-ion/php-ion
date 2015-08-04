@@ -67,7 +67,7 @@ if test "$PHP_ION" != "no"; then
     ion_src="php_ion.c
     pion/debug.c
     pion/callback.c
-    pion/zend.c
+    pion/engine.c
     pion/linkedlist.c
     pion.c
     ION/Data/LinkedList.c

@@ -50,7 +50,7 @@ class BuildRunner {
 		}
 
 		if($this->hasOption('make', 'm')) {
-			$this->exec('make');
+			$this->exec('make -j4');
 		}
 
 		if($this->hasOption('info', 'i')) {
