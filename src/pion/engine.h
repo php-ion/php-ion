@@ -84,7 +84,7 @@
     memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
 
 #define CLASS_METHOD(class, method, acc_flags) \
-    const uint flags ## class ## method = acc_flags; \
+    static const zend_uint flags ## class ## method = acc_flags; \
     PHP_METHOD(class, method)
 
 #define METHOD_WITHOUT_ARGS(class_name, method_name) \

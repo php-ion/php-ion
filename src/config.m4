@@ -3,7 +3,7 @@ dnl config.m4 for extension ion
 PHP_ARG_WITH(ion, for asynchronous IO notifications,
 [  --with-ion             Include ION support])
 
-CFLAGS="$CFLAGS -Wall -g3 -ggdb -O0"
+CFLAGS="$CFLAGS -Wall -g3 -ggdb -O0 -std=c99"
 AC_DEFINE(ION_DEBUG, 1, [Enable ION debug support])
 
 if test "$PHP_ION" != "no"; then
