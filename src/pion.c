@@ -4,7 +4,7 @@
 
 BEGIN_EXTERN_C()
 
-int php_stream_get_fd(zval *zfd) {
+int php_stream_get_fd(zval *zfd TSRMLS_DC) {
 
     php_stream *stream;
     int fd = -1;
