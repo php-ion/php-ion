@@ -1,15 +1,20 @@
 language: php
 
+sudo: false
+addons:
+  apt:
+    packages:
+      - libevent-dev
+
 php:
-    - 5.4
-    - 5.5
-    - 5.6
+  - 5.4
+  - 5.5
+  - 5.6
 
 before_script:
-    - sudo apt-get install libevent-dev
-    - bin/build.php --phpize --clean --make
-    - bin/build.php --info
-    - composer install
+  - bin/build.php --phpize --clean --make
+  - bin/build.php --info
+  - composer install
 
 # Run tests
 script: bin/build.php --test

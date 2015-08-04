@@ -88,31 +88,31 @@ void get_from_end(struct skiplist *list, zval *return_value, get_from_end_cb cb,
 
 // PHP API
 /** public function ION\Data\SkipList::first() : mixed */
-CLASS_METHOD(ION_Data_SkipList, first, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_SkipList, first) {
     get_from_end((getThisInstance(IONSkipList *))->list, return_value, skiplist_first, 0);
 }
 METHOD_WITHOUT_ARGS(ION_Data_SkipList, first);
 
 /** public function ION\Data\SkipList::last() : mixed */
-CLASS_METHOD(ION_Data_SkipList, last, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_SkipList, last) {
     get_from_end((getThisInstance(IONSkipList *))->list, return_value, skiplist_last, 0);
 }
 METHOD_WITHOUT_ARGS(ION_Data_SkipList, last);
 
 /** public function ION\Data\SkipList::rPop() : mixed */
-CLASS_METHOD(ION_Data_SkipList, rPop, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_SkipList, rPop) {
     get_from_end((getThisInstance(IONSkipList *))->list, return_value, skiplist_pop_last, 1);
 }
 METHOD_WITHOUT_ARGS(ION_Data_SkipList, rPop);
 
 /** public function ION\Data\SkipList::lPop() : mixed */
-CLASS_METHOD(ION_Data_SkipList, lPop, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_SkipList, lPop) {
     get_from_end((getThisInstance(IONSkipList *))->list, return_value, skiplist_pop_first, 1);
 }
 METHOD_WITHOUT_ARGS(ION_Data_SkipList, lPop);
 
 /** public function ION\Data\SkipList::set(key, value) : self */
-CLASS_METHOD(ION_Data_SkipList, set, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_SkipList, set) {
     zval *zkey = NULL;
     zval *zvalue = NULL;
     zval *zold = NULL;
@@ -133,7 +133,7 @@ METHOD_ARGS_BEGIN(ION_Data_SkipList, set, 2)
 METHOD_ARGS_END();
 
 /** public function ION\Data\SkipList::add(key, value) : self */
-CLASS_METHOD(ION_Data_SkipList, add, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_SkipList, add) {
     zval *zkey = NULL;
     zval *zvalue = NULL;
     IONSkipList *slist = getThisInstance(IONSkipList *);
@@ -151,7 +151,7 @@ METHOD_ARGS_END();
 
 
 /* public function ION\Data\SkipList::exists(mixed $key) : bool */
-CLASS_METHOD(ION_Data_SkipList, exists, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_SkipList, exists) {
     zval *key = NULL;
     int result = 0;
     PARSE_ARGS("z", &key);
@@ -169,7 +169,7 @@ METHOD_ARGS_END();
 
 
 /* public function ION\Data\SkipList::get(mixed $key, bool $all = false) : mixed */
-CLASS_METHOD(ION_Data_SkipList, get, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_SkipList, get) {
     zval *key = NULL;
     zend_bool *all = 0;
     PARSE_ARGS("z|b", &key, &all);
@@ -199,7 +199,7 @@ METHOD_ARGS_END();
 
 
 /* public function ION\Data\SkipList::count() : int */
-CLASS_METHOD(ION_Data_SkipList, count, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_SkipList, count) {
     IONSkipList *slist = getThisInstance(IONSkipList *);
     RETURN_LONG(skiplist_count(slist->list));
 }
@@ -208,7 +208,7 @@ METHOD_WITHOUT_ARGS(ION_Data_SkipList, count);
 
 
 /* public function ION\Data\SkipList::toArray() : array */
-CLASS_METHOD(ION_Data_SkipList, toArray, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_SkipList, toArray) {
     array_init(return_value);
     skiplist_iter(
         (getThisInstance(IONSkipList *))->list,
@@ -220,16 +220,16 @@ CLASS_METHOD(ION_Data_SkipList, toArray, ZEND_ACC_PUBLIC) {
 METHOD_WITHOUT_ARGS(ION_Data_SkipList, toArray);
 
 CLASS_METHODS_START(ION_Data_SkipList)
-    METHOD(ION_Data_SkipList, first)
-    METHOD(ION_Data_SkipList, last)
-    METHOD(ION_Data_SkipList, rPop)
-    METHOD(ION_Data_SkipList, lPop)
-    METHOD(ION_Data_SkipList, set)
-    METHOD(ION_Data_SkipList, add)
-    METHOD(ION_Data_SkipList, exists)
-    METHOD(ION_Data_SkipList, get)
-    METHOD(ION_Data_SkipList, count)
-    METHOD(ION_Data_SkipList, toArray)
+    METHOD(ION_Data_SkipList, first, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_SkipList, last, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_SkipList, rPop, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_SkipList, lPop, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_SkipList, set, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_SkipList, add, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_SkipList, exists, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_SkipList, get, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_SkipList, count, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_SkipList, toArray, ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Data_SkipList) {

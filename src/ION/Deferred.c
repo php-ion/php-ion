@@ -14,7 +14,7 @@ CLASS_INSTANCE_CTOR(ION_Deferred) {
     RETURN_INSTANCE(ION_Deferred, object);
 }
 
-CLASS_METHOD(ION_Deferred, then, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Deferred, then) {
     IONDeferred *deferred = getThisInstance(IONDeferred *);
 
     RETURN_NULL();
@@ -26,7 +26,7 @@ METHOD_ARGS_END()
 
 
 CLASS_METHODS_START(ION_Deferred)
-    METHOD(ION_Deferred, then)
+    METHOD(ION_Deferred, then, ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 
 

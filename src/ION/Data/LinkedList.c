@@ -126,7 +126,7 @@ zend_object_iterator *ion_llist_get_iterator(zend_class_entry *ce, zval *object,
 
 // PHP API
 /* public function ION\Dat\LinkedList::rPush(mixed item) : int */
-CLASS_METHOD(ION_Data_LinkedList, rPush, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_LinkedList, rPush) {
     IONLinkedList *llist = getThisInstance(IONLinkedList *);
     zval *zitem = NULL;
     PARSE_ARGS("z/", &zitem);
@@ -141,7 +141,7 @@ METHOD_ARGS_BEGIN(ION_Data_LinkedList, rPush, 1)
 METHOD_ARGS_END();
 
 /* public function ION\Dat\LinkedList::lPush(mixed item) : int */
-CLASS_METHOD(ION_Data_LinkedList, lPush, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_LinkedList, lPush) {
     IONLinkedList *llist = getThisInstance(IONLinkedList *);
     zval *zitem = NULL;
     PARSE_ARGS("z/", &zitem);
@@ -157,7 +157,7 @@ METHOD_ARGS_END();
 
 
 /* public function ION\Dat\LinkedList::rPop() : mixed */
-CLASS_METHOD(ION_Data_LinkedList, rPop, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_LinkedList, rPop) {
     IONLinkedList *llist = getThisInstance(IONLinkedList *);
     zval *zitem = NULL;
     if(llist->current && !llist->current->next) {
@@ -177,7 +177,7 @@ CLASS_METHOD(ION_Data_LinkedList, rPop, ZEND_ACC_PUBLIC) {
 METHOD_WITHOUT_ARGS(ION_Data_LinkedList, rPop);
 
 /* public function ION\Dat\LinkedList::lPop() : mixed */
-CLASS_METHOD(ION_Data_LinkedList, lPop, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_LinkedList, lPop) {
     IONLinkedList *llist = getThisInstance(IONLinkedList *);
     zval *zitem = NULL;
     if(llist->current && !llist->current->prev) {
@@ -202,7 +202,7 @@ METHOD_WITHOUT_ARGS(ION_Data_LinkedList, lPop);
 
 
 /* public function ION\Dat\LinkedList::count() : int */
-CLASS_METHOD(ION_Data_LinkedList, count, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_LinkedList, count) {
     IONLinkedList *llist = getThisInstance(IONLinkedList *);
     RETURN_LONG(llist->count);
 }
@@ -211,7 +211,7 @@ METHOD_WITHOUT_ARGS(ION_Data_LinkedList, count);
 
 
 /* public function ION\Dat\LinkedList::rewind() : void */
-CLASS_METHOD(ION_Data_LinkedList, rewind, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_LinkedList, rewind) {
     IONLinkedList *llist = getThisInstance(IONLinkedList *);
     if(llist->list->head) {
         llist->current = llist->list->head;
@@ -224,7 +224,7 @@ CLASS_METHOD(ION_Data_LinkedList, rewind, ZEND_ACC_PUBLIC) {
 METHOD_WITHOUT_ARGS(ION_Data_LinkedList, rewind);
 
 /* public function ION\Dat\LinkedList::current() : mixed */
-CLASS_METHOD(ION_Data_LinkedList, current, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_LinkedList, current) {
     IONLinkedList *llist = getThisInstance(IONLinkedList *);
     if(llist->current) {
         zval *item = (zval *)llist->current->data;
@@ -238,7 +238,7 @@ METHOD_WITHOUT_ARGS(ION_Data_LinkedList, current);
 
 
 /* public function ION\Dat\LinkedList::key() : mixed */
-CLASS_METHOD(ION_Data_LinkedList, key, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_LinkedList, key) {
     IONLinkedList *llist = getThisInstance(IONLinkedList *);
     if(llist->current) {
         RETURN_LONG(llist->key);
@@ -251,7 +251,7 @@ METHOD_WITHOUT_ARGS(ION_Data_LinkedList, key);
 
 
 /* public function ION\Dat\LinkedList::next() : void */
-CLASS_METHOD(ION_Data_LinkedList, next, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_LinkedList, next) {
     IONLinkedList *llist = getThisInstance(IONLinkedList *);
     pionLListItem *item;
     if(llist->current) {
@@ -265,7 +265,7 @@ METHOD_WITHOUT_ARGS(ION_Data_LinkedList, next);
 
 
 /* public function ION\Dat\LinkedList::valid() : bool */
-CLASS_METHOD(ION_Data_LinkedList, valid, ZEND_ACC_PUBLIC) {
+CLASS_METHOD(ION_Data_LinkedList, valid) {
     IONLinkedList *llist = getThisInstance(IONLinkedList *);
 
     RETURN_BOOL(llist->current != NULL);
@@ -275,16 +275,16 @@ METHOD_WITHOUT_ARGS(ION_Data_LinkedList, valid);
 
 
 CLASS_METHODS_START(ION_Data_LinkedList)
-    METHOD(ION_Data_LinkedList, rPush)
-    METHOD(ION_Data_LinkedList, lPush)
-    METHOD(ION_Data_LinkedList, rPop)
-    METHOD(ION_Data_LinkedList, lPop)
-    METHOD(ION_Data_LinkedList, count)
-    METHOD(ION_Data_LinkedList, rewind)
-    METHOD(ION_Data_LinkedList, current)
-    METHOD(ION_Data_LinkedList, key)
-    METHOD(ION_Data_LinkedList, next)
-    METHOD(ION_Data_LinkedList, valid)
+    METHOD(ION_Data_LinkedList, rPush, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_LinkedList, lPush, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_LinkedList, rPop, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_LinkedList, lPop, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_LinkedList, count, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_LinkedList, rewind, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_LinkedList, current, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_LinkedList, key, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_LinkedList, next, ZEND_ACC_PUBLIC)
+    METHOD(ION_Data_LinkedList, valid, ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Data_LinkedList) {

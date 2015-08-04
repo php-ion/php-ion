@@ -83,8 +83,7 @@
     spl_register_std_class(&c ## class, class_name, _ ## class ## Ctor, m ## class TSRMLS_CC);   \
     memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
 
-#define CLASS_METHOD(class, method, acc_flags) \
-    static const zend_uint flags ## class ## method = acc_flags; \
+#define CLASS_METHOD(class, method) \
     PHP_METHOD(class, method)
 
 #define METHOD_WITHOUT_ARGS(class_name, method_name) \
@@ -104,8 +103,8 @@
 #define ARG_TYPE(name, type_hint, allow_null) \
     ZEND_ARG_TYPE_INFO(0, name, type_hint, allow_null)
 
-#define METHOD(class_name, method_name) \
-    ZEND_ME(class_name, method_name, args ## class_name ## method_name, flags ## class_name ## method_name)
+#define METHOD(class_name, method_name, flags) \
+    ZEND_ME(class_name, method_name, args ## class_name ## method_name, flags)
 
 
 
