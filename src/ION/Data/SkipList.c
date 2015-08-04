@@ -5,9 +5,17 @@
 
 DEFINE_CLASS(ION_Data_SkipList);
 
+#ifdef ZTS
+TSRMLS_D ## _local;
+#define SYNC_TSRMLS() TSRMLS_D ## _local = TSRMLS_C;
+#else
+#define SYNC_TSRMLS();
+#endif
+
 static int php_skiplist_cmp(void *keyA, void *keyB) {
     zval result;
-    compare_function(&result, (zval *)keyA, (zval *)keyB);
+    TSRMLS_FETCH();
+    compare_function(&result, (zval *)keyA, (zval *)keyB TSRMLS_CC);
     return (int)Z_LVAL(result);
 }
 
@@ -24,11 +32,9 @@ static int php_skiplist_to_array(void *key, void *value, void *udata) {
 static int php_skiplist_range(void *key, void *value, void *udata) {
     zval result;
     IONSkipListRange *range = (IONSkipListRange *)udata;
-
+    TSRMLS_FETCH();
     if(range->to) {
-//        PHPDBG("compare");
-//        ZVAL_DUMP_P((zval *)key);
-        compare_function(&result, (zval *)key, range->to);
+        compare_function(&result, (zval *)key, range->to TSRMLS_CC);
         if(Z_LVAL(result) > 0) {
             return 1;
         }
