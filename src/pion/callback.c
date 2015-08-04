@@ -163,7 +163,9 @@ int pionCallConstructor(zend_class_entry *cls, zval *this_ptr, int args_num, zva
         if (retval_ptr) {
             zval_ptr_dtor(&retval_ptr);
         }
-        zend_throw_exception_ex(spl_ce_RuntimeException, 1, "Invocation of %s's constructor failed",  cls->name);
+        if(!EG(exception)) {
+            zend_throw_exception_ex(spl_ce_RuntimeException, 1, "Invocation of %s's constructor failed",  cls->name);
+        }
         return FAILURE;
     }
     if (retval_ptr) {
@@ -197,7 +199,7 @@ int pionCallConstructorWith3Args(zend_class_entry *cls, zval *this_ptr, zval *ar
 zval* pionNewObject(zend_class_entry *ce, int args_num, zval ***args TSRMLS_DC) {
     zval *object = NULL;
     ALLOC_INIT_ZVAL(object);
-    object_init_ex(object, ce);
+    object_init_ex(object, ce TSRMLS_CC);
     if(ce->constructor) {
         if(pionCallConstructor(ce, object, args_num, args) == FAILURE) {
             zval_ptr_dtor(&object);
