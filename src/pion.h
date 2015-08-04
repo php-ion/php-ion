@@ -21,7 +21,7 @@ typedef struct _ion_base {
     struct event *sigsegv;
 //    pionLList *queue;                // queue of defers object
 #ifdef ZTS
-    void ***thread_ctx;
+    TSRMLS_D;
 #endif
 } IONBase;
 
@@ -29,7 +29,7 @@ typedef struct _ion_base {
     ionBase->prop
 
 /* Fetch FD from ZVAL resource */
-int php_stream_get_fd(zval *);
+int pionGetFdFromStream(zval* zfd TSRMLS_DC);
 
 /**
  * For debug
