@@ -10,6 +10,7 @@
 typedef struct _pionCb {
     zend_fcall_info *fci;
     zend_fcall_info_cache *fcc;
+    zval *zcb;
 #ifdef ZTS
     void ***thread_ctx;
 #endif

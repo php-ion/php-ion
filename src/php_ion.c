@@ -18,6 +18,7 @@
 #include "php_ion.h"
 #include "pion.h"
 
+#define PION_FUNCTIONS
 
 IONBase *ionBase;
 
@@ -26,17 +27,62 @@ ZEND_GET_MODULE(ion);
 #endif
 
 static const zend_module_dep ion_depends[] = {
-        ZEND_MOD_REQUIRED("SPL")
-        {NULL, NULL, NULL}
+    ZEND_MOD_REQUIRED("SPL")
+    {NULL, NULL, NULL}
 };
+
+#ifdef PION_FUNCTIONS
+// PION framework functions for testing
+
+PHP_FUNCTION(pionCbCreate) {
+    zval *zarg = NULL;
+    zend_fcall_info        fci = empty_fcall_info;
+    zend_fcall_info_cache  fcc = empty_fcall_info_cache;
+    PARSE_ARGS("fz", &fci, &fcc, &zarg);
+    pionCb *cb = pionCbCreate(&fci, &fcc);
+    int result = pionCbVoidWith1Arg(cb, zarg);
+    pionCbFree(cb);
+    RETURN_LONG((long)result);
+}
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_pionCbCreate, 0, 0, 1)
+    ZEND_ARG_TYPE_INFO(0, callback, IS_CALLABLE, 0)
+ZEND_END_ARG_INFO()
+
+PHP_FUNCTION(pionCbCreateFromZval) {
+    zval *zarg = NULL;
+    zval *zcb = NULL;
+    PARSE_ARGS("zz", &zcb, &zarg);
+    pionCb *cb = pionCbCreateFromZval(zcb);
+    int result = pionCbVoidWith1Arg(cb, zarg);
+    pionCbFree(cb);
+    RETURN_LONG((long)result);
+}
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_pionCbCreateFromZval, 0, 0, 1)
+    ZEND_ARG_TYPE_INFO(0, callback, IS_CALLABLE, 0)
+ZEND_END_ARG_INFO()
+
+const zend_function_entry pion_functions[] = {
+    PHP_FE(pionCbCreate, arginfo_pionCbCreate)
+    PHP_FE(pionCbCreateFromZval, arginfo_pionCbCreateFromZval)
+    {NULL, NULL, NULL}
+};
+
+#endif
+
 
 /* ION module meta */
 zend_module_entry ion_module_entry = {
         STANDARD_MODULE_HEADER_EX,
         NULL,
         ion_depends, // depends
-        "ION", // module name
-        NULL, // module's functions
+        "ion", // module name
+#ifdef PION_FUNCTIONS
+        pion_functions, // module's functions
+#else
+        NULL,
+#endif
         PHP_MINIT(ion), // module init callback
         NULL,  // module shutdown callback
         PHP_RINIT(ion),  // request init callback
@@ -45,7 +91,6 @@ zend_module_entry ion_module_entry = {
         PHP_ION_VERSION, // module version
         STANDARD_MODULE_PROPERTIES
 };
-
 
 /* Init module callback */
 PHP_MINIT_FUNCTION(ion) {
@@ -80,8 +125,6 @@ PHP_RSHUTDOWN_FUNCTION(ion) {
 }
 
 
-
-
 PHP_MINFO_FUNCTION(ion) {
     char engine[64], poll[32], available[16] = "";
     int features = 0;
@@ -104,22 +147,22 @@ PHP_MINFO_FUNCTION(ion) {
         strcat(available, "FDS ");
     }
     php_info_print_table_start();
-    php_info_print_table_header(2, "ION.support", "enabled");
-    php_info_print_table_row(2, "ION.version", PHP_ION_VERSION);
-    php_info_print_table_row(2, "ION.engine", engine);
-    php_info_print_table_row(2, "ION.engine.built-in", "no");
-    php_info_print_table_row(2, "ION.DNS.support", "enabled");
-    php_info_print_table_row(2, "ION.DNS.resolve.config", "/etc/resolve.conf");
-    php_info_print_table_row(2, "ION.SSL.support", "disabled");
-    php_info_print_table_row(2, "ION.event.poll", poll);
+    php_info_print_table_header(2, "ion.support", "enabled");
+    php_info_print_table_row(2, "ion.version", PHP_ION_VERSION);
+    php_info_print_table_row(2, "ion.engine", engine);
+    php_info_print_table_row(2, "ion.engine.built-in", "no");
+    php_info_print_table_row(2, "ion.dns.support", "enabled");
+    php_info_print_table_row(2, "ion.dns.resolve.config", "/etc/resolve.conf");
+    php_info_print_table_row(2, "ion.ssl.support", "disabled");
+    php_info_print_table_row(2, "ion.event.poll", poll);
 #ifdef _EVENT_HAVE_SENDFILE
-    php_info_print_table_row(2, "ION.sendfile.engine", "sendfile");
+    php_info_print_table_row(2, "ion.sendfile.engine", "sendfile");
 #elif _EVENT_HAVE_MMAP
-    php_info_print_table_row(2, "Send file engine", "mmap");
+    php_info_print_table_row(2, "ion.sendfile.engine", "mmap");
 #else
-    php_info_print_table_row(2, "Send file engine", "none");
+    php_info_print_table_row(2, "ion.sendfile.engine", "none");
 #endif
 
-    php_info_print_table_row(2, "ION.event.features", available);
+    php_info_print_table_row(2, "ion.event.features", available);
     php_info_print_table_end();
 }

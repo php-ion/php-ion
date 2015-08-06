@@ -11,13 +11,13 @@ final class Deferred {
 	 * @param callable $cancel_cb
 	 * @param mixed $cancel_arg
 	 */
-	public function __construct(callable $cancel_cb = null, $cancel_arg = null) {}
+	public function __construct(callable $cancel_cb = null) {}
 	/**
 	 * Set user callback on finish defer-event
 	 * @param callable $cb
 	 * @param mixed $arg
 	 */
-	public function then(callable $cb, $arg = null) {}
+	public function then(callable $cb) {}
 
 	/**
 	 * Cancel defer object
@@ -41,13 +41,6 @@ final class Deferred {
 	 * @param int $seconds
 	 */
 	public function timeout($seconds) {}
-
-	/**
-	 * Make object hardy.
-	 * @todo more doc
-	 * Be careful, may be memory leak
-	 */
-	public function alive() {}
 
 	/**
 	 * Processing internal defer-object queue

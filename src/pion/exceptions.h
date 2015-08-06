@@ -10,11 +10,9 @@ BEGIN_EXTERN_C();
 
 #define Throw(class_name, message, code)                                            \
     zend_throw_exception(class_name,  message, code TSRMLS_CC);                               \
-    return;
 
 #define ThrowEx(class_name, code, message, ...)                                     \
     zend_throw_exception_ex(class_name, code TSRMLS_CC, message, ##__VA_ARGS__);              \
-    return;
 
 #define ThrowRuntime(message, code)     Throw(spl_ce_RuntimeException, message, code)
 #define ThrowRuntimeEx(code, message, ...)     \

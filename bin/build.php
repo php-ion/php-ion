@@ -7,6 +7,13 @@ $builder->run();
 
 class BuildRunner {
 
+    public function __construct() {
+        set_exception_handler(function ($exception) {
+            fwrite(STDERR, get_class($exception).": ".$exception->getMessage()." in ".$exception->getFile().":".$exception->getLine()."\n".$exception->getTraceAsString());
+            exit(1);
+        });
+    }
+
 	public function hasOption($long, $short) {
 		$options = getopt($short, [$long]);
 		return isset($options[ $long ]) || isset($options[ $short ]);
@@ -86,10 +93,18 @@ class BuildRunner {
             $info[] = "const $constant = ".var_export($value, true);
         }
         foreach($ion->getFunctions() as $function) {
-            $info[] = "function {$function->name}()";
+            $params = [];
+            foreach($function->getParameters() as $param) {
+                if($param->isOptional()) {
+                    $params[] = '[ $'.$param->name.' ]';
+                } else {
+                    $params[] = '$'.$param->name;
+                }
+            }
+            $info[] = "function {$function->name}(".implode(", ", $params).")";
         }
         foreach($ion->getClasses() as $class) {
-            $info[] = "class {$class->name} {";
+            $info[] = "class ".implode(' ', Reflection::getModifierNames($class->getModifiers()))." {$class->name} {";
             if($class->getParentClass()) {
                 $info[] = "  extends {$class->getParentClass()->name}";
             }

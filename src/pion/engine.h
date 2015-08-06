@@ -94,8 +94,8 @@
     ZEND_BEGIN_ARG_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args)
 
 #define METHOD_ARG(name, pass_by_ref)  ZEND_ARG_INFO(pass_by_ref, name)
-
 #define METHOD_ARG_TYPE(name, type_hint, allow_null, pass_by_ref)     ZEND_ARG_TYPE_INFO(pass_by_ref, name, type_hint, allow_null)
+#define METHOD_ARG_OBJECT(name, classname, allow_null, pass_by_ref)     ZEND_ARG_OBJ_INFO(pass_by_ref, name, classname, allow_null)
 
 #define METHOD_ARGS_END() \
     ZEND_END_ARG_INFO()
@@ -106,6 +106,8 @@
 #define METHOD(class_name, method_name, flags) \
     ZEND_ME(class_name, method_name, args ## class_name ## method_name, flags)
 
-
+#define REGISTER_VOID_EXTENDED_CLASS(class, parent_class, class_name, obj_ctor) \
+    spl_register_sub_class(&c ## class, c ## parent_class, class_name, obj_ctor, NULL TSRMLS_CC); \
+    memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
 
 #endif //PION_ENGINE_H

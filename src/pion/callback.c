@@ -1,14 +1,15 @@
 #include "callback.h"
+#include "debug.h"
 #include "engine.h"
 #include "exceptions.h"
-
 
 /**
  * Create pionCb callback from FCI
  **/
-pionCb * pionCbCreate(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr TSRMLS_DC) {
+pionCb *pionCbCreate(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr TSRMLS_DC) {
     zval* retval_ptr;
     pionCb *cb = safe_emalloc(1, sizeof(pionCb), 0);
+    memset(cb, 0,  sizeof(pionCb));
     cb->fci = safe_emalloc(1, sizeof(zend_fcall_info), 0);
     cb->fcc = safe_emalloc(1, sizeof(zend_fcall_info_cache), 0);
 
@@ -31,29 +32,43 @@ pionCb * pionCbCreate(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr T
     return cb;
 }
 
-/**
- * Create pionCb callback from variable zval
- * @param zval* zCb
- * @return pionCb*
- */
-pionCb * pionCbCreateFromZval(zval* zCb TSRMLS_DC) {
-    return NULL;
+pionCb *pionCbCreateFromZval(zval *zCb TSRMLS_DC) {
+    pionCb *cb = safe_emalloc(1, sizeof(pionCb), 0);
+    char *is_callable_error = NULL;
+    memset(cb, 0, sizeof(pionCb));
+    cb->fci = safe_emalloc(1, sizeof(empty_fcall_info), 0);
+    cb->fcc = safe_emalloc(1, sizeof(empty_fcall_info_cache), 0);
+    *cb->fci = empty_fcall_info;
+    *cb->fcc = empty_fcall_info_cache;
+    if (zend_fcall_info_init(zCb, 0, cb->fci, cb->fcc, NULL, &is_callable_error TSRMLS_CC) == SUCCESS) {
+        if (is_callable_error) {
+            return NULL;
+        } else {
+            return cb;
+        }
+    } else {
+        return NULL;
+    }
 }
 
 /**
  * Destroy pionCb callback
  * */
 void pionCbFree(pionCb *cb) {
-    efree(cb->fcc);
-    if (ZEND_FCI_INITIALIZED(*cb->fci)) {
+    if(cb->fcc) {
+        efree(cb->fcc);
+    }
+    if (cb->fci && ZEND_FCI_INITIALIZED(*cb->fci)) {
         zval_ptr_dtor(&cb->fci->function_name);
         if (cb->fci->object_ptr) {
             zval_ptr_dtor(&cb->fci->object_ptr);
         }
     }
+    if(cb->zcb) {
+        zval_ptr_dtor(&cb->zcb);
+    }
     efree(cb->fci);
     efree(cb);
-    cb = NULL;
 }
 
 
@@ -67,8 +82,6 @@ void pionCbFree(pionCb *cb) {
  */
 int pionCbVoidCall(pionCb *cb, int num, zval ***args TSRMLS_DC) {
     zval *pretval = NULL;
-
-
     if (ZEND_FCI_INITIALIZED(*cb->fci)) {
         cb->fci->retval_ptr_ptr = &pretval;
         cb->fci->params = args;
@@ -78,11 +91,11 @@ int pionCbVoidCall(pionCb *cb, int num, zval ***args TSRMLS_DC) {
 //        } zend_catch {
 //        } zend_end_try();
         if(EG(exception)) {
-//            PHPDBG("catch exception");
+            PHPDBG("catch exception");
 //            event_base_loopbreak(ION(base));
         }
         if(pretval) {
-//            ion_result_dispatch(pretval TSRMLS_CC);
+            zval_ptr_dtor(&pretval);
         }
         return SUCCESS;
     } else {

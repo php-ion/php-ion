@@ -8,20 +8,36 @@
 BEGIN_EXTERN_C();
 
 
-typedef void (*deferred_cancel_func)(zval *error TSRMLS_DC);
+#define DEFERRED_RESOLVED  1
+#define DEFERRED_FAILED    2
+#define DEFERRED_FINISHED  3
 
-typedef struct _IONDeferred {
-    zend_object std;
-    short       flags;
-    void        (*deferred_cancel_func)(zval *error TSRMLS_DC);
-    void        *obj;
-    struct event *timeout;
-    zval        *result;
-    pionCb      *cb;
+#define DEFERRED_INTERNAL  4
+#define DEFERRED_TIMED_OUT 8
+#define DEFERRED_REJECTED  16
+
+typedef struct _IONDeferred IONDeferred;
+
+typedef void (*deferredCancelFunc)(zval *error, void *IONDeferred TSRMLS_DC);
+
+struct _IONDeferred {
+    zend_object     std;
+    short            flags;
+    void             (*deferredCancelFunc)(zval *error, void *IONDeferred TSRMLS_DC);
+    void             *object;
+    zend_class_entry *scope;
+    struct event     *timeout;
+    zval             *result;
+    pionCb           *finish_cb;
+    pionCb           *cancel_cb;
 #ifdef ZTS
     void ***thread_ctx;
 #endif
-} IONDeferred;
+};
+
+DEFINE_CLASS(ION_Deferred);
+DEFINE_CLASS(ION_Deferred_RejectException);
+DEFINE_CLASS(ION_Deferred_TimeoutException);
 
 CLASS_INSTANCE_DTOR(ION_Deferred);
 CLASS_INSTANCE_CTOR(ION_Deferred);
