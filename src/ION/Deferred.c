@@ -10,30 +10,31 @@
 #define PION_CLASS_CONST_LONG(class, const_name, value) \
     zend_declare_class_constant_long(c ## class, const_name, sizeof(const_name)-1, (long)value TSRMLS_CC);
 
-inline void ionDeferredFinish(zval *zDeferred, zval *result, short type) {
+inline void ionDeferredFinish(zval *zDeferred, zval *result, short type TSRMLS_DC) {
     IONDeferred *deferred = getInstance(zDeferred);
+    deferred->flags |= type;
 }
 
-inline void ionDeferredReject(zval *zDeferred, char *message) {
+inline void ionDeferredReject(zval *zDeferred, char *message TSRMLS_DC) {
     IONDeferred *deferred = getInstance(zDeferred);
     IONF("Cancellation defer object: %s", message);
     zval *zMessage = NULL;
     ALLOC_STRING_ZVAL(zMessage, message, 1);
-    zval *result = pionNewObjectWith1Arg(CE(ION_Deferred_RejectException), zMessage);
+    zval *result = pionNewObjectWith1Arg(CE(ION_Deferred_RejectException), zMessage TSRMLS_CC);
     zval_ptr_dtor(&zMessage);
     deferred->flags |= DEFERRED_REJECTED;
     if(deferred->deferredCancelFunc) {
-        deferred->deferredCancelFunc(result, deferred);
+        deferred->deferredCancelFunc(result, deferred TSRMLS_CC);
     }
-    ionDeferredFinish(zDeferred, result, DEFERRED_FAILED);
+    ionDeferredFinish(zDeferred, result, DEFERRED_FAILED TSRMLS_CC);
 }
 
 //inline void iodDeferredStore()
 
-static void _ionRejectFromPHP(zval *error, IONDeferred *deferred) {
+static void _ionRejectFromPHP(zval *error, IONDeferred *deferred TSRMLS_DC) {
 //    IONDeferred *deferred = (IONDeferred *)deferred;
 //    if(deferred->cancel_cb) {
-        pionCbVoidWith1Arg(deferred->cancel_cb, deferred->result);
+    pionCbVoidWith1Arg(deferred->cancel_cb, deferred->result TSRMLS_CC);
 //    }
 //    IONDeferCb *cb = (IONDeferCb *)arg;
 //    ion_defer_cancel_call(cb, error);
@@ -58,7 +59,7 @@ CLASS_METHOD(ION_Deferred, __construct) {
     zval *zCallback = NULL;
     PARSE_ARGS("z", &zCallback);
     deferred->deferredCancelFunc = (deferredCancelFunc) _ionRejectFromPHP;
-    deferred->cancel_cb = pionCbCreateFromZval(zCallback);
+    deferred->cancel_cb = pionCbCreateFromZval(zCallback TSRMLS_CC);
 }
 
 METHOD_ARGS_BEGIN(ION_Deferred, __construct, 1)
@@ -89,7 +90,7 @@ CLASS_METHOD(ION_Deferred, reject) {
     }
 
     PARSE_ARGS("s", &message, &message_len);
-    ionDeferredReject(getThis(), message);
+    ionDeferredReject(getThis(), message TSRMLS_CC);
     RETURN_THIS();
 }
 
