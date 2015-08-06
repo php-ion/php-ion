@@ -71,7 +71,7 @@ CLASS_METHOD(ION_Deferred, then) {
     IONDeferred *deferred = getThisInstance(IONDeferred *);
     zval *zCallback = NULL;
     PARSE_ARGS("z", &zCallback);
-    deferred->finish_cb = pionCbCreateFromZval(zCallback);
+    deferred->finish_cb = pionCbCreateFromZval(zCallback TSRMLS_CC);
     RETURN_THIS();
 }
 
