@@ -39,8 +39,8 @@ PHP_FUNCTION(pionCbCreate) {
     zend_fcall_info        fci = empty_fcall_info;
     zend_fcall_info_cache  fcc = empty_fcall_info_cache;
     PARSE_ARGS("fz", &fci, &fcc, &zarg);
-    pionCb *cb = pionCbCreate(&fci, &fcc);
-    int result = pionCbVoidWith1Arg(cb, zarg);
+    pionCb *cb = pionCbCreate(&fci, &fcc TSRMLS_CC);
+    int result = pionCbVoidWith1Arg(cb, zarg TSRMLS_CC);
     pionCbFree(cb);
     RETURN_LONG((long)result);
 }
@@ -53,8 +53,8 @@ PHP_FUNCTION(pionCbCreateFromZval) {
     zval *zarg = NULL;
     zval *zcb = NULL;
     PARSE_ARGS("zz", &zcb, &zarg);
-    pionCb *cb = pionCbCreateFromZval(zcb);
-    int result = pionCbVoidWith1Arg(cb, zarg);
+    pionCb *cb = pionCbCreateFromZval(zcb TSRMLS_CC);
+    int result = pionCbVoidWith1Arg(cb, zarg TSRMLS_CC);
     pionCbFree(cb);
     RETURN_LONG((long)result);
 }
