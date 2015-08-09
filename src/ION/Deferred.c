@@ -182,7 +182,7 @@ METHOD_WITHOUT_ARGS(ION_Deferred, getFlags)
 /** public function ION\Deferred::__destruct() : int */
 CLASS_METHOD(ION_Deferred, __destruct) {
 //    PHPDBG("_desctruct");
-}DiDo
+}
 
 METHOD_WITHOUT_ARGS(ION_Deferred, __destruct)
 
