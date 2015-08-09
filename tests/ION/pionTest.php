@@ -19,8 +19,9 @@ class PionTest extends TestCase {
 	/**
 	 * @group testCbCreateFromZval
 	 * @memcheck
+	 * @deprecated
 	 */
-	public function testCbCreateFromZval() {
+	public function _testCbCreateFromZval() {
 		$this->assertEquals(0, pionCbCreateFromZval(function ($a) {
 			$this->testCbCreateFromZval = 1;
 			return "retval";
