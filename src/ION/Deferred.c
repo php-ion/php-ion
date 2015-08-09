@@ -28,7 +28,7 @@ static void ionDeferredFinish(zval *zDeferred, zval *zResult, short type TSRMLS_
 static void ionDeferredReject(zval *zDeferred, const char *message TSRMLS_DC) {
     IONDeferred *deferred = getInstance(zDeferred);
     IONF("Cancellation defer object: %s", message);
-    zval *zException = pionNewException(CE(ION_Deferred_RejectException), message, 0);
+    zval *zException = pionNewException(CE(ION_Deferred_RejectException), message, 0 TSRMLS_CC);
     deferred->flags |= DEFERRED_REJECTED;
     if(deferred->deferredCancelFunc) {
         deferred->deferredCancelFunc(zException, deferred TSRMLS_CC);
