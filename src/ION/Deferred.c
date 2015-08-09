@@ -1,49 +1,57 @@
 #include "Deferred.h"
 
-#define CB_INIT(cb)                                           \
-    zend_fcall_info        cb ## _fci = empty_fcall_info;       \
-    zend_fcall_info_cache  cb ## _fcc = empty_fcall_info_cache;
-
 #define getInstance(zobj)   zend_object_store_get_object(zobj TSRMLS_CC)
-
-
 #define PION_CLASS_CONST_LONG(class, const_name, value) \
     zend_declare_class_constant_long(c ## class, const_name, sizeof(const_name)-1, (long)value TSRMLS_CC);
 
-inline void ionDeferredFinish(zval *zDeferred, zval *result, short type TSRMLS_DC) {
+static void ionDeferredFinish(zval *zDeferred, zval *zResult, short type TSRMLS_DC) {
     IONDeferred *deferred = getInstance(zDeferred);
+    int result = 0;
     deferred->flags |= type;
+    if(deferred->finish_cb) {
+        zval *helper = NULL;
+        ALLOC_INIT_ZVAL(helper);
+        if(type == DEFERRED_RESOLVED) {
+            result = pionCbVoidWith2Args(deferred->finish_cb, zResult, helper);
+        } else {
+            result = pionCbVoidWith2Args(deferred->finish_cb, helper, zResult);
+        }
+        if(result == FAILURE) {
+            zend_error(E_WARNING, "ION: deferred callback corrupted");
+        }
+        zval_ptr_dtor(&helper);
+        pionCbFree(deferred->finish_cb);
+        deferred->finish_cb = NULL;
+    }
 }
 
-inline void ionDeferredReject(zval *zDeferred, char *message TSRMLS_DC) {
+static void ionDeferredReject(zval *zDeferred, const char *message TSRMLS_DC) {
     IONDeferred *deferred = getInstance(zDeferred);
     IONF("Cancellation defer object: %s", message);
-    zval *zMessage = NULL;
-    ALLOC_STRING_ZVAL(zMessage, message, 1);
-    zval *result = pionNewObjectWith1Arg(CE(ION_Deferred_RejectException), zMessage TSRMLS_CC);
-    zval_ptr_dtor(&zMessage);
+    zval *zException = pionNewException(CE(ION_Deferred_RejectException), message, 0);
     deferred->flags |= DEFERRED_REJECTED;
     if(deferred->deferredCancelFunc) {
-        deferred->deferredCancelFunc(result, deferred TSRMLS_CC);
+        deferred->deferredCancelFunc(zException, deferred TSRMLS_CC);
     }
-    ionDeferredFinish(zDeferred, result, DEFERRED_FAILED TSRMLS_CC);
+//    ionDeferredFinish(zDeferred, result, DEFERRED_FAILED TSRMLS_CC);
 }
 
-//inline void iodDeferredStore()
-
 static void _ionRejectFromPHP(zval *error, IONDeferred *deferred TSRMLS_DC) {
-//    IONDeferred *deferred = (IONDeferred *)deferred;
-//    if(deferred->cancel_cb) {
-    pionCbVoidWith1Arg(deferred->cancel_cb, deferred->result TSRMLS_CC);
-//    }
-//    IONDeferCb *cb = (IONDeferCb *)arg;
-//    ion_defer_cancel_call(cb, error);
-//    DEFERCB_FREE(cb);
+    pionCbVoidWith1Arg(deferred->cancel_cb, error TSRMLS_CC);
+    zval_ptr_dtor(&error);
 }
 
 CLASS_INSTANCE_DTOR(ION_Deferred) {
-    IONDeferred *defer = getInstanceObject(IONDeferred *);
-    efree(defer);
+    IONDeferred *deferred = getInstanceObject(IONDeferred *);
+    if(deferred->cancel_cb) {
+        pionCbFree(deferred->cancel_cb);
+        deferred->cancel_cb = NULL;
+    }
+    if(deferred->finish_cb) {
+        pionCbFree(deferred->finish_cb);
+        deferred->finish_cb = NULL;
+    }
+    efree(deferred);
 }
 
 CLASS_INSTANCE_CTOR(ION_Deferred) {
@@ -56,10 +64,11 @@ CLASS_INSTANCE_CTOR(ION_Deferred) {
 /** public function ION\Deferred::__construct(callable $cancel_callback) : self */
 CLASS_METHOD(ION_Deferred, __construct) {
     IONDeferred *deferred = getThisInstance(IONDeferred *);
-    zval *zCallback = NULL;
-    PARSE_ARGS("z", &zCallback);
+    zend_fcall_info        fci = empty_fcall_info;
+    zend_fcall_info_cache  fcc = empty_fcall_info_cache;
+    PARSE_ARGS("f", &fci, &fcc);
     deferred->deferredCancelFunc = (deferredCancelFunc) _ionRejectFromPHP;
-    deferred->cancel_cb = pionCbCreateFromZval(zCallback TSRMLS_CC);
+    deferred->cancel_cb = pionCbCreate(&fci, &fcc TSRMLS_CC);
 }
 
 METHOD_ARGS_BEGIN(ION_Deferred, __construct, 1)
@@ -68,10 +77,11 @@ METHOD_ARGS_END();
 
 /** public function ION\Deferred::then(callable $callback) : self */
 CLASS_METHOD(ION_Deferred, then) {
-    IONDeferred *deferred = getThisInstance(IONDeferred *);
-    zval *zCallback = NULL;
-    PARSE_ARGS("z", &zCallback);
-    deferred->finish_cb = pionCbCreateFromZval(zCallback TSRMLS_CC);
+    IONDeferred      *deferred = getThisInstance(IONDeferred *);
+    zend_fcall_info        fci = empty_fcall_info;
+    zend_fcall_info_cache  fcc = empty_fcall_info_cache;
+    PARSE_ARGS("f", &fci, &fcc);
+    deferred->finish_cb = pionCbCreate(&fci, &fcc TSRMLS_CC);
     RETURN_THIS();
 }
 
@@ -95,13 +105,13 @@ CLASS_METHOD(ION_Deferred, reject) {
 }
 
 METHOD_ARGS_BEGIN(ION_Deferred, reject, 1)
-    METHOD_ARG_TYPE(reason, IS_STRING, 0, 0)
+    METHOD_ARG(reason, 0)
 METHOD_ARGS_END()
 
 /** public function ION\Deferred::resolve(mixed $data) : self */
 CLASS_METHOD(ION_Deferred, resolve) {
     IONDeferred *deferred = getThisInstance(IONDeferred *);
-    zval *zData;
+    zval *zData = NULL;
     if(deferred->scope) {
         if(deferred->scope != EG(scope)) {
             ThrowLogic("Invalid call scope", -1);
@@ -116,6 +126,7 @@ CLASS_METHOD(ION_Deferred, resolve) {
         ThrowLogic("Internal defer-event cannot be finished from user-space", -1);
     }
     PARSE_ARGS("z", &zData);
+    ionDeferredFinish(getThis(), zData, DEFERRED_RESOLVED TSRMLS_CC);
     RETURN_THIS();
 }
 
@@ -123,15 +134,30 @@ METHOD_ARGS_BEGIN(ION_Deferred, resolve, 1)
     METHOD_ARG(data, 0)
 METHOD_ARGS_END()
 
-/** public function ION\Deferred::resolve(mixed $data) : self */
+/** public function ION\Deferred::error(Exception $error) : self */
 CLASS_METHOD(ION_Deferred, error) {
     IONDeferred *deferred = getThisInstance(IONDeferred *);
-
+    zval *zError;
+    if(deferred->scope) {
+        if(deferred->scope != EG(scope)) {
+            ThrowLogic("Invalid call scope", -1);
+            return;
+        }
+    }
+    if(deferred->flags & DEFERRED_FINISHED) {
+        ThrowLogic("Failed to cancel finished defer-event", -1);
+        return;
+    }
+    if(deferred->flags & DEFERRED_INTERNAL) {
+        ThrowLogic("Internal defer-event cannot be finished from user-space", -1);
+    }
+    PARSE_ARGS("z", &zError);
+    ionDeferredFinish(getThis(), zError, DEFERRED_FAILED TSRMLS_CC);
     RETURN_THIS();
 }
 
 METHOD_ARGS_BEGIN(ION_Deferred, error, 1)
-    METHOD_ARG_OBJECT(data, "Exception", 0, 0)
+    METHOD_ARG_OBJECT(data, Exception, 0, 0)
 METHOD_ARGS_END()
 
 /** public function ION\Deferred::timeout(int $seconds) : self */
@@ -148,11 +174,17 @@ METHOD_ARGS_END()
 /** public function ION\Deferred::getFlags() : int */
 CLASS_METHOD(ION_Deferred, getFlags) {
     IONDeferred *deferred = getThisInstance(IONDeferred *);
-
-    RETURN_THIS();
+    RETURN_LONG((long)deferred->flags);
 }
 
 METHOD_WITHOUT_ARGS(ION_Deferred, getFlags)
+
+/** public function ION\Deferred::__destruct() : int */
+CLASS_METHOD(ION_Deferred, __destruct) {
+//    PHPDBG("_desctruct");
+}DiDo
+
+METHOD_WITHOUT_ARGS(ION_Deferred, __destruct)
 
 
 CLASS_METHODS_START(ION_Deferred)
@@ -163,6 +195,7 @@ CLASS_METHODS_START(ION_Deferred)
     METHOD(ION_Deferred, error, ZEND_ACC_PUBLIC)
     METHOD(ION_Deferred, timeout, ZEND_ACC_PUBLIC)
     METHOD(ION_Deferred, getFlags, ZEND_ACC_PUBLIC)
+    METHOD(ION_Deferred, __destruct, ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Deferred) {

@@ -7,12 +7,15 @@
 BEGIN_EXTERN_C();
 
 #define cException zend_exception_get_default(TSRMLS_C)
+#define getExceptionClass() zend_exception_get_default(TSRMLS_C)
+
+zval *pionNewException(zend_class_entry *exception_ce, const char *message, long code TSRMLS_DC);
 
 #define Throw(class_name, message, code)                                            \
-    zend_throw_exception(class_name,  message, code TSRMLS_CC);                               \
+    zend_throw_exception(class_name,  message, code TSRMLS_CC);                     \
 
 #define ThrowEx(class_name, code, message, ...)                                     \
-    zend_throw_exception_ex(class_name, code TSRMLS_CC, message, ##__VA_ARGS__);              \
+    zend_throw_exception_ex(class_name, code TSRMLS_CC, message, ##__VA_ARGS__);    \
 
 #define ThrowRuntime(message, code)     Throw(spl_ce_RuntimeException, message, code)
 #define ThrowRuntimeEx(code, message, ...)     \

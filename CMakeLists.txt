@@ -24,7 +24,7 @@ add_custom_target(
 
 set(ION_SOURCE_FILES
     src/php_ion.c
-    src/pion/exceptions.h
+    src/pion/exceptions.c
     src/pion/debug.c
     src/pion/callback.c
     src/pion/engine.c

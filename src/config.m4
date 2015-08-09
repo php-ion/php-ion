@@ -66,12 +66,13 @@ if test "$PHP_ION" != "no"; then
     AC_CHECK_FUNCS(setproctitle, [ AC_DEFINE(HAVE_SETPROCTITLE,1,[ ]) ],)
     ion_src="php_ion.c
     pion/debug.c
+    pion/exceptions.c
     pion/callback.c
     pion/engine.c
     pion/linkedlist.c
     pion.c
-    ION/Data/LinkedList.c
     externals/SkipList/skiplist.c
+    ION/Data/LinkedList.c
     ION/Data/SkipList.c
     ION/Deferred.c"
     PHP_NEW_EXTENSION(ion, $ion_src, $ext_shared,, $CFLAGS)

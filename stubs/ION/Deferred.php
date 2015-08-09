@@ -9,45 +9,44 @@ final class Deferred {
 	/**
 	 * @todo more doc
 	 * @param callable $cancel_cb
-	 * @param mixed $cancel_arg
 	 */
 	public function __construct(callable $cancel_cb = null) {}
 	/**
-	 * Set user callback on finish defer-event
+	 * Set user callback on finish deferred-event
 	 * @param callable $cb
-	 * @param mixed $arg
 	 */
 	public function then(callable $cb) {}
 
 	/**
-	 * Cancel defer object
+	 * Cancel deferred object
+	 * @param string $reason
 	 */
-	public function reject() {}
+	public function reject($reason) {}
 
 	/**
-	 * Successfully complete the defer-event
+	 * Successfully complete the deferred-event
 	 * @param mixed $data
 	 */
 	public function resolve($data) {}
 
 	/**
 	 * @todo more doc
-	 * @param Exception $error
+	 * @param \Exception $error
 	 */
-	public function error(Exception $error) {}
+	public function error(\Exception $error) {}
 
 	/**
-	 * Set timeout in seconds for defer object. After timeout defer will be canceled.
+	 * Set timeout in seconds for deferred object. After timeout defer will be canceled.
 	 * @param int $seconds
 	 */
 	public function timeout($seconds) {}
 
 	/**
-	 * Processing internal defer-object queue
+	 * Processing internal deferred-object queue
 	 * @internal this is important method invoks after each event
 	 */
 	public static function dequeue() {}
 }
 
-class CancelException extends Exception {}
+class CancelException extends \Exception {}
 class TimeoutException extends CancelException {}

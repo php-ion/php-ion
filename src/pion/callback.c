@@ -44,6 +44,9 @@ pionCb *pionCbCreateFromZval(zval *zCb TSRMLS_DC) {
         if (is_callable_error) {
             return NULL;
         } else {
+            if (cb->fci->object_ptr) {
+                zval_add_ref(&cb->fci->object_ptr);
+            }
             return cb;
         }
     } else {
@@ -86,22 +89,15 @@ int pionCbVoidCall(pionCb *cb, int num, zval ***args TSRMLS_DC) {
         cb->fci->retval_ptr_ptr = &pretval;
         cb->fci->params = args;
         cb->fci->param_count = (zend_uint)num;
-//        zend_try {
-        zend_call_function(cb->fci, cb->fcc TSRMLS_CC);
-//        } zend_catch {
-//        } zend_end_try();
-        if(EG(exception)) {
-            PHPDBG("catch exception");
-//            event_base_loopbreak(ION(base));
+        if(zend_call_function(cb->fci, cb->fcc TSRMLS_CC) == FAILURE) {
+            return FAILURE;
         }
         if(pretval) {
             zval_ptr_dtor(&pretval);
         }
         return SUCCESS;
     } else {
-//        PHPDBG("FCI not inited");
         return FAILURE;
-        //ThrowRuntimeError("Callback corrupted");
     }
 }
 

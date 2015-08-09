@@ -42,6 +42,9 @@ DEFINE_CLASS(ION_Deferred_TimeoutException);
 CLASS_INSTANCE_DTOR(ION_Deferred);
 CLASS_INSTANCE_CTOR(ION_Deferred);
 
+static void ionDeferredFinish(zval *zDeferred, zval *zResult, short type TSRMLS_DC);
+static void ionDeferredReject(zval *zDeferred, const char *message TSRMLS_DC);
+
 
 END_EXTERN_C();
 
