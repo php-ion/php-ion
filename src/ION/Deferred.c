@@ -12,9 +12,9 @@ static void ionDeferredFinish(zval *zDeferred, zval *zResult, short type TSRMLS_
         zval *helper = NULL;
         ALLOC_INIT_ZVAL(helper);
         if(type == DEFERRED_RESOLVED) {
-            result = pionCbVoidWith2Args(deferred->finish_cb, zResult, helper);
+            result = pionCbVoidWith2Args(deferred->finish_cb, zResult, helper TSRMLS_CC);
         } else {
-            result = pionCbVoidWith2Args(deferred->finish_cb, helper, zResult);
+            result = pionCbVoidWith2Args(deferred->finish_cb, helper, zResult TSRMLS_CC);
         }
         if(result == FAILURE) {
             zend_error(E_WARNING, "ION: deferred callback corrupted");
