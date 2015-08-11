@@ -71,6 +71,9 @@
     static zend_object_value _ ## class ## Ctor(zend_class_entry *ce TSRMLS_DC)
 
 
+#define getInstance(zobj)   zend_object_store_get_object(zobj TSRMLS_CC)
+
+
 #define RETURN_INSTANCE(class, object) \
     zend_object_value instance;   \
     zend_object_std_init(&(object->std), c ## class TSRMLS_CC); \
@@ -82,6 +85,21 @@
 #define PION_REGISTER_CLASS(class, class_name)                                    \
     spl_register_std_class(&c ## class, class_name, _ ## class ## Ctor, m ## class TSRMLS_CC);   \
     memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
+
+#define PION_REGISTER_PLAIN_CLASS(class, class_name)                                    \
+    spl_register_std_class(&c ## class, class_name, NULL, m ## class TSRMLS_CC);   \
+    memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
+
+#define REGISTER_VOID_EXTENDED_CLASS(class, parent_class, class_name, obj_ctor) \
+    spl_register_sub_class(&c ## class, c ## parent_class, class_name, obj_ctor, NULL TSRMLS_CC); \
+    memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
+
+
+#define PION_CLASS_CONST_LONG(class, const_name, value) \
+    zend_declare_class_constant_long(c ## class, const_name, sizeof(const_name)-1, (long)value TSRMLS_CC);
+
+#define PION_CLASS_CONST_STRING(class, const_name, value) \
+    zend_declare_class_constant_string(c ## class, const_name, sizeof(const_name)-1, value TSRMLS_CC);
 
 #define CLASS_METHOD(class, method) \
     PHP_METHOD(class, method)
@@ -105,9 +123,5 @@
 
 #define METHOD(class_name, method_name, flags) \
     ZEND_ME(class_name, method_name, args ## class_name ## method_name, flags)
-
-#define REGISTER_VOID_EXTENDED_CLASS(class, parent_class, class_name, obj_ctor) \
-    spl_register_sub_class(&c ## class, c ## parent_class, class_name, obj_ctor, NULL TSRMLS_CC); \
-    memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
 
 #endif //PION_ENGINE_H

@@ -18,9 +18,10 @@
 #include "php_ion.h"
 #include "pion.h"
 
+extern IONBase *ionBase;
+
 #define PION_FUNCTIONS
 
-IONBase *ionBase;
 
 #ifdef COMPILE_DL_ION
 ZEND_GET_MODULE(ion);
@@ -97,6 +98,7 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_Data_LinkedList);
     STARTUP_MODULE(ION_Data_SkipList);
     STARTUP_MODULE(ION_Deferred);
+    STARTUP_MODULE(ION);
 
     return SUCCESS;
 }
@@ -104,6 +106,8 @@ PHP_MINIT_FUNCTION(ion) {
 PHP_MSHUTDOWN_FUNCTION(ion) {
     SHUTDOWN_MODULE(ION_Data_LinkedList);
     SHUTDOWN_MODULE(ION_Data_SkipList);
+    SHUTDOWN_MODULE(ION_Deferred);
+    SHUTDOWN_MODULE(ION);
 
     return SUCCESS;
 }

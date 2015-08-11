@@ -36,7 +36,7 @@ final class Deferred {
 	public function error(\Exception $error) {}
 
 	/**
-	 * Set timeout in seconds for deferred object. After timeout defer will be canceled.
+	 * Auto reject deferred object after N seconds
 	 * @param int $seconds
 	 */
 	public function timeout($seconds) {}

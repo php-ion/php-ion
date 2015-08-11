@@ -50,12 +50,12 @@ if test "$PHP_ION" != "no"; then
     case $build_os in
     darwin1*.*.*)
       AC_MSG_CHECKING([whether to compile for recent osx architectures])
-      CFLAGS="$CFLAGS -arch i386 -arch x86_64 -mmacosx-version-min=10.5"
+      CFLAGS="$CFLAGS -arch x86_64 -mmacosx-version-min=10.5"
       AC_MSG_RESULT([yes])
       ;;
     darwin*)
       AC_MSG_CHECKING([whether to compile for every osx architecture ever])
-      CFLAGS="$CFLAGS -arch i386 -arch x86_64 -arch ppc -arch ppc64"
+      CFLAGS="$CFLAGS -arch x86_64 -arch ppc -arch ppc64"
       AC_MSG_RESULT([yes])
       ;;
     esac
@@ -74,7 +74,8 @@ if test "$PHP_ION" != "no"; then
     externals/SkipList/skiplist.c
     ION/Data/LinkedList.c
     ION/Data/SkipList.c
-    ION/Deferred.c"
+    ION/Deferred.c
+    ION.c"
     PHP_NEW_EXTENSION(ion, $ion_src, $ext_shared,, $CFLAGS)
 
     PHP_SUBST(ION_SHARED_LIBADD)

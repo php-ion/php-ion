@@ -7,7 +7,7 @@
 #include "pion/callback.h"
 #include "pion/engine.h"
 
-/** main structure (class ION) */
+/** main structure */
 typedef struct _ion_base {
     struct event_base *base;     // event base
     struct evdns_base *evdns;    // event DNS base
@@ -17,13 +17,14 @@ typedef struct _ion_base {
     HashTable *signals;          // array of listening signals
     HashTable *timers;           // array of timers
     HashTable *execs;            // array of process childs
-    short has_fatals;            // flag, fatal error occured
-    struct event *sigsegv;
+//    struct event *sigsegv;
 //    pionLList *queue;                // queue of defers object
 #ifdef ZTS
     void ***thread_ctx;
 #endif
 } IONBase;
+
+extern IONBase *ionBase;
 
 #define ION(prop) \
     ionBase->prop
