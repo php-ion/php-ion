@@ -3,9 +3,9 @@
 zval * ionDeferredNew(zval *zCancelCb TSRMLS_DC) {
     zval *zDeferred = NULL;
     if(zCancelCb) {
-        zDeferred = pionNewObjectWith1Arg(CE(ION_Deferred), zCancelCb);
+        zDeferred = pionNewObjectWith1Arg(CE(ION_Deferred), zCancelCb TSRMLS_CC);
     } else {
-        zDeferred = pionNewObject(CE(ION_Deferred), 0, NULL);
+        zDeferred = pionNewObject(CE(ION_Deferred), 0, NULL TSRMLS_CC);
     }
     return zDeferred;
 }
@@ -76,7 +76,7 @@ CLASS_INSTANCE_DTOR(ION_Deferred) {
         deferred->finish_cb = NULL;
     }
     if(deferred->object && deferred->object_dtor) {
-        deferred->object_dtor(object);
+        deferred->object_dtor(object TSRMLS_CC);
     }
     efree(deferred);
 }
