@@ -51,12 +51,12 @@ void * ionDeferredStoreGet(zval *zDeferred TSRMLS_DC);
 void ionDeferredFinish(zval *zDeferred, zval *zResult, short type TSRMLS_DC);
 void ionDeferredReject(zval *zDeferred, const char *message TSRMLS_DC);
 
-#define deferredNew(cancel_cb)                  ionDeferredNew(cancel_cb TSRMLS_DC)
-#define deferredNewInternal(cancel_cb, object, object_dtor)  ionDeferredNewInternal(cancel_cb, (void *) object, object_dtor TSRMLS_DC)
-#define deferredStoreGet(zDeferred)             ionDeferredStoreGet(zDeferred TSRMLS_DC)
-#define deferredResolve(zDeferred, zResult)     ionDeferredFinish(zDeferred, zResult, DEFERRED_RESOLVED TSRMLS_DC)
-#define deferredError(zDeferred, zException)    ionDeferredFinish(zDeferred, zException, DEFERRED_FAILED TSRMLS_DC)
-#define deferredReject(zDeferred, message)      ionDeferredReject(zDeferred, message TSRMLS_DC)
+#define deferredNew(cancel_cb)                  ionDeferredNew(cancel_cb TSRMLS_CC)
+#define deferredNewInternal(cancel_cb, object, object_dtor)  ionDeferredNewInternal(cancel_cb, (void *) object, object_dtor TSRMLS_CC)
+#define deferredStoreGet(zDeferred)             ionDeferredStoreGet(zDeferred TSRMLS_CC)
+#define deferredResolve(zDeferred, zResult)     ionDeferredFinish(zDeferred, zResult, DEFERRED_RESOLVED TSRMLS_CC)
+#define deferredError(zDeferred, zException)    ionDeferredFinish(zDeferred, zException, DEFERRED_FAILED TSRMLS_CC)
+#define deferredReject(zDeferred, message)      ionDeferredReject(zDeferred, message TSRMLS_CC)
 
 
 END_EXTERN_C();
