@@ -24,11 +24,13 @@ add_custom_target(
 
 set(ION_SOURCE_FILES
     src/php_ion.c
+    src/pion/config.h
     src/pion/exceptions.c
     src/pion/debug.c
     src/pion/callback.c
     src/pion/engine.c
     src/pion/linkedlist.c
+    src/pion/deferred.h
     src/pion.c
     src/ION/Data/LinkedList.c
     src/externals/SkipList/skiplist.c

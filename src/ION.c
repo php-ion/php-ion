@@ -3,6 +3,10 @@
 
 #include "ION.h"
 
+//#define event struct event
+
+typedef struct event ev;
+
 DEFINE_CLASS(ION);
 IONBase *ionBase;
 void ion_reinit(long flags) {
@@ -74,14 +78,64 @@ CLASS_METHOD(ION, stop) {
     }
 }
 
-METHOD_ARGS_BEGIN(ION, stop, 1)
-    METHOD_ARG_TYPE(timeout, IS_DOUBLE, 0, 0)
+METHOD_ARGS_BEGIN(ION, stop, 0)
+    METHOD_ARG(timeout, 0)
+METHOD_ARGS_END()
+
+static void _timer_done(evutil_socket_t fd, short flags, void * arg) {
+    zval * zdeferred = (zval * )arg;
+    zval * zresult = NULL;
+    TSRMLS_FETCH();
+    MAKE_STD_ZVAL(zresult);
+    deferredResolve(zdeferred, zresult);
+    zval_ptr_dtor(&zresult);
+//    zval_ptr_dtor(&zdeferred);
+}
+
+static void _timer_dtor(void * object TSRMLS_DC) {
+    ev * timer = (ev *) object;
+    event_del(timer);
+    event_free(timer);
+}
+
+/** public function ION::await(double $time) : ION\Deferred */
+CLASS_METHOD(ION, await) {
+    if(!return_value_used) {
+        zend_error(E_NOTICE, "Unused deferred object");
+        return;
+    }
+    zval *zDeferred = NULL;
+    double timeout = 0.0;
+    struct timeval tv = { 0, 0 };
+    PARSE_ARGS("d", &timeout);
+    if(timeout < 0) {
+        ThrowRuntime("timeout sould be unsigned", 1);
+        return;
+    }
+    tv.tv_usec = (int)((int)(timeout*1000000) % 1000000);
+    tv.tv_sec = (int)timeout;
+    zDeferred = deferredNewInternal(NULL, 1);
+    ev * timer = event_new(ION(base), -1, EV_TIMEOUT, _timer_done, zDeferred);
+    if(event_add(timer, &tv) == FAILURE) {
+        event_del(timer);
+        event_free(timer);
+        deferredFree(zDeferred);
+    } else {
+        deferredStore(zDeferred, timer, _timer_dtor);
+        RETURN_ZVAL(zDeferred, 1, 0);
+    }
+
+}
+
+METHOD_ARGS_BEGIN(ION, await, 1)
+    METHOD_ARG(time, 0)
 METHOD_ARGS_END()
 
 CLASS_METHODS_START(ION)
     METHOD(ION, reinit,   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION, dispatch, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION, stop,     ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION, await,    ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 //    METHOD(ION_Deferred, then, ZEND_ACC_PUBLIC)
 //    METHOD(ION_Deferred, reject, ZEND_ACC_PUBLIC)
 //    METHOD(ION_Deferred, resolve, ZEND_ACC_PUBLIC)
@@ -95,6 +149,7 @@ PHP_MINIT_FUNCTION(ION) {
     PION_REGISTER_PLAIN_CLASS(ION, "ION");
     PION_CLASS_CONST_STRING(ION, "VERSION",       PHP_ION_VERSION);
     PION_CLASS_CONST_LONG(ION, "VERSION_NUMBER",  PHP_ION_VERSION_NUMBER);
+    PION_CLASS_CONST_LONG(ION, "LIBEVENT_VERSION_NUMBER",LIBEVENT_VERSION_NUMBER);
     PION_CLASS_CONST_LONG(ION, "ONCE",            EVLOOP_ONCE);
     PION_CLASS_CONST_LONG(ION, "NONBLOCK",        EVLOOP_NONBLOCK);
 //    PION_CLASS_CONST_LONG(ION_Deferred, "FAILED",    DEFERRED_FAILED);
@@ -109,5 +164,10 @@ PHP_MINIT_FUNCTION(ION) {
 }
 
 PHP_MSHUTDOWN_FUNCTION(ION) {
+    return SUCCESS;
+}
+
+PHP_RINIT_FUNCTION(ION) {
+
     return SUCCESS;
 }

@@ -1,5 +1,20 @@
 #include "Deferred.h"
 
+void _clean_deferred(IONDeferred * deferred TSRMLS_DC) {
+    if(deferred->cancel_cb) {
+        pionCbFree(deferred->cancel_cb);
+        deferred->cancel_cb = NULL;
+    }
+    if(deferred->finish_cb) {
+        pionCbFree(deferred->finish_cb);
+        deferred->finish_cb = NULL;
+    }
+    if(deferred->object && deferred->object_dtor) {
+        deferred->object_dtor(deferred->object TSRMLS_CC);
+        deferred->object = NULL;
+    }
+}
+
 zval * ionDeferredNew(zval *zCancelCb TSRMLS_DC) {
     zval *zDeferred = NULL;
     if(zCancelCb) {
@@ -10,17 +25,43 @@ zval * ionDeferredNew(zval *zCancelCb TSRMLS_DC) {
     return zDeferred;
 }
 
-zval * ionDeferredNewInternal(deferredCancelFunc cancel_cb, void *object, object_dtor cb TSRMLS_DC) {
+zval * ionDeferredNewInternal(reject_callback cancel_cb, short auto_unref TSRMLS_DC) {
     zval *zDeferred = NULL;
     ALLOC_INIT_ZVAL(zDeferred);
     object_init_ex(zDeferred, CE(ION_Deferred));
     IONDeferred *deferred = getInstance(zDeferred);
-    deferred->deferredCancelFunc = cancel_cb;
-    if(object) {
-        deferred->object = object;
-        deferred->object_dtor = cb;
+    deferred->reject = cancel_cb;
+    deferred->flags |= DEFERRED_INTERNAL;
+    if(auto_unref) {
+        deferred->flags |= DEFERRED_AUTO_UNREF;
     }
     return zDeferred;
+}
+
+int ionDeferredCast(zval * zvariable, void * object, object_dtor dtor, reject_callback reject_cb TSRMLS_DC) {
+    object_init_ex(zvariable, CE(ION_Deferred));
+    IONDeferred *deferred = getInstance(zvariable);
+    deferred->flags |= DEFERRED_INTERNAL;
+    deferred->reject = reject_cb;
+    deferred->object = object;
+    deferred->object_dtor = dtor;
+    return SUCCESS;
+}
+
+
+void ionDeferredFree(zval * zDeferred TSRMLS_DC) {
+    IONDeferred *deferred = getInstance(zDeferred);
+    _clean_deferred(deferred TSRMLS_CC);
+}
+
+void ionDeferredStore(zval *zDeferred, void *object, object_dtor dtor TSRMLS_DC) {
+    IONDeferred *deferred = getInstance(zDeferred);
+    if(deferred->object && deferred->object_dtor) {
+        IONF("Cleanup prevoiuse stored object");
+        deferred->object_dtor(deferred->object TSRMLS_CC);
+    }
+    deferred->object = object;
+    deferred->object_dtor = dtor;
 }
 
 void * ionDeferredStoreGet(zval *zDeferred TSRMLS_DC) {
@@ -28,12 +69,12 @@ void * ionDeferredStoreGet(zval *zDeferred TSRMLS_DC) {
     return deferred->object;
 }
 
-void ionDeferredFinish(zval *zDeferred, zval *zResult, short type TSRMLS_DC) {
+void ionDeferredFinish(zval * zDeferred, zval * zResult, short type TSRMLS_DC) {
     IONDeferred *deferred = getInstance(zDeferred);
     int result = 0;
     deferred->flags |= type;
     if(deferred->finish_cb) {
-        zval *helper = NULL;
+        zval * helper = NULL;
         ALLOC_INIT_ZVAL(helper);
         if(type == DEFERRED_RESOLVED) {
             result = pionCbVoidWith2Args(deferred->finish_cb, zResult, helper TSRMLS_CC);
@@ -44,21 +85,28 @@ void ionDeferredFinish(zval *zDeferred, zval *zResult, short type TSRMLS_DC) {
             zend_error(E_WARNING, "ION: deferred callback corrupted");
         }
         zval_ptr_dtor(&helper);
-        pionCbFree(deferred->finish_cb);
-        deferred->finish_cb = NULL;
+    }
+    _clean_deferred(deferred TSRMLS_CC);
+    if(deferred->flags & DEFERRED_AUTO_UNREF) {
+        zval_ptr_dtor(&zDeferred);
     }
 }
 
 void ionDeferredReject(zval *zDeferred, const char *message TSRMLS_DC) {
-    IONDeferred *deferred = getInstance(zDeferred);
+    IONDeferred * deferred = getInstance(zDeferred);
     IONF("Cancellation defer object: %s", message);
     zval *zException = pionNewException(CE(ION_Deferred_RejectException), message, 0 TSRMLS_CC);
     deferred->flags |= DEFERRED_REJECTED | DEFERRED_FAILED;
-    if(deferred->deferredCancelFunc) {
-        deferred->deferredCancelFunc(zException, deferred TSRMLS_CC);
+    if(deferred->reject) {
+        deferred->reject(zException, deferred TSRMLS_CC);
+    }
+    _clean_deferred(deferred TSRMLS_CC);
+    if(deferred->flags & DEFERRED_AUTO_UNREF) {
+        zval_ptr_dtor(&zDeferred);
     }
 //    ionDeferredFinish(zDeferred, result, DEFERRED_FAILED TSRMLS_CC);
 }
+
 
 static void _ionRejectFromPHP(zval *error, IONDeferred *deferred TSRMLS_DC) {
     pionCbVoidWith1Arg(deferred->cancel_cb, error TSRMLS_CC);
@@ -67,17 +115,7 @@ static void _ionRejectFromPHP(zval *error, IONDeferred *deferred TSRMLS_DC) {
 
 CLASS_INSTANCE_DTOR(ION_Deferred) {
     IONDeferred *deferred = getInstanceObject(IONDeferred *);
-    if(deferred->cancel_cb) {
-        pionCbFree(deferred->cancel_cb);
-        deferred->cancel_cb = NULL;
-    }
-    if(deferred->finish_cb) {
-        pionCbFree(deferred->finish_cb);
-        deferred->finish_cb = NULL;
-    }
-    if(deferred->object && deferred->object_dtor) {
-        deferred->object_dtor(object TSRMLS_CC);
-    }
+    _clean_deferred(deferred TSRMLS_CC);
     efree(deferred);
 }
 
@@ -94,7 +132,7 @@ CLASS_METHOD(ION_Deferred, __construct) {
     zend_fcall_info        fci = empty_fcall_info;
     zend_fcall_info_cache  fcc = empty_fcall_info_cache;
     PARSE_ARGS("f", &fci, &fcc);
-    deferred->deferredCancelFunc = (deferredCancelFunc) _ionRejectFromPHP;
+    deferred->reject = (reject_callback) _ionRejectFromPHP;
     deferred->cancel_cb = pionCbCreate(&fci, &fcc TSRMLS_CC);
 }
 

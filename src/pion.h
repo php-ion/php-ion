@@ -2,10 +2,12 @@
 #ifndef ION_FRAMEWORK_H
 #define ION_FRAMEWORK_H
 
+#include "pion/config.h"
 #include "pion/exceptions.h"
 #include "pion/debug.h"
 #include "pion/callback.h"
 #include "pion/engine.h"
+#include "pion/deferred.h"
 
 /** main structure */
 typedef struct _ion_base {

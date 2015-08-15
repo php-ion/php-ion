@@ -10,9 +10,6 @@
 extern zend_module_entry ion_module_entry;
 #define phpext_ion_ptr &ion_module_entry
 
-#define PHP_ION_VERSION_NUMBER 200
-#define PHP_ION_VERSION "0.2.0"
-
 PHP_MINIT_FUNCTION(ion);
 PHP_MSHUTDOWN_FUNCTION(ion);
 

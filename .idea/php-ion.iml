@@ -19,8 +19,10 @@
       <sourceFolder url="file://$MODULE_DIR$/src/pion.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/pion/callback.c" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/pion/callback.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/pion/config.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/pion/debug.c" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/pion/debug.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/pion/deferred.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/pion/engine.c" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/pion/engine.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/pion/exceptions.c" isTestSource="false" />

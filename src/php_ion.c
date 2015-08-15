@@ -116,6 +116,7 @@ PHP_MSHUTDOWN_FUNCTION(ion) {
 PHP_RINIT_FUNCTION(ion) {
     ionBase = emalloc(sizeof(IONBase));
     memset(ionBase, 0, sizeof(IONBase));
+    ION(i)             = 33;
     ION(base)          = event_base_new();
 
     return SUCCESS;
