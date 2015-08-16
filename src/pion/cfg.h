@@ -1,0 +1,7 @@
+#ifndef PION_CONFIG_H
+#define PION_CONFIG_H
+
+#define PHP_ION_VERSION_NUMBER 200
+#define PHP_ION_VERSION "0.2.0"
+
+#endif //PION_CONFIG_H
