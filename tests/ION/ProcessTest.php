@@ -55,25 +55,27 @@ class ProcessTest extends TestCase {
      * @memcheck
      */
     public function testGetUser() {
-        $info = Process::getUser();
-        $this->assertSame(trim(`whoami`), $info['name']);
-        $this->assertSame(intval(`id -u`), $info['uid']);
-        $this->assertSame(intval(`id -g`), $info['gid']);
-        $this->assertSame(trim(`echo \$HOME`), $info['home']);
-        $this->assertSame(trim(`echo \$SHELL`), $info['shell']);
+	    $actual = Process::getUser();
+	    $expected = posix_getpwnam(posix_getlogin());
+	    $this->assertSame($expected['name'], $actual['name']);
+	    $this->assertSame($expected['uid'], $actual['uid']);
+	    $this->assertSame($expected['gid'], $actual['gid']);
+	    $this->assertSame($expected['dir'], $actual['home']);
+	    $this->assertSame($expected['shell'], $actual['shell']);
     }
     
     /**
      * @group testGetAnotherUser
-     * @memcheck
+     * @mem check
      */
     public function testGetAnotherUser() {
-        $info = Process::getUser('nobody');        
-        $this->assertSame('nobody', $info['name']);
-        $this->assertSame(intval(`id -u nobody`), $info['uid']);
-        $this->assertSame(intval(`id -g nobody`), $info['gid']);
-        $this->assertNotEquals(trim(`echo \$HOME`), $info['home']);
-        $this->assertSame('/usr/bin/false', $info['shell']);
+        $actual = Process::getUser('nobody');
+	    $expected = posix_getpwnam('nobody');
+	    $this->assertEquals($expected['name'], $actual['name']);
+	    $this->assertSame($expected['uid'], $actual['uid']);
+	    $this->assertSame($expected['gid'], $actual['gid']);
+        $this->assertSame($expected['dir'], $actual['home']);
+        $this->assertSame($expected['shell'], $actual['shell']);
     }
     
     /**
@@ -81,12 +83,13 @@ class ProcessTest extends TestCase {
      * @memcheck
      */
     public function testGetAnotherUserUID() {
-        $info = Process::getUser(intval(`id -u nobody`));        
-        $this->assertSame('nobody', $info['name']);
-        $this->assertSame(intval(`id -u nobody`), $info['uid']);
-        $this->assertSame(intval(`id -g nobody`), $info['gid']);
-        $this->assertNotEquals(trim(`echo \$HOME`), $info['home']);
-        $this->assertSame('/usr/bin/false', $info['shell']);
+	    $actual = Process::getUser(intval(`id -u nobody`));
+	    $expected = posix_getpwnam('nobody');
+	    $this->assertSame($expected['name'], $actual['name']);
+	    $this->assertSame($expected['uid'], $actual['uid']);
+	    $this->assertSame($expected['gid'], $actual['gid']);
+	    $this->assertSame($expected['dir'], $actual['home']);
+	    $this->assertSame($expected['shell'], $actual['shell']);
     }
     
     /**
