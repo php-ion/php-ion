@@ -1,4 +1,3 @@
-#include <php.h>
 #include "exceptions.h"
 
 zval *pionNewException(zend_class_entry *exception_ce, const char *message, long code TSRMLS_DC) {

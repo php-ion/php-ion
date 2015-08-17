@@ -2,7 +2,7 @@
 #ifndef ION_FRAMEWORK_H
 #define ION_FRAMEWORK_H
 
-#include "pion/cfg.h"
+#include "config.h"
 #include "pion/exceptions.h"
 #include "pion/debug.h"
 #include "pion/callback.h"

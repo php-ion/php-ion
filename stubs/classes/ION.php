@@ -6,24 +6,10 @@
  * @static
  * */
 class ION {
-    /**
-     * @since 1.0
-     * Largest number of priorities that Libevent can support.
-     * */
-    const MAX_PRIORITIES = 256;
-
-    /**
-     * @since 1.0
-     * Libevent version
-     * */
-    const LIBEVENT_VERSION = '2.0.16';
-
-    /**
-     * @since 1.0
-     * Libevent version as hexadecimal integer
-     * */
-    const LIBEVENT_VERSION_INT = 0x020016;
-
+	const PRIORITY_LOW     = 5;
+	const PRIORITY_DEFAULT = 3;
+	const PRIORITY_HIGH    = 1;
+	const PRIORITY_URGENT  = 0;
     /**
      * Version of ION
      * */
@@ -75,10 +61,9 @@ class ION {
 	 *
 	 * @since 1.0
 	 * @param int $flags any combination of ION::ONCE, ION::NONBLOCK
-	 * @param int $timeout
      * @todo remove flags
 	 */
-    public static function dispatch($flags = 0, $timeout = 0) {}
+    public static function dispatch($flags = 0) {}
 
     /**
      * Exit the event dispatcher after the specified time.
@@ -92,35 +77,11 @@ class ION {
     public static function stop($timeout = -1) {}
 
     /**
-     * Set the number of different event priorities.
-     *
-     * By default Libevent schedules all active events with the same priority. However, some time it is desirable to process some
-     * events with a higher priority than others. For that reason, Libevent supports strict priority queues.
-     * Active events with a lower priority are always processed before events with a higher priority.
-     *
-     * The number of different priorities can be set initially with this method.
-     * This function should be called before the first call to ION::dispatch().
-     * By default, Libevent assigns the middle priority to all events unless their priority is explicitly set.
-     *
-     * Note that urgent-priority events can starve less-urgent events: after running all urgent-priority callbacks,
-     * Libevent checks for more urgent events again, before running less-urgent events.
-     * Less-urgent events will not have their callbacks run until there are no events more urgent than them that want to be active.
-     *
-     * @since 1.0
-     * @param int $npriorities the maximum number of priorities (no more then ION::MAX_PRIORITIES)
-     * @throws \RuntimeException if error occurs
-     * @throws \InvalidArgumentException if passed invalid value
-     * */
-    public static function setMaxPriorities($npriorities) {}
-
-    /**
      * 
      * @param float $time time in seconds. Minimal value is 1e-6
-     * @param callable $callback
-     * @param mixed $args
-     * @return int
+     * @return \ION\Deferred
      */
-    public static function setTimeout($time, $callback, $args = null) {}
+    public static function await($time) {}
 
     /**
      * 
@@ -130,19 +91,5 @@ class ION {
      * @return int
      */
     public static function setInterval($time, $callback, $args = null) {}
-    
-    /**
-     * 
-     * @param callable $cb
-     * @param array $arg
-     */
-    public static function deferred(callable $cb, array $args = array()) {}
-    
-    /**
-     * Return current DNS server
-     * @return ION\DNS
-     */
-    public static function getDNS() {}
-
 
 }

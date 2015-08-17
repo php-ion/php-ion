@@ -8,7 +8,7 @@ $builder->run();
 class BuildRunner {
 
     public function __construct() {
-        set_exception_handler(function ($exception) {
+        set_exception_handler(function (\Exception $exception) {
             fwrite(STDERR, get_class($exception).": ".$exception->getMessage()." in ".$exception->getFile().":".$exception->getLine()."\n".$exception->getTraceAsString());
             exit(1);
         });

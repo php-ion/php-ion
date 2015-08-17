@@ -1,10 +1,13 @@
 dnl config.m4 for extension ion
 
-PHP_ARG_WITH(ion, for asynchronous IO notifications,
+VERSION=`git describe --tags --long`
+PHP_ARG_WITH(ion, for asynchronous IO notifications $VERSION,
 [  --with-ion             Include ION support])
 
 CFLAGS="$CFLAGS -Wall -g3 -ggdb -O0 -std=c99"
 AC_DEFINE(ION_DEBUG, 1, [Enable ION debug support])
+
+AC_DEFINE_UNQUOTED(ION_VERSION, "$VERSION", [Current version])
 
 if test "$PHP_ION" != "no"; then
     SEARCH_PATH="/usr/local /usr /opt/local"
@@ -41,6 +44,7 @@ if test "$PHP_ION" != "no"; then
     [
       PHP_ADD_LIBRARY_WITH_PATH($LIBNAME, $ION_DIR/lib, ION_SHARED_LIBADD)
       AC_DEFINE(HAVE_LIBEVENT, 1, [ libevent ])
+      AC_DEFINE([ION_EVENT_ENGINE], ["libevent"], [ Event engine used ])
     ],[
       AC_MSG_ERROR([wrong libevent version or lib not found])
     ],[
@@ -75,7 +79,8 @@ if test "$PHP_ION" != "no"; then
     ION/Data/LinkedList.c
     ION/Data/SkipList.c
     ION/Deferred.c
-    ION.c"
+    ION.c
+    ION/Process.c"
     PHP_NEW_EXTENSION(ion, $ion_src, $ext_shared,, $CFLAGS)
 
     PHP_SUBST(ION_SHARED_LIBADD)

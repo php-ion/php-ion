@@ -215,6 +215,7 @@ CLASS_METHOD(ION_Deferred, error) {
     }
     if(deferred->flags & DEFERRED_INTERNAL) {
         ThrowLogic("Internal defer-event cannot be finished from user-space", -1);
+        return;
     }
     PARSE_ARGS("z", &zError);
     ionDeferredFinish(getThis(), zError, DEFERRED_FAILED TSRMLS_CC);

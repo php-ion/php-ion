@@ -1,6 +1,7 @@
 #ifndef PION_EXCEPTIONS_H
 #define PION_EXCEPTIONS_H
 
+#include <php.h>
 #include <zend_exceptions.h>
 #include <ext/spl/spl_exceptions.h>
 
