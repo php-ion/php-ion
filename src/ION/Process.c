@@ -75,7 +75,7 @@ CLASS_METHOD(ION_Process, getParentPid) {
 
 METHOD_WITHOUT_ARGS(ION_Process, getParentPid);
 
-struct passwd * get_pw_by_zval(zval * user) {
+struct passwd * get_pw_by_zval(zval * user TSRMLS_DC) {
     struct passwd * pw;
     errno = 0;
     if(Z_TYPE_P(user) == IS_STRING) {
@@ -117,7 +117,7 @@ CLASS_METHOD(ION_Process, getUser) {
         ZVAL_LONG(zuser, getuid());
     }
 
-    pw = get_pw_by_zval(zuser);
+    pw = get_pw_by_zval(zuser TSRMLS_CC);
     zval_ptr_dtor(&zuser);
 
     array_init(return_value);
@@ -142,7 +142,7 @@ CLASS_METHOD(ION_Process, setUser) {
 
     PARSE_ARGS("z|b", &zuser, &set_group);
 
-    pw = get_pw_by_zval(zuser);
+    pw = get_pw_by_zval(zuser TSRMLS_CC);
 
     array_init(return_value);
 
