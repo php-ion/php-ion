@@ -72,7 +72,7 @@ class ProcessTest extends TestCase {
         $this->assertSame('nobody', $info['name']);
         $this->assertSame(intval(`id -u nobody`), $info['uid']);
         $this->assertSame(intval(`id -g nobody`), $info['gid']);
-        $this->assertSame('/var/empty', $info['home']);
+        $this->assertNotEquals(trim(`echo \$HOME`), $info['home']);
         $this->assertSame('/usr/bin/false', $info['shell']);
     }
     
@@ -85,7 +85,7 @@ class ProcessTest extends TestCase {
         $this->assertSame('nobody', $info['name']);
         $this->assertSame(intval(`id -u nobody`), $info['uid']);
         $this->assertSame(intval(`id -g nobody`), $info['gid']);
-        $this->assertSame('/var/empty', $info['home']);
+        $this->assertNotEquals(trim(`echo \$HOME`), $info['home']);
         $this->assertSame('/usr/bin/false', $info['shell']);
     }
     
