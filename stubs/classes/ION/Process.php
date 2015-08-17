@@ -7,7 +7,6 @@ class Process {
 	/**
 	 * Create a child process and restore event loop.
 	 *
-	 * @since 1.0
 	 * @param int $flags
 	 * @param mixed $ipc
 	 * @return int On success, the PID of the child process is returned in the parent, and 0 is returned in the child.
@@ -81,6 +80,7 @@ class Process {
 	 * Set process user
 	 * @param mixed $user integer means UID, string means username
 	 * @param bool $set_group set user's group too
+	 * @return array previous user information
 	 * @throws \RuntimeException if error occurs
 	 * @throws \InvalidArgumentException if user not found or invalid argument type
 	 */
@@ -97,7 +97,7 @@ class Process {
 	 * Set program scheduling priority
 	 * @param int $priority
 	 * @param int $pid
-	 * @return int
+	 * @return int previous priority
 	 */
 	public static function setPriority($priority, $pid = null) {}
 }

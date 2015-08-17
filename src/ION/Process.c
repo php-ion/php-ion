@@ -1,5 +1,5 @@
 #include "Process.h"
-
+#include <sys/resource.h>
 #ifdef HAVE_KILL
 #include <signal.h>
 #endif
