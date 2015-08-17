@@ -48,6 +48,9 @@ class BuildRunner {
 		}
 
 		if($this->hasOption('phpize', 'p')) {
+			if($this->hasOption('clean', 'c')) {
+				$this->exec('phpize --clean');
+			}
 			$this->exec('phpize');
 			$this->exec('./configure --with-ion');
 		}
