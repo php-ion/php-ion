@@ -2,6 +2,7 @@
 #ifndef ION_DEBUG_H
 #define ION_DEBUG_H
 
+//#include "ext/standard/php_var.h"
 
 #define PHPDBG(msg, ...)    \
     printf("%s: ", __func__); \

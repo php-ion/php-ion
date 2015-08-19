@@ -75,38 +75,37 @@ CLASS_METHOD(ION_Process, getParentPid) {
 
 METHOD_WITHOUT_ARGS(ION_Process, getParentPid);
 
-struct passwd * get_pw_by_zval(zval * user TSRMLS_DC) {
+
+
+struct passwd * get_pw_by_zval(zval * zuser TSRMLS_DC) {
     struct passwd * pw;
     errno = 0;
-    if(Z_TYPE_P(user) == IS_STRING) {
-        if (NULL == (pw = getpwnam(Z_STRVAL_P(user)))) {
-            if(errno) {
-                ThrowRuntimeEx(errno, "Failed to get info by user name %s: %s", Z_STRVAL_P(user), strerror(errno));
-            } else {
-                ThrowInvalidArgumentEx("User %s not found", Z_STRVAL_P(user));
-            }
-            return NULL;
-        }
-    } else if(Z_TYPE_P(user) == IS_LONG) {
-        if (NULL == (pw = getpwuid((uid_t)Z_LVAL_P(user)))) {
-            if(errno) {
-                ThrowRuntimeEx(errno, "Failed to get info by UID %d: %s", Z_LVAL_P(user), strerror(errno));
-            } else {
-                ThrowInvalidArgumentEx("UID %d not found", Z_LVAL_P(user));
-            }
-            return NULL;
-        }
+    if(Z_TYPE_P(zuser) == IS_STRING) {
+        pw = getpwnam(Z_STRVAL_P(zuser));
+    } else if(Z_TYPE_P(zuser) == IS_LONG) {
+        pw = getpwuid((uid_t)Z_LVAL_P(zuser));
     } else {
         ThrowInvalidArgument("Invalid user identifier");
+        return NULL;
+    }
+    if (NULL == pw) {
+        if(errno) {
+            if(Z_TYPE_P(zuser) == IS_STRING) {
+                ThrowRuntimeEx(errno, "Failed to get info by user name %s: %s", Z_STRVAL_P(zuser), strerror(errno));
+            } else {
+                ThrowRuntimeEx(errno, "Failed to get info by UID %d: %s", Z_LVAL_P(zuser), strerror(errno));
+            }
+        }
         return NULL;
     }
     return pw;
 }
 
-/** public function ION\Process::getUser($user = null) : array */
+/** public function ION\Process::getUser($user = null) : array|bool */
 CLASS_METHOD(ION_Process, getUser) {
     struct passwd * pw;
     zval * zuser = NULL;
+    zend_bool me = 0;
 
     PARSE_ARGS("|z", &zuser);
 
@@ -115,17 +114,21 @@ CLASS_METHOD(ION_Process, getUser) {
             ALLOC_INIT_ZVAL(zuser);
         }
         ZVAL_LONG(zuser, getuid());
+        me = 1;
     }
 
     pw = get_pw_by_zval(zuser TSRMLS_CC);
-    zval_ptr_dtor(&zuser);
+    if(me) {
+        zval_ptr_dtor(&zuser);
+    }
 
     array_init(return_value);
 
-    add_assoc_string(return_value, "name",   pw->pw_name, 1);
     add_assoc_long  (return_value, "uid",    pw->pw_uid);
+    add_assoc_string(return_value, "name",   pw->pw_name,  1);
+    add_assoc_string(return_value, "gecos",  pw->pw_gecos, 1);
     add_assoc_long  (return_value, "gid",	 pw->pw_gid);
-    add_assoc_string(return_value, "home",   pw->pw_dir, 1);
+    add_assoc_string(return_value, "home",   pw->pw_dir,   1);
     add_assoc_string(return_value, "shell",  pw->pw_shell, 1);
 }
 
@@ -136,8 +139,8 @@ METHOD_ARGS_END()
 
 /** public function ION\Process::setUser($user, $set_group = true) : array */
 CLASS_METHOD(ION_Process, setUser) {
-    struct passwd *pw;
-    zval *zuser = NULL;
+    struct passwd * pw;
+    zval * zuser = NULL;
     zend_bool set_group = 1;
 
     PARSE_ARGS("z|b", &zuser, &set_group);
@@ -146,10 +149,11 @@ CLASS_METHOD(ION_Process, setUser) {
 
     array_init(return_value);
 
-    add_assoc_string(return_value, "name",   pw->pw_name, 1);
     add_assoc_long  (return_value, "uid",    pw->pw_uid);
+    add_assoc_string(return_value, "name",   pw->pw_name,  1);
+    add_assoc_string(return_value, "gecos",  pw->pw_gecos, 1);
     add_assoc_long  (return_value, "gid",	 pw->pw_gid);
-    add_assoc_string(return_value, "home",   pw->pw_dir, 1);
+    add_assoc_string(return_value, "home",   pw->pw_dir,   1);
     add_assoc_string(return_value, "shell",  pw->pw_shell, 1);
 
     if(set_group && setgid(pw->pw_gid)) {

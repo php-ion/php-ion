@@ -66,12 +66,13 @@ class ProcessTest extends TestCase {
     
     /**
      * @group testGetAnotherUser
-     * @mem check
+     * @memcheck
      */
     public function testGetAnotherUser() {
         $actual = Process::getUser('nobody');
 	    $expected = posix_getpwnam('nobody');
 	    $this->assertEquals($expected['name'], $actual['name']);
+	    $this->assertEquals($expected['gecos'], $actual['gecos']);
 	    $this->assertSame($expected['uid'], $actual['uid']);
 	    $this->assertSame($expected['gid'], $actual['gid']);
         $this->assertSame($expected['dir'], $actual['home']);
