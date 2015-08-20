@@ -8,7 +8,7 @@ CLASS_INSTANCE_DTOR(ION_Data_LinkedList) {
     IONLinkedList *llist = getInstanceObject(IONLinkedList *);
     zval *item;
     if(llist->count) {
-        while(item = pionLListLPop(llist->list)) {
+        while((item = pionLListLPop(llist->list))) {
             zval_ptr_dtor(&item);
         }
     }

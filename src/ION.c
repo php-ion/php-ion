@@ -92,10 +92,11 @@ static void _timer_done(evutil_socket_t fd, short flags, void * arg) {
 //    zval_ptr_dtor(&zdeferred);
 }
 
-static void _timer_dtor(void * object TSRMLS_DC) {
+static void _timer_dtor(void * object, zval * zdeferred TSRMLS_DC) {
     ev * timer = (ev *) object;
     event_del(timer);
     event_free(timer);
+    zval_ptr_dtor(&zdeferred);
 }
 
 /** public function ION::await(double $time) : ION\Deferred */
@@ -114,7 +115,7 @@ CLASS_METHOD(ION, await) {
     }
     tv.tv_usec = (int)((int)(timeout*1000000) % 1000000);
     tv.tv_sec = (int)timeout;
-    zDeferred = deferredNewInternal(NULL, 1);
+    zDeferred = deferredNewInternal(NULL);
     ev * timer = event_new(ION(base), -1, EV_TIMEOUT, _timer_done, zDeferred);
     if(event_add(timer, &tv) == FAILURE) {
         event_del(timer);

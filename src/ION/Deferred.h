@@ -12,9 +12,9 @@ typedef struct _IONDeferred IONDeferred;
 struct _IONDeferred {
     zend_object      std;
     short            flags;
-    void             (*reject)(zval *error, void *IONDeferred TSRMLS_DC);
+    void             (*reject)(zval * error, zval *zdeferred TSRMLS_DC);
     void             *object;
-    void             (*object_dtor)(void *object TSRMLS_DC);
+    void             (*object_dtor)(void * object, zval *zdeferred TSRMLS_DC);
     zend_class_entry *scope;
     struct event     *timeout;
     pionCb           *finish_cb;
