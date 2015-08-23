@@ -31,9 +31,6 @@ extern IONBase *ionBase;
 #define ION(prop) \
     ionBase->prop
 
-/* Fetch FD from ZVAL resource */
-int pionGetFdFromStream(zval* zfd TSRMLS_DC);
-
 /**
  * For debug
  */

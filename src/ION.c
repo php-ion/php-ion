@@ -101,10 +101,6 @@ static void _timer_dtor(void * object, zval * zdeferred TSRMLS_DC) {
 
 /** public function ION::await(double $time) : ION\Deferred */
 CLASS_METHOD(ION, await) {
-    if(!return_value_used) {
-        zend_error(E_NOTICE, "Unused deferred object");
-        return;
-    }
     zval *zDeferred = NULL;
     double timeout = 0.0;
     struct timeval tv = { 0, 0 };

@@ -37,6 +37,7 @@ set(ION_SOURCE_FILES
     src/ION/Deferred.c
     src/ION.c
     src/ION/Process.c
+    src/ION/Stream.c
 )
 
 add_library(ion ${ION_SOURCE_FILES})

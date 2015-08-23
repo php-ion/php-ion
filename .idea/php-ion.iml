@@ -13,6 +13,8 @@
       <sourceFolder url="file://$MODULE_DIR$/src/ION/Deferred.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/ION/Process.c" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/ION/Process.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/ION/Stream.c" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/ION/Stream.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/externals/SkipList/skiplist.c" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/externals/SkipList/skiplist.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/php_ion.c" isTestSource="false" />
@@ -21,7 +23,6 @@
       <sourceFolder url="file://$MODULE_DIR$/src/pion.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/pion/callback.c" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/pion/callback.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/pion/cfg.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/pion/debug.c" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/pion/debug.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/pion/deferred.h" isTestSource="false" />

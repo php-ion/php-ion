@@ -13,7 +13,6 @@ class SkipList implements \Countable {
 	const EXTR_KEY   = 2;
 	const EXTR_BOTH  = 3;
 
-//	public function __construct($values = [], $flags = 0) {}
 	/**
 	 * Get the first pair from the skiplist.
 	 * @return mixed

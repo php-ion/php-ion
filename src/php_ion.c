@@ -96,6 +96,7 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_Deferred);
     STARTUP_MODULE(ION);
     STARTUP_MODULE(ION_Process);
+    STARTUP_MODULE(ION_Stream);
 
     long KB = 1000;
     long MB = 1000 * KB;
@@ -139,6 +140,7 @@ PHP_MSHUTDOWN_FUNCTION(ion) {
     SHUTDOWN_MODULE(ION_Deferred);
     SHUTDOWN_MODULE(ION);
     SHUTDOWN_MODULE(ION_Process);
+    SHUTDOWN_MODULE(ION_Stream);
 
     return SUCCESS;
 }
@@ -147,7 +149,7 @@ PHP_MSHUTDOWN_FUNCTION(ion) {
 PHP_RINIT_FUNCTION(ion) {
     ionBase = emalloc(sizeof(IONBase));
     memset(ionBase, 0, sizeof(IONBase));
-    ION(i)             = 33;
+    ION(i)             = 1;
     ION(base)          = event_base_new();
 
     return SUCCESS;

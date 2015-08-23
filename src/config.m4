@@ -80,7 +80,8 @@ if test "$PHP_ION" != "no"; then
     ION/Data/SkipList.c
     ION/Deferred.c
     ION.c
-    ION/Process.c"
+    ION/Process.c
+    ION/Stream.c"
     PHP_NEW_EXTENSION(ion, $ion_src, $ext_shared,, $CFLAGS)
 
     PHP_SUBST(ION_SHARED_LIBADD)
