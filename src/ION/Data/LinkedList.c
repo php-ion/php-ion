@@ -127,7 +127,7 @@ zend_object_iterator *ion_llist_get_iterator(zend_class_entry *ce, zval *object,
 // PHP API
 /* public function ION\Dat\LinkedList::rPush(mixed item) : int */
 CLASS_METHOD(ION_Data_LinkedList, rPush) {
-    IONLinkedList *llist = getThisInstance(IONLinkedList *);
+    IONLinkedList *llist = getThisInstance();
     zval *zitem = NULL;
     PARSE_ARGS("z/", &zitem);
 
@@ -142,7 +142,7 @@ METHOD_ARGS_END();
 
 /* public function ION\Dat\LinkedList::lPush(mixed item) : int */
 CLASS_METHOD(ION_Data_LinkedList, lPush) {
-    IONLinkedList *llist = getThisInstance(IONLinkedList *);
+    IONLinkedList *llist = getThisInstance();
     zval *zitem = NULL;
     PARSE_ARGS("z/", &zitem);
 
@@ -158,7 +158,7 @@ METHOD_ARGS_END();
 
 /* public function ION\Dat\LinkedList::rPop() : mixed */
 CLASS_METHOD(ION_Data_LinkedList, rPop) {
-    IONLinkedList *llist = getThisInstance(IONLinkedList *);
+    IONLinkedList *llist = getThisInstance();
     zval *zitem = NULL;
     if(llist->current && !llist->current->next) {
         llist->current = NULL;
@@ -178,7 +178,7 @@ METHOD_WITHOUT_ARGS(ION_Data_LinkedList, rPop);
 
 /* public function ION\Dat\LinkedList::lPop() : mixed */
 CLASS_METHOD(ION_Data_LinkedList, lPop) {
-    IONLinkedList *llist = getThisInstance(IONLinkedList *);
+    IONLinkedList *llist = getThisInstance();
     zval *zitem = NULL;
     if(llist->current && !llist->current->prev) {
         if(llist->current->next) {
@@ -203,7 +203,7 @@ METHOD_WITHOUT_ARGS(ION_Data_LinkedList, lPop);
 
 /* public function ION\Dat\LinkedList::count() : int */
 CLASS_METHOD(ION_Data_LinkedList, count) {
-    IONLinkedList *llist = getThisInstance(IONLinkedList *);
+    IONLinkedList *llist = getThisInstance();
     RETURN_LONG(llist->count);
 }
 
@@ -212,7 +212,7 @@ METHOD_WITHOUT_ARGS(ION_Data_LinkedList, count);
 
 /* public function ION\Dat\LinkedList::rewind() : void */
 CLASS_METHOD(ION_Data_LinkedList, rewind) {
-    IONLinkedList *llist = getThisInstance(IONLinkedList *);
+    IONLinkedList *llist = getThisInstance();
     if(llist->list->head) {
         llist->current = llist->list->head;
     } else {
@@ -225,7 +225,7 @@ METHOD_WITHOUT_ARGS(ION_Data_LinkedList, rewind);
 
 /* public function ION\Dat\LinkedList::current() : mixed */
 CLASS_METHOD(ION_Data_LinkedList, current) {
-    IONLinkedList *llist = getThisInstance(IONLinkedList *);
+    IONLinkedList *llist = getThisInstance();
     if(llist->current) {
         zval *item = (zval *)llist->current->data;
         RETURN_ZVAL(item, 0, 0);
@@ -239,7 +239,7 @@ METHOD_WITHOUT_ARGS(ION_Data_LinkedList, current);
 
 /* public function ION\Dat\LinkedList::key() : mixed */
 CLASS_METHOD(ION_Data_LinkedList, key) {
-    IONLinkedList *llist = getThisInstance(IONLinkedList *);
+    IONLinkedList *llist = getThisInstance();
     if(llist->current) {
         RETURN_LONG(llist->key);
     } else {
@@ -252,7 +252,7 @@ METHOD_WITHOUT_ARGS(ION_Data_LinkedList, key);
 
 /* public function ION\Dat\LinkedList::next() : void */
 CLASS_METHOD(ION_Data_LinkedList, next) {
-    IONLinkedList *llist = getThisInstance(IONLinkedList *);
+    IONLinkedList *llist = getThisInstance();
     pionLListItem *item;
     if(llist->current) {
         llist->key++;
@@ -266,7 +266,7 @@ METHOD_WITHOUT_ARGS(ION_Data_LinkedList, next);
 
 /* public function ION\Dat\LinkedList::valid() : bool */
 CLASS_METHOD(ION_Data_LinkedList, valid) {
-    IONLinkedList *llist = getThisInstance(IONLinkedList *);
+    IONLinkedList *llist = getThisInstance();
 
     RETURN_BOOL(llist->current != NULL);
 }

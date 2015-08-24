@@ -10,8 +10,8 @@
     zend_class_entry *c ## class; \
     zend_object_handlers h ## class;
 
-#define getThisInstance(obj_type)   (obj_type) zend_object_store_get_object(this_ptr TSRMLS_CC)
-#define getThisInstanceVoid()   zend_object_store_get_object(this_ptr TSRMLS_CC)
+#define getThisInstance()             zend_object_store_get_object(this_ptr TSRMLS_CC)
+#define getThisInstanceEx(obj_type)   (obj_type) zend_object_store_get_object(this_ptr TSRMLS_CC)
 
 #define PARSE_ARGS(format, ...)                                                 \
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, format, ##__VA_ARGS__) == FAILURE) {    \

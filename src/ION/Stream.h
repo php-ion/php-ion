@@ -4,6 +4,10 @@
 #include "../pion.h"
 #include <event.h>
 
+#define ION_STREAM_FLAG_SOCKET  1
+#define ION_STREAM_FLAG_READING 16
+#define ION_STREAM_FLAG_FLUSHED 32
+
 typedef struct bufferevent bevent;
 
 typedef struct _ion_stream {

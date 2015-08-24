@@ -16,11 +16,13 @@ class Stream {
 	public static function resource($resource) {}
 
 	/**
+	 * Recognized hostname formats are hostname + port:
+	 * www.example.com:80, 1.2.3.4:567, [::1]:8080
 	 * @param string $host
 	 *
 	 * @return Deferred
 	 */
-	public static function connect($host) {}
+	public static function socket($host) {}
 
 	/**
 	 * @return Stream[]
@@ -28,7 +30,6 @@ class Stream {
 	public static function pair() {}
 
 	/**
-	 * @todo
 	 * Enable stream
 	 *
 	 * @return self
@@ -36,7 +37,6 @@ class Stream {
 	public function enable() {}
 
 	/**
-	 * @todo
 	 * Disable stream
 	 *
 	 * @return self
@@ -51,16 +51,25 @@ class Stream {
 
 	/**
 	 * @todo
-	 * @param int $timeout
+	 * @return Deferred
 	 */
-	public function setWriteTimeout($timeout) {}
+	public function awaitConnect() {}
 
 	/**
-	 * @todo
-	 * @param $type
-	 * @param $priority
+	 * Set the read and write timeout for a Stream.
+	 * A Stream timeout will fire the first time that the indicated amount of time has elapsed since a successful
+	 * read or write operation, during which the Stream was trying to read or write.
+	 * @param double $read_timeout
+	 * @param double $write_timeout
 	 */
-	public function setPriority($type, $priority) {}
+	public function setTimeouts($read_timeout, $write_timeout) {}
+
+	/**
+	 * Assign a priority to a stream.
+	 * Only supported for socket streams.
+	 * @param int $priority
+	 */
+	public function setPriority($priority) {}
 
 	/**
 	 * @todo
@@ -143,7 +152,6 @@ class Stream {
 	public function fetchAll() {}
 
 	/**
-	 * @todo
 	 * @param string $data
 	 *
 	 * @return self
@@ -156,7 +164,7 @@ class Stream {
 	 * @param int $offset
 	 * @param int $limit
 	 *
-	 * @return Deferred
+	 * @return self
 	 */
 	public function sendFile($fd, $offset = 0, $limit = -1) {}
 

@@ -123,7 +123,7 @@ CLASS_INSTANCE_CTOR(ION_Deferred) {
 
 /** public function ION\Deferred::__construct(callable $cancel_callback) : self */
 CLASS_METHOD(ION_Deferred, __construct) {
-    IONDeferred *deferred = getThisInstance(IONDeferred *);
+    IONDeferred *deferred = getThisInstance();
     zend_fcall_info        fci = empty_fcall_info;
     zend_fcall_info_cache  fcc = empty_fcall_info_cache;
     PARSE_ARGS("f", &fci, &fcc);
@@ -137,7 +137,7 @@ METHOD_ARGS_END();
 
 /** public function ION\Deferred::then(callable $callback) : self */
 CLASS_METHOD(ION_Deferred, then) {
-    IONDeferred      *deferred = getThisInstance(IONDeferred *);
+    IONDeferred      *deferred = getThisInstance();
     zend_fcall_info        fci = empty_fcall_info;
     zend_fcall_info_cache  fcc = empty_fcall_info_cache;
     PARSE_ARGS("f", &fci, &fcc);
@@ -151,7 +151,7 @@ METHOD_ARGS_END();
 
 /** public function ION\Deferred::reject(string $reason) : self */
 CLASS_METHOD(ION_Deferred, reject) {
-    IONDeferred *deferred = getThisInstance(IONDeferred *);
+    IONDeferred *deferred = getThisInstance();
     char *message = NULL;
     long message_len = 0;
     if(deferred->flags & DEFERRED_FINISHED) {
@@ -170,7 +170,7 @@ METHOD_ARGS_END()
 
 /** public function ION\Deferred::resolve(mixed $data) : self */
 CLASS_METHOD(ION_Deferred, resolve) {
-    IONDeferred *deferred = getThisInstance(IONDeferred *);
+    IONDeferred *deferred = getThisInstance();
     zval *zData = NULL;
     if(deferred->scope) {
         if(deferred->scope != EG(scope)) {
@@ -196,7 +196,7 @@ METHOD_ARGS_END()
 
 /** public function ION\Deferred::error(Exception $error) : self */
 CLASS_METHOD(ION_Deferred, error) {
-    IONDeferred *deferred = getThisInstance(IONDeferred *);
+    IONDeferred *deferred = getThisInstance();
     zval *zError;
     if(deferred->scope) {
         if(deferred->scope != EG(scope)) {
@@ -223,7 +223,7 @@ METHOD_ARGS_END()
 
 /** public function ION\Deferred::timeout(int $seconds) : self */
 CLASS_METHOD(ION_Deferred, timeout) {
-    IONDeferred *deferred = getThisInstance(IONDeferred *);
+    IONDeferred *deferred = getThisInstance();
 
     RETURN_THIS();
 }
@@ -234,7 +234,7 @@ METHOD_ARGS_END()
 
 /** public function ION\Deferred::getFlags() : int */
 CLASS_METHOD(ION_Deferred, getFlags) {
-    IONDeferred *deferred = getThisInstance(IONDeferred *);
+    IONDeferred *deferred = getThisInstance();
     RETURN_LONG((long)deferred->flags);
 }
 
@@ -242,7 +242,7 @@ METHOD_WITHOUT_ARGS(ION_Deferred, getFlags)
 
 /** public function ION\Deferred::__destruct() : int */
 CLASS_METHOD(ION_Deferred, __destruct) {
-    IONDeferred *deferred = getThisInstance(IONDeferred *);
+    IONDeferred *deferred = getThisInstance();
     if(deferred->flags & DEFERRED_FINISHED) {
         return;
     } else {

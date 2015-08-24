@@ -89,25 +89,25 @@ void get_from_end(struct skiplist *list, zval *return_value, get_from_end_cb cb,
 // PHP API
 /** public function ION\Data\SkipList::first() : mixed */
 CLASS_METHOD(ION_Data_SkipList, first) {
-    get_from_end((getThisInstance(IONSkipList *))->list, return_value, skiplist_first, 0);
+    get_from_end((getThisInstanceEx(IONSkipList *))->list, return_value, skiplist_first, 0);
 }
 METHOD_WITHOUT_ARGS(ION_Data_SkipList, first);
 
 /** public function ION\Data\SkipList::last() : mixed */
 CLASS_METHOD(ION_Data_SkipList, last) {
-    get_from_end((getThisInstance(IONSkipList *))->list, return_value, skiplist_last, 0);
+    get_from_end((getThisInstanceEx(IONSkipList *))->list, return_value, skiplist_last, 0);
 }
 METHOD_WITHOUT_ARGS(ION_Data_SkipList, last);
 
 /** public function ION\Data\SkipList::rPop() : mixed */
 CLASS_METHOD(ION_Data_SkipList, rPop) {
-    get_from_end((getThisInstance(IONSkipList *))->list, return_value, skiplist_pop_last, 1);
+    get_from_end((getThisInstanceEx(IONSkipList *))->list, return_value, skiplist_pop_last, 1);
 }
 METHOD_WITHOUT_ARGS(ION_Data_SkipList, rPop);
 
 /** public function ION\Data\SkipList::lPop() : mixed */
 CLASS_METHOD(ION_Data_SkipList, lPop) {
-    get_from_end((getThisInstance(IONSkipList *))->list, return_value, skiplist_pop_first, 1);
+    get_from_end((getThisInstanceEx(IONSkipList *))->list, return_value, skiplist_pop_first, 1);
 }
 METHOD_WITHOUT_ARGS(ION_Data_SkipList, lPop);
 
@@ -116,7 +116,7 @@ CLASS_METHOD(ION_Data_SkipList, set) {
     zval *zkey = NULL;
     zval *zvalue = NULL;
     zval *zold = NULL;
-    IONSkipList *slist = getThisInstance(IONSkipList *);
+    IONSkipList *slist = getThisInstance();
     PARSE_ARGS("zz", &zkey, &zvalue);
     Z_ADDREF_P(zkey);
     Z_ADDREF_P(zvalue);
@@ -136,7 +136,7 @@ METHOD_ARGS_END();
 CLASS_METHOD(ION_Data_SkipList, add) {
     zval *zkey = NULL;
     zval *zvalue = NULL;
-    IONSkipList *slist = getThisInstance(IONSkipList *);
+    IONSkipList *slist = getThisInstance();
     PARSE_ARGS("zz", &zkey, &zvalue);
     Z_ADDREF_P(zkey);
     Z_ADDREF_P(zvalue);
@@ -155,7 +155,7 @@ CLASS_METHOD(ION_Data_SkipList, exists) {
     zval *key = NULL;
     int result = 0;
     PARSE_ARGS("z", &key);
-    result = skiplist_member((getThisInstance(IONSkipList *))->list, (void *)key);
+    result = skiplist_member((getThisInstanceEx(IONSkipList *))->list, (void *)key);
     if(result) {
         RETURN_TRUE;
     } else {
@@ -177,14 +177,14 @@ CLASS_METHOD(ION_Data_SkipList, get) {
         array_init(return_value);
         IONSkipListRange *range = IONSListGetRange(ION_SKIPLIST_RANGE_WITHOUT_KEYS, return_value, key TSRMLS_CC);
         skiplist_iter_from(
-                (getThisInstance(IONSkipList *))->list,
+                (getThisInstanceEx(IONSkipList *))->list,
                 (void *) key,
                 (void *) range,
                 php_skiplist_range
         );
         efree(range);
     } else { // get any single value by key
-        zval *value = (zval *)skiplist_get((getThisInstance(IONSkipList *))->list, (void *)key);
+        zval *value = (zval *)skiplist_get((getThisInstanceEx(IONSkipList *))->list, (void *)key);
         if(value == NULL) {
             RETURN_NULL();
         }
@@ -200,7 +200,7 @@ METHOD_ARGS_END();
 
 /* public function ION\Data\SkipList::count() : int */
 CLASS_METHOD(ION_Data_SkipList, count) {
-    IONSkipList *slist = getThisInstance(IONSkipList *);
+    IONSkipList *slist = getThisInstance();
     RETURN_LONG(skiplist_count(slist->list));
 }
 
@@ -211,7 +211,7 @@ METHOD_WITHOUT_ARGS(ION_Data_SkipList, count);
 CLASS_METHOD(ION_Data_SkipList, toArray) {
     array_init(return_value);
     skiplist_iter(
-        (getThisInstance(IONSkipList *))->list,
+        (getThisInstanceEx(IONSkipList *))->list,
         (void *) return_value,
         php_skiplist_to_array
     );

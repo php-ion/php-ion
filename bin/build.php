@@ -107,7 +107,22 @@ class BuildRunner {
             $info[] = "function {$function->name}(".implode(", ", $params).")";
         }
         foreach($ion->getClasses() as $class) {
-            $info[] = "class ".implode(' ', Reflection::getModifierNames($class->getModifiers()))." {$class->name} {";
+	        $mods = [];
+	        if($class->isFinal()) {
+		        $mods[] = "final";
+	        }
+	        if($class->isInterface()) {
+		        $mods[] = "interface";
+	        } elseif($class->isTrait()) {
+		        $mods[] = "trait";
+	        } else {
+		        if($class->isAbstract()) {
+			        $mods[] = "abstract";
+		        }
+		        $mods[] = "class";
+	        }
+
+            $info[] = implode(' ', $mods)." {$class->name} {";
             if($class->getParentClass()) {
                 $info[] = "  extends {$class->getParentClass()->name}";
             }

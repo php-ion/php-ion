@@ -31,6 +31,10 @@ extern IONBase *ionBase;
 #define ION(prop) \
     ionBase->prop
 
+
+#define SET_TIMEVAL(tval, dval)                          \
+    tval.tv_usec = (int)((int)(dval*1000000) % 1000000); \
+    tval.tv_sec = (int)dval;
 /**
  * For debug
  */
