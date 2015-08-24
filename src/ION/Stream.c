@@ -83,8 +83,7 @@ CLASS_METHOD(ION_Stream, resource) {
     ion_stream_set_buffer(stream, buffer);
 
     if (EG(called_scope)->constructor) {
-        if(pionCallConstructor(EG(called_scope), return_value, 0, NULL) == FAILURE) {
-            zval_ptr_dtor(&return_value);
+        if(pionCallConstructor(EG(called_scope), return_value, 0, NULL TSRMLS_CC) == FAILURE) {
             return;
         }
     }
@@ -123,10 +122,10 @@ CLASS_METHOD(ION_Stream, pair) {
 
 
     if (EG(called_scope)->constructor) {
-        if(pionCallConstructor(EG(called_scope), one, 0, NULL) == FAILURE) {
+        if(pionCallConstructor(EG(called_scope), one, 0, NULL TSRMLS_CC) == FAILURE) {
             return;
         }
-        if(pionCallConstructor(EG(called_scope), two, 0, NULL) == FAILURE) {
+        if(pionCallConstructor(EG(called_scope), two, 0, NULL TSRMLS_CC) == FAILURE) {
             return;
         }
     }
@@ -183,8 +182,7 @@ CLASS_METHOD(ION_Stream, socket) {
 
 
     if (EG(called_scope)->constructor) {
-        if(pionCallConstructor(EG(called_scope), return_value, 0, NULL) == FAILURE) {
-            zval_ptr_dtor(&return_value);
+        if(pionCallConstructor(EG(called_scope), return_value, 0, NULL TSRMLS_CC) == FAILURE) {
             return;
         }
     }
