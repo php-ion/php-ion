@@ -190,8 +190,7 @@ CLASS_METHOD(ION_Stream, socket) {
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, socket, 1)
-    METHOD_ARG(hostname, 0)
-    METHOD_ARG(port, 0)
+    METHOD_ARG(host, 0)
 METHOD_ARGS_END()
 
 
