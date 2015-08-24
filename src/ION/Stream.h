@@ -23,11 +23,11 @@ typedef struct _ion_stream {
 #endif
 } ion_stream;
 
-#ifdef ZTS
-#define STREAM_BUFFER_DEFAULT_FLAGS BEV_OPT_DEFER_CALLBACKS | BEV_OPT_THREADSAFE
-#else
+//#ifdef ZTS
+//#define STREAM_BUFFER_DEFAULT_FLAGS BEV_OPT_DEFER_CALLBACKS | BEV_OPT_THREADSAFE
+//#else
 #define STREAM_BUFFER_DEFAULT_FLAGS BEV_OPT_DEFER_CALLBACKS
-#endif
+//#endif
 
 
 DEFINE_CLASS(ION_Stream);
