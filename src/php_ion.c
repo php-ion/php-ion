@@ -43,24 +43,24 @@ ZEND_API void _php_efree(void * ptr) {
 
 static void _engine_log(int severity, const char *msg) {
     switch (severity) {
-        case EVENT_LOG_ERR:
-            zend_error(E_ERROR, msg);
+        case _EVENT_LOG_ERR:
+            zend_error(E_ERROR, "Libevent: %s", msg);
             break;
-        case EVENT_LOG_MSG:
-            zend_error(E_NOTICE, msg);
+        case _EVENT_LOG_MSG:
+            zend_error(E_NOTICE, "Libevent: %s", msg);
             break;
-        case EVENT_LOG_DEBUG:
-            zend_error(E_NOTICE, msg);
+        case _EVENT_LOG_DEBUG:
+            zend_error(E_NOTICE, "Libevent: %s", msg);
             break;
-        case EVENT_LOG_WARN:
+        case _EVENT_LOG_WARN:
         default:
-            zend_error(E_WARNING, msg);
+            zend_error(E_WARNING, "Libevent: %s", msg);
             break;
     }
 }
 
 static void _engine_fatal(int err) {
-    zend_error(E_CORE_ERROR, "Internal libevent fatal error: %s", strerror(err));
+    zend_error(E_CORE_ERROR, "Libevent fatal error: %s", strerror(err));
     _exit(err);
 }
 
