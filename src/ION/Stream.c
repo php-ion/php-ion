@@ -44,7 +44,7 @@ CLASS_INSTANCE_DTOR(ION_Stream) {
 CLASS_INSTANCE_CTOR(ION_Stream) {
     ion_stream * stream = emalloc(sizeof(ion_stream));
     memset(stream, 0, sizeof(ion_stream));
-    TSRMLS_SET_CTX(stream->thread_ctx)
+    TSRMLS_SET_CTX(stream->thread_ctx);
     RETURN_INSTANCE(ION_Stream, stream);
 }
 
