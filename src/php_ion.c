@@ -28,6 +28,42 @@ static const zend_module_dep ion_depends[] = {
     {NULL, NULL, NULL}
 };
 
+
+ZEND_API void * _php_emalloc(size_t size) {
+    return emalloc(size);
+}
+
+ZEND_API void * _php_realloc(void * nmemb, size_t size) {
+    return erealloc(nmemb, size);
+}
+
+ZEND_API void _php_efree(void * ptr) {
+    efree(ptr);
+}
+
+static void _engine_log(int severity, const char *msg) {
+    switch (severity) {
+        case EVENT_LOG_ERR:
+            zend_error(E_ERROR, msg);
+            break;
+        case EVENT_LOG_MSG:
+            zend_error(E_NOTICE, msg);
+            break;
+        case EVENT_LOG_DEBUG:
+            zend_error(E_NOTICE, msg);
+            break;
+        case EVENT_LOG_WARN:
+        default:
+            zend_error(E_WARNING, msg);
+            break;
+    }
+}
+
+static void _engine_fatal(int err) {
+    zend_error(E_CORE_ERROR, "Internal libevent fatal error: %s", strerror(err));
+    _exit(err);
+}
+
 #ifdef PION_FUNCTIONS
 // PION framework functions for testing
 
@@ -91,6 +127,10 @@ zend_module_entry ion_module_entry = {
 
 /* Init module callback */
 PHP_MINIT_FUNCTION(ion) {
+//    event_set_mem_functions(_php_emalloc, _php_realloc, _php_efree);
+    event_set_log_callback(_engine_log);
+    event_set_fatal_callback(_engine_fatal);
+
     STARTUP_MODULE(ION_Data_LinkedList);
     STARTUP_MODULE(ION_Data_SkipList);
     STARTUP_MODULE(ION_Deferred);

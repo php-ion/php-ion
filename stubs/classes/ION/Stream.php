@@ -30,14 +30,14 @@ class Stream {
 	public static function pair() {}
 
 	/**
-	 * Enable stream
+	 * Activate stream for listening events
 	 *
 	 * @return self
 	 */
 	public function enable() {}
 
 	/**
-	 * Disable stream
+	 * Deactivate stream for listening events
 	 *
 	 * @return self
 	 */
@@ -90,40 +90,38 @@ class Stream {
 	public function getLocalPeer() {}
 
 	/**
-	 * @todo
-	 * @param string $token
-	 * @param int $max_length
-	 * @param int $offset
+	 * Search for a string within an incoming buffer
 	 *
-	 * @return int|false
+	 * @param string $token the string to be searched for
+	 * @param int $length that indicates where we should start searching
+	 * @param int $offset that indicates where we should stop searching
+	 *
+	 * @return int|false the position of where the $token exists relative to the beginning of the incoming buffer
 	 */
-	public function getPositionOf($token, $max_length = -1, $offset = 0) {}
+	public function search($token, $length = 0, $offset = 0) {}
 
 
 	/**
-	 * @todo
 	 * @param int $type
 	 */
-	public function getLength($type = \ION::READ) {}
+	public function getSize($type = \ION::READ) {}
 
 	/**
-	 * @todo
 	 * Get N bytes
 	 *
 	 * @param int $count
 	 * @return string
 	 */
-	public function get($count = 0) {}
+	public function read($count = -1) {}
 
 	/**
-	 * @todo
 	 * @param string $token
 	 * @param int $flag
 	 * @param int $max_length
 	 *
 	 * @return string
 	 */
-	public function getLine($token, $flag = self::WITHOUT_TOKEN, $max_length = 8192) {}
+	public function readLine($token, $flag = self::WITHOUT_TOKEN, $max_length = 8192) {}
 
 	/**
 	 * @todo
@@ -131,7 +129,7 @@ class Stream {
 	 *
 	 * @return Deferred
 	 */
-	public function fetch($count = 0) {}
+	public function await($count = 0) {}
 
 	/**
 	 * @todo
@@ -141,7 +139,7 @@ class Stream {
 	 *
 	 * @return Deferred
 	 */
-	public function fetchLine($token, $flag = self::WITHOUT_TOKEN, $max_length = 8192) {}
+	public function awaitLine($token, $flag = self::WITHOUT_TOKEN, $max_length = 8192) {}
 
 	/**
 	 * @todo
@@ -149,9 +147,12 @@ class Stream {
 	 *
 	 * @return Deferred
 	 */
-	public function fetchAll() {}
+	public function awaitAll() {}
 
 	/**
+	 * Write data to a stream.
+	 * The data is appended to the output buffer and written to the descriptor automatically as it becomes available for writing.
+	 *
 	 * @param string $data
 	 *
 	 * @return self
@@ -159,17 +160,22 @@ class Stream {
 	public function write($data) {}
 
 	/**
-	 * @todo
-	 * @param resource $fd
-	 * @param int $offset
-	 * @param int $limit
+	 * Copy data from a file descriptor into the event buffer for writing to a socket.
+	 * This method avoids unnecessary data copies between userland and kernel.
+	 *
+	 * @param resource $fd the file descriptor
+	 * @param int $offset the offset from which to read data
+	 * @param int $limit how much data to read
+	 * @throws \RuntimeException if error occurs
+	 * @throws \InvalidArgumentException if passed invalid value
 	 *
 	 * @return self
 	 */
 	public function sendFile($fd, $offset = 0, $limit = -1) {}
 
 	/**
-	 * @todo
+	 * Done deferred object when outgoing buffer is empty
+	 *
 	 * @return Deferred
 	 */
 	public function flush() {}
