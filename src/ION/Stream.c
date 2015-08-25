@@ -1,16 +1,17 @@
 #include <php.h>
+#include <php_network.h>
 #include "Stream.h"
-
-zend_bool has_socket_module = 0;
 
 void _ion_stream_data(bevent *bev, void *ctx) {
     ion_stream *stream = (ion_stream *)ctx;
     TSRMLS_FETCH_FROM_CTX(stream->thread_ctx);
+    PHPDBG("_ion_stream_data happened");
 }
 
 void _ion_stream_empty(bevent *bev, void *ctx) {
     ion_stream *stream = (ion_stream *)ctx;
     TSRMLS_FETCH_FROM_CTX(stream->thread_ctx);
+    PHPDBG("_ion_stream_empty happened");
     if(stream->flush) {
         zval *result;
         ALLOC_LONG_ZVAL(result, 0);
@@ -25,6 +26,8 @@ void _ion_stream_empty(bevent *bev, void *ctx) {
 void _ion_stream_notify(bevent *bev, short what, void *ctx) {
     ion_stream *stream = (ion_stream *)ctx;
     TSRMLS_FETCH_FROM_CTX(stream->thread_ctx);
+    PHPDBG("_ion_stream_notify happened");
+
 }
 
 void ion_stream_set_buffer(ion_stream * stream, bevent * buffer) {
@@ -75,7 +78,7 @@ CLASS_METHOD(ION_Stream, resource) {
 
     php_stream * stream_resource;
     if (ZEND_FETCH_RESOURCE_NO_RETURN(stream_resource, php_stream *, &zfd, -1, NULL, php_file_le_stream())) {
-        if (php_stream_cast(stream_resource, PHP_STREAM_AS_FD_FOR_SELECT | PHP_STREAM_CAST_INTERNAL, (void *) &fd, REPORT_ERRORS) == FAILURE) {
+        if (php_stream_cast(stream_resource, PHP_STREAM_AS_FD_FOR_SELECT | PHP_STREAM_CAST_INTERNAL, (void *) &fd, 0) == FAILURE) {
             ThrowInvalidArgument("stream argument must be either valid PHP stream");
             return;
         }
@@ -238,6 +241,13 @@ CLASS_METHOD(ION_Stream, disable) {
 
 METHOD_WITHOUT_ARGS(ION_Stream, disable)
 
+
+/** public function ION\Stream::awaitConnection() : Deferred */
+CLASS_METHOD(ION_Stream, awaitConnection) {
+
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, awaitConnection)
 
 /** public function ION\Stream::setTimeouts(double $read_timeout, double $write_timeout) : self */
 CLASS_METHOD(ION_Stream, setTimeouts) {
@@ -477,12 +487,18 @@ METHOD_ARGS_END()
 char * _ion_stream_read(ion_stream * stream, size_t size) {
     char * data;
     size_t read;
-    data = emalloc(size + 1);
+
     long incoming_length;
     incoming_length = (long)evbuffer_get_length( bufferevent_get_input(stream->buffer) );
+    if(!incoming_length) {
+        data = emalloc(1);
+        data[0] = '\0';
+        return data;
+    }
     if(size > incoming_length) {
         size = (size_t) incoming_length;
     }
+    data = emalloc(size + 1);
     read = bufferevent_read(stream->buffer, data, size);
     if (read > 0) {
         data[read] = '\0';
@@ -514,7 +530,7 @@ CLASS_METHOD(ION_Stream, get) {
 
     data = ion_stream_read(stream, length);
     if(data == NULL) {
-        ThrowRuntime("Failed to reading", -1);
+        ThrowRuntime("Stream is unreachable", -1);
         return;
     }
     RETURN_STRING(data, 0);
@@ -748,32 +764,33 @@ CLASS_METHOD(ION_Stream, __toString) {
 METHOD_WITHOUT_ARGS(ION_Stream, __toString)
 
 CLASS_METHODS_START(ION_Stream)
-    METHOD(ION_Stream, resource,      ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Stream, pair,          ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Stream, socket,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Stream, enable,        ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, disable,       ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, setTimeouts,   ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, setPriority,   ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, write,         ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, sendFile,      ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, flush,         ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, search,        ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, getSize,       ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, get,           ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, getAll,        ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, getLine,       ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, await,         ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, awaitAll,      ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, awaitLine,     ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, shutdown,      ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, onData,        ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, onClose,       ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, ensureSSL,     ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, getRemotePeer, ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, getLocalPeer,  ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, __destruct,    ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, __toString,    ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, resource,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Stream, pair,            ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Stream, socket,          ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Stream, enable,          ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, disable,         ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, awaitConnection, ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, setTimeouts,     ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, setPriority,     ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, write,           ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, sendFile,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, flush,           ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, search,          ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getSize,         ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, get,             ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getAll,          ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getLine,         ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, await,           ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, awaitAll,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, awaitLine,       ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, shutdown,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, onData,          ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, onClose,         ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, ensureSSL,       ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getRemotePeer,   ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getLocalPeer,    ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, __destruct,      ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, __toString,      ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Stream) {

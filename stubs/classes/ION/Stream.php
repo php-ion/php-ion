@@ -11,7 +11,7 @@ class Stream {
 	/**
 	 * @param resource $resource
 	 *
-	 * @return Stream
+	 * @return self
 	 */
 	public static function resource($resource) {}
 
@@ -20,12 +20,12 @@ class Stream {
 	 * www.example.com:80, 1.2.3.4:567, [::1]:8080
 	 * @param string $host
 	 *
-	 * @return Deferred
+	 * @return self
 	 */
 	public static function socket($host) {}
 
 	/**
-	 * @return Stream[]
+	 * @return self[]
 	 */
 	public static function pair() {}
 
@@ -44,7 +44,6 @@ class Stream {
 	public function disable() {}
 
 	/**
-	 * @todo
 	 * @return string
 	 */
 	public function __toString() {}
@@ -53,7 +52,7 @@ class Stream {
 	 * @todo
 	 * @return Deferred
 	 */
-	public function awaitConnect() {}
+	public function awaitConnection() {}
 
 	/**
 	 * Set the read and write timeout for a Stream.
@@ -109,10 +108,15 @@ class Stream {
 	/**
 	 * Get N bytes
 	 *
-	 * @param int $count
+	 * @param int $bytes
 	 * @return string
 	 */
-	public function read($count = -1) {}
+	public function get($bytes) {}
+
+	/**
+	 * @return string
+	 */
+	public function getAll() {}
 
 	/**
 	 * @param string $token
@@ -121,7 +125,7 @@ class Stream {
 	 *
 	 * @return string
 	 */
-	public function readLine($token, $flag = self::WITHOUT_TOKEN, $max_length = 8192) {}
+	public function getLine($token, $flag = self::WITHOUT_TOKEN, $max_length = 8192) {}
 
 	/**
 	 * @todo
@@ -197,5 +201,7 @@ class Stream {
 	public function onData(callable $cb) {}
 
 	public function onClose(callable $cb) {}
+
+	public function __destruct() {}
 
 }

@@ -1,11 +1,19 @@
 <?php
 namespace ION;
 
+use ION;
+use TestCase\Server;
+
 class TestCase extends \PHPUnit_Framework_TestCase
 {
 
-	public function setUp() {
+	private $_stop;
+	private $_error;
+	public $data = [];
+	public $shared;
 
+	public function setUp() {
+		$this->data = [];
 	}
 
 	public function tearDown() {
@@ -25,6 +33,14 @@ class TestCase extends \PHPUnit_Framework_TestCase
 				$this->fail("Memory leak detected: +".implode(" B, +", $r)." B");
 			}
 		}
+	}
+
+	/**
+	 * @param string $host
+	 * @return Server
+	 */
+	public function listen($host) {
+		return new Server($host);
 	}
 
 	public function assertException($exception, $message = null, $code = null) {
@@ -54,14 +70,48 @@ class TestCase extends \PHPUnit_Framework_TestCase
 		$this->assertSame($status, $s);
 	}
 
-	public function separate(callable $callback, $wait = 0.1) {
+	/**
+	 * @param float $timeout
+	 * @param bool $timeout_as_fail
+	 */
+	public function loop($timeout = 0.5, $timeout_as_fail = true) {
+		$this->_stop = false;
+		$this->_error = null;
+		ION::stop($timeout);
+		ION::dispatch();
+		if($this->_stop) {
+			if($this->_error) {
+				$this->fail($this->_error);
+			}
+		} elseif($timeout_as_fail) {
+			$this->fail("Loop timed out. ".($this->shared ? "Data: ".var_export($this->shared, true) : ""));
+		}
+	}
+
+	public function stop($error = null) {
+		$this->_stop = true;
+		if(is_numeric($error)) {
+			ION::stop((double)$error);
+		} else {
+			$this->_error = $error;
+			ION::stop(0.1);
+		}
+
+	}
+
+	public function startWorker(callable $callback, $wait = 0.1) {
 		$pid = pcntl_fork();
 		if($pid == -1) {
 			$this->fail("Fork failed");
 		} elseif($pid) {
+			if($wait < 0) {
+				usleep(abs($wait) * 1e6);
+			}
 			return $pid;
 		} else {
-			usleep($wait * 1e6);
+			if($wait > 0) {
+				usleep($wait * 1e6);
+			}
 			try {
 				call_user_func($callback);
 			} catch(\Exception $e) {

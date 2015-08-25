@@ -160,7 +160,7 @@ class BuildRunner {
 		echo "\n** ".getcwd().": $cmd\n";
 		passthru($cmd.' 2>&1', $code);
 		if($code) {
-			throw new RuntimeException("Command $cmd failed");
+			throw new RuntimeException("Command $cmd failed", $code);
 		}
 	}
 
