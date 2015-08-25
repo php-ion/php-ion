@@ -5,6 +5,7 @@
 #include <event.h>
 
 #define ION_STREAM_FLAG_SOCKET  1
+#define ION_STREAM_FLAG_PAIR    2
 #define ION_STREAM_FLAG_READING 16
 #define ION_STREAM_FLAG_FLUSHED 32
 
@@ -16,10 +17,14 @@ typedef struct bufferevent bevent;
 
 typedef struct _ion_stream {
     zend_object      std;
-    short            flags;
-    bevent         * buffer;
-    zval           * read;
-    zval           * flush;
+    short            flags;   // flags ION_STREAM_FLAG_*
+    bevent         * buffer;  // input and output bufferevent
+    char           * token;   // token for awaitLine
+    int              token_length; // token length
+    long             length;  // bytes for reading
+    zval           * read;    // read deferred object
+    zval           * flush;   // flush deferred object
+    zval           * connect; // connection deferred object
     pionCb         * on_data;
     pionCb         * on_close;
 #ifdef ZTS
