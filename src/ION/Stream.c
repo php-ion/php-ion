@@ -351,11 +351,14 @@ void _deferred_stream_dtor(void *object, zval * zdeferred TSRMLS_DC) {
     }
 }
 
-/** public function ION\Stream::flush() : Deferred */
+/** public function ION\Stream::flush() : ION\Deferred */
 CLASS_METHOD(ION_Stream, flush) {
     ion_stream * stream = getThisInstance();
 
     CHECK_STREAM(stream);
+    if(stream->flush) {
+        RETURN_ZVAL(stream->flush, 1, 0);
+    }
     stream->flush = deferredNewInternal(NULL);
     zval_addref_p(stream->flush);
     deferredStore(stream->flush, stream, _deferred_stream_dtor);
@@ -389,7 +392,7 @@ int _ion_stream_search(struct evbuffer_ptr * result, struct evbuffer * buffer, c
 #define ion_stream_search(result, buffer, token, token_len, offset, length) \
     _ion_stream_search(result, buffer, token, (size_t) token_len, (size_t) offset, (size_t) length)
 
-/** public function ION\Stream::search(string $token, int $length = 0, int $offset = 0) : bool */
+/** public function ION\Stream::search(string $token, int $length = 0, int $offset = 0) : int|bool */
 CLASS_METHOD(ION_Stream, search) {
     ion_stream * stream = getThisInstance();
     char * token;
@@ -428,7 +431,7 @@ METHOD_ARGS_BEGIN(ION_Stream, search, 1)
     METHOD_ARG(offset, 0)
 METHOD_ARGS_END()
 
-/** public function ION\Stream::getSize(int $type = ION::READ) : bool */
+/** public function ION\Stream::getSize(int $type = ION::READ) : string|bool */
 CLASS_METHOD(ION_Stream, getSize) {
     ion_stream * stream = getThisInstance();
     long type = EV_READ;
@@ -453,7 +456,7 @@ METHOD_ARGS_BEGIN(ION_Stream, getSize, 0)
     METHOD_ARG(type, 0)
 METHOD_ARGS_END()
 
-/** public function ION\Stream::read(int $bytes = -1) : bool */
+/** public function ION\Stream::read(int $bytes) : string */
 CLASS_METHOD(ION_Stream, read) {
     ion_stream * stream = getThisInstance();
     long length = -1;
@@ -489,7 +492,14 @@ METHOD_ARGS_BEGIN(ION_Stream, read, 0)
     METHOD_ARG(bytes, 0)
 METHOD_ARGS_END()
 
-/** public function ION\Stream::readLine(string $token, $mode = self::WITHOUT_TOKEN, $max_length = 8192) : bool */
+/** public function ION\Stream::readAll() : string */
+CLASS_METHOD(ION_Stream, readAll) {
+
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, readAll);
+
+/** public function ION\Stream::readLine(string $token, $mode = self::WITHOUT_TOKEN, $max_length = 8192) : string|bool */
 CLASS_METHOD(ION_Stream, readLine) {
     ion_stream * stream = getThisInstance();
     char * data;
@@ -550,21 +560,106 @@ METHOD_ARGS_BEGIN(ION_Stream, readLine, 1)
     METHOD_ARG(max_length, 0)
 METHOD_ARGS_END()
 
+/** public function ION\Stream::await(int $bytes) : ION\Deferred */
+CLASS_METHOD(ION_Stream, await) {
+
+}
+
+METHOD_ARGS_BEGIN(ION_Stream, await, 1)
+    METHOD_ARG(bytes, 0)
+METHOD_ARGS_END()
+
+/** public function ION\Stream::awaitLine(string $token, $mode = self::WITHOUT_TOKEN, $max_length = 8192) : ION\Deferred */
+CLASS_METHOD(ION_Stream, awaitLine) {
+
+}
+
+METHOD_ARGS_BEGIN(ION_Stream, awaitLine, 1)
+    METHOD_ARG(token, 0)
+    METHOD_ARG(mode, 0)
+    METHOD_ARG(max_length, 0)
+METHOD_ARGS_END()
+
+/** public function ION\Stream::awaitAll(int $bytes) : ION\Deferred */
+CLASS_METHOD(ION_Stream, awaitAll) {
+
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, awaitAll)
+
+/** public function ION\Stream::shutdown() : self */
+CLASS_METHOD(ION_Stream, shutdown) {
+
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, shutdown)
+
+/** public function ION\Stream::onData(callable $callback) : self */
+CLASS_METHOD(ION_Stream, onData) {
+
+}
+
+METHOD_ARGS_BEGIN(ION_Stream, onData, 1)
+    METHOD_ARG(callback, 0)
+METHOD_ARGS_END()
+
+/** public function ION\Stream::onClose(callable $callback) : self */
+CLASS_METHOD(ION_Stream, onClose) {
+
+}
+
+METHOD_ARGS_BEGIN(ION_Stream, onClose, 1)
+    METHOD_ARG(callback, 0)
+METHOD_ARGS_END()
+
+/** public function ION\Stream::ensureSSL(ION\SSL $ssl) : self */
+CLASS_METHOD(ION_Stream, ensureSSL) {
+
+}
+
+METHOD_ARGS_BEGIN(ION_Stream, ensureSSL, 1)
+    METHOD_ARG(ssl, 0)
+METHOD_ARGS_END()
+
+/** public function ION\Stream::getRemotePeer() : string */
+CLASS_METHOD(ION_Stream, getRemotePeer) {
+
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, getRemotePeer)
+
+/** public function ION\Stream::getLocalPeer() : string */
+CLASS_METHOD(ION_Stream, getLocalPeer) {
+
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, getLocalPeer)
+
 CLASS_METHODS_START(ION_Stream)
-    METHOD(ION_Stream, resource,     ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Stream, pair,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Stream, socket,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Stream, enable,       ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, disable,      ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, setTimeouts,  ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, setPriority,  ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, write,        ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, sendFile,     ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, flush,        ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, search,       ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, getSize,      ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, read,         ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, readLine,     ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, resource,      ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Stream, pair,          ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Stream, socket,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Stream, enable,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, disable,       ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, setTimeouts,   ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, setPriority,   ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, write,         ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, sendFile,      ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, flush,         ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, search,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getSize,       ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, read,          ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, readAll,       ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, readLine,      ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, await,         ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, awaitAll,      ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, awaitLine,     ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, shutdown,      ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, onData,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, onClose,       ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, ensureSSL,     ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getRemotePeer, ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getLocalPeer,  ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Stream) {
