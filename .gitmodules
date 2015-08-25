@@ -1,3 +1,6 @@
 [submodule "src/externals/SkipList"]
 	path = src/externals/SkipList
 	url = git://github.com/silentbicycle/skiplist
+[submodule "src/externals/jemalloc"]
+	path = src/externals/jemalloc
+	url = git@github.com:jemalloc/jemalloc.git
