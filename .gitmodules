@@ -4,3 +4,6 @@
 [submodule "src/externals/jemalloc"]
 	path = src/externals/jemalloc
 	url = git@github.com:jemalloc/jemalloc.git
+[submodule "src/externals/libevent"]
+	path = src/externals/libevent
+	url = git@github.com:libevent/libevent.git
