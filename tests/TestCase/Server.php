@@ -43,7 +43,7 @@ class Server {
 				}
 				return $pid;
 			} else {
-				\ION::reinit(\ION::RECREATE_BASE);
+				\ION::reinit();
 				if($this->timeout > 0) {
 					usleep($this->timeout * 1e6);
 				}

@@ -8,6 +8,9 @@ class Stream {
 	const MODE_WITH_TOKEN    = 2;
 	const MODE_WITHOUT_TOKEN = 3;
 
+	const INPUT = 0x02;
+	const OUTPUT = 0x04;
+
 	/**
 	 * @param resource $resource
 	 *
@@ -102,8 +105,9 @@ class Stream {
 
 	/**
 	 * @param int $type
+	 * @return int
 	 */
-	public function getSize($type = \ION::READ) {}
+	public function getSize($type = self::INPUT) {}
 
 	/**
 	 * Get N bytes

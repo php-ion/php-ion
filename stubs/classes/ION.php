@@ -13,35 +13,50 @@ class ION {
     /**
      * Version of ION
      * */
-    const VERSION = '1.0';
+    const VERSION = 'x.y';
 
-    /**
-     * Version of ION as integer
-     * */
     const VERSION_INT = 100;
 
     /**
      * Block until we have an active event, then exit once all active events have had their callbacks run.
      * */
-    const ONCE = 1;
+    const LOOP_ONCE = 1;
 
     /**
      * Do not block: see which events are ready now, run the callbacks of the highest-priority ones, then exit.
      * */
-    const NONBLOCK = 2;
-    const READ = 1;
-    const WRITE = 2;
-    const PERSIST = 4;
-    const EV_ET = 8;
+    const LOOP_NONBLOCK = 2;
+
+	/**
+	 * Indicates that a timeout has occurred.
+	 */
+	const EV_TIMEOUT = 0x01;
+	/**
+	 * Wait for a socket or FD to become readable
+	 */
+	const EV_READ = 0x02;
+	/**
+	 * Wait for a socket or FD to become writeable
+	 */
+	const EV_WRITE = 0x04;
+	/**
+	 * Wait for a POSIX signal to be raised
+	 */
+    const EV_SIGNAL = 0x08;
+	/**
+	 * Persistent event
+	 */
+	const EV_PERSIST = 0x10;
+//	const EV_ET = 0x20;
     
     /**
      * Reinit timer events
      */
-    const REINIT_TIMERS = 1;
+//    const REINIT_TIMERS = 1;
     /**
      * Reinit signal events
      */
-    const REINIT_SIGNALS = 2;
+//    const REINIT_SIGNALS = 2;
 
     /**
      * Reinitialize the event dispatcher after a fork.

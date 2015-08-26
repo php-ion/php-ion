@@ -20,15 +20,16 @@ class TestCase extends \PHPUnit_Framework_TestCase
 		$method = new \ReflectionMethod($this, $this->getName(false));
 
 		if(strpos($method->getDocComment(), "@memcheck")) {
-			$memory = 0; // reserve variable
-			$r = array(0, 0);
+			$memory = 0; // allocate variable
+			$zero = 0; // allocate zero value
+			$r = array(0, 0);  // allocate result
 
 			for($i=0; $i<2; $i++) {
 				$memory = memory_get_usage();
 				$this->runTest();
 				$r[$i] = memory_get_usage() - $memory;
 				if($r[$i] < 0) { // free memory o_O
-					$r[$i] = 0;
+					$r[$i] = $zero; // this hack works - no one 8-bytes-memory-leak
 				}
 			}
 

@@ -99,15 +99,19 @@ class StreamTest extends TestCase {
 
 		$socket = Stream::socket(ION_TEST_SERVER_HOST)->enable();
 		ION::await(0.03)->then(function () use($socket, $method, $args) {
+			$this->data["size"] = $socket->getSize();
 			$this->data[$method] = call_user_func_array([$socket, $method], $args);
+			$this->data["tail_size"] = $socket->getSize();
 			$this->data["tail"]  = $socket->getAll();
 			$this->stop();
 		});
 		$this->loop();
 
 		$this->assertEquals([
-			$method   => $result,
-			"tail"    => $tail
+			"size"      => strlen($string),
+			$method     => $result,
+			"tail"      => $tail,
+			"tail_size" => strlen($tail)
 		], $this->data);
 		$this->assertWaitPID($pid);
 	}

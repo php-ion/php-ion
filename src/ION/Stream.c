@@ -466,7 +466,7 @@ METHOD_ARGS_BEGIN(ION_Stream, search, 1)
     METHOD_ARG(offset, 0)
 METHOD_ARGS_END()
 
-/** public function ION\Stream::getSize(int $type = ION::READ) : string|bool */
+/** public function ION\Stream::getSize(int $type = self::INPUT) : string|bool */
 CLASS_METHOD(ION_Stream, getSize) {
     ion_stream * stream = getThisInstance();
     long type = EV_READ;
@@ -480,7 +480,7 @@ CLASS_METHOD(ION_Stream, getSize) {
     } else if(type == EV_WRITE) {
         buffer = bufferevent_get_output(stream->buffer);
     } else {
-        ThrowRuntime("Failed to retrieve buffer", 1);
+        ThrowInvalidArgument("Invalid buffer identify");
         return;
     }
 
@@ -498,6 +498,7 @@ char * _ion_stream_read(ion_stream * stream, size_t * size) {
     if(!incoming_length) {
         data = emalloc(1);
         data[0] = '\0';
+        *size = 0;
         return data;
     }
     if(*size > incoming_length) {
@@ -805,6 +806,9 @@ PHP_MINIT_FUNCTION(ION_Stream) {
     PION_CLASS_CONST_LONG(ION_Stream, "MODE_TRIM_TOKEN", ION_STREAM_MODE_TRIM_TOKEN);
     PION_CLASS_CONST_LONG(ION_Stream, "MODE_WITH_TOKEN", ION_STREAM_MODE_WITH_TOKEN);
     PION_CLASS_CONST_LONG(ION_Stream, "MODE_WITHOUT_TOKEN", ION_STREAM_MODE_WITHOUT_TOKEN);
+
+    PION_CLASS_CONST_LONG(ION_Stream, "INPUT",  EV_READ);
+    PION_CLASS_CONST_LONG(ION_Stream, "OUTPUT", EV_WRITE);
     return SUCCESS;
 }
 
