@@ -5,13 +5,13 @@
 void _ion_stream_data(bevent *bev, void *ctx) {
     ion_stream *stream = (ion_stream *)ctx;
     TSRMLS_FETCH_FROM_CTX(stream->thread_ctx);
-    PHPDBG("_ion_stream_data happened");
+    IONF("new data vailable");
 }
 
 void _ion_stream_empty(bevent *bev, void *ctx) {
     ion_stream *stream = (ion_stream *)ctx;
     TSRMLS_FETCH_FROM_CTX(stream->thread_ctx);
-    PHPDBG("_ion_stream_empty happened");
+    IONF("all data sent");
     if(stream->flush) {
         zval *result;
         ALLOC_LONG_ZVAL(result, 0);
@@ -26,7 +26,7 @@ void _ion_stream_empty(bevent *bev, void *ctx) {
 void _ion_stream_notify(bevent *bev, short what, void *ctx) {
     ion_stream *stream = (ion_stream *)ctx;
     TSRMLS_FETCH_FROM_CTX(stream->thread_ctx);
-    PHPDBG("_ion_stream_notify happened");
+    IONF("stream note");
 
 }
 
@@ -397,28 +397,41 @@ CLASS_METHOD(ION_Stream, flush) {
 
 METHOD_WITHOUT_ARGS(ION_Stream, flush)
 
-int _ion_stream_search(struct evbuffer_ptr * result, struct evbuffer * buffer, char * token, size_t token_len, size_t offset, size_t length) {
-    struct evbuffer_ptr * ptr_length = NULL;
-    struct evbuffer_ptr * ptr_offset = NULL;
-    struct evbuffer_ptr result_ptr;
-    if(offset) {
-        if(evbuffer_ptr_set(buffer, ptr_offset, (size_t)offset, EVBUFFER_PTR_SET)) {
-            return FAILURE;
-        }
+long _ion_stream_search(long * pos, struct evbuffer * buffer, char * token, size_t token_len, size_t start, size_t length) {
+    struct evbuffer_ptr ptr_end;
+    struct evbuffer_ptr ptr_start;
+    struct evbuffer_ptr ptr_result;
+    size_t current_size = evbuffer_get_length(buffer);
+    size_t end = start + length - 1;
+    if(current_size == 0) {
+        *pos = -1;
+        return SUCCESS;
+    }
+    if(start >= current_size) {
+        *pos = -1;
+        return SUCCESS;
+    }
+    if(end >= current_size - 1) { // libevent bug? if <end> in the last element evbuffer_search_range can't find token
+        length = 0;
+    }
+
+    if(evbuffer_ptr_set(buffer, &ptr_start, start, EVBUFFER_PTR_SET) == FAILURE) {
+        return FAILURE;
     }
     if(length) {
-        if(evbuffer_ptr_set(buffer, ptr_length, (size_t)length, EVBUFFER_PTR_SET)) {
+        if(evbuffer_ptr_set(buffer, &ptr_end, end, EVBUFFER_PTR_SET) == FAILURE) {
             return FAILURE;
         }
-        *result = evbuffer_search_range(buffer, token, (size_t)token_len, ptr_offset, ptr_length);
+        ptr_result = evbuffer_search_range(buffer, token, (size_t)token_len, &ptr_start, &ptr_end);
     } else {
-        *result = evbuffer_search(buffer, token, (size_t)token_len, ptr_offset);
+        ptr_result = evbuffer_search(buffer, token, (size_t)token_len, &ptr_start);
     }
+    *pos = (long)ptr_result.pos;
     return SUCCESS;
 }
 
-#define ion_stream_search(result, buffer, token, token_len, offset, length) \
-    _ion_stream_search(result, buffer, token, (size_t) token_len, (size_t) offset, (size_t) length)
+#define ion_stream_search(pos, buffer, token, token_len, offset, length) \
+    _ion_stream_search(pos, buffer, token, (size_t) token_len, (size_t) offset, (size_t) length)
 
 /** public function ION\Stream::search(string $token, int $length = 0, int $offset = 0) : int|bool */
 CLASS_METHOD(ION_Stream, search) {
@@ -427,8 +440,8 @@ CLASS_METHOD(ION_Stream, search) {
     long token_len      = 0;
     long length         = 0;
     long offset         = 0;
+    long position       = 0;
     struct evbuffer * buffer;
-    struct evbuffer_ptr result;
 
     CHECK_STREAM(stream);
     PARSE_ARGS("s|ll", &token, &token_len, &length, &offset);
@@ -439,16 +452,15 @@ CLASS_METHOD(ION_Stream, search) {
     }
 
     buffer = bufferevent_get_input(stream->buffer);
-
-    if(ion_stream_search(&result, buffer, token, token_len, offset, length) == FAILURE) {
+    if(ion_stream_search(&position, buffer, token, token_len, offset, length) == FAILURE) {
         ThrowRuntime("Failed to get internal buffer pointer for length/offset", -1);
         return;
     }
 
-    if(result.pos < 0) {
+    if(position < 0) {
         RETURN_FALSE;
     } else {
-        RETURN_LONG(result.pos);
+        RETURN_LONG(position);
     }
 
 }
@@ -484,24 +496,22 @@ METHOD_ARGS_BEGIN(ION_Stream, getSize, 0)
     METHOD_ARG(type, 0)
 METHOD_ARGS_END()
 
-char * _ion_stream_read(ion_stream * stream, size_t size) {
+char * _ion_stream_read(ion_stream * stream, size_t * size) {
+    size_t incoming_length = evbuffer_get_length( bufferevent_get_input(stream->buffer) );
     char * data;
-    size_t read;
 
-    long incoming_length;
-    incoming_length = (long)evbuffer_get_length( bufferevent_get_input(stream->buffer) );
     if(!incoming_length) {
         data = emalloc(1);
         data[0] = '\0';
         return data;
     }
-    if(size > incoming_length) {
-        size = (size_t) incoming_length;
+    if(*size > incoming_length) {
+        *size = incoming_length;
     }
-    data = emalloc(size + 1);
-    read = bufferevent_read(stream->buffer, data, size);
-    if (read > 0) {
-        data[read] = '\0';
+    data = emalloc(*size + 1);
+    *size = bufferevent_read(stream->buffer, data, *size);
+    if (*size > 0) {
+        data[*size] = '\0';
         return data;
     } else {
         efree(data);
@@ -509,31 +519,27 @@ char * _ion_stream_read(ion_stream * stream, size_t size) {
     }
 }
 
-#define ion_stream_read(stream, size) _ion_stream_read(stream, (size_t) size)
+#define ion_stream_read(stream, size) _ion_stream_read(stream, size)
 
 /** public function ION\Stream::get(int $bytes) : string */
 CLASS_METHOD(ION_Stream, get) {
     ion_stream * stream = getThisInstance();
-    long length = -1;
-    char * data;
+    size_t length = 0;
+    char * data = NULL;
 
     CHECK_STREAM(stream);
     PARSE_ARGS("|l", &length);
 
-    if(length < 0) {
-        ThrowInvalidArgument("bytes < 0");
-        return;
-    }
     if(!length) {
         RETURN_EMPTY_STRING();
     }
 
-    data = ion_stream_read(stream, length);
+    data = ion_stream_read(stream, &length);
     if(data == NULL) {
         ThrowRuntime("Stream is unreachable", -1);
         return;
     }
-    RETURN_STRING(data, 0);
+    RETURN_STRINGL(data, length, 0);
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, get, 0)
@@ -543,17 +549,17 @@ METHOD_ARGS_END()
 /** public function ION\Stream::getAll() : string */
 CLASS_METHOD(ION_Stream, getAll) {
     ion_stream * stream = getThisInstance();
-    long length;
-    char * data;
+    size_t length;
+    char * data = NULL;
 
     CHECK_STREAM(stream);
     length = (long)evbuffer_get_length( bufferevent_get_input(stream->buffer) );
-    data = ion_stream_read(stream, length);
+    data = ion_stream_read(stream, &length);
     if(data == NULL) {
-        ThrowRuntime("Failed to reading", -1);
+        ThrowRuntime("Stream is unreachable", -1);
         return;
     }
-    RETURN_STRING(data, 0);
+    RETURN_STRINGL(data, length, 0);
 }
 
 METHOD_WITHOUT_ARGS(ION_Stream, getAll);
@@ -566,47 +572,54 @@ CLASS_METHOD(ION_Stream, getLine) {
     long token_len      = 0;
     long mode           = 0;
     long max_length     = 0;
+    long position       = 0;
     struct evbuffer * buffer;
-    struct evbuffer_ptr result;
-    size_t len;
     size_t ret;
 
     CHECK_STREAM(stream);
     PARSE_ARGS("s|ll", &token, &token_len, &mode, &max_length);
+    if(token_len == 0) {
+        RETURN_FALSE;
+    }
 
     buffer = bufferevent_get_input(stream->buffer);
 
-    if(ion_stream_search(&result, buffer, token, token_len, 0, max_length) == FAILURE) {
+    if(ion_stream_search(&position, buffer, token, token_len, 0, max_length) == FAILURE) {
         ThrowRuntime("Failed to get internal buffer pointer for length/offset", -1);
         return;
     }
 
-    if(result.pos < 0) {
+    if(position == -1) {
         RETURN_FALSE;
-    } else {
-        len = (size_t)result.pos;
-        if(len == 0) {
-            if(mode == ION_STREAN_LN_TRIM_WITH_TOKEN) {
-                RETURN_STRINGL(token, token_len, 0)
-            } else {
-                RETURN_EMPTY_STRING();
+    } else if(position == 0) {
+        if(mode & (ION_STREAN_LN_WITH_TOKEN | ION_STREAN_LN_TRIM_TOKEN)) {
+            if(evbuffer_drain(buffer, (size_t)token_len) == FAILURE) {
+                ThrowRuntime("Failed to drain token", 1);
+                return;
             }
         }
-
-        if(mode == ION_STREAN_LN_TRIM_WITH_TOKEN) {
-            len += token_len;
+        if(mode == ION_STREAN_LN_WITH_TOKEN) {
+            RETURN_STRINGL(token, token_len, 1);
+        } else {
+            RETVAL_EMPTY_STRING();
+        }
+    } else {
+        if(mode == ION_STREAN_LN_WITH_TOKEN) {
+            position += token_len;
         }
 
-        data = safe_emalloc((size_t)len + 1, sizeof(char), 1);
-        ret = bufferevent_read(stream->buffer, data, len);
+        data = emalloc((size_t)position + 1);
+        ret = bufferevent_read(stream->buffer, data, (size_t) position);
+        data[ret] = '\0';
         if(mode == ION_STREAN_LN_TRIM_TOKEN) {
             if(evbuffer_drain(buffer, (size_t)token_len) == FAILURE) {
                 efree(data);
-                ThrowRuntime("Failed to drain token", 1);
+                ThrowRuntime("Failed to trim token", 1);
+                return;
             }
         }
         if (ret > 0) {
-            RETURN_STRINGL(data, len, 0);
+            RETURN_STRINGL(data, position, 0);
         } else {
             efree(data);
             RETURN_EMPTY_STRING();
@@ -633,7 +646,6 @@ CLASS_METHOD(ION_Stream, await) {
     ion_stream * stream = getThisInstance();
     long length = 0;
     size_t current = 0;
-    char * data;
 
     CHECK_STREAM(stream);
     PARSE_ARGS("l", &length);
@@ -645,7 +657,7 @@ CLASS_METHOD(ION_Stream, await) {
     current = (long)evbuffer_get_length( bufferevent_get_input(stream->buffer) );
     stream->read = deferredNewInternal(NULL);
     zval_addref_p(stream->read);
-    deferredStore(stream->read, stream, _deferred_stream_dtor);
+    deferredStore(stream->read, stream, _deferred_stream_read_dtor);
     if(current >= length) {
         // TODO read delay
     }
@@ -796,8 +808,8 @@ CLASS_METHODS_END;
 PHP_MINIT_FUNCTION(ION_Stream) {
     PION_REGISTER_CLASS(ION_Stream, "ION\\Stream");
     PION_CLASS_CONST_LONG(ION_Stream, "MODE_TRIM_TOKEN", ION_STREAN_LN_TRIM_TOKEN);
-    PION_CLASS_CONST_LONG(ION_Stream, "MODE_WITH_TOKEN", ION_STREAN_LN_TRIM_WITH_TOKEN);
-    PION_CLASS_CONST_LONG(ION_Stream, "MODE_WITHOUT_TOKEN", ION_STREAN_LN_TRIM_WITHOUT_TOKEN);
+    PION_CLASS_CONST_LONG(ION_Stream, "MODE_WITH_TOKEN", ION_STREAN_LN_WITH_TOKEN);
+    PION_CLASS_CONST_LONG(ION_Stream, "MODE_WITHOUT_TOKEN", ION_STREAN_LN_WITHOUT_TOKEN);
     return SUCCESS;
 }
 

@@ -13,17 +13,22 @@ void ion_reinit(long flags) {
     IONF("Reinit event loop: %d. Cleanup exec events...", (int)flags);
     //zend_hash_clean(ION(execs));
 
+
+
     if(!(flags & PRESERVE_TIMERS)) {
         IONF("Cleanup timer events...");
-        zend_hash_clean(ION(timers));
+//        zend_hash_clean(ION(timers));
     }
 
     if(!(flags & PRESERVE_SIGNALS)) {
         IONF("Cleanup signal events...");
-        zend_hash_clean(ION(signals));
+//        zend_hash_clean(ION(signals));
     }
 
-    if(event_reinit(ION(base)) == FAILURE) {
+    if(flags & RECREATE_BASE) {
+        event_base_free(ION(base));
+        ION(base) = event_base_new();
+    } else if(event_reinit(ION(base)) == FAILURE) {
         php_error(E_NOTICE, "Some events could not be re-added");
     }
 }
@@ -36,7 +41,7 @@ CLASS_METHOD(ION, reinit) {
     ion_reinit(flags);
 }
 METHOD_ARGS_BEGIN(ION, reinit, 1)
-    METHOD_ARG_TYPE(flags, IS_LONG, 0, 0)
+    METHOD_ARG(flags, 0)
 METHOD_ARGS_END()
 
 /** public function ION::dispatch(int $flags = 0) : self */
@@ -148,14 +153,7 @@ PHP_MINIT_FUNCTION(ION) {
     PION_CLASS_CONST_LONG(ION, "LIBEVENT_VERSION_NUMBER",LIBEVENT_VERSION_NUMBER);
     PION_CLASS_CONST_LONG(ION, "ONCE",            EVLOOP_ONCE);
     PION_CLASS_CONST_LONG(ION, "NONBLOCK",        EVLOOP_NONBLOCK);
-//    PION_CLASS_CONST_LONG(ION_Deferred, "FAILED",    DEFERRED_FAILED);
-//    PION_CLASS_CONST_LONG(ION_Deferred, "FINISHED",  DEFERRED_FINISHED);
-//    PION_CLASS_CONST_LONG(ION_Deferred, "INTERNAL",  DEFERRED_INTERNAL);
-//    PION_CLASS_CONST_LONG(ION_Deferred, "TIMED_OUT", DEFERRED_TIMED_OUT);
-//    PION_CLASS_CONST_LONG(ION_Deferred, "REJECTED",  DEFERRED_REJECTED);
-//
-//    REGISTER_VOID_EXTENDED_CLASS(ION_Deferred_RejectException, Exception, "ION\\Deferred\\RejectException", NULL);
-//    REGISTER_VOID_EXTENDED_CLASS(ION_Deferred_TimeoutException, ION_Deferred_RejectException, "ION\\Deferred\\TimeoutException", NULL);
+    PION_CLASS_CONST_LONG(ION, "RECREATE_BASE",        RECREATE_BASE);
     return SUCCESS;
 }
 

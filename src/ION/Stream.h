@@ -9,9 +9,9 @@
 #define ION_STREAM_FLAG_READING 16
 #define ION_STREAM_FLAG_FLUSHED 32
 
-#define ION_STREAN_LN_TRIM_TOKEN         1
-#define ION_STREAN_LN_TRIM_WITH_TOKEN    2
-#define ION_STREAN_LN_TRIM_WITHOUT_TOKEN 4
+#define ION_STREAN_LN_TRIM_TOKEN    1
+#define ION_STREAN_LN_WITH_TOKEN    2
+#define ION_STREAN_LN_WITHOUT_TOKEN 4
 
 typedef struct bufferevent bevent;
 

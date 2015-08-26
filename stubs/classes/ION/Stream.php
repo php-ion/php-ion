@@ -4,9 +4,9 @@ namespace ION;
 
 
 class Stream {
-	const WITH_TOKEN    = 1;
-	const WITHOUT_TOKEN = 2;
-	const TRIM_TOKEN    = 3;
+	const MODE_TRIM_TOKEN    = 1;
+	const MODE_WITH_TOKEN    = 2;
+	const MODE_WITHOUT_TOKEN = 3;
 
 	/**
 	 * @param resource $resource

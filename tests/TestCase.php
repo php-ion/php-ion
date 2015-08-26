@@ -27,6 +27,9 @@ class TestCase extends \PHPUnit_Framework_TestCase
 				$memory = memory_get_usage();
 				$this->runTest();
 				$r[$i] = memory_get_usage() - $memory;
+				if($r[$i] < 0) { // free memory o_O
+					$r[$i] = 0;
+				}
 			}
 
 			if(array_sum($r)) {
@@ -77,8 +80,15 @@ class TestCase extends \PHPUnit_Framework_TestCase
 	public function loop($timeout = 0.5, $timeout_as_fail = true) {
 		$this->_stop = false;
 		$this->_error = null;
-		ION::stop($timeout);
+//		$stopper = ION::await($timeout)->then(function ($tmp, $error) {
+//			if(!$error) {
+//				ION::stop();
+//			}
+//		});
 		ION::dispatch();
+//		$stopper->reject("already");
+//		unset($stopper);
+//		ION::reinit(ION::RECREATE_BASE);
 		if($this->_stop) {
 			if($this->_error) {
 				$this->fail($this->_error);
