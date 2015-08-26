@@ -14,6 +14,7 @@ final class Deferred {
 	/**
 	 * Set user callback on finish deferred-event
 	 * @param callable $cb
+	 * @return self
 	 */
 	public function then(callable $cb) {}
 

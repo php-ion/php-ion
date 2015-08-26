@@ -4,14 +4,16 @@
 #include "../pion.h"
 #include <event.h>
 
+BEGIN_EXTERN_C();
+
 #define ION_STREAM_FLAG_SOCKET  1
 #define ION_STREAM_FLAG_PAIR    2
 #define ION_STREAM_FLAG_READING 16
 #define ION_STREAM_FLAG_FLUSHED 32
 
-#define ION_STREAN_LN_TRIM_TOKEN    1
-#define ION_STREAN_LN_WITH_TOKEN    2
-#define ION_STREAN_LN_WITHOUT_TOKEN 4
+#define ION_STREAM_MODE_TRIM_TOKEN    1
+#define ION_STREAM_MODE_WITH_TOKEN    2
+#define ION_STREAM_MODE_WITHOUT_TOKEN 4
 
 typedef struct bufferevent bevent;
 
@@ -43,5 +45,7 @@ typedef struct _ion_stream {
 DEFINE_CLASS(ION_Stream);
 CLASS_INSTANCE_DTOR(ION_Stream);
 CLASS_INSTANCE_CTOR(ION_Stream);
+
+END_EXTERN_C();
 
 #endif //ION_STREAM_H

@@ -125,7 +125,7 @@ class Stream {
 	 *
 	 * @return string
 	 */
-	public function getLine($token, $flag = self::WITHOUT_TOKEN, $max_length = 8192) {}
+	public function getLine($token, $flag = self::MODE_TRIM_TOKEN, $max_length = 0) {}
 
 	/**
 	 * @todo
@@ -143,7 +143,7 @@ class Stream {
 	 *
 	 * @return Deferred
 	 */
-	public function awaitLine($token, $flag = self::WITHOUT_TOKEN, $max_length = 8192) {}
+	public function awaitLine($token, $flag = self::MODE_TRIM_TOKEN, $max_length = 8192) {}
 
 	/**
 	 * @todo

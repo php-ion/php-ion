@@ -564,13 +564,13 @@ CLASS_METHOD(ION_Stream, getAll) {
 
 METHOD_WITHOUT_ARGS(ION_Stream, getAll);
 
-/** public function ION\Stream::getLine(string $token, $mode = self::WITHOUT_TOKEN, $max_length = 8192) : string|bool */
+/** public function ION\Stream::getLine(string $token, $mode = self::MODE_TRIM_TOKEN, $max_length = 0) : string|bool */
 CLASS_METHOD(ION_Stream, getLine) {
     ion_stream * stream = getThisInstance();
     char * data;
     char * token;
     long token_len      = 0;
-    long mode           = 0;
+    long mode           = ION_STREAM_MODE_TRIM_TOKEN;
     long max_length     = 0;
     long position       = 0;
     struct evbuffer * buffer;
@@ -592,26 +592,26 @@ CLASS_METHOD(ION_Stream, getLine) {
     if(position == -1) {
         RETURN_FALSE;
     } else if(position == 0) {
-        if(mode & (ION_STREAN_LN_WITH_TOKEN | ION_STREAN_LN_TRIM_TOKEN)) {
+        if(mode & (ION_STREAM_MODE_WITH_TOKEN | ION_STREAM_MODE_TRIM_TOKEN)) {
             if(evbuffer_drain(buffer, (size_t)token_len) == FAILURE) {
                 ThrowRuntime("Failed to drain token", 1);
                 return;
             }
         }
-        if(mode == ION_STREAN_LN_WITH_TOKEN) {
+        if(mode == ION_STREAM_MODE_WITH_TOKEN) {
             RETURN_STRINGL(token, token_len, 1);
         } else {
             RETVAL_EMPTY_STRING();
         }
     } else {
-        if(mode == ION_STREAN_LN_WITH_TOKEN) {
+        if(mode == ION_STREAM_MODE_WITH_TOKEN) {
             position += token_len;
         }
 
         data = emalloc((size_t)position + 1);
         ret = bufferevent_read(stream->buffer, data, (size_t) position);
         data[ret] = '\0';
-        if(mode == ION_STREAN_LN_TRIM_TOKEN) {
+        if(mode == ION_STREAM_MODE_TRIM_TOKEN) {
             if(evbuffer_drain(buffer, (size_t)token_len) == FAILURE) {
                 efree(data);
                 ThrowRuntime("Failed to trim token", 1);
@@ -668,7 +668,7 @@ METHOD_ARGS_BEGIN(ION_Stream, await, 1)
     METHOD_ARG(bytes, 0)
 METHOD_ARGS_END()
 
-/** public function ION\Stream::awaitLine(string $token, $mode = self::WITHOUT_TOKEN, $max_length = 8192) : ION\Deferred */
+/** public function ION\Stream::awaitLine(string $token, $mode = self::MODE_TRIM_TOKEN, $max_length = 0) : ION\Deferred */
 CLASS_METHOD(ION_Stream, awaitLine) {
 
 }
@@ -807,9 +807,9 @@ CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Stream) {
     PION_REGISTER_CLASS(ION_Stream, "ION\\Stream");
-    PION_CLASS_CONST_LONG(ION_Stream, "MODE_TRIM_TOKEN", ION_STREAN_LN_TRIM_TOKEN);
-    PION_CLASS_CONST_LONG(ION_Stream, "MODE_WITH_TOKEN", ION_STREAN_LN_WITH_TOKEN);
-    PION_CLASS_CONST_LONG(ION_Stream, "MODE_WITHOUT_TOKEN", ION_STREAN_LN_WITHOUT_TOKEN);
+    PION_CLASS_CONST_LONG(ION_Stream, "MODE_TRIM_TOKEN", ION_STREAM_MODE_TRIM_TOKEN);
+    PION_CLASS_CONST_LONG(ION_Stream, "MODE_WITH_TOKEN", ION_STREAM_MODE_WITH_TOKEN);
+    PION_CLASS_CONST_LONG(ION_Stream, "MODE_WITHOUT_TOKEN", ION_STREAM_MODE_WITHOUT_TOKEN);
     return SUCCESS;
 }
 
