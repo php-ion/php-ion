@@ -23,7 +23,7 @@ class Server {
 		return $this;
 	}
 
-	public function inWorker($timeout = -0.05) {
+	public function inWorker($timeout = -0.03) {
 		$this->timeout = $timeout;
 		$this->in_worker = true;
 		return $this;

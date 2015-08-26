@@ -23,6 +23,6 @@ Features:
 * Built-in connections pool
 * Asynchronous execution of external programs
 * Implementation basic process functions (fork, setgid, setuid ...)
-* Have C API
+* Has C API
 
 [Thinking about asynchronous programming](docs/philosophy.md)

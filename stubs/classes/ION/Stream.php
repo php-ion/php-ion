@@ -92,12 +92,12 @@ class Stream {
 	 * Search for a string within an incoming buffer
 	 *
 	 * @param string $token the string to be searched for
-	 * @param int $length that indicates where we should start searching
 	 * @param int $offset that indicates where we should stop searching
+	 * @param int $length that indicates where we should start searching
 	 *
 	 * @return int|false the position of where the $token exists relative to the beginning of the incoming buffer
 	 */
-	public function search($token, $length = 0, $offset = 0) {}
+	public function search($token, $offset = 0, $length = 0) {}
 
 
 	/**

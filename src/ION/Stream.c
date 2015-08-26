@@ -433,7 +433,7 @@ long _ion_stream_search(long * pos, struct evbuffer * buffer, char * token, size
 #define ion_stream_search(pos, buffer, token, token_len, offset, length) \
     _ion_stream_search(pos, buffer, token, (size_t) token_len, (size_t) offset, (size_t) length)
 
-/** public function ION\Stream::search(string $token, int $length = 0, int $offset = 0) : int|bool */
+/** public function ION\Stream::search(string $token, int $offset = 0, int $length = 0) : int|bool */
 CLASS_METHOD(ION_Stream, search) {
     ion_stream * stream = getThisInstance();
     char * token;
@@ -444,7 +444,7 @@ CLASS_METHOD(ION_Stream, search) {
     struct evbuffer * buffer;
 
     CHECK_STREAM(stream);
-    PARSE_ARGS("s|ll", &token, &token_len, &length, &offset);
+    PARSE_ARGS("s|ll", &token, &token_len, &offset, &length);
 
     if(!token_len) {
         ThrowInvalidArgument("Empty token string");
@@ -457,12 +457,7 @@ CLASS_METHOD(ION_Stream, search) {
         return;
     }
 
-    if(position < 0) {
-        RETURN_FALSE;
-    } else {
-        RETURN_LONG(position);
-    }
-
+    RETURN_LONG(position);
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, search, 1)
