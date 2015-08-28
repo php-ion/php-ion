@@ -8,10 +8,10 @@ class Process {
 	 * Create a child process and restore event loop.
 	 *
 	 * @param int $flags
-	 * @param mixed $ipc
+	 * @param Stream[] $ipc
 	 * @return int On success, the PID of the child process is returned in the parent, and 0 is returned in the child.
 	 * @see man fork
-	 * @see ION::reinit()
+	 * @see \ION::reinit()
 	 */
 	public static function fork($flags = 0, &$ipc = null) {}
 

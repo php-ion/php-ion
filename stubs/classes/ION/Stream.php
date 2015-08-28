@@ -4,16 +4,18 @@ namespace ION;
 
 
 class Stream {
-	const MODE_TRIM_TOKEN    = 1;
-	const MODE_WITH_TOKEN    = 2;
-	const MODE_WITHOUT_TOKEN = 3;
+	const MODE_TRIM_TOKEN    = 0b001;
+	const MODE_WITH_TOKEN    = 0b010;
+	const MODE_WITHOUT_TOKEN = 0b100;
 
-	const INPUT = 0x02;
-	const OUTPUT = 0x04;
+	const INPUT  = 0b010;
+	const OUTPUT = 0b100;
+	const BOTH   = 0b110;
 
 	/**
-	 * @param resource $resource
+	 * Create streams from resource of PHP stream.
 	 *
+	 * @param resource $resource
 	 * @return self
 	 */
 	public static function resource($resource) {}
@@ -28,9 +30,27 @@ class Stream {
 	public static function socket($host) {}
 
 	/**
+	 * Create a pair of linked streams.
+	 * The streams behave as would two sockets connected to opposite ends of each other.
+	 *
 	 * @return self[]
 	 */
 	public static function pair() {}
+
+	/**
+	 *
+	 */
+	private function _input() {}
+
+	/**
+	 *
+	 */
+	private function _output() {}
+
+	/**
+	 *
+	 */
+	private function _notify() {}
 
 	/**
 	 * Activate stream for listening events
@@ -63,6 +83,7 @@ class Stream {
 	 * read or write operation, during which the Stream was trying to read or write.
 	 * @param double $read_timeout
 	 * @param double $write_timeout
+	 * @return self
 	 */
 	public function setTimeouts($read_timeout, $write_timeout) {}
 
@@ -70,12 +91,14 @@ class Stream {
 	 * Assign a priority to a stream.
 	 * Only supported for socket streams.
 	 * @param int $priority
+	 * @return self
 	 */
 	public function setPriority($priority) {}
 
 	/**
 	 * @todo
 	 * @param mixed $ssl
+	 * @return self
 	 */
 	public function ensureSSL($ssl) {}
 
@@ -207,5 +230,12 @@ class Stream {
 	public function onClose(callable $cb) {}
 
 	public function __destruct() {}
+
+	/**
+	 * Append data to input buffer.
+	 * Available only in debug mode!
+	 * @param string $data
+	 */
+	public function appendToInput($data) {}
 
 }

@@ -7,6 +7,7 @@ use ION;
 class StreamTest extends TestCase {
 
 	/**
+	 * @group dev
 	 * @memcheck
 	 */
 	public function testCreatePair() {
@@ -136,7 +137,6 @@ class StreamTest extends TestCase {
 	}
 
 	/**
-	 * @group dev
 	 * @memcheck
 	 * @dataProvider providerString
 	 * @param $string
@@ -158,6 +158,50 @@ class StreamTest extends TestCase {
 		$this->loop();
 
 		$this->assertEquals($position, $this->data['search']);
+		$this->assertWaitPID($pid);
+	}
+
+	public function providerAwaits() {
+		$string = "0123456789";
+		return array(
+			0  => [$string, "await", [5],                                        "01234", "56789"],
+			1  => [$string, "await", [10],                                       "0123456789", ""],
+			2  => [$string, "await", [16],                                       "0123456789", ""],
+		);
+	}
+
+	/**
+	 * @memcheck
+	 * @dataProvider providerAwaits
+	 * @param string $string
+	 * @param string $method
+	 * @param array $args
+	 * @param string $result
+	 * @param string $tail
+	 */
+	public function _testAwaits($string, $method, $args, $result, $tail) {
+		$pid = $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) use ($string) {
+			fwrite($connect, $string);
+		})->start();
+
+		$this->data = [];
+
+		$socket = Stream::socket(ION_TEST_SERVER_HOST)->enable();
+		ION::await(0.02)->then(function () use($socket, $method, $args) {
+			$this->data["one.".$method] = call_user_func_array([$socket, $method], $args);
+			$this->data["one.tail"]  = $socket->getAll();
+		});
+		ION::await(0.04)->then(function () use($socket, $method, $args) {
+			$this->data["two.".$method] = call_user_func_array([$socket, $method], $args);
+			$this->data["two.tail"]  = $socket->getAll();
+			$this->stop();
+		});
+		$this->loop();
+
+		$this->assertEquals([
+			$method     => $result,
+			"tail"      => $tail,
+		], $this->data);
 		$this->assertWaitPID($pid);
 	}
 }

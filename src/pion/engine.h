@@ -6,6 +6,22 @@
 #define CE(class) \
     c ## class
 
+#define ion_class_entry(cls) \
+    c ## cls
+
+#define ion_class_handlers(cls) \
+    h ## cls
+
+#define ion_define_class_entry(cls) \
+    zend_class_entry *c ## class;
+
+#define ion_define_class_handlers(cls) \
+    zend_object_handlers h ## class;
+
+#define ION_DEFINE_CLASS(cls)    \
+    zend_class_entry *c ## cls; \
+    zend_object_handlers h ## cls;
+
 #define DEFINE_CLASS(class) \
     zend_class_entry *c ## class; \
     zend_object_handlers h ## class;

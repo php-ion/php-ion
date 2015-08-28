@@ -75,7 +75,7 @@ class BuildRunner {
 			} else {
 				$group = "";
 			}
-			$this->exec(PHP_BINARY." -dextension=".dirname(__DIR__)."/src/modules/ion.so vendor/bin/phpunit --stop-on-failure $group ".$this->getOption('test', 't', ''));
+			$this->exec(PHP_BINARY." -dextension=".dirname(__DIR__)."/src/modules/ion.so vendor/bin/phpunit --colors=never $group ".$this->getOption('test', 't', ''));
 		}
 
 	}

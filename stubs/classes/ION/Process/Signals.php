@@ -129,7 +129,5 @@ class Signals {
 	 */
 	const SIGSYS = 30;
 
-	public static function getSignalNameByNo($no) {
-
-	}
+	public static function getSignalNameByNo($no) {}
 }

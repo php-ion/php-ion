@@ -6,11 +6,21 @@
 
 BEGIN_EXTERN_C();
 
-#define ION_STREAM_FLAG_SOCKET  1
-#define ION_STREAM_FLAG_PAIR    2
-#define ION_STREAM_FLAG_READING 16
-#define ION_STREAM_FLAG_FLUSHED 32
+// stream types
+#define ION_STREAM_FLAG_SOCKET    1<<0
+#define ION_STREAM_FLAG_PAIR      1<<1
 
+// reading and writing states
+#define ION_STREAM_FLAG_READING   1<<4
+#define ION_STREAM_FLAG_FLUSHED   1<<5
+#define ION_STREAM_FLAG_HAS_DATA  1<<6
+
+// runtime stream states
+#define ION_STREAM_FLAG_CONNECTED 1<<10
+#define ION_STREAM_FLAG_CLOSED    1<<11
+#define ION_STREAM_FLAG_ERROR     1<<12
+
+// mode for line reading (getLine() and awaitLine())
 #define ION_STREAM_MODE_TRIM_TOKEN    1
 #define ION_STREAM_MODE_WITH_TOKEN    2
 #define ION_STREAM_MODE_WITHOUT_TOKEN 4
@@ -19,14 +29,16 @@ typedef struct bufferevent bevent;
 
 typedef struct _ion_stream {
     zend_object      std;
-    short            flags;   // flags ION_STREAM_FLAG_*
+    short            state;   // flags ION_STREAM_FLAG_*
     bevent         * buffer;  // input and output bufferevent
     char           * token;   // token for awaitLine
     int              token_length; // token length
     long             length;  // bytes for reading
+    long             offset;  // offset for reading next chunk while awaiting
     zval           * read;    // read deferred object
-    zval           * flush;   // flush deferred object
+    zval           * flush;   // state deferred object
     zval           * connect; // connection deferred object
+    zval           * self;
     pionCb         * on_data;
     pionCb         * on_close;
 #ifdef ZTS
@@ -40,9 +52,17 @@ typedef struct _ion_stream {
 #define STREAM_BUFFER_DEFAULT_FLAGS BEV_OPT_DEFER_CALLBACKS
 //#endif
 
+#define ion_stream_new(buffer, state)                  _ion_stream_new(buffer, state, NULL TSRMLS_CC)
+#define ion_stream_new_ex(buffer, state, class_entry)  _ion_stream_new(buffer, state, class_entry TSRMLS_CC)
+#define ion_stream_zval(zstream, buffer, state, class_entry)    _ion_stream_zval(zstream, buffer, state, NULL TSRMLS_CC)
+#define ion_stream_zval_ex(zstream, buffer, state, class_entry) _ion_stream_zval(zstream, buffer, state, class_entry TSRMLS_CC)
+
+int    _ion_stream_zval(zval * zstream, bevent * buffer, short flags, zend_class_entry * cls TSRMLS_DC);
+zval * _ion_stream_new(bevent * buffer, short flags, zend_class_entry * cls TSRMLS_DC);
+
 #define CHECK_STREAM(stream)
 
-DEFINE_CLASS(ION_Stream);
+ion_define_class_entry(ION_Streams);
 CLASS_INSTANCE_DTOR(ION_Stream);
 CLASS_INSTANCE_CTOR(ION_Stream);
 

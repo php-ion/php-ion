@@ -29,6 +29,8 @@ static const zend_module_dep ion_depends[] = {
 };
 
 
+#ifdef ION_DEBUG
+
 ZEND_API void * _php_emalloc(size_t size) {
     return emalloc(size);
 }
@@ -40,6 +42,8 @@ ZEND_API void * _php_realloc(void * nmemb, size_t size) {
 ZEND_API void _php_efree(void * ptr) {
     efree(ptr);
 }
+
+#endif
 
 static void _engine_log(int severity, const char *msg) {
     switch (severity) {
@@ -64,7 +68,7 @@ static void _engine_fatal(int err) {
     _exit(err);
 }
 
-#ifdef PION_FUNCTIONS
+#ifdef ION_DEBUG
 // PION framework functions for testing
 
 PHP_FUNCTION(pionCbCreate) {
@@ -127,7 +131,9 @@ zend_module_entry ion_module_entry = {
 
 /* Init module callback */
 PHP_MINIT_FUNCTION(ion) {
-//    event_set_mem_functions(_php_emalloc, _php_realloc, _php_efree);
+#ifdef ION_DEBUG
+    event_set_mem_functions(_php_emalloc, _php_realloc, _php_efree);
+#endif
     event_set_log_callback(_engine_log);
     event_set_fatal_callback(_engine_fatal);
 
@@ -215,7 +221,7 @@ PHP_MINFO_FUNCTION(ion) {
     php_info_print_table_row(2, "ion.engine", ION_EVENT_ENGINE);
     php_info_print_table_row(2, "ion.engine.version", event_get_version());
     php_info_print_table_row(2, "ion.engine.builtin", "no");
-    php_info_print_table_row(2, "ion.engine.method", event_base_get_method(base));
+//    php_info_print_table_row(2, "ion.engine.method", event_base_get_method(base));
 #ifdef _EVENT_HAVE_SENDFILE
     php_info_print_table_row(2, "ion.engine.sendfile", "sendfile");
 #elif _EVENT_HAVE_MMAP
