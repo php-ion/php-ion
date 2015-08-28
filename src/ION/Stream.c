@@ -28,7 +28,7 @@ void _ion_stream_input(bevent * bev, void * ctx) {
                 read = (size_t)stream->length;
                 data = ion_stream_read(stream, &read);
                 ALLOC_STRINGL_ZVAL(zresult, data, read, 0);
-                deferredResolve(stream->read, zresult);
+                ion_deferred_done(stream->read, zresult);
                 zval_ptr_dtor(&zresult);
                 zval_ptr_dtor(&stream->read);
                 stream->read = NULL;
@@ -56,7 +56,7 @@ void _ion_stream_output(bevent *bev, void *ctx) {
     if(stream->flush) {
         zval *result;
         ALLOC_LONG_ZVAL(result, 0);
-        deferredResolve(stream->flush, result);
+        ion_deferred_done(stream->flush, result);
         zval_ptr_dtor(&result);
         zval_ptr_dtor(&stream->flush);
         stream->flush = NULL;
@@ -98,11 +98,11 @@ int _ion_stream_zval(zval * zstream, bevent * buffer, short flags, zend_class_en
     return SUCCESS;
 }
 
-void ion_stream_set_buffer(ion_stream * stream, bevent * buffer, short flags) {
-    stream->buffer = buffer;
-    stream->state |= flags;
-    bufferevent_setcb(stream->buffer, _ion_stream_input, _ion_stream_output, _ion_stream_notify, (void *) stream);
-}
+//void ion_stream_set_buffer(ion_stream * stream, bevent * buffer, short flags) {
+//    stream->buffer = buffer;
+//    stream->state |= flags;
+//    bufferevent_setcb(stream->buffer, _ion_stream_input, _ion_stream_output, _ion_stream_notify, (void *) stream);
+//}
 
 
 char * _ion_stream_read(ion_stream * stream, size_t * size) {
@@ -132,18 +132,18 @@ char * _ion_stream_read(ion_stream * stream, size_t * size) {
 CLASS_INSTANCE_DTOR(ION_Stream) {
     ion_stream * stream = getInstanceObject(ion_stream *);
     if(stream->flush) {
-        deferredFree(stream->flush);
+        ion_deferred_free(stream->flush);
         zval_ptr_dtor(&stream->flush);
     }
     if(stream->read) {
-        deferredFree(stream->read);
+        ion_deferred_free(stream->read);
         zval_ptr_dtor(&stream->read);
         if(stream->token) {
             efree(stream->token);
         }
     }
     if(stream->connect) {
-        deferredFree(stream->connect);
+        ion_deferred_free(stream->connect);
         zval_ptr_dtor(&stream->connect);
     }
     if(stream->buffer) {
@@ -475,9 +475,9 @@ CLASS_METHOD(ION_Stream, flush) {
         RETURN_ZVAL(stream->flush, 1, 0);
     }
 
-    stream->flush = deferredNewInternal(NULL);
+    stream->flush = ion_deferred_new_ex(NULL);
     zval_addref_p(stream->flush);
-    deferredStore(stream->flush, stream, _deferred_stream_dtor);
+    ion_deferred_store(stream->flush, stream, _deferred_stream_dtor);
     if(stream->state & ION_STREAM_FLAG_FLUSHED) {
         // TODO state delay
     }
@@ -693,6 +693,7 @@ METHOD_ARGS_END()
 
 void _deferred_stream_read_dtor(void *object, zval * zdeferred TSRMLS_DC) {
     ion_stream * stream = (ion_stream *) object;
+    bufferevent_setwatermark(stream->buffer, EV_READ, 0, 0);
     if(stream->read) {
         zval_ptr_dtor(&stream->read);
         if(stream->token) {
@@ -718,11 +719,13 @@ CLASS_METHOD(ION_Stream, await) {
     }
 
     current = (long)evbuffer_get_length( bufferevent_get_input(stream->buffer) );
-    stream->read = deferredNewInternal(NULL);
+    stream->read = ion_deferred_new_ex(NULL);
     zval_addref_p(stream->read);
-    deferredStore(stream->read, stream, _deferred_stream_read_dtor);
+    ion_deferred_store(stream->read, stream, _deferred_stream_read_dtor);
     if(current >= length) {
         // TODO read delay
+    } else {
+        bufferevent_setwatermark(stream->buffer, EV_READ, length - current, length - current + 1);
     }
     RETURN_ZVAL(stream->read, 1, 0);
 }
@@ -802,12 +805,12 @@ METHOD_WITHOUT_ARGS(ION_Stream, getLocalPeer)
 CLASS_METHOD(ION_Stream, __destruct) {
     ion_stream * stream = getThisInstance();
     if(stream->flush) {
-        deferredReject(stream->flush, "The stream shutdown by the destructor");
+        ion_deferred_reject(stream->flush, "The stream shutdown by the destructor");
         zval_ptr_dtor(&stream->flush);
         stream->flush = NULL;
     }
     if(stream->read) {
-        deferredReject(stream->read, "The stream shutdown by the destructor");
+        ion_deferred_reject(stream->read, "The stream shutdown by the destructor");
         zval_ptr_dtor(&stream->read);
         stream->read = NULL;
         if(stream->token) {
@@ -816,7 +819,7 @@ CLASS_METHOD(ION_Stream, __destruct) {
         }
     }
     if(stream->connect) {
-        deferredReject(stream->connect, "The stream shutdown by the destructor");
+        ion_deferred_reject(stream->connect, "The stream shutdown by the destructor");
         zval_ptr_dtor(&stream->connect);
         stream->connect = NULL;
     }

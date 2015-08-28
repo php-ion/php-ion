@@ -270,7 +270,7 @@ typedef struct _ion_exec {
 //            } else {
 //                add_assoc_stringl(result, "stderr", "", 0, 1);
 //            }
-//            deferredResolve(exec->defer, result);
+//            ion_deferred_done(exec->defer, result);
 //            zval_ptr_dtor(&result);
 //        } else {
 //            // @todo call ion_defer_fail()
@@ -365,7 +365,7 @@ typedef struct _ion_exec {
 //        }
 //        bufferevent_setwatermark(exec->err, EV_READ, 0x1000000, 0x1000000);
 //        exec->defer = deferredNewInternal(_ion_exec_cancel, 1);
-//        deferredStore(exec->defer, exec, NULL);
+//        ion_deferred_store(exec->defer, exec, NULL);
 //        zval_add_ref(&exec->defer);
 //        RETURN_ZVAL(exec->defer, 1, 0);
 //    } else { // child

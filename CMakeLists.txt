@@ -42,4 +42,4 @@ set(ION_SOURCE_FILES
 
 add_library(ion ${ION_SOURCE_FILES})
 add_dependencies(ion external_ion)
-include_directories("/opt/local/include" "/opt/local/include/php56/php" "/opt/local/include/php56/php/main" "/opt/local/include/php56/php/Zend" "/opt/local/include/php56/php/TSRM")
+include_directories("/opt/local/include" "/opt/local/include/php56/php" "/opt/local/include/php56/php/main" "/opt/local/include/php56/php/Zend" "/opt/local/include/php56/php/TSRM" "/opt/local/var/macports/build/_opt_local_var_macports_sources_rsync.macports.org_release_tarballs_ports_devel_libevent/libevent/work/libevent-2.0.22-stable/")
