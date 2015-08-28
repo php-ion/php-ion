@@ -32,7 +32,7 @@ int pionCbVoidWith3Args(pionCb *cb, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC
 int pionCbVoidWith4Args(pionCb *cb, zval *arg1, zval *arg2, zval *arg3, zval *arg4 TSRMLS_DC);
 
 int   pionCallConstructor(zend_class_entry *class_name, zval *object, int num_args, zval ***args TSRMLS_DC);
-#define pionCallConstructorWithoutArgs(cls, object)  pionCallConstructor(cls, object, 0, NULL TSRMLS_DC)
+#define pionCallConstructorWithoutArgs(cls, object)  pionCallConstructor(cls, object, 0, NULL TSRMLS_CC)
 
 /* Create an object */
 zval* pionNewObject(zend_class_entry *ce, int num_args, zval ***args TSRMLS_DC);
