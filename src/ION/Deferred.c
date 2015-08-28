@@ -103,7 +103,7 @@ void _ion_deferred_reject(zval *zDeferred, const char *message TSRMLS_DC) {
     CALL_OBJECT_DTOR(deferred, zDeferred);
 }
 
-int _ion_deferred_dequeue(TSRMLS_CC) {
+int _ion_deferred_dequeue(TSRMLS_C) {
 
     return SUCCESS;
 }

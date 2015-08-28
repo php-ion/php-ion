@@ -23,7 +23,7 @@ void * _ion_deferred_store_get(zval *zDeferred TSRMLS_DC);
 void   _ion_deferred_resolve(zval *zDeferred, zval *zResult, short type TSRMLS_DC);
 void   _ion_deferred_reject(zval *zDeferred, const char *message TSRMLS_DC);
 void   _ion_deferred_free(zval *zDeferred TSRMLS_DC);
-int    _ion_deferred_dequeue(TSRMLS_DC);
+int    _ion_deferred_dequeue(TSRMLS_D);
 
 #define ion_deferred_new(zcancel_cb)                        _ion_deferred_new(cancel_cb TSRMLS_CC)
 #define ion_deferred_new_ex(cancel_cb)                      _ion_deferred_new_ex(cancel_cb TSRMLS_CC)
