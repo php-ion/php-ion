@@ -12,7 +12,7 @@ char * _ion_stream_read(ion_stream * stream, size_t * size);
 long _ion_stream_search(long * pos, struct evbuffer * buffer, char * token, size_t token_len, size_t start, size_t length);
 
 void _ion_stream_input(bevent * bev, void * ctx) {
-    ion_stream * stream = (ion_stream *)ctx
+    ion_stream * stream = (ion_stream *)ctx;
     TSRMLS_FETCH_FROM_CTX(stream->thread_ctx);
     struct evbuffer * buffer;
     char * data = NULL;
