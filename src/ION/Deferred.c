@@ -1,5 +1,6 @@
 #include "Deferred.h"
 
+
 #define CALL_OBJECT_DTOR(deferred, zDeferred)                          \
     if(deferred->object && deferred->object_dtor) {                    \
         deferred->object_dtor(deferred->object, zDeferred TSRMLS_CC);  \
@@ -100,6 +101,11 @@ void _ion_deferred_reject(zval *zDeferred, const char *message TSRMLS_DC) {
     }
     CLEAN_DEFERRED(deferred);
     CALL_OBJECT_DTOR(deferred, zDeferred);
+}
+
+int _ion_deferred_dequeue(TSRMLS_DC) {
+
+    return SUCCESS;
 }
 
 

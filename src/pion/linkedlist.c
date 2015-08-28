@@ -2,18 +2,18 @@
 #include <php.h>
 
 
-pionLList *pionLListInit() {
-    pionLList *list = emalloc(sizeof(pionLList));
+pion_llist *pion_llist_init() {
+    pion_llist *list = emalloc(sizeof(pion_llist));
     list->tail = list->head = NULL;
     return list;
 }
 
-void pionLListFree(pionLList *list) {
+void pion_llist_free(pion_llist *list) {
     efree(list);
 }
 
-void pionLListRPush(pionLList *list, void *data) {
-    pionLListItem *item = emalloc(sizeof(pionLListItem));
+void pion_llist_rpush(pion_llist * list, void * data) {
+    pion_llist_item * item = emalloc(sizeof(pion_llist_item));
     item->data = data;
     item->next  = NULL;
     if(list->tail) { // append item
@@ -26,8 +26,8 @@ void pionLListRPush(pionLList *list, void *data) {
     }
 }
 
-void pionLListLPush(pionLList *list, void *data) {
-    pionLListItem *item = emalloc(sizeof(pionLListItem));
+void pion_llist_lpush(pion_llist * list, void * data) {
+    pion_llist_item * item = emalloc(sizeof(pion_llist_item));
     item->data = data;
     item->prev  = NULL;
     if(list->head) { // prepend item
@@ -41,8 +41,8 @@ void pionLListLPush(pionLList *list, void *data) {
 
 }
 
-void* pionLListLPop(pionLList *list) {
-    pionLListItem *item;
+void * pion_llist_lpop(pion_llist *list) {
+    pion_llist_item *item;
     void *data = NULL;
     if(list->head == NULL) {
         return NULL;
@@ -59,8 +59,8 @@ void* pionLListLPop(pionLList *list) {
     return data;
 }
 
-void* pionLListRPop(pionLList *list) {
-    pionLListItem *item;
+void * pion_llist_rpop(pion_llist *list) {
+    pion_llist_item *item;
     void *data = NULL;
     if(list->tail == NULL) {
         return NULL;

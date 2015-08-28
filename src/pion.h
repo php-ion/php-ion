@@ -20,7 +20,7 @@ typedef struct _ion_base {
     HashTable *timers;           // array of timers
     HashTable *execs;            // array of process childs
 //    struct event *sigsegv;
-//    pionLList *queue;                // queue of defers object
+//    pion_llist *queue;                // queue of defers object
 #ifdef ZTS
     void ***thread_ctx;
 #endif
@@ -30,6 +30,19 @@ extern IONBase *ionBase;
 
 #define ION(prop) \
     ionBase->prop
+
+#define ion_loop_break() event_base_loopbreak(ION(base))
+
+#define ION_CHECK_LOOP()                 \
+    if(EG(exception)) {                  \
+        event_base_loopbreak(ION(base)); \
+    }
+
+#define ION_CHECK_LOOP_RETURN()          \
+    if(EG(exception)) {                  \
+        event_base_loopbreak(ION(base)); \
+        return;                          \
+    }
 
 
 #define SET_TIMEVAL(tval, dval)                          \

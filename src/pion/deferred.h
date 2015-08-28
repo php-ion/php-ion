@@ -6,10 +6,11 @@
 #define ION_DEFERRED_RESOLVED  1
 #define ION_DEFERRED_FAILED    2
 #define ION_DEFERRED_FINISHED  3
+#define ION_DEFERRED_REJECTED  4
 
-#define ION_DEFERRED_INTERNAL  4
-#define ION_DEFERRED_TIMED_OUT 8
-#define ION_DEFERRED_REJECTED  16
+#define ION_DEFERRED_INTERNAL  8
+#define ION_DEFERRED_TIMED_OUT 16
+#define ION_DEFERRED_DALAYED   32
 
 typedef void (*deferred_reject_callback)(zval *error, zval * zdeferred TSRMLS_DC);
 typedef void (*deferred_object_dtor)(void *object, zval * zdeferred TSRMLS_DC);
@@ -22,6 +23,7 @@ void * _ion_deferred_store_get(zval *zDeferred TSRMLS_DC);
 void   _ion_deferred_resolve(zval *zDeferred, zval *zResult, short type TSRMLS_DC);
 void   _ion_deferred_reject(zval *zDeferred, const char *message TSRMLS_DC);
 void   _ion_deferred_free(zval *zDeferred TSRMLS_DC);
+int    _ion_deferred_dequeue(TSRMLS_DC);
 
 #define ion_deferred_new(zcancel_cb)                        _ion_deferred_new(cancel_cb TSRMLS_CC)
 #define ion_deferred_new_ex(cancel_cb)                      _ion_deferred_new_ex(cancel_cb TSRMLS_CC)

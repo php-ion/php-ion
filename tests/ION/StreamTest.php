@@ -7,7 +7,6 @@ use ION;
 class StreamTest extends TestCase {
 
 	/**
-	 * @group dev
 	 * @memcheck
 	 */
 	public function testCreatePair() {
@@ -171,7 +170,8 @@ class StreamTest extends TestCase {
 	}
 
 	/**
-	 * @memcheck
+	 * @_memcheck
+	 * @group dev
 	 * @dataProvider providerAwaits
 	 * @param string $string
 	 * @param string $method
@@ -181,6 +181,7 @@ class StreamTest extends TestCase {
 	 */
 	public function _testAwaits($string, $method, $args, $result, $tail) {
 		$pid = $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) use ($string) {
+			$this->out("sending $string");
 			fwrite($connect, $string);
 		})->start();
 
@@ -197,6 +198,7 @@ class StreamTest extends TestCase {
 			$this->stop();
 		});
 		$this->loop();
+
 
 		$this->assertEquals([
 			$method     => $result,

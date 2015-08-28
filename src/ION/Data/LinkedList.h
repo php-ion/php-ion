@@ -7,13 +7,13 @@
 #include "../../pion/linkedlist.h"
 
 // LinkedList PHP object
-typedef struct _php_linkedlist {
+typedef struct _php_linked_list {
     zend_object std;
-    pionLList *list;
+    pion_llist *list;
     long        count;
     long        key;
-    pionLListItem *current;
-} IONLinkedList;
+    pion_llist_item *current;
+} ion_linked_list;
 
 
 PHP_MINIT_FUNCTION(ION_Data_LinkedList);

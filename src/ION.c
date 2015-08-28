@@ -94,6 +94,8 @@ static void _timer_done(evutil_socket_t fd, short flags, void * arg) {
     MAKE_STD_ZVAL(zresult);
     ion_deferred_done(zdeferred, zresult);
     zval_ptr_dtor(&zresult);
+
+    ION_CHECK_LOOP();
 //    zval_ptr_dtor(&zdeferred);
 }
 

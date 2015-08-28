@@ -14,17 +14,17 @@ long _ion_stream_search(long * pos, struct evbuffer * buffer, char * token, size
 void _ion_stream_input(bevent * bev, void * ctx) {
     ion_stream * stream = (ion_stream *)ctx;
     TSRMLS_FETCH_FROM_CTX(stream->thread_ctx);
-    struct evbuffer * buffer;
+    struct evbuffer * input;
     char * data = NULL;
     size_t read = 0;
     zval * zresult = NULL;
     IONF("new data vailable");
     if(stream->read) {
-        buffer = bufferevent_get_input(stream->buffer);
+        input = bufferevent_get_input(stream->buffer);
         if(stream->token) { // awaitLine
 
         } else if(stream->length) { // await()
-            if(evbuffer_get_length(buffer) >= stream->length) {
+            if(evbuffer_get_length(input) >= stream->length) {
                 read = (size_t)stream->length;
                 data = ion_stream_read(stream, &read);
                 ALLOC_STRINGL_ZVAL(zresult, data, read, 0);
@@ -32,10 +32,12 @@ void _ion_stream_input(bevent * bev, void * ctx) {
                 zval_ptr_dtor(&zresult);
                 zval_ptr_dtor(&stream->read);
                 stream->read = NULL;
+
+                ION_CHECK_LOOP_RETURN();
             }
         } // else awaitAll
 
-        if(evbuffer_get_length(buffer)) {
+        if(evbuffer_get_length(input)) {
             stream->state |= ION_STREAM_FLAG_HAS_DATA;
         } else {
             stream->state &= ~ION_STREAM_FLAG_HAS_DATA;
@@ -47,6 +49,8 @@ void _ion_stream_input(bevent * bev, void * ctx) {
     if(!stream->read && stream->on_data && (stream->state & ION_STREAM_FLAG_HAS_DATA)) {
 //        pionCbVoidWith1Arg(stream->on_data, zstream);
     }
+
+    ION_CHECK_LOOP();
 }
 
 void _ion_stream_output(bevent *bev, void *ctx) {
@@ -62,6 +66,8 @@ void _ion_stream_output(bevent *bev, void *ctx) {
         stream->flush = NULL;
     }
     stream->state |= ION_STREAM_FLAG_FLUSHED;
+
+    ION_CHECK_LOOP();
 }
 
 void _ion_stream_notify(bevent *bev, short what, void *ctx) {
@@ -69,6 +75,7 @@ void _ion_stream_notify(bevent *bev, short what, void *ctx) {
     TSRMLS_FETCH_FROM_CTX(stream->thread_ctx);
     IONF("stream note");
 
+    ION_CHECK_LOOP();
 }
 
 zval * _ion_stream_new(bevent * buffer, short flags, zend_class_entry * cls TSRMLS_DC) {
@@ -691,7 +698,7 @@ METHOD_ARGS_BEGIN(ION_Stream, getLine, 1)
     METHOD_ARG(max_length, 0)
 METHOD_ARGS_END()
 
-void _deferred_stream_read_dtor(void *object, zval * zdeferred TSRMLS_DC) {
+void _deferred_stream_await_dtor(void *object, zval *zdeferred TSRMLS_DC) {
     ion_stream * stream = (ion_stream *) object;
     bufferevent_setwatermark(stream->buffer, EV_READ, 0, 0);
     if(stream->read) {
@@ -720,8 +727,8 @@ CLASS_METHOD(ION_Stream, await) {
 
     current = (long)evbuffer_get_length( bufferevent_get_input(stream->buffer) );
     stream->read = ion_deferred_new_ex(NULL);
-    zval_addref_p(stream->read);
-    ion_deferred_store(stream->read, stream, _deferred_stream_read_dtor);
+    zval_add_ref(&stream->read);
+    ion_deferred_store(stream->read, stream, _deferred_stream_await_dtor);
     if(current >= length) {
         // TODO read delay
     } else {
