@@ -95,7 +95,7 @@ int _pion_fcall_void(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr TS
         args[j] = va_arg(args_list, zval **);
     }
     va_end(args_list);
-    int r =  _pion_fcall(result, fci_ptr, fcc_ptr, num, args);
+    int r =  _pion_fcall(result, fci_ptr, fcc_ptr, num, args TSRMLS_CC);
 
     if(result) {
         zval_ptr_dtor(&result);
