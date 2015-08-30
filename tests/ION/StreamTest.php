@@ -171,7 +171,7 @@ class StreamTest extends TestCase {
 
 	/**
 	 * @_memcheck
-	 * @group dev
+	 *
 	 * @dataProvider providerAwaits
 	 * @param string $string
 	 * @param string $method

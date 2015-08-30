@@ -132,4 +132,17 @@ class DeferredTest extends TestCase {
 		$defer->resolve("some result")->reject("bad reason");
 		$this->fail("should be exception");
 	}
+
+	/**
+	 * @group dev
+	 * @memcheck
+	 */
+	public function _testThenAfterDone() {
+		$defer = new Deferred(function () {});
+		$defer->resolve("already done");
+		$defer->then(function ($data, $error) {
+			$this->assertSame("already done", $data);
+			$this->assertNull($error);
+		});
+	}
 }

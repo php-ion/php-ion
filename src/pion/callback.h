@@ -21,6 +21,24 @@ pionCb * pionCbCreate(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr T
 pionCb * pionCbCreateFromZval(zval *zCb TSRMLS_DC);
 void   pionCbFree(pionCb *cb);
 
+int _pion_fcall(zval * result, zend_fcall_info * fci_ptr, zend_fcall_info_cache * fcc_ptr, int num, zval *** args TSRMLS_DC);
+int _pion_call_void_fci_with_1_arg(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr, zval * arg1 TSRMLS_DC);
+int _pion_call_void_fci_with_2_args(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr, zval * arg1, zval * arg2 TSRMLS_DC);
+int _pion_fcall_void(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr TSRMLS_DC, int num, ...);
+
+#define pion_fcall_void_no_args(fci, fcc)   \
+    _pion_fcall_void(fci, fcc TSRMLS_CC, 0)
+#define pion_fcall_void_1_arg(fci, fcc, arg)    \
+    _pion_fcall_void(fci, fcc TSRMLS_CC, 1, &arg)
+#define pion_fcall_void_2_args(fci, fcc, arg1, arg2)    \
+    _pion_fcall_void(fci, fcc TSRMLS_CC, 2, &arg1, &arg2)
+
+#define pion_call_fci(retval, fci, fcc, num, args)  \
+    _pion_call_fci(retval, fci, fcc, num, args TSRMLS_CC)
+#define pion_call_void_fci_with_1_arg(fci, fcc, arg1) \
+    _pion_call_void_fci_with_1_arg(fci, fcc, arg1 TSRMLS_CC)
+#define pion_call_void_fci_with_2_args(fci, fcc, arg1, arg2) \
+    _pion_call_void_fci_with_2_args(fci, fcc, arg1, arg2 TSRMLS_CC)
 
 
 /* Call callbacks */

@@ -3,7 +3,7 @@
 
 #include <php.h>
 
-#define ION_DEFERRED_RESOLVED  1
+#define ION_DEFERRED_DONE      1
 #define ION_DEFERRED_FAILED    2
 #define ION_DEFERRED_FINISHED  3
 #define ION_DEFERRED_REJECTED  4
@@ -20,7 +20,7 @@ zval * _ion_deferred_new_ex(deferred_reject_callback reject_cb TSRMLS_DC);
 int    _ion_deferred_zval(zval *zvariable, void *object, deferred_object_dtor dtor, deferred_reject_callback reject_cb TSRMLS_DC);
 void   _ion_deferred_store(zval *zDeferred, void *object, deferred_object_dtor dtor TSRMLS_DC);
 void * _ion_deferred_store_get(zval *zDeferred TSRMLS_DC);
-void   _ion_deferred_resolve(zval *zDeferred, zval *zResult, short type TSRMLS_DC);
+void   _ion_deferred_resolve(zval *zDeferred, zval * zresult, short type TSRMLS_DC);
 void   _ion_deferred_reject(zval *zDeferred, const char *message TSRMLS_DC);
 void   _ion_deferred_free(zval *zDeferred TSRMLS_DC);
 int    _ion_deferred_dequeue(TSRMLS_D);
@@ -31,7 +31,7 @@ int    _ion_deferred_dequeue(TSRMLS_D);
 #define ion_deferred_zval(zvar, object, dtor, cancel_cb)    _ion_deferred_zval(zvar, object, dtor, cancel_cb TSRMLS_CC)
 #define ion_deferred_store(zdeferred, object, object_dtor)  _ion_deferred_store(zdeferred, (void *) object, object_dtor TSRMLS_CC)
 #define ion_deferred_store_get(zdeferred)                   _ion_deferred_store_get(zdeferred TSRMLS_CC)
-#define ion_deferred_done(zdeferred, zResult)               _ion_deferred_resolve(zdeferred, zResult, ION_DEFERRED_RESOLVED TSRMLS_CC)
+#define ion_deferred_done(zdeferred, zResult)               _ion_deferred_resolve(zdeferred, zResult, ION_DEFERRED_DONE TSRMLS_CC)
 #define ion_deferred_fail(zdeferred, zException)            _ion_deferred_resolve(zdeferred, zException, ION_DEFERRED_FAILED TSRMLS_CC)
 #define ion_deferred_reject(zdeferred, message)             _ion_deferred_reject(zdeferred, message TSRMLS_CC)
 #define ion_deferred_free(zdeferred)                        _ion_deferred_free(zdeferred TSRMLS_CC)

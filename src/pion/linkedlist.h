@@ -4,7 +4,7 @@
 typedef struct _pion_llist_item pion_llist_item;
 
 // Linked list C API
-typedef struct _pion_llist_item {
+struct _pion_llist_item {
     pion_llist_item * prev;
     pion_llist_item * next;
     void            * data;

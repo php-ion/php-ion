@@ -74,6 +74,34 @@ void pionCbFree(pionCb *cb) {
     efree(cb);
 }
 
+int _pion_fcall(zval * result, zend_fcall_info * fci_ptr, zend_fcall_info_cache * fcc_ptr, int num, zval *** args TSRMLS_DC) {
+    if (ZEND_FCI_INITIALIZED(*fci_ptr)) {
+        fci_ptr->retval_ptr_ptr = &result;
+        fci_ptr->params = args;
+        fci_ptr->param_count = (zend_uint)num;
+        return zend_call_function(fci_ptr, fcc_ptr TSRMLS_CC);
+    } else {
+        return FAILURE;
+    }
+}
+
+int _pion_fcall_void(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr TSRMLS_DC, int num, ...) {
+    zval ** args[num];
+    va_list args_list;
+    zval * result = NULL;
+
+    va_start(args_list, num);
+    for (int j = 0; j < num; j++) {
+        args[j] = va_arg(args_list, zval **);
+    }
+    va_end(args_list);
+    int r =  _pion_fcall(result, fci_ptr, fcc_ptr, num, args);
+
+    if(result) {
+        zval_ptr_dtor(&result);
+    }
+    return r;
+}
 
 
 /**

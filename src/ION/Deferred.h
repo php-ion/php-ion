@@ -7,14 +7,15 @@
 
 BEGIN_EXTERN_C();
 
-typedef struct _IONDeferred IONDeferred;
+typedef struct _ion_deferred ion_deferred;
 
-struct _IONDeferred {
+struct _ion_deferred {
     zend_object      std;
     short            flags;
     void             (*reject)(zval * error, zval *zdeferred TSRMLS_DC);
     void             *object;
     void             (*object_dtor)(void * object, zval *zdeferred TSRMLS_DC);
+    zval             *result;
     zend_class_entry *scope;
     struct event     *timeout;
     pionCb           *finish_cb;
