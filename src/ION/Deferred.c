@@ -145,18 +145,17 @@ CLASS_METHOD(ION_Deferred, then) {
     zend_fcall_info        fci = empty_fcall_info;
     zend_fcall_info_cache  fcc = empty_fcall_info_cache;
     PARSE_ARGS("f", &fci, &fcc);
-
+    deferred->finish_cb = pionCbCreate(&fci, &fcc TSRMLS_CC);
     if(deferred->result) {
         ALLOC_INIT_ZVAL(znull);
         if(deferred->flags & ION_DEFERRED_DONE) {
-            pion_fcall_void_2_args(&fci, &fcc, deferred->result, znull);
+            pionCbVoidWith2Args(deferred->finish_cb, deferred->result, znull TSRMLS_CC);
         } else {
-            pion_fcall_void_2_args(&fci, &fcc, znull, deferred->result);
-
+            pionCbVoidWith2Args(deferred->finish_cb, znull, deferred->result TSRMLS_CC);
         }
         zval_ptr_dtor(&znull);
-    } else {
-        deferred->finish_cb = pionCbCreate(&fci, &fcc TSRMLS_CC);
+        pionCbFree(deferred->finish_cb);
+        deferred->finish_cb = NULL;
     }
     RETURN_THIS();
 }
