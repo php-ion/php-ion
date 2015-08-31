@@ -206,10 +206,6 @@ class BuildRunner {
 					$cores = glob("core*");
 					if(!$cores) {
 						$this->line("*** Core dump NOT found (".getcwd().")");
-						$this->line("*** Search by find: find ..");
-//						$this->exec("find .");
-						passthru("/var/cache/abrt 2>&1");
-						passthru("ls /var/crash 2>&1");
 					} else {
 						$core = $cores[0];
 						$this->line("*** Core dump found $core");
@@ -239,6 +235,7 @@ Build:
   --install, -l   — install module
   --phpize,  -p   — phpize and configure project
   --build,   -b   — alias: --phpize --clean --make
+  --deps,    -D   — load packages
   --info,    -i   - print info about module
   --system,  -s   — print information about system
 
