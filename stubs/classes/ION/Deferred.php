@@ -22,7 +22,7 @@ final class Deferred {
 	 * Cancel deferred object
 	 * @param string $reason
 	 */
-	public function reject($reason) {}
+	public function cancel($reason) {}
 
 	/**
 	 * Successfully complete the deferred-event
@@ -43,10 +43,32 @@ final class Deferred {
 	public function timeout($seconds) {}
 
 	/**
-	 * Processing internal deferred-object queue
-	 * @internal this is important method invoks after each event
+	 * @todo
 	 */
-	public static function dequeue() {}
+	public function getState() {}
+
+	/**
+	 * @todo
+	 * @param mixed $info
+	 */
+	public function notify($info) {}
+
+	/**
+	 * @todo
+	 * @param callable $cb
+	 */
+	public function done(callable $cb) {}
+
+	/**
+	 * @todo
+	 * @param callable $cb
+	 */
+	public function fail(callable $cb) {}
+	/**
+	 * @todo
+	 * @param callable $cb
+	 */
+	public function progress(callable $cb) {}
 }
 
 class CancelException extends \Exception {}

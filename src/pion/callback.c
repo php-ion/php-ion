@@ -88,18 +88,18 @@ int _pion_fcall(zval * result, zend_fcall_info * fci_ptr, zend_fcall_info_cache 
 int _pion_fcall_void(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr TSRMLS_DC, int num, ...) {
     zval ** args[num];
     va_list args_list;
-    zval * result = NULL;
+//    zval * result = NULL;
 
     va_start(args_list, num);
     for (int j = 0; j < num; j++) {
         args[j] = va_arg(args_list, zval **);
     }
     va_end(args_list);
-    int r =  _pion_fcall(result, fci_ptr, fcc_ptr, num, args TSRMLS_CC);
+    int r =  _pion_fcall(NULL, fci_ptr, fcc_ptr, num, args TSRMLS_CC);
 
-    if(result) {
-        zval_ptr_dtor(&result);
-    }
+//    if(result) {
+//        zval_ptr_dtor(&result);
+//    }
     return r;
 }
 

@@ -1,5 +1,5 @@
 {
-  "name": "php-ion/php-ion",
+  "name": "phpion/phpion",
   "description": "PHP extension for asynchronous IO and other notifications",
   "license": "MIT",
   "authors": [
@@ -17,6 +17,6 @@
     "phpunit/phpunit": "*"
   },
   "autoload": {
-    "classmap": ["tests/"]
+    "classmap": ["tests/lib", "tests/cases"]
   }
 }

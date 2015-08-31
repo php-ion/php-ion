@@ -1,7 +1,7 @@
-dnl config.m4 for extension ion
+# config.m4 for extension ion
 
 VERSION=`git describe --tags --long`
-PHP_ARG_WITH(ion, for asynchronous IO notifications $VERSION,
+PHP_ARG_WITH(ion, "for asynchronous IO notifications $VERSION",
 [  --with-ion             Include ION support])
 
 CFLAGS="$CFLAGS -Wall -g3 -ggdb -O0 -std=c99"
@@ -50,7 +50,7 @@ if test "$PHP_ION" != "no"; then
     ],[
       -L$ION_DIR/lib $EXTRA_LIBS
     ])
-    dnl PHP_SUBST(LIBEVENT_SHARED_LIBADD)
+    # PHP_SUBST(LIBEVENT_SHARED_LIBADD)
     case $build_os in
     darwin1*.*.*)
       AC_MSG_CHECKING([whether to compile for recent osx architectures])
