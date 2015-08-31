@@ -207,9 +207,9 @@ class BuildRunner {
 					if(!$cores) {
 						$this->line("*** Core dump NOT found (".getcwd().")");
 						$this->line("*** Search by find: find ..");
-						$this->exec("find .");
-						$this->exec("/var/cache/abrt");
-						$this->exec("ls /var/crash");
+//						$this->exec("find .");
+						passthru("/var/cache/abrt 2>&1");
+						passthru("ls /var/crash 2>&1");
 					} else {
 						$core = $cores[0];
 						$this->line("*** Core dump found $core");
