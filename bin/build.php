@@ -97,6 +97,7 @@ class BuildRunner {
 			} else {
 				$group = "";
 			}
+			passthru("which phpunit");
 			$this->exec($this->getBin('php')." -dextension=".dirname(__DIR__)."/src/modules/ion.so vendor/bin/phpunit --colors=never $group ".$this->getOption('test', 't', ''));
 		}
 
