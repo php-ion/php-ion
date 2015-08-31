@@ -46,7 +46,7 @@ class ETAP extends PHPUnit_Util_Printer implements PHPUnit_Framework_TestListene
 	public function __construct($out = null)
 	{
 		parent::__construct($out);
-		$this->write("ETAP version 1\n");
+		$this->write("ETAP version 1 (TAP version 13)\n");
 	}
 
 	/**
@@ -192,7 +192,7 @@ class ETAP extends PHPUnit_Util_Printer implements PHPUnit_Framework_TestListene
 		$this->testSuccessful = true;
 		$this->write(
 			sprintf(
-				"?? %d - %s",
+				"?? %d - %s ",
 				$this->testNumber,
 				PHPUnit_Util_Test::describe($test)
 			)

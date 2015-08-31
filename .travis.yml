@@ -5,12 +5,16 @@ addons:
   apt:
     packages:
       - libevent-dev
+      - gdb
+      - php5-dbg
+      - php5-dev
 
 php:
   - 5.5
   - 5.6
 
 before_script:
+  - ulimit -c unlimited -S
   - bin/build.php --phpize --clean --make
   - bin/build.php --info
   - composer install
