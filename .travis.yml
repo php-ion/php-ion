@@ -7,7 +7,6 @@ addons:
       - libevent-dev
       - gdb
       - php5-dbg
-      - php5-dev
 
 php:
   - 5.5
