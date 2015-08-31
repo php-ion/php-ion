@@ -198,7 +198,7 @@ class BuildRunner {
 			chdir($cwd);
 		}
 		$this->line("\n** ".getcwd().": $cmd");
-		passthru($cmd.' 2>&1', $code);
+		passthru("ulimit -c unlimited -S;".$cmd.' 2>&1', $code);
 		if($code) {
 			if($code == self::SEGEV_CODE) {
 				$this->line("*** Segmentation fault detected. Getting backtrace from core dump...");
