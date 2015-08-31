@@ -202,8 +202,12 @@ class BuildRunner {
 					$cores = glob("core*");
 					if(!$cores) {
 						$this->line("*** Core dump NOT found (".getcwd().")");
-						$this->line("*** Search by find: find ./ -maxdepth 1 -name 'core*' -print");
-						passthru("find ./ -maxdepth 1 -name 'core*' -print");
+						$c = <<<EOT
+for i in $(find ./ -maxdepth 1 -name 'core*' -print); do gdb $(pwd)/test core* -ex "thread apply all bt" -ex "set pagination 0" -batch; done;
+EOT;
+
+						$this->line("*** Search by find: $c");
+						passthru($c);
 					} else {
 						$core = $cores[0];
 						$this->line("*** Core dump found $core");
