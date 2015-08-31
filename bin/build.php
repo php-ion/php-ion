@@ -198,7 +198,7 @@ class BuildRunner {
 			chdir($cwd);
 		}
 		$this->line("\n** ".getcwd().": $cmd");
-		passthru("ulimit -c unlimited -S;".$cmd.' 2>&1', $code);
+		passthru($cmd.' 2>&1', $code);
 		if($code) {
 			if($code == self::SEGEV_CODE) {
 				$this->line("*** Segmentation fault detected. Getting backtrace from core dump...");
@@ -207,7 +207,7 @@ class BuildRunner {
 					if(!$cores) {
 						$this->line("*** Core dump NOT found (".getcwd().")");
 						$this->line("*** Search by find: find ..");
-						$this->exec("find ..");
+						$this->exec("find .");
 						$this->exec("/var/cache/abrt");
 						$this->exec("ls /var/crash");
 					} else {
