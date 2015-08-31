@@ -13,6 +13,7 @@ class BuildRunner {
 		"php"    => PHP_BINARY,
 		"phpize" => 'phpize',
 		"make"   => 'make',
+		"phpunit"   => 'vendor/bin/phpunit',
 	];
 
     public function __construct() {
@@ -97,8 +98,10 @@ class BuildRunner {
 			} else {
 				$group = "";
 			}
-			passthru("which phpunit");
-			$this->exec($this->getBin('php')." -dextension=".dirname(__DIR__)."/src/modules/ion.so vendor/bin/phpunit --colors=never $group ".$this->getOption('test', 't', ''));
+			if(!($phpunit = exec("which phpunit")) || !file_exists($phpunit)) {
+				$phpunit = "vendor/bin/phpunit";
+			}
+			$this->exec($this->getBin('php')." -dextension=".dirname(__DIR__)."/src/modules/ion.so ".$this->getBin('phpunit')." --colors=never $group ".$this->getOption('test', 't', ''));
 		}
 
 	}
@@ -198,17 +201,13 @@ class BuildRunner {
 		passthru($cmd.' 2>&1', $code);
 		if($code) {
 			if($code == self::SEGEV_CODE) {
-				$this->line("*** Segmentation fault detected. Getting backtrace from core dump... ");
+				$this->line("*** Segmentation fault detected. Getting backtrace from core dump...");
 				if($this->isLinux()) {
 					$cores = glob("core*");
 					if(!$cores) {
 						$this->line("*** Core dump NOT found (".getcwd().")");
-						$c = <<<EOT
-for i in $(find ./ -maxdepth 1 -name 'core*' -print); do gdb $(pwd)/test core* -ex "thread apply all bt" -ex "set pagination 0" -batch; done;
-EOT;
-
-						$this->line("*** Search by find: $c");
-						passthru($c);
+						$this->line("*** Search by find: find ..");
+						passthru("find ..");
 					} else {
 						$core = $cores[0];
 						$this->line("*** Core dump found $core");
