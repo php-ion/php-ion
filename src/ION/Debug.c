@@ -24,6 +24,9 @@ CLASS_METHOD(ION_Debug, fcallVoid) {
 
 METHOD_ARGS_BEGIN(ION_Debug, fcallVoid, 1)
     METHOD_ARG_TYPE(callback, IS_CALLABLE, 0, 0)
+    METHOD_ARG(arg1, 0)
+    METHOD_ARG(arg2, 0)
+    METHOD_ARG(arg3, 0)
 METHOD_ARGS_END();
 
 CLASS_METHODS_START(ION_Debug)

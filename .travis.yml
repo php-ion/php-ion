@@ -20,6 +20,7 @@ install:
   - ulimit -c
 
 before_script:
+  - service apport stop
   - ulimit -c unlimited -S
   - bin/build.php --system
   - bin/build.php --phpize --clean --make

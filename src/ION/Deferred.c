@@ -80,10 +80,10 @@ void _ion_deferred_resolve(zval *zDeferred, zval * zresult, short type TSRMLS_DC
         } else {
             result = pionCbVoidWith2Args(deferred->finish_cb, helper, zresult TSRMLS_CC);
         }
-        if(result == FAILURE) {
-            zend_error(E_WARNING, "ION: deferred callback corrupted");
-        }
         zval_ptr_dtor(&helper);
+        if(result == FAILURE) {
+            PHPDBG("ION: deferred callback corrupted");
+        }
     }
     deferred->result = zresult;
     zval_add_ref(&zresult);

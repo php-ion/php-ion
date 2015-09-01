@@ -179,7 +179,7 @@ class BuildRunner {
     }
 
 	public function li($name, $value) {
-		$this->line("$name: $value");
+		$this->line(trim($name).": ".trim($value));
 	}
 
     public function printSystemInfo() {
