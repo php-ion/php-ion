@@ -22,10 +22,11 @@ before_script:
   - ulimit -c unlimited -S
   - bin/build.php --phpize --clean --make
   - bin/build.php --info
+  - php `which phpunit` --help
   - composer install
 
 # Run tests
-script: bin/build.php --test
+script: php -dextension=/Volumes/Data/Dev/php-ion/src/modules/ion.so vendor/bin/phpunit
 
 after_failure:
  # If the program returned an error code, now we check for a
