@@ -16,13 +16,7 @@ php:
 compiler:
   - gcc
 
-install:
-  - ulimit -c
-
 before_script:
-  - bin/build.php --system
-  - apt-get remove apport
-  - ulimit -c unlimited -S
   - bin/build.php --system
   - bin/build.php --phpize --clean --make
   - bin/build.php --info
@@ -30,8 +24,3 @@ before_script:
 
 # Run tests
 script: bin/build.php --test
-
-after_failure:
- # If the program returned an error code, now we check for a
- # core file in the current working directory and dump the backtrace out
- - for i in $(find ./ -maxdepth 2 -name 'core*' -print); do gdb php core* -ex "thread apply all bt" -ex "set pagination 0" -batch; done;

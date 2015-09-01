@@ -10,13 +10,19 @@ class BuildRunner {
 	const SEGEV_CODE = 139;
 
 	public $binaries = [
-		"php"    => PHP_BINARY,
-		"phpize" => 'phpize',
-		"make"   => 'make',
-		"phpunit"   => 'vendor/bin/phpunit',
+		"php"      => PHP_BINARY,
+		"phpize"   => 'phpize',
+		"make"     => 'make',
+		"phpunit"  => 'vendor/bin/phpunit',
+		"gdb"      => 'gdb',
 	];
 
     public function __construct() {
+	    foreach($this->binaries as $name => $path) {
+			if(getenv(strtoupper("ion_{$name}_exec"))) {
+				$this->binaries[$name] = getenv(strtoupper("ion_{$name}_exec"));
+			}
+	    }
         set_exception_handler(function (\Exception $exception) {
             $this->line(get_class($exception).": ".$exception->getMessage()." in ".$exception->getFile().":".$exception->getLine()."\n".$exception->getTraceAsString()."\n");
 	        exit(1);
@@ -208,22 +214,8 @@ class BuildRunner {
 		passthru($cmd.' 2>&1', $code);
 		if($code) {
 			if($code == self::SEGEV_CODE) {
-				$this->line("*** Segmentation fault detected. Getting backtrace from core dump...");
-				if($this->isLinux()) {
-					$cores = glob("core*");
-					if(!$cores) {
-						$this->line("*** Core dump NOT found (".getcwd().")");
-					} else {
-						$core = $cores[0];
-						$this->line("*** Core dump found $core");
-						$gdb = 'gdb '.$this->getBin('php').' '.$core.' -ex "thread apply all bt" -ex "set pagination 0" -batch';
-						$this->line("*** Reading core dump: $gdb");
-						passthru($gdb.' 2>&1', $code);
-
-					}
-				} elseif($this->isMacOs()) {
-					$this->line("*** Unsupported yet ");
-				}
+				$this->line("*** Segmentation fault detected. Run GDB for backtrace");
+				passthru($this->getBin('gdb').' -ex "run"  -ex "thread apply all bt" -ex "set pagination 0" -batch --args '.$cmd);
 			}
 			throw new RuntimeException("Command $cmd failed", $code);
 		}
@@ -248,7 +240,13 @@ Build:
 Testing:
   --test[=TEST_PATH], -t  — run tests, all or only by path
   --group=GROUP_LIST, -g  - only runs tests from the specified group(s). Option --test required
-  ";
+
+Default env:
+";
+		foreach($this->binaries as $name => $path) {
+			echo "  ".strtoupper("ion_{$name}_exec")."=".$path."\n";
+		}
+		echo "\n";
 	}
 }
 
