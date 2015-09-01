@@ -57,7 +57,7 @@ class BuildRunner {
 	}
 
 	public function run() {
-        if($this->hasOption('system', 's')) {
+        if($this->hasOption('system', 'I')) {
             $this->printSystemInfo();
         }
 
@@ -178,8 +178,15 @@ class BuildRunner {
         echo implode("\n", $info)."\n";
     }
 
-    public function printSystemInfo() {
+	public function li($name, $value) {
+		$this->line("$name: $value");
+	}
 
+    public function printSystemInfo() {
+		$this->li("/proc/sys/kernel/core_pattern", `cat /proc/sys/kernel/core_pattern`);
+		$this->li("phpunit", `which phpunit`);
+		$this->li("composer", `which composer`);
+		$this->li("core size", `ulimit -c`);
     }
 
 	public function isLinux() {
@@ -235,9 +242,8 @@ Build:
   --install, -l   — install module
   --phpize,  -p   — phpize and configure project
   --build,   -b   — alias: --phpize --clean --make
-  --deps,    -D   — load packages
   --info,    -i   - print info about module
-  --system,  -s   — print information about system
+  --system,  -I   — print information about system
 
 Testing:
   --test[=TEST_PATH], -t  — run tests, all or only by path

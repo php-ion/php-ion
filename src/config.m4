@@ -75,6 +75,7 @@ if test "$PHP_ION" != "no"; then
     pion/linkedlist.c
     pion.c
     externals/SkipList/skiplist.c
+    ION/Debug.c
     ION/Data/LinkedList.c
     ION/Data/SkipList.c
     ION/Deferred.c

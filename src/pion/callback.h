@@ -32,6 +32,8 @@ int _pion_fcall_void(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr TS
     _pion_fcall_void(fci, fcc TSRMLS_CC, 1, &arg)
 #define pion_fcall_void_2_args(fci, fcc, arg1, arg2)    \
     _pion_fcall_void(fci, fcc TSRMLS_CC, 2, &arg1, &arg2)
+#define pion_fcall_void_3_args(fci, fcc, arg1, arg2, arg3)    \
+    _pion_fcall_void(fci, fcc TSRMLS_CC, 3, &arg1, &arg2, &arg3)
 
 #define pion_call_fci(retval, fci, fcc, num, args)  \
     _pion_call_fci(retval, fci, fcc, num, args TSRMLS_CC)

@@ -137,6 +137,7 @@ PHP_MINIT_FUNCTION(ion) {
     event_set_log_callback(_engine_log);
     event_set_fatal_callback(_engine_fatal);
 
+    STARTUP_MODULE(ION_Debug);
     STARTUP_MODULE(ION_Data_LinkedList);
     STARTUP_MODULE(ION_Data_SkipList);
     STARTUP_MODULE(ION_Deferred);
@@ -181,6 +182,7 @@ PHP_MINIT_FUNCTION(ion) {
 }
 
 PHP_MSHUTDOWN_FUNCTION(ion) {
+    SHUTDOWN_MODULE(ION_Debug);
     SHUTDOWN_MODULE(ION_Data_LinkedList);
     SHUTDOWN_MODULE(ION_Data_SkipList);
     SHUTDOWN_MODULE(ION_Deferred);

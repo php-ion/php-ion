@@ -7,6 +7,7 @@ addons:
       - libevent-dev
       - gdb
       - php5-dbg
+      - php5-dev
 
 php:
   - 5.5
@@ -20,9 +21,9 @@ install:
 
 before_script:
   - ulimit -c unlimited -S
+  - bin/build.php --system
   - bin/build.php --phpize --clean --make
   - bin/build.php --info
-  - php `which phpunit` --help
   - composer install
 
 # Run tests
@@ -31,4 +32,4 @@ script: php -dextension=./src/modules/ion.so vendor/bin/phpunit
 after_failure:
  # If the program returned an error code, now we check for a
  # core file in the current working directory and dump the backtrace out
- - for i in $(find ./ -maxdepth 2 -name 'core*' -print); do gdb $(pwd)/test core* -ex "thread apply all bt" -ex "set pagination 0" -batch; done;
+ - for i in $(find ./ -maxdepth 2 -name 'core*' -print); do gdb php core* -ex "thread apply all bt" -ex "set pagination 0" -batch; done;

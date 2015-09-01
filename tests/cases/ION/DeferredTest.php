@@ -34,7 +34,7 @@ class DeferredTest extends TestCase {
 
 	/**
 	 * @group testResolveException
-	 * @expectedException RuntimeException
+	 * @expectedException \RuntimeException
 	 * @expectedExceptionMessage Test exception in then()
 	 * @memcheck
 	 */
