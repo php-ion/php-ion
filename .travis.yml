@@ -1,6 +1,6 @@
 language: php
 
-sudo: required
+sudo: false
 addons:
   apt:
     packages:
@@ -20,7 +20,7 @@ install:
   - ulimit -c
 
 before_script:
-  - sudo apt-get remove apport
+  - apt-get remove apport
   - ulimit -c unlimited -S
   - bin/build.php --system
   - bin/build.php --phpize --clean --make
@@ -28,7 +28,7 @@ before_script:
   - composer install
 
 # Run tests
-script: php -dextension=./src/modules/ion.so vendor/bin/phpunit
+script: bin/build.php --test
 
 after_failure:
  # If the program returned an error code, now we check for a
