@@ -20,7 +20,7 @@ install:
   - ulimit -c
 
 before_script:
-  - sudo echo 'core.%e.%p' > /proc/sys/kernel/core_pattern
+  - sudo bash -c 'echo %e.core.%p > /proc/sys/kernel/core_pattern'
   - ulimit -c unlimited -S
   - bin/build.php --system
   - bin/build.php --phpize --clean --make
