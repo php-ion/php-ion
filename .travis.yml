@@ -1,6 +1,6 @@
 language: php
 
-sudo: false
+sudo: required
 addons:
   apt:
     packages:
@@ -20,7 +20,7 @@ install:
   - ulimit -c
 
 before_script:
-  - echo 'core.%e.%p' > /proc/sys/kernel/core_pattern
+  - sudo echo 'core.%e.%p' > /proc/sys/kernel/core_pattern
   - ulimit -c unlimited -S
   - bin/build.php --system
   - bin/build.php --phpize --clean --make
