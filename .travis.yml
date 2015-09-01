@@ -20,6 +20,7 @@ install:
   - ulimit -c
 
 before_script:
+  - bin/build.php --system
   - apt-get remove apport
   - ulimit -c unlimited -S
   - bin/build.php --system
