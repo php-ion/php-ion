@@ -20,7 +20,7 @@ install:
   - ulimit -c
 
 before_script:
-  - service apport stop
+  - echo 'core.%e.%p' > /proc/sys/kernel/core_pattern
   - ulimit -c unlimited -S
   - bin/build.php --system
   - bin/build.php --phpize --clean --make
