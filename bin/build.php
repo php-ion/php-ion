@@ -94,7 +94,7 @@ class BuildRunner {
 		}
 
 		if($this->hasOption('info', 'i')) {
-			$this->exec($this->getBin('php') . ' -dextension=modules/ion.so '.__FILE__." --diagnostic", "src/");
+			$this->exec($this->getBin('php') . ' -dextension=./src/modules/ion.so '.__FILE__." --diagnostic", false, true);
 		}
 
 		if($this->hasOption('test', 't')) {
@@ -104,10 +104,8 @@ class BuildRunner {
 			} else {
 				$group = "";
 			}
-			if(!($phpunit = exec("which phpunit")) || !file_exists($phpunit)) {
-				$phpunit = "vendor/bin/phpunit";
-			}
-			$this->exec($this->getBin('php')." -dextension=".dirname(__DIR__)."/src/modules/ion.so ".$this->getBin('phpunit')." --colors=never $group ".$this->getOption('test', 't', ''));
+			$phpunit = $this->getBin('php')." -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --colors=never $group ".$this->getOption('test', 't', '');
+			$this->exec($phpunit, false, true);
 		}
 
 	}
@@ -203,7 +201,7 @@ class BuildRunner {
 		return strtolower(PHP_OS) == "darwin";
 	}
 
-	public function exec($cmd, $cwd = null) {
+	public function exec($cmd, $cwd = null, $gdb = false) {
 		$prev_cwd = null;
 		if($cwd) {
 			$cwd = realpath($cwd);
@@ -211,12 +209,14 @@ class BuildRunner {
 			chdir($cwd);
 		}
 		$this->line("\n** ".getcwd().": $cmd");
-		passthru($cmd.' 2>&1', $code);
+		if($gdb) {
+			$run_cmd = $this->getBin('gdb').' -ex "run"  -ex "thread apply all bt" -ex "set pagination 0" -batch -return-child-result -silent --args  '.$cmd;
+			$this->line("*** Using gdb: $run_cmd");
+		} else {
+			$run_cmd = $cmd.' 2>&1';
+		}
+		passthru($run_cmd, $code);
 		if($code) {
-			if($code == self::SEGEV_CODE) {
-				$this->line("*** Segmentation fault detected. Run GDB for backtrace");
-				passthru($this->getBin('gdb').' -ex "run"  -ex "thread apply all bt" -ex "set pagination 0" -batch --args '.$cmd);
-			}
 			throw new RuntimeException("Command $cmd failed", $code);
 		}
 

@@ -72,6 +72,8 @@ void _ion_deferred_resolve(zval *zDeferred, zval * zresult, short type TSRMLS_DC
     ion_deferred *deferred = getInstance(zDeferred);
     int result = 0;
     deferred->flags |= type;
+    deferred->result = zresult;
+    zval_add_ref(&zresult);
     if(deferred->finish_cb) {
         zval * helper = NULL;
         ALLOC_INIT_ZVAL(helper);
@@ -85,8 +87,6 @@ void _ion_deferred_resolve(zval *zDeferred, zval * zresult, short type TSRMLS_DC
             PHPDBG("ION: deferred callback corrupted");
         }
     }
-    deferred->result = zresult;
-    zval_add_ref(&zresult);
 
     CLEAN_DEFERRED(deferred);
     CALL_OBJECT_DTOR(deferred, zDeferred);

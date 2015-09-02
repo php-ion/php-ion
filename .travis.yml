@@ -13,14 +13,11 @@ php:
   - 5.5
   - 5.6
 
-compiler:
-  - gcc
-
 before_script:
   - bin/build.php --system
   - bin/build.php --phpize --clean --make
   - bin/build.php --info
-  - composer install
+  - composer install --no-dev
 
 # Run tests
-script: bin/build.php --test
+script: 'ION_PHPUNIT_EXEC=`command -v phpunit` bin/build.php --test'
