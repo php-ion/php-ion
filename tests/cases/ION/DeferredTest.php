@@ -136,7 +136,7 @@ class DeferredTest extends TestCase {
 	}
 
 	/**
-	 * @group dev
+	 *
 	 * @memcheck
 	 */
 	public function _testThenAfterDone() {

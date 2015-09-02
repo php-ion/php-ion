@@ -17,6 +17,8 @@ class BuildRunner {
 		"gdb"      => 'gdb',
 	];
 
+	public $opts = [];
+
     public function __construct() {
 	    foreach($this->binaries as $name => $path) {
 			if(getenv(strtoupper("ion_{$name}_exec"))) {
@@ -37,10 +39,6 @@ class BuildRunner {
 		}
 	}
 
-	public function hasOption($long, $short) {
-		$options = getopt($short, [$long]);
-		return isset($options[ $long ]) || isset($options[ $short ]);
-	}
 
 	public function write($msg) {
 		fwrite(STDERR, $msg);
@@ -51,11 +49,24 @@ class BuildRunner {
 		return $this->write($msg."\n");
 	}
 
-	public function getOption($long, $short, $default = null) {
+	public function hasOption($long, $short = "") {
+		$options = getopt($short, [$long]);
+		return isset($this->opts[ $long ]) || isset($options[ $long ]) || isset($options[ $short ]);
+	}
+
+	public function setOption($long, $value = "") {
+		$this->opts[$long] = $value;
+		return $this;
+	}
+
+	public function getOption($long, $short = "", $default = null) {
+		if(isset($this->opts[$long])) {
+			return $this->opts[$long];
+		}
 		$options = getopt($short."::", [$long."::"]);
 		if(isset($options[ $long ])) {
 			return $options[ $long ];
-		} elseif(isset($options[ $short ])) {
+		} elseif($short && isset($options[ $short ])) {
 			return $options[ $short ];
 		} else {
 			return $default;
@@ -77,6 +88,25 @@ class BuildRunner {
 			return;
 		}
 
+		if($this->hasOption("build")) {
+			$this->setOption("phpize");
+			$this->setOption("make");
+			$this->setOption("clean");
+		}
+
+		if($this->hasOption("setup")) {
+			$this->setOption("phpize");
+			$this->setOption("make");
+			$this->setOption("clean");
+			$this->setOption("install");
+		}
+
+		if($use_gdb = $this->hasOption("use-gdb")) {
+			if($this->getOption("use-gdb")) {
+				$this->binaries['gdb'] = $this->getOption("use-gdb");
+			}
+		}
+
 		if($this->hasOption('phpize', 'p')) {
 			if($this->hasOption('clean', 'c')) {
 				$this->exec($this->getBin('phpize').' --clean', "src/");
@@ -94,9 +124,14 @@ class BuildRunner {
 		}
 
 		if($this->hasOption('info', 'i')) {
-			$this->exec($this->getBin('php') . ' -dextension=./src/modules/ion.so '.__FILE__." --diagnostic", false, true);
+			$this->exec($this->getBin('php') . ' -dextension=./src/modules/ion.so '.__FILE__." --diagnostic", false, $use_gdb);
 		}
 
+
+		if($this->hasOption("dev")) {
+			$this->setOption("test");
+			$this->setOption("group", "dev");
+		}
 		if($this->hasOption('test', 't')) {
 			$group = $this->getOption('group', 'g');
 			if($group) {
@@ -105,15 +140,10 @@ class BuildRunner {
 				$group = "";
 			}
 			$phpunit = $this->getBin('php')." -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --colors=never $group ".$this->getOption('test', 't', '');
-			$this->exec($phpunit, false, true);
+			$this->exec($phpunit, false, $use_gdb);
 		}
 
 	}
-
-//	public function chdir($rel_path = "") {
-//		chdir(dirname(__DIR__).($rel_path ? "/" : "").$rel_path);
-//	}
-
 
     public function printInfo() {
         $info = [];
@@ -234,12 +264,15 @@ Build:
   --install, -l   — install module
   --phpize,  -p   — phpize and configure project
   --build,   -b   — alias: --phpize --clean --make
+  --setup,   -B   — alias: --build --install
   --info,    -i   - print info about module
   --system,  -I   — print information about system
 
 Testing:
   --test[=TEST_PATH], -t  — run tests, all or only by path
   --group=GROUP_LIST, -g  - only runs tests from the specified group(s). Option --test required
+  --dev                   - alias: --test --group=dev
+  --use-gdb[=BINARY]      - use gdb for running tests
 
 Default env:
 ";
