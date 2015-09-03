@@ -45,7 +45,7 @@ CLASS_METHOD(ION_Debug, cbCallVoid) {
     zend_fcall_info        fci = empty_fcall_info;
     zend_fcall_info_cache  fcc = empty_fcall_info_cache;
     PARSE_ARGS("f|zzz", &fci, &fcc, &arg1, &arg2, &arg3);
-    cb = pionCbCreate(&fci, &fcc);
+    cb = pionCbCreate(&fci, &fcc TSRMLS_CC);
 
     if(ZEND_NUM_ARGS() == 1) {
         r = pionCbVoidWithoutArgs(cb TSRMLS_CC);
