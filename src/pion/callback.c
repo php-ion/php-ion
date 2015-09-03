@@ -78,6 +78,7 @@ int _pion_fcall(zval * result, zend_fcall_info * fci_ptr, zend_fcall_info_cache 
     if (ZEND_FCI_INITIALIZED(*fci_ptr)) {
         fci_ptr->retval_ptr_ptr = &result;
         fci_ptr->params = args;
+        fci_ptr->no_separation = 0;
         fci_ptr->param_count = (zend_uint)num;
         return zend_call_function(fci_ptr, fcc_ptr TSRMLS_CC);
     } else {
@@ -88,19 +89,34 @@ int _pion_fcall(zval * result, zend_fcall_info * fci_ptr, zend_fcall_info_cache 
 int _pion_fcall_void(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr TSRMLS_DC, int num, ...) {
     zval ** args[num];
     va_list args_list;
-//    zval * result = NULL;
+    zval * result = NULL;
 
     va_start(args_list, num);
     for (int j = 0; j < num; j++) {
         args[j] = va_arg(args_list, zval **);
     }
     va_end(args_list);
-    int r =  _pion_fcall(NULL, fci_ptr, fcc_ptr, num, args TSRMLS_CC);
-
+    if (ZEND_FCI_INITIALIZED(*fci_ptr)) {
+        fci_ptr->retval_ptr_ptr = &result;
+        fci_ptr->params = args;
+        fci_ptr->no_separation = 0;
+        fci_ptr->param_count = (zend_uint)num;
+        if(zend_call_function(fci_ptr, fcc_ptr TSRMLS_CC) == FAILURE) {
+            return FAILURE;
+        }
+        if(result) {
+            zval_ptr_dtor(&result);
+        }
+        return SUCCESS;
+    } else {
+        return FAILURE;
+    }
+//    int r =  _pion_fcall(result, fci_ptr, fcc_ptr, num, args TSRMLS_CC);
+//
 //    if(result) {
 //        zval_ptr_dtor(&result);
 //    }
-    return r;
+//    return r;
 }
 
 

@@ -13,12 +13,12 @@ class DebugTest extends TestCase {
 			[1],
 			[1,2],
 			[1,2,3],
-
 		];
 	}
 
 	/**
 	 * @group dev
+	 * @memcheck
 	 * @dataProvider providerFcallVoid()
 	 * @param mixed $arg1
 	 * @param mixed $arg2
@@ -28,19 +28,53 @@ class DebugTest extends TestCase {
 		$callback = function () {
 			return array_sum(func_get_args());
 		};
+		$res =1;
+
 		switch(func_num_args()) {
 			case 0:
-				Debug::fcallVoid($callback);
-				return;
+				$res = Debug::fcallVoid($callback);
+				break;
 			case 1:
-				Debug::fcallVoid($callback, $arg1);
-				return;
+				$res = Debug::fcallVoid($callback, $arg1);
+				break;
 			case 2:
-				Debug::fcallVoid($callback, $arg1, $arg2);
-				return;
+				$res = Debug::fcallVoid($callback, $arg1, $arg2);
+				break;
 			case 3:
-				Debug::fcallVoid($callback, $arg1, $arg2, $arg3);
-				return;
+				$res = Debug::fcallVoid($callback, $arg1, $arg2, $arg3);
+				break;
 		}
+		$this->assertEquals(0, $res);
+	}
+
+	/**
+	 *
+	 * @memcheck
+	 * @dataProvider providerFcallVoid()
+	 * @param mixed $arg1
+	 * @param mixed $arg2
+	 * @param mixed $arg3
+	 */
+	public function testCbCallVoid($arg1 = null, $arg2 = null, $arg3 = null) {
+		$callback = function () {
+			return array_sum(func_get_args());
+		};
+		$res =1;
+
+		switch(func_num_args()) {
+			case 0:
+				$res = Debug::cbCallVoid($callback);
+				break;
+			case 1:
+				$res = Debug::cbCallVoid($callback, $arg1);
+				break;
+			case 2:
+				$res = Debug::cbCallVoid($callback, $arg1, $arg2);
+				break;
+			case 3:
+				$res = Debug::cbCallVoid($callback, $arg1, $arg2, $arg3);
+				break;
+		}
+		$this->assertEquals(0, $res);
 	}
 }
