@@ -48,13 +48,13 @@ CLASS_METHOD(ION_Debug, cbCallVoid) {
     cb = pionCbCreate(&fci, &fcc);
 
     if(ZEND_NUM_ARGS() == 1) {
-        r = pionCbVoidWithoutArgs(cb);
+        r = pionCbVoidWithoutArgs(cb TSRMLS_CC);
     } else if (ZEND_NUM_ARGS() == 2) {
-        r =pionCbVoidWith1Arg(cb, arg1);
+        r =pionCbVoidWith1Arg(cb, arg1 TSRMLS_CC);
     } else if (ZEND_NUM_ARGS() == 3) {
-        r =pionCbVoidWith2Args(cb, arg1, arg2);
+        r =pionCbVoidWith2Args(cb, arg1, arg2 TSRMLS_CC);
     } else if (ZEND_NUM_ARGS() == 4) {
-        r =pionCbVoidWith3Args(cb, arg1, arg2, arg3);
+        r =pionCbVoidWith3Args(cb, arg1, arg2, arg3 TSRMLS_CC);
     }
 
     pionCbFree(cb);
