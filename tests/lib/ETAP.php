@@ -100,7 +100,7 @@ class ETAP extends PHPUnit_Util_Printer implements PHPUnit_Framework_TestListene
 			sprintf(
 				"  ---\n%s  ...\n",
 				$yaml->dump($diagnostic, 2, 2)
-			)
+			)."\n".$e->getTraceAsString()
 		);
 	}
 

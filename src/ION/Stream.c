@@ -4,6 +4,7 @@
 
 ION_DEFINE_CLASS(ION_Stream);
 
+#define ion_stream_input_length(stream) evbuffer_get_length( bufferevent_get_input(stream->buffer) )
 #define ion_stream_read(stream, size_p) _ion_stream_read(stream, size_p);
 #define ion_stream_search(pos, buffer, token, token_len, offset, length) \
     _ion_stream_search(pos, buffer, token, (size_t) token_len, (size_t) offset, (size_t) length)
@@ -30,8 +31,7 @@ void _ion_stream_input(bevent * bev, void * ctx) {
                 ALLOC_STRINGL_ZVAL(zresult, data, read, 0);
                 ion_deferred_done(stream->read, zresult);
                 zval_ptr_dtor(&zresult);
-                zval_ptr_dtor(&stream->read);
-                stream->read = NULL;
+                // freed in the deferred dtor
 
                 ION_CHECK_LOOP_RETURN();
             }
@@ -113,7 +113,7 @@ int _ion_stream_zval(zval * zstream, bevent * buffer, short flags, zend_class_en
 
 
 char * _ion_stream_read(ion_stream * stream, size_t * size) {
-    size_t incoming_length = evbuffer_get_length( bufferevent_get_input(stream->buffer) );
+    size_t incoming_length = ion_stream_input_length(stream);
     char * data;
 
     if(!incoming_length) {
@@ -147,7 +147,9 @@ CLASS_INSTANCE_DTOR(ION_Stream) {
         zval_ptr_dtor(&stream->read);
         if(stream->token) {
             efree(stream->token);
+            stream->token = NULL;
         }
+        stream->read = NULL;
     }
     if(stream->connect) {
         ion_deferred_free(stream->connect);
@@ -618,7 +620,7 @@ CLASS_METHOD(ION_Stream, getAll) {
     char * data = NULL;
 
     CHECK_STREAM(stream);
-    length = (long)evbuffer_get_length( bufferevent_get_input(stream->buffer) );
+    length = (long)ion_stream_input_length(stream);
     data = ion_stream_read(stream, &length);
     if(data == NULL) {
         ThrowRuntime("Stream is unreachable", -1);
@@ -715,8 +717,11 @@ void _deferred_stream_await_dtor(void *object, zval *zdeferred TSRMLS_DC) {
 /** public function ION\Stream::await(int $bytes) : ION\Deferred */
 CLASS_METHOD(ION_Stream, await) {
     ion_stream * stream = getThisInstance();
-    long length = 0;
+    size_t length = 0;
     size_t current = 0;
+    char * data = NULL;
+    zval * zresult = NULL;
+    zval * zdeferred = NULL;
 
     CHECK_STREAM(stream);
     PARSE_ARGS("l", &length);
@@ -725,16 +730,25 @@ CLASS_METHOD(ION_Stream, await) {
         return;
     }
 
-    current = (long)evbuffer_get_length( bufferevent_get_input(stream->buffer) );
-    stream->read = ion_deferred_new_ex(NULL);
-    zval_add_ref(&stream->read);
-    ion_deferred_store(stream->read, stream, _deferred_stream_await_dtor);
+    current = ion_stream_input_length(stream);
+    zdeferred = ion_deferred_new_ex(NULL);
     if(current >= length) {
-        // TODO read delay
+        data = ion_stream_read(stream, &length);
+        if(data == NULL) {
+            ThrowRuntime("Stream is unreachable", -1);
+            return;
+        }
+        ALLOC_STRINGL_ZVAL(zresult, data, length, 0);
+        ion_deferred_done(zdeferred, zresult);
+        RETURN_ZVAL(zdeferred, 1, 0);
     } else {
-        bufferevent_setwatermark(stream->buffer, EV_READ, length - current, length - current + 1);
+        ion_deferred_store(zdeferred, stream, _deferred_stream_await_dtor);
+        stream->read = zdeferred;
+        stream->length = length;
+        zval_add_ref(&zdeferred);
+        bufferevent_setwatermark(stream->buffer, EV_READ, length - current, 0);
+        RETURN_ZVAL_FAST(zdeferred);
     }
-    RETURN_ZVAL(stream->read, 1, 0);
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, await, 1)
@@ -813,22 +827,25 @@ CLASS_METHOD(ION_Stream, __destruct) {
     ion_stream * stream = getThisInstance();
     if(stream->flush) {
         ion_deferred_reject(stream->flush, "The stream shutdown by the destructor");
-        zval_ptr_dtor(&stream->flush);
-        stream->flush = NULL;
+        // stream->flush freed in cancel function
+//        zval_ptr_dtor(&stream->flush);
+//        stream->flush = NULL;
     }
     if(stream->read) {
         ion_deferred_reject(stream->read, "The stream shutdown by the destructor");
-        zval_ptr_dtor(&stream->read);
-        stream->read = NULL;
-        if(stream->token) {
-            efree(stream->token);
-            stream->token = NULL;
-        }
+        // stream->read freed in cancel function
+//        zval_ptr_dtor(&stream->read);
+//        stream->read = NULL;
+//        if(stream->token) {
+//            efree(stream->token);
+//            stream->token = NULL;
+//        }
     }
     if(stream->connect) {
         ion_deferred_reject(stream->connect, "The stream shutdown by the destructor");
-        zval_ptr_dtor(&stream->connect);
-        stream->connect = NULL;
+        // stream->flush freed in cancel function
+//        zval_ptr_dtor(&stream->connect);
+//        stream->connect = NULL;
     }
 }
 

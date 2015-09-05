@@ -1,6 +1,6 @@
 
-#ifndef ION_DEBUG_H
-#define ION_DEBUG_H
+#ifndef PION_DEBUG_H
+#define PION_DEBUG_H
 
 //#include "ext/standard/php_var.h"
 
@@ -21,4 +21,4 @@
 
 #define IONF(msg, ...)
 
-#endif //ION_DEBUG_H
+#endif //PION_DEBUG_H

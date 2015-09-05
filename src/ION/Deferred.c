@@ -258,6 +258,7 @@ METHOD_WITHOUT_ARGS(ION_Deferred, getFlags)
 /** public function ION\Deferred::__destruct() : int */
 CLASS_METHOD(ION_Deferred, __destruct) {
 //    PHPDBG("deferred destructed")
+//    zend_error(E_USER_NOTICE, "Deferred destruct");
     ion_deferred *deferred = getThisInstance();
     if(deferred->result) {
         zval_ptr_dtor(&deferred->result);

@@ -166,13 +166,14 @@ class StreamTest extends TestCase {
 		return array(
 			0  => [$string, "await", [5],                                        "01234", "56789"],
 			1  => [$string, "await", [10],                                       "0123456789", ""],
-			2  => [$string, "await", [16],                                       "0123456789", ""],
+//			2  => [$string, "await", [16],                                       "0123456789", ""],
 		);
 	}
 
 	/**
-	 * @_memcheck
+	 * @memcheck
 	 *
+	 * @group dev
 	 * @dataProvider providerAwaits
 	 * @param string $string
 	 * @param string $method
@@ -180,31 +181,34 @@ class StreamTest extends TestCase {
 	 * @param string $result
 	 * @param string $tail
 	 */
-	public function _testAwaits($string, $method, $args, $result, $tail) {
+	public function testAwaits($string, $method, $args, $result, $tail) {
 		$pid = $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) use ($string) {
-			$this->out("sending $string");
+//			$this->out("sending $string");
 			fwrite($connect, $string);
+//			$this->out("exit");
 		})->start();
 
 		$this->data = [];
 
 		$socket = Stream::socket(ION_TEST_SERVER_HOST)->enable();
-		ION::await(0.02)->then(function () use($socket, $method, $args) {
-			$this->data["one.".$method] = call_user_func_array([$socket, $method], $args);
-			$this->data["one.tail"]  = $socket->getAll();
-		});
-		ION::await(0.04)->then(function () use($socket, $method, $args) {
-			$this->data["two.".$method] = call_user_func_array([$socket, $method], $args);
-			$this->data["two.tail"]  = $socket->getAll();
+		$deferred = call_user_func_array([$socket, $method], $args);
+		$this->assertInstanceOf('ION\Deferred', $deferred);
+		/** @var Deferred $deferred */
+		$deferred->then(function($data, $error) use ($socket) {
+			$this->data["result"] = $data;
+			$this->data["error"]  = $error;
+			$this->data["tail"]   = $socket->getAll();
 			$this->stop();
 		});
-		$this->loop();
 
+		$this->loop(3);
 
 		$this->assertEquals([
-			$method     => $result,
-			"tail"      => $tail,
+			"result"  => $result,
+			"error"   => null,
+			"tail"    => $tail,
 		], $this->data);
+//		var_dump($pid, pcntl_waitpid($pid, $s), $s);
 		$this->assertWaitPID($pid);
 	}
 }

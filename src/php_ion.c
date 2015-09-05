@@ -16,9 +16,6 @@
 
 extern IONBase *ionBase;
 
-#define PION_FUNCTIONS
-
-
 #ifdef COMPILE_DL_ION
 ZEND_GET_MODULE(ion);
 #endif
@@ -68,58 +65,13 @@ static void _engine_fatal(int err) {
     _exit(err);
 }
 
-#ifdef ION_DEBUG
-// PION framework functions for testing
-
-PHP_FUNCTION(pionCbCreate) {
-    zval *zarg = NULL;
-    zend_fcall_info        fci = empty_fcall_info;
-    zend_fcall_info_cache  fcc = empty_fcall_info_cache;
-    PARSE_ARGS("fz", &fci, &fcc, &zarg);
-    pionCb *cb = pionCbCreate(&fci, &fcc TSRMLS_CC);
-    int result = pionCbVoidWith1Arg(cb, zarg TSRMLS_CC);
-    pionCbFree(cb);
-    RETURN_LONG((long)result);
-}
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_pionCbCreate, 0, 0, 1)
-    ZEND_ARG_TYPE_INFO(0, callback, IS_CALLABLE, 0)
-ZEND_END_ARG_INFO()
-
-PHP_FUNCTION(pionCbCreateFromZval) {
-    zval *zarg = NULL;
-    zval *zcb = NULL;
-    PARSE_ARGS("zz", &zcb, &zarg);
-    pionCb *cb = pionCbCreateFromZval(zcb TSRMLS_CC);
-    int result = pionCbVoidWith1Arg(cb, zarg TSRMLS_CC);
-    pionCbFree(cb);
-    RETURN_LONG((long)result);
-}
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_pionCbCreateFromZval, 0, 0, 1)
-    ZEND_ARG_TYPE_INFO(0, callback, IS_CALLABLE, 0)
-ZEND_END_ARG_INFO()
-
-const zend_function_entry pion_functions[] = {
-    PHP_FE(pionCbCreate, arginfo_pionCbCreate)
-    PHP_FE(pionCbCreateFromZval, arginfo_pionCbCreateFromZval)
-    {NULL, NULL, NULL}
-};
-
-#endif
-
-
 /* ION module meta */
 zend_module_entry ion_module_entry = {
         STANDARD_MODULE_HEADER_EX,
         NULL,
         ion_depends, // depends
         "ion", // module name
-#ifdef PION_FUNCTIONS
-        pion_functions, // module's functions
-#else
         NULL,
-#endif
         PHP_MINIT(ion), // module init callback
         NULL,  // module shutdown callback
         PHP_RINIT(ion),  // request init callback
