@@ -140,4 +140,20 @@
 #define METHOD(class_name, method_name, flags) \
     ZEND_ME(class_name, method_name, args ## class_name ## method_name, flags)
 
+// for old php
+
+#ifndef RETURN_ZVAL_FAST
+#define RETVAL_ZVAL_FAST(z) do {      \
+	zval *_z = (z);                   \
+	if (Z_ISREF_P(_z)) {              \
+		RETVAL_ZVAL(_z, 1, 0);        \
+	} else {                          \
+		zval_ptr_dtor(&return_value); \
+		Z_ADDREF_P(_z);               \
+		*return_value_ptr = _z;       \
+	}                                 \
+} while (0)
+#define RETURN_ZVAL_FAST(z) { RETVAL_ZVAL_FAST(z); return; }
+#endif
+
 #endif //PION_ENGINE_H
