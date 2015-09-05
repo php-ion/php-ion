@@ -59,6 +59,7 @@ class ETAP extends PHPUnit_Util_Printer implements PHPUnit_Framework_TestListene
 	public function addError(PHPUnit_Framework_Test $test, Exception $e, $time)
 	{
 		$this->writeNotOk($test, 'Error');
+		$this->write(get_class($e).": ".$e->getMessage()." in ".$e->getFile().":".$e->getLine()."\n".$e->getTraceAsString());
 	}
 
 	/**
