@@ -70,6 +70,9 @@
     ALLOC_INIT_ZVAL(var);   \
     ZVAL_LONG(var, num);
 
+#define ALLOC_BOOL_ZVAL(var, bval)   \
+    ALLOC_INIT_ZVAL(var);   \
+    ZVAL_BOOL(var, bval);
 
 
 /**

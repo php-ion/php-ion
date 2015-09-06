@@ -92,10 +92,41 @@ void _ion_deferred_resolve(zval *zDeferred, zval * zresult, short type TSRMLS_DC
     CALL_OBJECT_DTOR(deferred, zDeferred);
 }
 
+void _ion_deferred_done_long(zval *zdeferred, long * lval TSRMLS_DC) {
+    zval * zlong = NULL;
+    ALLOC_LONG_ZVAL(zlong, lval);
+    ion_deferred_done(zdeferred, zlong);
+    zval_ptr_dtor(&zlong);
+}
+
+void _ion_deferred_done_bool(zval *zdeferred, zend_bool bval TSRMLS_DC) {
+    zval * zbool = NULL;
+    ALLOC_BOOL_ZVAL(zbool, bval);
+    ion_deferred_done(zdeferred, zbool);
+    zval_ptr_dtor(&zbool);
+}
+
+void _ion_deferred_done_stringl(zval *zdeferred, char * str, long length, int dup TSRMLS_DC) {
+    zval * zstring = NULL;
+    ALLOC_STRINGL_ZVAL(zstring, str, length, dup);
+    ion_deferred_done(zdeferred, zstring);
+    zval_ptr_dtor(&zstring);
+}
+
+void _ion_deferred_exception_ex(zval * zdeferred, zend_class_entry * ce, long code TSRMLS_DC, const char * message, ...) {
+    va_list args;
+    zval * zexception = NULL;
+    va_start(args, message);
+    zexception = pion_exception_new_ex(ce, code, message, args);
+    va_end(args);
+    ion_deferred_fail(zdeferred, zexception);
+    zval_ptr_dtor(&zexception);
+}
+
 void _ion_deferred_reject(zval *zDeferred, const char *message TSRMLS_DC) {
     ion_deferred * deferred = getInstance(zDeferred);
     IONF("Cancellation defer object: %s", message);
-    zval *zException = pionNewException(CE(ION_Deferred_RejectException), message, 0 TSRMLS_CC);
+    zval *zException = _pion_exception_new(CE(ION_Deferred_RejectException), message, 0 TSRMLS_CC);
     deferred->flags |= ION_DEFERRED_REJECTED | ION_DEFERRED_FAILED;
     if(deferred->reject) {
         deferred->reject(zException, zDeferred TSRMLS_CC);
