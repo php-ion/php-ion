@@ -7,18 +7,22 @@
 BEGIN_EXTERN_C();
 
 // stream types
-#define ION_STREAM_FLAG_SOCKET    1<<0
-#define ION_STREAM_FLAG_PAIR      1<<1
+#define ION_STREAM_STATE_SOCKET    1<<0
+#define ION_STREAM_STATE_PAIR      1<<1
+#define ION_STREAM_STATE_PIPE      1<<2
 
 // reading and writing states
-#define ION_STREAM_FLAG_READING   1<<4
-#define ION_STREAM_FLAG_FLUSHED   1<<5
-#define ION_STREAM_FLAG_HAS_DATA  1<<6
+#define ION_STREAM_STATE_READING   1<<4
+#define ION_STREAM_STATE_FLUSHED   1<<5
+#define ION_STREAM_STATE_HAS_DATA  1<<6
 
 // runtime stream states
-#define ION_STREAM_FLAG_CONNECTED 1<<10
-#define ION_STREAM_FLAG_CLOSED    1<<11
-#define ION_STREAM_FLAG_ERROR     1<<12
+#define ION_STREAM_STATE_CONNECTED 1<<10
+#define ION_STREAM_STATE_EOF       1<<11
+#define ION_STREAM_STATE_ERROR     1<<12
+#define ION_STREAM_STATE_SHUTDOWN  1<<13
+#define ION_STREAM_STATE_CLOSED    ION_STREAM_STATE_EOF | ION_STREAM_STATE_ERROR | ION_STREAM_STATE_SHUTDOWN
+
 
 // mode for line reading (getLine() and awaitLine())
 #define ION_STREAM_MODE_TRIM_TOKEN    1

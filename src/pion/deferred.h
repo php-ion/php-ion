@@ -42,6 +42,8 @@ int    _ion_deferred_dequeue(TSRMLS_D);
 #define ion_deferred_done_stringl(zdeferred, str, len, dup) _ion_deferred_done_stringl(zdeferred, str, len, dup TSRMLS_CC)
 #define ion_deferred_done_empty_string(zdeferred)           _ion_deferred_done_empty_string(zdeferred TSRMLS_CC)
 #define ion_deferred_done_bool(zdeferred, bval)             _ion_deferred_done_bool(zdeferred, bval TSRMLS_CC)
+#define ion_deferred_done_true(zdeferred)                   ion_deferred_done_bool(zdeferred, 1)
+#define ion_deferred_done_false(zdeferred)                  ion_deferred_done_bool(zdeferred, 0)
 #define ion_deferred_fail(zdeferred, zexception)            _ion_deferred_resolve(zdeferred, zexception, ION_DEFERRED_FAILED TSRMLS_CC)
 #define ion_deferred_exception_ex(zdeferred, ce, code, message, ...)  \
     _ion_deferred_exception_ex(zdeferred, ce, code TSRMLS_CC, message ##__VA_ARGS__)

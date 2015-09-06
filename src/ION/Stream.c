@@ -18,7 +18,6 @@ void _ion_stream_input(bevent * bev, void * ctx) {
     struct evbuffer * input;
     char * data = NULL;
     size_t read = 0;
-    zval * zresult = NULL;
     IONF("new data vailable");
     if(stream->read) {
         input = bufferevent_get_input(stream->buffer);
@@ -28,25 +27,22 @@ void _ion_stream_input(bevent * bev, void * ctx) {
             if(evbuffer_get_length(input) >= stream->length) {
                 read = (size_t)stream->length;
                 data = ion_stream_read(stream, &read);
-                ALLOC_STRINGL_ZVAL(zresult, data, read, 0);
-                ion_deferred_done(stream->read, zresult);
-                zval_ptr_dtor(&zresult);
+                ion_deferred_done_stringl(stream->read, data, read, 0);
                 // freed in the deferred dtor
-
                 ION_CHECK_LOOP_RETURN();
             }
         } // else awaitAll
 
         if(evbuffer_get_length(input)) {
-            stream->state |= ION_STREAM_FLAG_HAS_DATA;
+            stream->state |= ION_STREAM_STATE_HAS_DATA;
         } else {
-            stream->state &= ~ION_STREAM_FLAG_HAS_DATA;
+            stream->state &= ~ION_STREAM_STATE_HAS_DATA;
         }
     } else {
-        stream->state |= ION_STREAM_FLAG_HAS_DATA;
+        stream->state |= ION_STREAM_STATE_HAS_DATA;
     }
 
-    if(!stream->read && stream->on_data && (stream->state & ION_STREAM_FLAG_HAS_DATA)) {
+    if(!stream->read && stream->on_data && (stream->state & ION_STREAM_STATE_HAS_DATA)) {
 //        pionCbVoidWith1Arg(stream->on_data, zstream);
     }
 
@@ -58,14 +54,10 @@ void _ion_stream_output(bevent *bev, void *ctx) {
     TSRMLS_FETCH_FROM_CTX(stream->thread_ctx);
     IONF("all data sent");
     if(stream->flush) {
-        zval *result;
-        ALLOC_LONG_ZVAL(result, 0);
-        ion_deferred_done(stream->flush, result);
-        zval_ptr_dtor(&result);
-        zval_ptr_dtor(&stream->flush);
+        ion_deferred_done_true(stream->flush);
         stream->flush = NULL;
     }
-    stream->state |= ION_STREAM_FLAG_FLUSHED;
+    stream->state |= ION_STREAM_STATE_FLUSHED;
 
     ION_CHECK_LOOP();
 }
@@ -80,7 +72,7 @@ void _ion_stream_notify(bevent *bev, short what, void *ctx) {
 
     if(what & BEV_EVENT_EOF) {
 //        PHPDBG("BEV_EVENT_EOF");
-        stream->state |= ION_STREAM_FLAG_CLOSED;
+        stream->state |= ION_STREAM_STATE_EOF;
         if(stream->read) {
             if(stream->length) {
                 // todo fail read-deferred
@@ -92,7 +84,7 @@ void _ion_stream_notify(bevent *bev, short what, void *ctx) {
         }
     } else if(what & BEV_EVENT_ERROR) {
 //        PHPDBG("BEV_EVENT_ERROR");
-        stream->state |= ION_STREAM_FLAG_ERROR;
+        stream->state |= ION_STREAM_STATE_ERROR;
     } else if(what & BEV_EVENT_TIMEOUT) {
 //        PHPDBG("BEV_EVENT_TIMEOUT");
         if(what & BEV_EVENT_READING) {
@@ -102,7 +94,7 @@ void _ion_stream_notify(bevent *bev, short what, void *ctx) {
         }
     } else if(what & BEV_EVENT_CONNECTED) {
 //        PHPDBG("BEV_EVENT_CONNECTED");
-        stream->state |= ION_STREAM_FLAG_CONNECTED;
+        stream->state |= ION_STREAM_STATE_CONNECTED;
         if(stream->connect) {
             // todo done connect-deferred
         }
@@ -218,7 +210,7 @@ CLASS_METHOD(ION_Stream, resource) {
     php_stream *stream_resource;
     if (ZEND_FETCH_RESOURCE_NO_RETURN(stream_resource, php_stream *, &zfd, -1, NULL, php_file_le_stream())) {
         if(php_stream_cast(stream_resource, PHP_STREAM_AS_FD | PHP_STREAM_CAST_INTERNAL | PHP_STREAM_AS_SOCKETD, (void *) &fd, 0) == SUCCESS) {
-            state = ION_STREAM_FLAG_SOCKET;
+            state = ION_STREAM_STATE_SOCKET;
         } else if (php_stream_cast(stream_resource, PHP_STREAM_AS_FD_FOR_SELECT | PHP_STREAM_CAST_INTERNAL, (void *) &fd, 0) == FAILURE) {
             ThrowInvalidArgument("stream argument must be either valid PHP stream");
             return;
@@ -256,8 +248,8 @@ CLASS_METHOD(ION_Stream, pair) {
         return;
     }
 
-    one = ion_stream_new_ex(pair[0], ION_STREAM_FLAG_SOCKET | ION_STREAM_FLAG_PAIR, EG(called_scope));
-    two = ion_stream_new_ex(pair[1], ION_STREAM_FLAG_SOCKET | ION_STREAM_FLAG_PAIR, EG(called_scope));
+    one = ion_stream_new_ex(pair[0], ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_PAIR, EG(called_scope));
+    two = ion_stream_new_ex(pair[1], ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_PAIR, EG(called_scope));
 
     array_init(return_value);
     add_next_index_zval(return_value, one);
@@ -318,7 +310,7 @@ CLASS_METHOD(ION_Stream, socket) {
     }
     efree(hostname);
 
-    ion_stream_zval_ex(return_value, buffer, ION_STREAM_FLAG_SOCKET, EG(called_scope));
+    ion_stream_zval_ex(return_value, buffer, ION_STREAM_STATE_SOCKET, EG(called_scope));
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, socket, 1)
@@ -445,7 +437,7 @@ CLASS_METHOD(ION_Stream, write) {
     bufferevent_flush(stream->buffer, EV_WRITE, BEV_NORMAL);
 
     if(evbuffer_get_length(bufferevent_get_output(stream->buffer))) {
-        stream->state &= ~ION_STREAM_FLAG_FLUSHED;
+        stream->state &= ~ION_STREAM_STATE_FLUSHED;
     }
     RETURN_THIS();
 
@@ -522,7 +514,7 @@ CLASS_METHOD(ION_Stream, flush) {
     stream->flush = ion_deferred_new_ex(NULL);
     zval_addref_p(stream->flush);
     ion_deferred_store(stream->flush, stream, _deferred_stream_dtor);
-    if(stream->state & ION_STREAM_FLAG_FLUSHED) {
+    if(stream->state & ION_STREAM_STATE_FLUSHED) {
         // TODO state delay
     }
     RETURN_ZVAL(stream->flush, 1, 0);
@@ -755,7 +747,6 @@ CLASS_METHOD(ION_Stream, await) {
     size_t length = 0;
     size_t current = 0;
     char * data = NULL;
-    zval * zresult = NULL;
     zval * zdeferred = NULL;
 
     CHECK_STREAM(stream);
@@ -773,8 +764,7 @@ CLASS_METHOD(ION_Stream, await) {
             ThrowRuntime("Stream is unreachable", -1);
             return;
         }
-        ALLOC_STRINGL_ZVAL(zresult, data, length, 0);
-        ion_deferred_done(zdeferred, zresult);
+        ion_deferred_done_stringl(zdeferred, data, length, 0);
         RETURN_ZVAL(zdeferred, 1, 0);
     } else {
         ion_deferred_store(zdeferred, stream, _deferred_stream_await_dtor);
@@ -811,7 +801,7 @@ CLASS_METHOD(ION_Stream, awaitAll) {
         return;
     }
     zdeferred = ion_deferred_new_ex(NULL);
-    if(stream->state & ION_STREAM_FLAG_CLOSED) {
+    if(stream->state & ION_STREAM_STATE_EOF) {
         ion_deferred_done_empty_string(zdeferred);
         RETURN_EMPTY_STRING();
         RETURN_ZVAL(zdeferred, 1, 0);
@@ -907,9 +897,9 @@ METHOD_WITHOUT_ARGS(ION_Stream, __destruct)
 /** public function ION\Stream::__toString() : string */
 CLASS_METHOD(ION_Stream, __toString) {
     ion_stream * stream = getThisInstance();
-    if(stream->state & ION_STREAM_FLAG_SOCKET) {
+    if(stream->state & ION_STREAM_STATE_SOCKET) {
         RETURN_STRING("stream:socket()", 1);
-    } else if(stream->state & ION_STREAM_FLAG_PAIR) {
+    } else if(stream->state & ION_STREAM_STATE_PAIR) {
         RETURN_STRING("stream:pair", 1);
     } else {
         RETURN_STRING("stream:pipe()", 1);
