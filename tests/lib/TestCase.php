@@ -134,7 +134,11 @@ class TestCase extends \PHPUnit_Framework_TestCase
 	}
 
 	public function out($message) {
-		echo $message."\n";
+		if(is_string($message)) {
+			echo $message."\n";
+		} else {
+			var_dump($message);
+		}
 		ob_flush();
 	}
 }

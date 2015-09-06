@@ -72,8 +72,43 @@ void _ion_stream_output(bevent *bev, void *ctx) {
 
 void _ion_stream_notify(bevent *bev, short what, void *ctx) {
     ion_stream *stream = (ion_stream *)ctx;
+    char * data = NULL;
+    size_t read = 0;
+
     TSRMLS_FETCH_FROM_CTX(stream->thread_ctx);
     IONF("stream note");
+
+    if(what & BEV_EVENT_EOF) {
+//        PHPDBG("BEV_EVENT_EOF");
+        stream->state |= ION_STREAM_FLAG_CLOSED;
+        if(stream->read) {
+            if(stream->length) {
+                // todo fail read-deferred
+            } else {
+                read = ion_stream_input_length(stream);
+                data = ion_stream_read(stream, &read);
+                ion_deferred_done_stringl(stream->read, data, read, 0);
+            }
+        }
+    } else if(what & BEV_EVENT_ERROR) {
+//        PHPDBG("BEV_EVENT_ERROR");
+        stream->state |= ION_STREAM_FLAG_ERROR;
+    } else if(what & BEV_EVENT_TIMEOUT) {
+//        PHPDBG("BEV_EVENT_TIMEOUT");
+        if(what & BEV_EVENT_READING) {
+            // todo reject read-deferred
+        } else {
+            // todo reject flush-deferred
+        }
+    } else if(what & BEV_EVENT_CONNECTED) {
+//        PHPDBG("BEV_EVENT_CONNECTED");
+        stream->state |= ION_STREAM_FLAG_CONNECTED;
+        if(stream->connect) {
+            // todo done connect-deferred
+        }
+    } else {
+        zend_error(E_WARNING, "Unknown type notification: %d", what);
+    }
 
     ION_CHECK_LOOP();
 }
@@ -768,7 +803,25 @@ METHOD_ARGS_END()
 
 /** public function ION\Stream::awaitAll(int $bytes) : ION\Deferred */
 CLASS_METHOD(ION_Stream, awaitAll) {
-
+    ion_stream * stream = getThisInstance();
+    zval * zdeferred;
+    CHECK_STREAM(stream);
+    if(stream->read) {
+        ThrowLogic("Stream already reading", -1);
+        return;
+    }
+    zdeferred = ion_deferred_new_ex(NULL);
+    if(stream->state & ION_STREAM_FLAG_CLOSED) {
+        ion_deferred_done_empty_string(zdeferred);
+        RETURN_EMPTY_STRING();
+        RETURN_ZVAL(zdeferred, 1, 0);
+    } else {
+        ion_deferred_store(zdeferred, stream, _deferred_stream_await_dtor);
+        stream->read = zdeferred;
+        stream->length = 0;
+        zval_add_ref(&zdeferred);
+        RETURN_ZVAL_FAST(zdeferred);
+    }
 }
 
 METHOD_WITHOUT_ARGS(ION_Stream, awaitAll)

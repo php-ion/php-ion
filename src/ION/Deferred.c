@@ -113,6 +113,13 @@ void _ion_deferred_done_stringl(zval *zdeferred, char * str, long length, int du
     zval_ptr_dtor(&zstring);
 }
 
+void _ion_deferred_done_empty_string(zval * zdeferred TSRMLS_CC) {
+    zval * zstring = NULL;
+    ALLOC_EMPTY_STRING_ZVAL(zstring);
+    ion_deferred_done(zdeferred, zstring);
+    zval_ptr_dtor(&zstring);
+}
+
 void _ion_deferred_exception_ex(zval * zdeferred, zend_class_entry * ce, long code TSRMLS_DC, const char * message, ...) {
     va_list args;
     zval * zexception = NULL;

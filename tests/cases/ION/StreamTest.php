@@ -167,6 +167,8 @@ class StreamTest extends TestCase {
 			0  => [$string, "await", [5],                                        "01234", "56789"],
 			1  => [$string, "await", [10],                                       "0123456789", ""],
 //			2  => [$string, "await", [16],                                       "0123456789", ""],
+
+			3  => [$string, "awaitAll",  [],                                       $string, ""],
 		);
 	}
 
@@ -183,9 +185,7 @@ class StreamTest extends TestCase {
 	 */
 	public function testAwaits($string, $method, $args, $result, $tail) {
 		$pid = $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) use ($string) {
-//			$this->out("sending $string");
 			fwrite($connect, $string);
-//			$this->out("exit");
 		})->start();
 
 		$this->data = [];
@@ -200,7 +200,6 @@ class StreamTest extends TestCase {
 			$this->data["tail"]   = $socket->getAll();
 			$this->stop();
 		});
-
 		$this->loop(3);
 
 		$this->assertEquals([
@@ -209,6 +208,6 @@ class StreamTest extends TestCase {
 			"tail"    => $tail,
 		], $this->data);
 //		var_dump($pid, pcntl_waitpid($pid, $s), $s);
-		$this->assertWaitPID($pid);
+//		$this->assertWaitPID($pid);
 	}
 }
