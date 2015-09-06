@@ -113,7 +113,7 @@ void _ion_deferred_done_stringl(zval *zdeferred, char * str, long length, int du
     zval_ptr_dtor(&zstring);
 }
 
-void _ion_deferred_done_empty_string(zval * zdeferred TSRMLS_CC) {
+void _ion_deferred_done_empty_string(zval * zdeferred TSRMLS_DC) {
     zval * zstring = NULL;
     ALLOC_EMPTY_STRING_ZVAL(zstring);
     ion_deferred_done(zdeferred, zstring);
