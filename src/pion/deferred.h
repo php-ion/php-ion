@@ -24,7 +24,7 @@ void   _ion_deferred_resolve(zval * zdeferred, zval * zresult, short type TSRMLS
 void   _ion_deferred_done_long(zval * zdeferred, long * lval TSRMLS_DC);
 void   _ion_deferred_done_bool(zval * zdeferred, zend_bool bval TSRMLS_DC);
 void   _ion_deferred_done_stringl(zval * zdeferred, char * str, long length, int dup TSRMLS_DC);
-void   _ion_deferred_done_empty_string(zval * zdeferred TSRMLS_CC);
+void   _ion_deferred_done_empty_string(zval * zdeferred TSRMLS_DC);
 void   _ion_deferred_exception_ex(zval * zdeferred, zend_class_entry * ce, long code TSRMLS_DC, const char * message, ...);
 void   _ion_deferred_reject(zval *zdeferred, const char *message TSRMLS_DC);
 void   _ion_deferred_free(zval *zdeferred TSRMLS_DC);
