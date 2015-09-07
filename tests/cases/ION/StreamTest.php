@@ -48,6 +48,52 @@ class StreamTest extends TestCase {
 		$b->enable()->disable()->enable();
 	}
 
+
+	public function providerString() {
+		$string = "0123456789";
+		return array(
+			[$string, "0",     0],
+			[$string, "012",   0],
+			[$string, "012",   -1, 1],
+			[$string, $string, 0],
+			[$string, "4",     4],
+			[$string, "45",    4],
+			[$string, "45",    4,  2, 6],
+			[$string, "45",    -1, 5, 6],
+			[$string, "45",    -1, 2, 4],
+			[$string, "9",     9],
+			[$string, "89",    8],
+			[$string, "89",    8,  6, 100],
+			[$string, "89",    -1,  9, 10],
+		);
+	}
+
+	/**
+	 *
+	 * @memcheck
+	 * @dataProvider providerString
+	 * @param $string
+	 * @param $token
+	 * @param $position
+	 * @param int $offset
+	 * @param int $limit
+	 */
+	public function testSearch($string, $token, $position, $offset = 0, $limit = 0) {
+		$pid = $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) use ($string) {
+			fwrite($connect, $string);
+		})->start();
+
+		$socket = Stream::socket(ION_TEST_SERVER_HOST)->enable();
+		ION::await(0.03)->then(function () use($socket, $token, $offset, $limit) {
+			$this->data['search'] = $socket->search($token, $offset, $limit);
+			$this->stop();
+		});
+		$this->loop();
+
+		$this->assertEquals($position, $this->data['search']);
+		$this->assertWaitPID($pid);
+	}
+
 	public function providerGets() {
 		$string = "0123456789";
 		return array(
@@ -84,7 +130,7 @@ class StreamTest extends TestCase {
 	}
 
 	/**
-	 *
+	 * @group dev
 	 * @memcheck
 	 * @dataProvider providerGets
 	 * @param string $string
@@ -92,6 +138,7 @@ class StreamTest extends TestCase {
 	 * @param array $args
 	 * @param string $result
 	 * @param string $tail
+	 * @group testGets
 	 */
 	public function testGets($string, $method, $args, $result, $tail) {
 		$pid = $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) use ($string) {
@@ -117,50 +164,6 @@ class StreamTest extends TestCase {
 		$this->assertWaitPID($pid);
 	}
 
-	public function providerString() {
-		$string = "0123456789";
-		return array(
-			[$string, "0",     0],
-			[$string, "012",   0],
-			[$string, "012",   -1, 1],
-			[$string, $string, 0],
-			[$string, "4",     4],
-			[$string, "45",    4],
-			[$string, "45",    4,  2, 6],
-			[$string, "45",    -1, 5, 6],
-			[$string, "45",    -1, 2, 4],
-			[$string, "9",     9],
-			[$string, "89",    8],
-			[$string, "89",    8,  6, 100],
-			[$string, "89",    -1,  9, 10],
-		);
-	}
-
-	/**
-	 * @memcheck
-	 * @dataProvider providerString
-	 * @param $string
-	 * @param $token
-	 * @param $position
-	 * @param int $offset
-	 * @param int $limit
-	 */
-	public function testSearch($string, $token, $position, $offset = 0, $limit = 0) {
-		$pid = $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) use ($string) {
-			fwrite($connect, $string);
-		})->start();
-
-		$socket = Stream::socket(ION_TEST_SERVER_HOST)->enable();
-		ION::await(0.03)->then(function () use($socket, $token, $offset, $limit) {
-			$this->data['search'] = $socket->search($token, $offset, $limit);
-			$this->stop();
-		});
-		$this->loop();
-
-		$this->assertEquals($position, $this->data['search']);
-		$this->assertWaitPID($pid);
-	}
-
 	public function providerAwaits() {
 		$string = "0123456789";
 		return array(
@@ -175,7 +178,7 @@ class StreamTest extends TestCase {
 	/**
 	 * @memcheck
 	 *
-	 * @group dev
+	 *
 	 * @dataProvider providerAwaits
 	 * @param string $string
 	 * @param string $method

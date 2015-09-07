@@ -3,14 +3,15 @@
 
 #include <php.h>
 
-#define ION_DEFERRED_DONE      1
-#define ION_DEFERRED_FAILED    2
-#define ION_DEFERRED_FINISHED  3
-#define ION_DEFERRED_REJECTED  4
+#define ION_DEFERRED_DONE      1<<0
+#define ION_DEFERRED_FAILED    1<<1
+#define ION_DEFERRED_REJECTED  1<<2
 
-#define ION_DEFERRED_INTERNAL  8
-#define ION_DEFERRED_TIMED_OUT 16
-#define ION_DEFERRED_DALAYED   32
+#define ION_DEFERRED_FINISHED  (ION_DEFERRED_DONE | ION_DEFERRED_FAILED)
+
+#define ION_DEFERRED_INTERNAL  1<<3
+#define ION_DEFERRED_TIMED_OUT 1<<4
+#define ION_DEFERRED_DALAYED   1<<5
 
 typedef void (*deferred_reject_callback)(zval *error, zval * zdeferred TSRMLS_DC);
 typedef void (*deferred_object_dtor)(void *object, zval * zdeferred TSRMLS_DC);

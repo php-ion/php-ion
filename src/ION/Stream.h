@@ -31,20 +31,26 @@ BEGIN_EXTERN_C();
 
 typedef struct bufferevent bevent;
 
+typedef struct _ion_stream_token {
+    char           * token;   // token string
+    long             token_length; // strlen of token
+    long             length;
+    long             offset;
+    short            mode;
+    long             position;
+} ion_stream_token;
+
 typedef struct _ion_stream {
-    zend_object      std;
-    short            state;   // flags ION_STREAM_FLAG_*
-    bevent         * buffer;  // input and output bufferevent
-    char           * token;   // token for awaitLine
-    int              token_length; // token length
-    long             length;  // bytes for reading
-    long             offset;  // offset for reading next chunk while awaiting
-    zval           * read;    // read deferred object
-    zval           * flush;   // state deferred object
-    zval           * connect; // connection deferred object
-    zval           * self;
-    pionCb         * on_data;
-    pionCb         * on_close;
+    zend_object        std;
+    short              state;   // flags ION_STREAM_FLAG_*
+    bevent           * buffer;  // input and output bufferevent
+    long               length;  // bytes for reading
+    ion_stream_token * token;
+    zval             * read;    // read deferred object
+    zval             * flush;   // state deferred object
+    zval             * connect; // connection deferred object
+    pionCb           * on_data;
+    pionCb           * on_close;
 #ifdef ZTS
     void ***thread_ctx;
 #endif
@@ -63,8 +69,6 @@ typedef struct _ion_stream {
 
 int    _ion_stream_zval(zval * zstream, bevent * buffer, short flags, zend_class_entry * cls TSRMLS_DC);
 zval * _ion_stream_new(bevent * buffer, short flags, zend_class_entry * cls TSRMLS_DC);
-
-#define CHECK_STREAM(stream)
 
 ion_define_class_entry(ION_Streams);
 CLASS_INSTANCE_DTOR(ION_Stream);

@@ -72,6 +72,11 @@ class Stream {
 	public function __toString() {}
 
 	/**
+	 * @return array
+	 */
+	public function __debugInfo() {}
+
+	/**
 	 * @todo
 	 * @return Deferred
 	 */
