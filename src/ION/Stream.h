@@ -40,6 +40,8 @@ typedef struct _ion_stream_token {
     long             position;
 } ion_stream_token;
 
+const ion_stream_token empty_stream_token = { NULL, 0, 0, 0, 0, -1 };
+
 typedef struct _ion_stream {
     zend_object        std;
     short              state;   // flags ION_STREAM_FLAG_*

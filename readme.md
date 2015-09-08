@@ -1,12 +1,13 @@
 ION Extension [dev]
 ===================
 
-**ION** (regexp `/^Input(?:, |-)Output,? Notifications$/`) - PHP extension for asynchronous IO and other notifications (such as POSIX signals, timers, inotify). Based on [libevent2](http://libevent.org/).
+**ION** (preg `/^(I)nput(?:, |-)(O)utput,? (N)otifications$/`) - PHP extension for asynchronous IO and other notifications (such as POSIX signals, timers, inotify). Based on [libevent2](http://libevent.org/).
 
 [![Build Status](https://travis-ci.org/php-ion/php-ion.png?branch=master)](https://travis-ci.org/php-ion/php-ion)
 
+** Documentation coming soon **
 
-Features:
+<!-- Features:
 * Listen descriptor events
 * Set timers
 * Listen signals
@@ -23,6 +24,6 @@ Features:
 * Built-in connections pool
 * Asynchronous execution of external programs
 * Implementation basic process functions (fork, setgid, setuid ...)
-* Has C API
+* Has C API -->
 
 [Thinking about asynchronous programming](docs/philosophy.md)

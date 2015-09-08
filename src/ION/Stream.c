@@ -4,8 +4,6 @@
 
 ION_DEFINE_CLASS(ION_Stream);
 
-const ion_stream_token empty_stream_token = { NULL, 0, 0, 0, 0, -1 };
-
 #define ion_stream_input_length(stream) evbuffer_get_length( bufferevent_get_input(stream->buffer) )
 #define ion_stream_read(stream, size_p) _ion_stream_read(stream, size_p TSRMLS_CC);
 #define ion_stream_read_token(stream, data, token) \
@@ -44,11 +42,32 @@ void _ion_stream_input(bevent * bev, void * ctx) {
     struct evbuffer * input;
     char * data = NULL;
     size_t read = 0;
+    zval * ex = NULL;
     IONF("new data vailable");
     if(stream->read) {
         input = bufferevent_get_input(stream->buffer);
         if(stream->token) { // awaitLine
-
+            if(ion_stream_search_token(bufferevent_get_input(stream->buffer), stream->token) == FAILURE) {
+                ion_deferred_exception_ex(stream->read, spl_ce_RuntimeException, -1, "Failed to get internal buffer pointer for token_length/offset");
+                return;
+            }
+            if(stream->token->position != -1) { // found
+            } else { // found
+                read = (size_t)ion_stream_read_token(stream, &data, stream->token);
+                if(read == -1) {
+                    if(EG(exception)) {
+                        ex = EG(exception);
+                        EG(exception) = NULL;
+                        ion_deferred_fail(stream->read, ex);
+                    } else {
+                        ion_deferred_exception_ex(stream->read, spl_ce_RuntimeException, -1, "Stream corrupted: failed to read token from buffer");
+                    }
+                } else if(read == 0) {
+                    ion_deferred_done_empty_string(stream->read);
+                } else {
+                    ion_deferred_done_stringl(stream->read, data, read, 0);
+                }
+            }
         } else if(stream->length) { // await()
             if(evbuffer_get_length(input) >= stream->length) {
                 read = (size_t)stream->length;
@@ -819,7 +838,6 @@ CLASS_METHOD(ION_Stream, awaitLine) {
         RETURN_FALSE;
     }
 
-
     if(ion_stream_search_token(bufferevent_get_input(stream->buffer), &token) == FAILURE) {
         ThrowRuntime("Failed to get internal buffer pointer for token_length/offset", -1);
         return;
@@ -829,13 +847,8 @@ CLASS_METHOD(ION_Stream, awaitLine) {
 
     if(token.position == -1) { // not found
         stream->token = emalloc(sizeof(ion_stream_token));
-        memset(stream->token, 0, sizeof(ion_stream_token));
+        memcpy(stream->token, &token, sizeof(ion_stream_token));
         stream->token->token = estrndup(token.token, (unsigned)token.token_length);
-        stream->token->token_length = token.token_length;
-        stream->token->mode = token.mode;
-        stream->token->offset = token.offset;
-        stream->token->length = token.length;
-        stream->token->position = -1;
         RETURN_ZVAL_FAST(zdeferred);
     } else { // found
         size = ion_stream_read_token(stream, &data, &token);
@@ -857,7 +870,7 @@ METHOD_ARGS_BEGIN(ION_Stream, awaitLine, 1)
     METHOD_ARG(max_length, 0)
 METHOD_ARGS_END()
 
-/** public function ION\Stream::awaitAll(int $bytes) : ION\Deferred */
+/** public function ION\Stream::awaitAll() : ION\Deferred */
 CLASS_METHOD(ION_Stream, awaitAll) {
     ion_stream * stream = getThisInstance();
     zval * zdeferred;
@@ -869,7 +882,6 @@ CLASS_METHOD(ION_Stream, awaitAll) {
     zdeferred = ion_deferred_new_ex(NULL);
     if(stream->state & ION_STREAM_STATE_EOF) {
         ion_deferred_done_empty_string(zdeferred);
-        RETURN_EMPTY_STRING();
         RETURN_ZVAL(zdeferred, 1, 0);
     } else {
         ion_deferred_store(zdeferred, stream, _deferred_stream_await_dtor);
@@ -1052,6 +1064,20 @@ PHP_MINIT_FUNCTION(ION_Stream) {
     PION_CLASS_CONST_LONG(ION_Stream, "MODE_TRIM_TOKEN", ION_STREAM_MODE_TRIM_TOKEN);
     PION_CLASS_CONST_LONG(ION_Stream, "MODE_WITH_TOKEN", ION_STREAM_MODE_WITH_TOKEN);
     PION_CLASS_CONST_LONG(ION_Stream, "MODE_WITHOUT_TOKEN", ION_STREAM_MODE_WITHOUT_TOKEN);
+
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_SOCKET", ION_STREAM_STATE_SOCKET);
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_PAIR", ION_STREAM_STATE_PAIR);
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_PIPE", ION_STREAM_STATE_PIPE);
+
+//    PION_CLASS_CONST_LONG(ION_Stream, "STATE_READING", ION_STREAM_STATE_READING);
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_FLUSHED", ION_STREAM_STATE_FLUSHED);
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_HAS_DATA", ION_STREAM_STATE_HAS_DATA);
+
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_CONNECTED", ION_STREAM_STATE_CONNECTED);
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_EOF", ION_STREAM_STATE_EOF);
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_ERROR", ION_STREAM_STATE_ERROR);
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_SHUTDOWN", ION_STREAM_STATE_SHUTDOWN);
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_CLOSED", ION_STREAM_STATE_CLOSED);
 
     PION_CLASS_CONST_LONG(ION_Stream, "INPUT",  EV_READ);
     PION_CLASS_CONST_LONG(ION_Stream, "OUTPUT", EV_WRITE);
