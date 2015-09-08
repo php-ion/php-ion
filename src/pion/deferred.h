@@ -11,7 +11,6 @@
 
 #define ION_DEFERRED_INTERNAL  1<<3
 #define ION_DEFERRED_TIMED_OUT 1<<4
-#define ION_DEFERRED_DALAYED   1<<5
 
 typedef void (*deferred_reject_callback)(zval *error, zval * zdeferred TSRMLS_DC);
 typedef void (*deferred_object_dtor)(void *object, zval * zdeferred TSRMLS_DC);
@@ -26,6 +25,8 @@ void   _ion_deferred_done_long(zval * zdeferred, long * lval TSRMLS_DC);
 void   _ion_deferred_done_bool(zval * zdeferred, zend_bool bval TSRMLS_DC);
 void   _ion_deferred_done_stringl(zval * zdeferred, char * str, long length, int dup TSRMLS_DC);
 void   _ion_deferred_done_empty_string(zval * zdeferred TSRMLS_DC);
+void   _ion_deferred_exception(zval * zdeferred, zend_class_entry * ce, const char * message, long code TSRMLS_DC);
+void   _ion_deferred_exception_eg(zval * zdeferred TSRMLS_DC);
 void   _ion_deferred_exception_ex(zval * zdeferred, zend_class_entry * ce, long code TSRMLS_DC, const char * message, ...);
 void   _ion_deferred_reject(zval *zdeferred, const char *message TSRMLS_DC);
 void   _ion_deferred_free(zval *zdeferred TSRMLS_DC);
@@ -46,6 +47,9 @@ int    _ion_deferred_dequeue(TSRMLS_D);
 #define ion_deferred_done_true(zdeferred)                   ion_deferred_done_bool(zdeferred, 1)
 #define ion_deferred_done_false(zdeferred)                  ion_deferred_done_bool(zdeferred, 0)
 #define ion_deferred_fail(zdeferred, zexception)            _ion_deferred_resolve(zdeferred, zexception, ION_DEFERRED_FAILED TSRMLS_CC)
+#define ion_deferred_exception(zdeferred, ce, message, code)          \
+    _ion_deferred_exception(zdeferred, ce, message, code TSRMLS_CC)
+#define ion_deferred_exception_eg(zdeferred)                _ion_deferred_exception_eg(zdeferred TSRMLS_CC)
 #define ion_deferred_exception_ex(zdeferred, ce, code, message, ...)  \
     _ion_deferred_exception_ex(zdeferred, ce, code TSRMLS_CC, message ##__VA_ARGS__)
 

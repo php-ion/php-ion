@@ -44,6 +44,11 @@ extern IONBase *ionBase;
         return;                          \
     }
 
+#define ION_EVCB_START()
+
+#define ION_EVCB_END()
+
+#define ION_EVCB_RETURN()
 
 #define SET_TIMEVAL(tval, dval)                          \
     tval.tv_usec = (int)((int)(dval*1000000) % 1000000); \

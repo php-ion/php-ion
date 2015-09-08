@@ -120,6 +120,19 @@ void _ion_deferred_done_empty_string(zval * zdeferred TSRMLS_DC) {
     zval_ptr_dtor(&zstring);
 }
 
+void _ion_deferred_exception(zval * zdeferred, zend_class_entry * ce, const char * message, long code TSRMLS_DC) {
+    zval * zexception = pion_exception_new(ce, message, code);
+    ion_deferred_fail(zdeferred, zexception);
+    zval_ptr_dtor(&zexception);
+}
+
+void _ion_deferred_exception_eg(zval * zdeferred) {
+    zval * zexception = EG(exception);
+    EG(exception) = NULL;
+    ion_deferred_fail(zdeferred, zexception);
+    zval_ptr_dtor(&zexception);
+}
+
 void _ion_deferred_exception_ex(zval * zdeferred, zend_class_entry * ce, long code TSRMLS_DC, const char * message, ...) {
     va_list args;
     zval * zexception = NULL;

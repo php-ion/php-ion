@@ -37,28 +37,24 @@ long _ion_stream_read_token(ion_stream * stream, char ** data, ion_stream_token 
 long _ion_stream_search_token(struct evbuffer * buffer, ion_stream_token * token TSRMLS_DC);
 
 void _ion_stream_input(bevent * bev, void * ctx) {
+    ION_EVCB_START();
+
     ion_stream * stream = (ion_stream *)ctx;
     TSRMLS_FETCH_FROM_CTX(stream->thread_ctx);
     struct evbuffer * input;
     char * data = NULL;
     size_t read = 0;
-    zval * ex = NULL;
     IONF("new data vailable");
     if(stream->read) {
         input = bufferevent_get_input(stream->buffer);
         if(stream->token) { // awaitLine
             if(ion_stream_search_token(bufferevent_get_input(stream->buffer), stream->token) == FAILURE) {
                 ion_deferred_exception_ex(stream->read, spl_ce_RuntimeException, -1, "Failed to get internal buffer pointer for token_length/offset");
-                return;
-            }
-            if(stream->token->position != -1) { // found
-            } else { // found
+            } else if(stream->token->position != -1) { // found
                 read = (size_t)ion_stream_read_token(stream, &data, stream->token);
                 if(read == -1) {
                     if(EG(exception)) {
-                        ex = EG(exception);
-                        EG(exception) = NULL;
-                        ion_deferred_fail(stream->read, ex);
+                        ion_deferred_exception_eg(stream->read);
                     } else {
                         ion_deferred_exception_ex(stream->read, spl_ce_RuntimeException, -1, "Stream corrupted: failed to read token from buffer");
                     }
@@ -73,8 +69,6 @@ void _ion_stream_input(bevent * bev, void * ctx) {
                 read = (size_t)stream->length;
                 data = ion_stream_read(stream, &read);
                 ion_deferred_done_stringl(stream->read, data, read, 0);
-                // freed in the deferred dtor
-                ION_CHECK_LOOP_RETURN();
             }
         } // else awaitAll
 
@@ -87,14 +81,16 @@ void _ion_stream_input(bevent * bev, void * ctx) {
         stream->state |= ION_STREAM_STATE_HAS_DATA;
     }
 
-    if(!stream->read && stream->on_data && (stream->state & ION_STREAM_STATE_HAS_DATA)) {
+    if(stream->read == NULL && stream->on_data != NULL && (stream->state & ION_STREAM_STATE_HAS_DATA)) {
 //        pionCbVoidWith1Arg(stream->on_data, zstream);
     }
 
-    ION_CHECK_LOOP();
+    ION_EVCB_END();
 }
 
 void _ion_stream_output(bevent *bev, void *ctx) {
+    ION_EVCB_START();
+
     ion_stream *stream = (ion_stream *)ctx;
     TSRMLS_FETCH_FROM_CTX(stream->thread_ctx);
     IONF("all data sent");
@@ -104,10 +100,12 @@ void _ion_stream_output(bevent *bev, void *ctx) {
     }
     stream->state |= ION_STREAM_STATE_FLUSHED;
 
-    ION_CHECK_LOOP();
+    ION_EVCB_END();
 }
 
 void _ion_stream_notify(bevent *bev, short what, void *ctx) {
+    ION_EVCB_START();
+
     ion_stream *stream = (ion_stream *)ctx;
     char * data = NULL;
     size_t read = 0;
@@ -116,7 +114,6 @@ void _ion_stream_notify(bevent *bev, short what, void *ctx) {
     IONF("stream note");
 
     if(what & BEV_EVENT_EOF) {
-//        PHPDBG("BEV_EVENT_EOF");
         stream->state |= ION_STREAM_STATE_EOF;
         if(stream->read) {
             if(stream->length) {
@@ -128,17 +125,14 @@ void _ion_stream_notify(bevent *bev, short what, void *ctx) {
             }
         }
     } else if(what & BEV_EVENT_ERROR) {
-//        PHPDBG("BEV_EVENT_ERROR");
         stream->state |= ION_STREAM_STATE_ERROR;
     } else if(what & BEV_EVENT_TIMEOUT) {
-//        PHPDBG("BEV_EVENT_TIMEOUT");
         if(what & BEV_EVENT_READING) {
             // todo reject read-deferred
         } else {
             // todo reject flush-deferred
         }
     } else if(what & BEV_EVENT_CONNECTED) {
-//        PHPDBG("BEV_EVENT_CONNECTED");
         stream->state |= ION_STREAM_STATE_CONNECTED;
         if(stream->connect) {
             // todo done connect-deferred
@@ -147,7 +141,7 @@ void _ion_stream_notify(bevent *bev, short what, void *ctx) {
         zend_error(E_WARNING, "Unknown type notification: %d", what);
     }
 
-    ION_CHECK_LOOP();
+    ION_EVCB_END();
 }
 
 zval * _ion_stream_new(bevent * buffer, short flags, zend_class_entry * cls TSRMLS_DC) {
@@ -961,15 +955,12 @@ CLASS_METHOD(ION_Stream, __destruct) {
     ion_stream * stream = getThisInstance();
     if(stream->flush) {
         ion_deferred_reject(stream->flush, "The stream shutdown by the destructor");
-        // stream->flush freed in cancel function
     }
     if(stream->read) {
         ion_deferred_reject(stream->read, "The stream shutdown by the destructor");
-        // stream->read freed in cancel function
     }
     if(stream->connect) {
         ion_deferred_reject(stream->connect, "The stream shutdown by the destructor");
-        // stream->flush freed in cancel function
     }
 }
 
