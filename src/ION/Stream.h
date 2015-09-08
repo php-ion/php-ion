@@ -44,9 +44,10 @@ const ion_stream_token empty_stream_token = { NULL, 0, 0, 0, 0, -1 };
 
 typedef struct _ion_stream {
     zend_object        std;
-    short              state;   // flags ION_STREAM_FLAG_*
+    ushort             state;   // flags ION_STREAM_FLAG_*
     bevent           * buffer;  // input and output bufferevent
-    long               length;  // bytes for reading
+    size_t               length;  // bytes for reading
+    size_t             input_size;
     ion_stream_token * token;
     zval             * read;    // read deferred object
     zval             * flush;   // state deferred object
@@ -75,6 +76,8 @@ zval * _ion_stream_new(bevent * buffer, short flags, zend_class_entry * cls TSRM
 ion_define_class_entry(ION_Streams);
 CLASS_INSTANCE_DTOR(ION_Stream);
 CLASS_INSTANCE_CTOR(ION_Stream);
+
+#define ION_Stream_RuntimeException() spl_ce_RuntimeException
 
 END_EXTERN_C();
 

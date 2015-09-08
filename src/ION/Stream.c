@@ -49,14 +49,14 @@ void _ion_stream_input(bevent * bev, void * ctx) {
         input = bufferevent_get_input(stream->buffer);
         if(stream->token) { // awaitLine
             if(ion_stream_search_token(bufferevent_get_input(stream->buffer), stream->token) == FAILURE) {
-                ion_deferred_exception_ex(stream->read, spl_ce_RuntimeException, -1, "Failed to get internal buffer pointer for token_length/offset");
+                ion_deferred_exception(stream->read, ION_Stream_RuntimeException(), "Failed to get internal buffer pointer for token_length/offset", -1);
             } else if(stream->token->position != -1) { // found
                 read = (size_t)ion_stream_read_token(stream, &data, stream->token);
                 if(read == -1) {
                     if(EG(exception)) {
                         ion_deferred_exception_eg(stream->read);
                     } else {
-                        ion_deferred_exception_ex(stream->read, spl_ce_RuntimeException, -1, "Stream corrupted: failed to read token from buffer");
+                        ion_deferred_exception(stream->read, ION_Stream_RuntimeException(), "Stream corrupted: failed to read token from buffer", -1);
                     }
                 } else if(read == 0) {
                     ion_deferred_done_empty_string(stream->read);
@@ -65,9 +65,11 @@ void _ion_stream_input(bevent * bev, void * ctx) {
                 }
             }
         } else if(stream->length) { // await()
+
             if(evbuffer_get_length(input) >= stream->length) {
                 read = (size_t)stream->length;
                 data = ion_stream_read(stream, &read);
+                bufferevent_setwatermark(stream->buffer, EV_READ, 0, stream->input_size);
                 ion_deferred_done_stringl(stream->read, data, read, 0);
             }
         } // else awaitAll
@@ -116,8 +118,8 @@ void _ion_stream_notify(bevent *bev, short what, void *ctx) {
     if(what & BEV_EVENT_EOF) {
         stream->state |= ION_STREAM_STATE_EOF;
         if(stream->read) {
-            if(stream->length) {
-                // todo fail read-deferred
+            if(stream->token) {
+
             } else {
                 read = ion_stream_input_length(stream);
                 data = ion_stream_read(stream, &read);
@@ -467,7 +469,6 @@ METHOD_ARGS_BEGIN(ION_Stream, setTimeouts, 2)
     METHOD_ARG(write_timeout, 0)
 METHOD_ARGS_END()
 
-
 /** public function ION\Stream::setPriority(int $priority) : self */
 CLASS_METHOD(ION_Stream, setPriority) {
     int prio = 0;
@@ -484,6 +485,26 @@ CLASS_METHOD(ION_Stream, setPriority) {
 
 METHOD_ARGS_BEGIN(ION_Stream, setPriority, 1)
     METHOD_ARG(priority, 0)
+METHOD_ARGS_END()
+
+/** public function ION\Stream::setInputSize(int $bytes) : self */
+CLASS_METHOD(ION_Stream, setInputSize) {
+    long bytes = 0;
+    ion_stream * stream = getThisInstance();
+
+    CHECK_STREAM_BUFFER(stream);
+    PARSE_ARGS("l", &bytes);
+    if(bytes < 0) {
+        pion_throw(InvalidArgumentException, "The number of bytes cannot be negative", -1);
+        return;
+    }
+    stream->input_size = (size_t)bytes;
+    bufferevent_setwatermark(stream->buffer, EV_READ, stream->length, (stream->input_size >= stream->length) ? stream->input_size : stream->length);
+    RETURN_THIS();
+}
+
+METHOD_ARGS_BEGIN(ION_Stream, setInputSize, 1)
+    METHOD_ARG(bytes, 0)
 METHOD_ARGS_END()
 
 /** public function ION\Stream::write(string $data) : self */
@@ -585,7 +606,7 @@ CLASS_METHOD(ION_Stream, flush) {
     zval_addref_p(stream->flush);
     ion_deferred_store(stream->flush, stream, _deferred_stream_dtor);
     if(stream->state & ION_STREAM_STATE_FLUSHED) {
-        // TODO state delay
+        ion_deferred_done_true(stream->flush);
     }
     RETURN_ZVAL(stream->flush, 1, 0);
 }
@@ -766,7 +787,7 @@ METHOD_ARGS_END()
 
 void _deferred_stream_await_dtor(void *object, zval *zdeferred TSRMLS_DC) {
     ion_stream * stream = (ion_stream *) object;
-    bufferevent_setwatermark(stream->buffer, EV_READ, 0, 0);
+    bufferevent_setwatermark(stream->buffer, EV_READ, 0, stream->input_size);
     if(stream->read) {
         zval_ptr_dtor(&stream->read);
         if(stream->token) {
@@ -809,7 +830,7 @@ CLASS_METHOD(ION_Stream, await) {
         stream->read = zdeferred;
         stream->length = length;
         zval_add_ref(&zdeferred);
-        bufferevent_setwatermark(stream->buffer, EV_READ, length - current, 0);
+        bufferevent_setwatermark(stream->buffer, EV_READ, length, (stream->input_size >= length) ? stream->input_size : length);
         RETURN_ZVAL_FAST(zdeferred);
     }
 }
@@ -1028,6 +1049,7 @@ CLASS_METHODS_START(ION_Stream)
     METHOD(ION_Stream, awaitConnection, ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, setTimeouts,     ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, setPriority,     ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, setInputSize,    ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, write,           ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, sendFile,        ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, flush,           ZEND_ACC_PUBLIC)

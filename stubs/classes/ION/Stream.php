@@ -21,7 +21,7 @@ class Stream {
 	public static function resource($resource) {}
 
 	/**
-	 * Recognized hostname formats are hostname + port:
+	 * Recognized host formats are hostname + port:
 	 * www.example.com:80, 1.2.3.4:567, [::1]:8080
 	 * @param string $host
 	 *
@@ -99,6 +99,13 @@ class Stream {
 	 * @return self
 	 */
 	public function setPriority($priority) {}
+
+	/**
+	 * If the input buffer is beyond the $bytes, the stream stops reading from the network.
+	 * @param int $bytes
+	 * @return self
+	 */
+	public function setInputSize($bytes) {}
 
 	/**
 	 * @todo
@@ -218,7 +225,7 @@ class Stream {
 
 	/**
 	 * @todo
-	 * @return Deferred
+	 * @return self
 	 */
 	public function close() {}
 
@@ -234,6 +241,11 @@ class Stream {
 
 	public function onClose(callable $cb) {}
 
+	/**
+	 * @return Deferred
+	 */
+	public function awaitClose() {}
+
 	public function __destruct() {}
 
 	/**
@@ -244,3 +256,7 @@ class Stream {
 	public function appendToInput($data) {}
 
 }
+
+class StreamException extends \Exception {}
+class RuntimeException extends StreamException {}
+class ConnectionException extends StreamException {}
