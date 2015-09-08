@@ -126,7 +126,7 @@ void _ion_deferred_exception(zval * zdeferred, zend_class_entry * ce, const char
     zval_ptr_dtor(&zexception);
 }
 
-void _ion_deferred_exception_eg(zval * zdeferred) {
+void _ion_deferred_exception_eg(zval * zdeferred TSRMLS_DC) {
     zval * zexception = EG(exception);
     EG(exception) = NULL;
     ion_deferred_fail(zdeferred, zexception);
