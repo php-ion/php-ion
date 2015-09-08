@@ -52,8 +52,8 @@ typedef struct _ion_stream {
     zval             * read;    // read deferred object
     zval             * flush;   // state deferred object
     zval             * connect; // connection deferred object
+    zval             * closing; // closing deferred object
     pionCb           * on_data;
-    pionCb           * on_close;
 #ifdef ZTS
     void ***thread_ctx;
 #endif

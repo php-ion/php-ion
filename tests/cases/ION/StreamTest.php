@@ -97,9 +97,10 @@ class StreamTest extends TestCase {
 	public function providerGets() {
 		$string = "0123456789";
 		return array(
-			0  => [$string, "get", [5],                                        "01234", "56789"],
-			1  => [$string, "get", [10],                                       "0123456789", ""],
-			2  => [$string, "get", [16],                                       "0123456789", ""],
+			//     send     method      arguments for method                   read      tail
+			0  => [$string, "get",     [5],                                    "01234", "56789"],
+			1  => [$string, "get",     [10],                                   "0123456789", ""],
+			2  => [$string, "get",     [16],                                   "0123456789", ""],
 
 			3  => [$string, "getAll",  [],                                     $string, ""],
 
@@ -222,15 +223,18 @@ class StreamTest extends TestCase {
 		$this->data = [];
 
 		$socket = Stream::socket(ION_TEST_SERVER_HOST)->enable();
+		$socket->awaitClosing()->then(function (Stream $socket) {
+			$this->data["tail"]   = $socket->getAll();
+			$this->stop(3);
+		});
 		$deferred = call_user_func_array([$socket, $method], $args);
 		$this->assertInstanceOf('ION\Deferred', $deferred);
 		/** @var Deferred $deferred */
 		$deferred->then(function($data, $error) use ($socket) {
 			$this->data["result"] = $data;
 			$this->data["error"]  = $error;
-			$this->data["tail"]   = $socket->getAll();
-			$this->stop(3);
 		});
+
 		$this->loop(3);
 
 		$this->assertEquals([

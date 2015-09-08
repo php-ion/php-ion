@@ -7,7 +7,7 @@
 
 BEGIN_EXTERN_C()
 
-#define Exception zend_exception_get_default(TSRMLS_C);
+//#define Exception zend_exception_get_default(TSRMLS_C);
 #define cException zend_exception_get_default(TSRMLS_C)
 #define getExceptionClass() zend_exception_get_default(TSRMLS_C)
 

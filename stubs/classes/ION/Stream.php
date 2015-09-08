@@ -224,27 +224,19 @@ class Stream {
 	public function flush() {}
 
 	/**
-	 * @todo
-	 * @return self
-	 */
-	public function close() {}
-
-	/**
-	 * @todo
-	 * Close socket immediately
 	 *
+	 * @param bool $force close stream immediately
 	 * @return Stream
 	 */
-	public function shutdown() {}
+	public function close($force = false) {}
 
 	public function onData(callable $cb) {}
 
-	public function onClose(callable $cb) {}
-
 	/**
+	 * Deferred to be resolved when the stream is closed
 	 * @return Deferred
 	 */
-	public function awaitClose() {}
+	public function awaitClosing() {}
 
 	public function __destruct() {}
 

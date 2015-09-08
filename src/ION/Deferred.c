@@ -252,7 +252,7 @@ CLASS_METHOD(ION_Deferred, resolve) {
         ThrowLogic("Internal defer-event cannot be finished from user-space", -1);
     }
     PARSE_ARGS("z", &zData);
-    _ion_deferred_resolve(getThis(), zData, ION_DEFERRED_DONE TSRMLS_CC);
+    ion_deferred_done(getThis(), zData);
     RETURN_THIS();
 }
 
@@ -279,7 +279,7 @@ CLASS_METHOD(ION_Deferred, error) {
         return;
     }
     PARSE_ARGS("z", &zError);
-    _ion_deferred_resolve(getThis(), zError, ION_DEFERRED_FAILED TSRMLS_CC);
+    ion_deferred_fail(getThis(), zError);
     RETURN_THIS();
 }
 
