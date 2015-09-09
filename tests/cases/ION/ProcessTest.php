@@ -18,7 +18,7 @@ class ProcessTest extends TestCase {
         $this->assertSame(getmypid(), Process::getPid());
         $this->assertSame(posix_getppid(), Process::getParentPid());
     }
-    
+
     /**
      * @mem-check
      * @todo
@@ -29,10 +29,10 @@ class ProcessTest extends TestCase {
         \ION::stop(.03);
         \ION::dispatch();
     }
-    
+
     /**
      * @point done
-     * @mem-check 
+     * @mem-check
      * @todo
      * @group testExec
      */
@@ -41,65 +41,65 @@ class ProcessTest extends TestCase {
         $this->assertInstanceOf('Defer', $defer);
         $defer->onResult(function ($data, $error, $arg) {
             $this->point('done', 0.2);
-            $this->assertSame("done\n" ,$data['stdout']);
-            $this->assertSame("" ,$data['stderr']);
-            $this->assertSame(0 ,$data['status']);
-            $this->assertSame(0 ,$data['killed']);
+            $this->assertSame("done\n", $data['stdout']);
+            $this->assertSame("", $data['stderr']);
+            $this->assertSame(0, $data['status']);
+            $this->assertSame(0, $data['killed']);
 //            \ION::stop();
         });
         \ION::dispatch();
     }
-    
+
     /**
      * @group testGetUser
      * @memcheck
      */
     public function testGetUser() {
-	    $actual = Process::getUser();
-	    $expected = posix_getpwnam(posix_getlogin());
-	    $this->assertSame($expected['name'], $actual['name']);
-	    $this->assertSame($expected['uid'], $actual['uid']);
-	    $this->assertSame($expected['gid'], $actual['gid']);
-	    $this->assertSame($expected['dir'], $actual['home']);
-	    $this->assertSame($expected['shell'], $actual['shell']);
+        $actual = Process::getUser();
+        $expected = posix_getpwnam(posix_getlogin());
+        $this->assertSame($expected['name'], $actual['name']);
+        $this->assertSame($expected['uid'], $actual['uid']);
+        $this->assertSame($expected['gid'], $actual['gid']);
+        $this->assertSame($expected['dir'], $actual['home']);
+        $this->assertSame($expected['shell'], $actual['shell']);
     }
-    
+
     /**
      * @group testGetAnotherUser
      * @memcheck
      */
     public function testGetAnotherUser() {
         $actual = Process::getUser('nobody');
-	    $expected = posix_getpwnam('nobody');
-	    $this->assertEquals($expected['name'], $actual['name']);
-	    $this->assertEquals($expected['gecos'], $actual['gecos']);
-	    $this->assertSame($expected['uid'], $actual['uid']);
-	    $this->assertSame($expected['gid'], $actual['gid']);
+        $expected = posix_getpwnam('nobody');
+        $this->assertEquals($expected['name'], $actual['name']);
+        $this->assertEquals($expected['gecos'], $actual['gecos']);
+        $this->assertSame($expected['uid'], $actual['uid']);
+        $this->assertSame($expected['gid'], $actual['gid']);
         $this->assertSame($expected['dir'], $actual['home']);
         $this->assertSame($expected['shell'], $actual['shell']);
     }
-    
+
     /**
      * @group testGetAnotherUserUID
      * @memcheck
      */
     public function testGetAnotherUserUID() {
-	    $actual = Process::getUser(intval(`id -u nobody`));
-	    $expected = posix_getpwnam('nobody');
-	    $this->assertSame($expected['name'], $actual['name']);
-	    $this->assertSame($expected['uid'], $actual['uid']);
-	    $this->assertSame($expected['gid'], $actual['gid']);
-	    $this->assertSame($expected['dir'], $actual['home']);
-	    $this->assertSame($expected['shell'], $actual['shell']);
+        $actual = Process::getUser(intval(`id -u nobody`));
+        $expected = posix_getpwnam('nobody');
+        $this->assertSame($expected['name'], $actual['name']);
+        $this->assertSame($expected['uid'], $actual['uid']);
+        $this->assertSame($expected['gid'], $actual['gid']);
+        $this->assertSame($expected['dir'], $actual['home']);
+        $this->assertSame($expected['shell'], $actual['shell']);
     }
-    
+
     /**
      * @group testFork
      * @memcheck
      */
     public function _testFork() {
         $pid = Process::fork();
-        if($pid) {
+        if ($pid) {
             $this->assertSame($pid, pcntl_waitpid($pid, $status));
             $this->assertSame(0, $status);
         } else {
@@ -107,7 +107,7 @@ class ProcessTest extends TestCase {
             exit(0);
         }
     }
-    
+
     /**
      * @memcheck
      */
@@ -115,8 +115,8 @@ class ProcessTest extends TestCase {
         $this->assertSame(pcntl_getpriority(), Process::getPriority());
         $this->assertSame(pcntl_getpriority(posix_getppid()), Process::getPriority(posix_getppid()));
     }
-   
-    
+
+
     /**
      * @group testSetPriority
      * @memcheck
@@ -124,8 +124,8 @@ class ProcessTest extends TestCase {
     public function testSetPriority() {
         $prio = Process::getPriority();
         $pid = Process::fork();
-        
-        if($pid) {
+
+        if ($pid) {
             usleep(10000);
             $this->assertSame($prio + 10, Process::getPriority($pid));
             $this->assertWaitPID($pid);
@@ -135,7 +135,7 @@ class ProcessTest extends TestCase {
             exit(0);
         }
     }
-    
+
     /**
      * @group testSetUser
      * @mem check
@@ -145,14 +145,14 @@ class ProcessTest extends TestCase {
         var_dump(Process::getUser());
         Process::setUser($_SERVER['USER'], 'staff');
     }
-    
+
     /**
      * @group testOnSignal
      */
     public function _testOnSignal() {
-        $this->out("test ".getmypid());
+        $this->out("test " . getmypid());
         $this->separate([$this, 'procOnSignal']);
-        Process::onSignal(Sig::USR1, function($signal, $arg) {
+        Process::onSignal(Sig::USR1, function ($signal, $arg) {
             $this->assertSame(SIGUSR1, $signal);
             $this->assertSame('zx', $arg);
             $this->point('signal');
@@ -160,10 +160,10 @@ class ProcessTest extends TestCase {
         }, 'zx');
         \ION::dispatch();
     }
-    
+
     public function procOnSignal() {
-        $this->out("child ".getmypid());
+        $this->out("child " . getmypid());
         posix_kill(posix_getppid(), SIGUSR1);
     }
-    
+
 }

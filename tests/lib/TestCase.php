@@ -4,145 +4,144 @@ namespace ION\Test;
 use ION;
 use ION\Test\TestCase\Server;
 
-class TestCase extends \PHPUnit_Framework_TestCase
-{
+class TestCase extends \PHPUnit_Framework_TestCase {
 
-	const SERVER_CHUNK_INTERVAL = 5e4;
-	const LOOP_TIMEOUT = 0.5;
-	const WORKER_WAIT_ON_START = -0.03;
+    const SERVER_CHUNK_INTERVAL = 5e4;
+    const LOOP_TIMEOUT = 0.5;
+    const WORKER_WAIT_ON_START = -0.03;
 
-	private $_stop;
-	private $_error;
-	public $data = [];
-	public $shared;
+    private $_stop;
+    private $_error;
+    public $data = [];
+    public $shared;
 
-	public function setUp() {
-		$this->data = [];
-	}
+    public function setUp() {
+        $this->data = [];
+    }
 
-	public function tearDown() {
-		$method = new \ReflectionMethod($this, $this->getName(false));
+    public function tearDown() {
+        $method = new \ReflectionMethod($this, $this->getName(false));
 
-		if(strpos($method->getDocComment(), "@memcheck")) {
-			$memory = 0; // allocate variable
-			$zero = 0; // allocate zero value
-			$r = array(0, 0);  // allocate result
+        if (strpos($method->getDocComment(), "@memcheck")) {
+            $memory = 0; // allocate variable
+            $zero = 0; // allocate zero value
+            $r = array(0, 0);  // allocate result
 
-			for($i=0; $i<2; $i++) {
-				$memory = memory_get_usage();
-				$this->runTest();
-				$r[$i] = memory_get_usage() - $memory;
-				if($r[$i] < 0) { // free memory o_O
-					$r[$i] = $zero; // this hack works - no one 8-bytes-memory-leak
-				}
-			}
+            for ($i = 0; $i < 2; $i++) {
+                $memory = memory_get_usage();
+                $this->runTest();
+                $r[$i] = memory_get_usage() - $memory;
+                if ($r[$i] < 0) { // free memory o_O
+                    $r[$i] = $zero; // this hack works - no one 8-bytes-memory-leak
+                }
+            }
 
-			if(array_sum($r)) {
-				$this->fail("Memory leak detected: +".implode(" B, +", $r)." B");
-			}
-		}
-	}
+            if (array_sum($r)) {
+                $this->fail("Memory leak detected: +" . implode(" B, +", $r) . " B");
+            }
+        }
+    }
 
-	/**
-	 * @param string $host
-	 * @return Server
-	 */
-	public function listen($host) {
-		return new Server($host);
-	}
+    /**
+     * @param string $host
+     * @return Server
+     */
+    public function listen($host) {
+        return new Server($host);
+    }
 
-	public function assertException($exception, $message = null, $code = null) {
-		$this->assertInstanceOf('Exception', $exception);
-		/* @var \Exception $exception */
-		if(null !== $message) {
-			$this->assertSame($message, $exception->getMessage());
-		}
-		if(null !== $code) {
-			$this->assertSame($code, $exception->getCode());
-		}
-	}
+    public function assertException($exception, $message = null, $code = null) {
+        $this->assertInstanceOf('Exception', $exception);
+        /* @var \Exception $exception */
+        if (null !== $message) {
+            $this->assertSame($message, $exception->getMessage());
+        }
+        if (null !== $code) {
+            $this->assertSame($code, $exception->getCode());
+        }
+    }
 
-	public function point($name, $time = 0.0) {
+    public function point($name, $time = 0.0) {
 
-	}
+    }
 
-	public function assertTimeout($time, $timeout, $accuracy = 0.01) {
-		$time = microtime(1) - $time;
-		$this->assertTrue($time >= $timeout, "Time great then timeout");
-		$this->assertTrue($time < $timeout + $accuracy, "Value ($time) exceeds the accuracy ($timeout + $accuracy)");
-	}
+    public function assertTimeout($time, $timeout, $accuracy = 0.01) {
+        $time = microtime(1) - $time;
+        $this->assertTrue($time >= $timeout, "Time great then timeout");
+        $this->assertTrue($time < $timeout + $accuracy, "Value ($time) exceeds the accuracy ($timeout + $accuracy)");
+    }
 
 
-	public function assertWaitPID($pid, $status = 0) {
-		$this->assertSame($pid, pcntl_waitpid($pid, $s));
-		$this->assertSame($status, $s);
-	}
+    public function assertWaitPID($pid, $status = 0) {
+        $this->assertSame($pid, pcntl_waitpid($pid, $s));
+        $this->assertSame($status, $s);
+    }
 
-	/**
-	 * @param float $timeout
-	 * @param bool $timeout_as_fail
-	 */
-	public function loop($timeout = 0.5, $timeout_as_fail = true) {
-		$this->_stop = false;
-		$this->_error = null;
+    /**
+     * @param float $timeout
+     * @param bool $timeout_as_fail
+     */
+    public function loop($timeout = 0.5, $timeout_as_fail = true) {
+        $this->_stop = false;
+        $this->_error = null;
 //		$stopper = ION::await($timeout)->then(function ($tmp, $error) {
 //			if(!$error) {
 //				ION::stop();
 //			}
 //		});
-		ION::dispatch();
+        ION::dispatch();
 //		$stopper->reject("already");
 //		unset($stopper);
 //		ION::reinit(ION::RECREATE_BASE);
-		if($this->_stop) {
-			if($this->_error) {
-				$this->fail($this->_error);
-			}
-		} elseif($timeout_as_fail) {
-			$this->fail("Loop timed out. ".($this->shared ? "Data: ".var_export($this->shared, true) : ""));
-		}
-	}
+        if ($this->_stop) {
+            if ($this->_error) {
+                $this->fail($this->_error);
+            }
+        } elseif ($timeout_as_fail) {
+            $this->fail("Loop timed out. " . ($this->shared ? "Data: " . var_export($this->shared, true) : ""));
+        }
+    }
 
-	public function stop($error = null) {
-		$this->_stop = true;
-		if(is_numeric($error)) {
-			ION::stop((double)$error);
-		} else {
-			$this->_error = $error;
-			ION::stop(0.1);
-		}
+    public function stop($error = null) {
+        $this->_stop = true;
+        if (is_numeric($error)) {
+            ION::stop((double)$error);
+        } else {
+            $this->_error = $error;
+            ION::stop(0.1);
+        }
 
-	}
+    }
 
-	public function startWorker(callable $callback, $wait = self::WORKER_WAIT_ON_START) {
-		$pid = pcntl_fork();
-		if($pid == -1) {
-			$this->fail("Fork failed");
-		} elseif($pid) {
-			if($wait < 0) {
-				usleep(abs($wait) * 1e6);
-			}
-			return $pid;
-		} else {
-			if($wait > 0) {
-				usleep($wait * 1e6);
-			}
-			try {
-				call_user_func($callback);
-			} catch(\Exception $e) {
-				error_log(strval($e));
-				exit(127);
-			}
-			exit(0);
-		}
-	}
+    public function startWorker(callable $callback, $wait = self::WORKER_WAIT_ON_START) {
+        $pid = pcntl_fork();
+        if ($pid == -1) {
+            $this->fail("Fork failed");
+        } elseif ($pid) {
+            if ($wait < 0) {
+                usleep(abs($wait) * 1e6);
+            }
+            return $pid;
+        } else {
+            if ($wait > 0) {
+                usleep($wait * 1e6);
+            }
+            try {
+                call_user_func($callback);
+            } catch (\Exception $e) {
+                error_log(strval($e));
+                exit(127);
+            }
+            exit(0);
+        }
+    }
 
-	public function out($message) {
-		if(is_string($message)) {
-			echo $message."\n";
-		} else {
-			var_dump($message);
-		}
-		ob_flush();
-	}
+    public function out($message) {
+        if (is_string($message)) {
+            echo $message . "\n";
+        } else {
+            var_dump($message);
+        }
+        ob_flush();
+    }
 }
