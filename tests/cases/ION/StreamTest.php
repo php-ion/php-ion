@@ -283,7 +283,7 @@ class StreamTest extends TestCase {
     /**
      * @memcheck
      */
-    public function _testDebugInfo() {
+    public function testDebugInfo() {
         $pid = $this->setupServer(["01234","56789"]);
         $socket = Stream::socket(ION_TEST_SERVER_HOST)->enable();
         $socket->__debugInfo();
