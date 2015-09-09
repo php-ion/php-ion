@@ -25,7 +25,7 @@ class Server {
         return $this;
     }
 
-    public function inWorker($timeout = TestCase::WORKER_WAIT_ON_START) {
+    public function inWorker($timeout = TestCase::WORKER_DELAY) {
         $this->timeout = $timeout;
         $this->in_worker = true;
         return $this;

@@ -971,7 +971,7 @@ void _deferred_stream_closing_dtor(void *object, zval *zdeferred TSRMLS_DC) {
 
 
 /** public function ION\Stream::awaitClosing() : ION\Deferred */
-CLASS_METHOD(ION_Stream, awaitClosing) {
+CLASS_METHOD(ION_Stream, awaitShutdown) {
     ion_stream * stream = getThisInstance();
     zval * zdeferred;
     CHECK_STREAM_BUFFER(stream);
@@ -988,7 +988,7 @@ CLASS_METHOD(ION_Stream, awaitClosing) {
     }
 }
 
-METHOD_ARGS_BEGIN(ION_Stream, awaitClosing, 1)
+METHOD_ARGS_BEGIN(ION_Stream, awaitShutdown, 1)
     METHOD_ARG(callback, 0)
 METHOD_ARGS_END()
 
@@ -1076,6 +1076,14 @@ CLASS_METHOD(ION_Stream, __debugInfo) {
     add_assoc_bool(return_value, "await_shutdown", stream->closing ? 1 : 0);
 
 }
+
+/** public function ION\Stream::isClosed() : int */
+CLASS_METHOD(ION_Stream, isClosed) {
+    ion_stream * stream = getThisInstance();
+    RETURN_LONG(stream->state & ION_STREAM_STATE_CLOSED);
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, isClosed)
 
 METHOD_WITHOUT_ARGS(ION_Stream, __debugInfo)
 
@@ -1171,10 +1179,11 @@ CLASS_METHODS_START(ION_Stream)
     METHOD(ION_Stream, awaitLine,       ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, shutdown,        ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, onData,          ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, awaitClosing,    ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, awaitShutdown,   ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, ensureSSL,       ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, getRemotePeer,   ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, getLocalPeer,    ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, isClosed,        ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, __destruct,      ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, __toString,      ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, __debugInfo,     ZEND_ACC_PUBLIC)

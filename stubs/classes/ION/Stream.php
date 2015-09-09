@@ -4,13 +4,24 @@ namespace ION;
 
 
 class Stream {
-	const MODE_TRIM_TOKEN    = 0b001;
-	const MODE_WITH_TOKEN    = 0b010;
-	const MODE_WITHOUT_TOKEN = 0b100;
+    const MODE_TRIM_TOKEN = 1;
+    const MODE_WITH_TOKEN = 2;
+    const MODE_WITHOUT_TOKEN = 4;
 
-	const INPUT  = 0b010;
-	const OUTPUT = 0b100;
-	const BOTH   = 0b110;
+    const STATE_SOCKET = 1;
+    const STATE_PAIR = 2;
+    const STATE_PIPE = 4;
+    const STATE_FLUSHED = 32;
+    const STATE_HAS_DATA = 64;
+    const STATE_CONNECTED = 1024;
+    const STATE_EOF = 2048;
+    const STATE_ERROR = 4096;
+    const STATE_SHUTDOWN = 8192;
+    const STATE_CLOSED = 14336;
+
+    const PUT = 2;
+    const OUTPUT = 4;
+    const BOTH = 6;
 
 	/**
 	 * Create streams from resource of PHP stream.
@@ -233,10 +244,15 @@ class Stream {
 	public function onData(callable $cb) {}
 
 	/**
-	 * Deferred to be resolved when the stream is closed
+	 * Deferred to be resolved when the stream is shutdown
 	 * @return Deferred
 	 */
-	public function awaitClosing() {}
+	public function awaitShutdown() {}
+
+    /**
+     * @return int
+     */
+    public function isClosed() {}
 
 	public function __destruct() {}
 

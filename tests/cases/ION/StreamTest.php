@@ -7,6 +7,19 @@ use ION\Test\TestCase;
 
 class StreamTest extends TestCase {
 
+    public function setupServer($data, $timeout = TestCase::WORKER_DELAY) {
+        return $this->listen(ION_TEST_SERVER_HOST)->inWorker($timeout)->onConnect(function ($connect) use ($data) {
+            if(is_array($data)) {
+                foreach ($data as $chunk) {
+                    fwrite($connect, $chunk);
+                    usleep(self::SERVER_CHUNK_INTERVAL); // 0.1s
+                }
+            } else {
+                fwrite($connect, $data);
+            }
+        })->start();
+    }
+
     /**
      * @memcheck
      */
@@ -79,9 +92,7 @@ class StreamTest extends TestCase {
      * @param int $limit
      */
     public function testSearch($string, $token, $position, $offset = 0, $limit = 0) {
-        $pid = $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) use ($string) {
-            fwrite($connect, $string);
-        })->start();
+        $pid = $this->setupServer($string);
 
         $socket = Stream::socket(ION_TEST_SERVER_HOST)->enable();
         ION::await(0.03)->then(function () use ($socket, $token, $offset, $limit) {
@@ -145,10 +156,7 @@ class StreamTest extends TestCase {
      * @group testGets
      */
     public function testGets($string, $method, $args, $result, $tail) {
-        $pid = $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) use ($string) {
-            fwrite($connect, $string);
-        })->start();
-
+        $pid = $this->setupServer($string);
         $socket = Stream::socket(ION_TEST_SERVER_HOST)->enable();
         ION::await(0.03)->then(function () use ($socket, $method, $args) {
             $this->data["size"] = $socket->getSize();
@@ -164,6 +172,29 @@ class StreamTest extends TestCase {
             $method => $result,
             "tail" => $tail,
             "tail_size" => strlen($tail)
+        ], $this->data);
+        $this->assertWaitPID($pid);
+    }
+
+    /**
+     * @group testAwaitShutdown
+     * @memcheck
+     */
+    public function testAwaitShutdown() {
+        $pid = $this->setupServer(["01234","56789"]);
+        $socket = Stream::socket(ION_TEST_SERVER_HOST)->enable();
+
+        $socket->awaitShutdown()->then(function (Stream $stream, $error) {
+            $this->assertNull($error);
+            $this->assertInstanceOf('ION\Stream', $stream);
+            $this->data["tail"]   = $stream->getAll();
+            $this->data["closed"] = $stream->isClosed();
+            $this->stop();
+        });
+        $this->loop();
+        $this->assertEquals([
+            "tail" => "0123456789",
+            "closed" => Stream::STATE_EOF
         ], $this->data);
         $this->assertWaitPID($pid);
     }
@@ -212,6 +243,7 @@ class StreamTest extends TestCase {
     /**
      * @memcheck
      *
+     * @group awaits
      * @dataProvider providerAwaits
      * @param array $chunks
      * @param string $method
@@ -220,17 +252,12 @@ class StreamTest extends TestCase {
      * @param string $tail
      */
     public function testAwaits($chunks, $method, $args, $result, $tail) {
-        $pid = $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) use ($chunks) {
-            foreach ($chunks as $chunk) {
-                fwrite($connect, $chunk);
-                usleep(self::SERVER_CHUNK_INTERVAL); // 0.1s
-            }
-        })->start();
+        $pid = $this->setupServer($chunks);
 
         $this->data = [];
 
         $socket = Stream::socket(ION_TEST_SERVER_HOST)->enable();
-        $socket->awaitClosing()->then(function (Stream $socket) {
+        $socket->awaitShutdown()->then(function (Stream $socket) {
             $this->data["tail"] = $socket->getAll();
             $this->stop();
         });
@@ -250,6 +277,24 @@ class StreamTest extends TestCase {
             "tail" => $tail,
         ], $this->data);
 
-//		$this->assertWaitPID($pid);
+		$this->assertWaitPID($pid);
+    }
+
+    /**
+     * @memcheck
+     */
+    public function _testDebugInfo() {
+        $pid = $this->setupServer(["01234","56789"]);
+        $socket = Stream::socket(ION_TEST_SERVER_HOST)->enable();
+        $socket->__debugInfo();
+        $socket->awaitLine("a");
+        $socket->__debugInfo();
+        $socket->awaitShutdown()->then(function (Stream $stream, $error) {
+            $stream->__debugInfo();
+            $this->stop();
+        });
+
+        $this->loop();
+        $this->assertWaitPID($pid);
     }
 }

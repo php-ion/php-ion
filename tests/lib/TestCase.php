@@ -8,7 +8,7 @@ class TestCase extends \PHPUnit_Framework_TestCase {
 
     const SERVER_CHUNK_INTERVAL = 5e4;
     const LOOP_TIMEOUT = 0.5;
-    const WORKER_WAIT_ON_START = -0.03;
+    const WORKER_DELAY = -0.03;
 
     private $_stop;
     private $_error;
@@ -20,9 +20,9 @@ class TestCase extends \PHPUnit_Framework_TestCase {
     }
 
     public function tearDown() {
-        $method = new \ReflectionMethod($this, $this->getName(false));
+        $doc = \PHPUnit_Util_Test::parseTestMethodAnnotations(get_class($this), $this->getName(false));
 
-        if (strpos($method->getDocComment(), "@memcheck")) {
+        if (isset($doc['method']['memcheck'])) {
             $memory = 0; // allocate variable
             $zero = 0; // allocate zero value
             $r = array(0, 0);  // allocate result
@@ -73,8 +73,11 @@ class TestCase extends \PHPUnit_Framework_TestCase {
 
 
     public function assertWaitPID($pid, $status = 0) {
-        $this->assertSame($pid, pcntl_waitpid($pid, $s));
-        $this->assertSame($status, $s);
+        $wpid = pcntl_waitpid($pid, $s);
+        if($wpid != -1) { // in gdb we lost sigchld
+            $this->assertSame($pid, $wpid);
+            $this->assertSame($status, $s);
+        }
     }
 
     /**
@@ -113,7 +116,7 @@ class TestCase extends \PHPUnit_Framework_TestCase {
 
     }
 
-    public function startWorker(callable $callback, $wait = self::WORKER_WAIT_ON_START) {
+    public function startWorker(callable $callback, $wait = self::WORKER_DELAY) {
         $pid = pcntl_fork();
         if ($pid == -1) {
             $this->fail("Fork failed");

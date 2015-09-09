@@ -43,7 +43,7 @@ typedef struct _ion_stream_token {
     long             position;
 } ion_stream_token;
 
-const ion_stream_token empty_stream_token = { NULL, 0, 0, 0, 0, -1 };
+const ion_stream_token empty_stream_token = { NULL, 0, 0, 0, ION_STREAM_MODE_TRIM_TOKEN, -1 };
 
 typedef struct _ion_stream {
     zend_object        std;
