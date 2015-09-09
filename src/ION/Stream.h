@@ -29,6 +29,9 @@ BEGIN_EXTERN_C();
 #define ION_STREAM_MODE_WITH_TOKEN    2
 #define ION_STREAM_MODE_WITHOUT_TOKEN 4
 
+#define ION_STREAM_TOKEN_MODE_MASK    (ION_STREAM_MODE_TRIM_TOKEN | ION_STREAM_MODE_WITH_TOKEN | ION_STREAM_MODE_WITHOUT_TOKEN)
+#define ION_STREAM_TOKEN_LIMIT        8
+
 typedef struct bufferevent bevent;
 
 typedef struct _ion_stream_token {
@@ -36,7 +39,7 @@ typedef struct _ion_stream_token {
     long             token_length; // strlen of token
     long             length;
     long             offset;
-    short            mode;
+    short            flags;
     long             position;
 } ion_stream_token;
 
@@ -46,9 +49,10 @@ typedef struct _ion_stream {
     zend_object        std;
     ushort             state;   // flags ION_STREAM_FLAG_*
     bevent           * buffer;  // input and output bufferevent
-    size_t               length;  // bytes for reading
+    size_t             length;  // bytes for reading
     size_t             input_size;
     ion_stream_token * token;
+    zval             * self;
     zval             * read;    // read deferred object
     zval             * flush;   // state deferred object
     zval             * connect; // connection deferred object

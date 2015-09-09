@@ -63,6 +63,8 @@ void _ion_stream_input(bevent * bev, void * ctx) {
                 } else {
                     ion_deferred_done_stringl(stream->read, data, read, 0);
                 }
+            } else if(stream->token->flags & ION_STREAM_TOKEN_LIMIT) {
+                ion_deferred_done_false(stream->read);
             }
         } else if(stream->length) { // await()
 
@@ -119,12 +121,15 @@ void _ion_stream_notify(bevent *bev, short what, void *ctx) {
         stream->state |= ION_STREAM_STATE_EOF;
         if(stream->read) {
             if(stream->token) {
-
+                ion_deferred_done_false(stream->read);
             } else {
                 read = ion_stream_input_length(stream);
                 data = ion_stream_read(stream, &read);
                 ion_deferred_done_stringl(stream->read, data, read, 0);
             }
+        }
+        if(stream->closing) {
+            ion_deferred_done(stream->closing, stream->self);
         }
     } else if(what & BEV_EVENT_ERROR) {
         stream->state |= ION_STREAM_STATE_ERROR;
@@ -162,8 +167,10 @@ int _ion_stream_zval(zval * zstream, bevent * buffer, short flags, zend_class_en
         cls = CE(ION_Stream);
     }
     object_init_ex(zstream, cls);
-
     stream = getInstance(zstream);
+    ALLOC_INIT_ZVAL(stream->self);
+    ZVAL_COPY_VALUE(stream->self, zstream);
+
     stream->buffer = buffer;
     stream->state |= flags;
     bufferevent_setcb(buffer, _ion_stream_input, _ion_stream_output, _ion_stream_notify, (void *) stream);
@@ -200,13 +207,13 @@ char * _ion_stream_read(ion_stream * stream, size_t * size TSRMLS_DC) {
 long _ion_stream_read_token(ion_stream * stream, char ** data_out, ion_stream_token * token TSRMLS_DC) {
     size_t size = 0;
     if(token->position == 0) {
-        if(token->mode & (ION_STREAM_MODE_WITH_TOKEN | ION_STREAM_MODE_TRIM_TOKEN)) {
+        if(token->flags & (ION_STREAM_MODE_WITH_TOKEN | ION_STREAM_MODE_TRIM_TOKEN)) {
             if(evbuffer_drain(bufferevent_get_input(stream->buffer), (size_t)token->token_length) == FAILURE) {
                 ThrowRuntime("Failed to drain token", 1);
                 return -1;
             }
         }
-        if(token->mode == ION_STREAM_MODE_WITH_TOKEN) {
+        if(token->flags & ION_STREAM_MODE_WITH_TOKEN) {
             size = (size_t)token->token_length;
             *data_out  = estrndup(token->token, (unsigned)token->token_length);
         } else {
@@ -214,14 +221,14 @@ long _ion_stream_read_token(ion_stream * stream, char ** data_out, ion_stream_to
             *data_out  = NULL;
         }
     } else {
-        if(token->mode == ION_STREAM_MODE_WITH_TOKEN) {
+        if(token->flags & ION_STREAM_MODE_WITH_TOKEN) {
             token->position += token->token_length;
         }
 
         *data_out = emalloc((size_t)token->position + 1);
         size = bufferevent_read(stream->buffer, *data_out, (size_t) token->position);
         (*data_out)[size] = '\0';
-        if(token->mode == ION_STREAM_MODE_TRIM_TOKEN) {
+        if(token->flags & ION_STREAM_MODE_TRIM_TOKEN) {
             if(evbuffer_drain(bufferevent_get_input(stream->buffer), (size_t)token->token_length) == FAILURE) {
                 efree(*data_out);
                 ThrowRuntime("Failed to trim token", 1);
@@ -257,6 +264,9 @@ CLASS_INSTANCE_DTOR(ION_Stream) {
     if(stream->buffer) {
         bufferevent_disable(stream->buffer, EV_READ | EV_WRITE);
         bufferevent_free(stream->buffer);
+    }
+    if(stream->self) {
+        FREE_ZVAL(stream->self);
     }
     efree(stream);
 }
@@ -643,6 +653,9 @@ long _ion_stream_search_token(struct evbuffer * buffer, ion_stream_token * token
     } else {
         ptr_result = evbuffer_search(buffer, token->token, (size_t)token->token_length, &ptr_start);
     }
+    if(token->length > 0 && current_size >= token->length) {
+        token->flags |= ION_STREAM_TOKEN_LIMIT;
+    }
     token->offset = current_size - token->token_length + 1;
     token->position = (long)ptr_result.pos;
     return SUCCESS;
@@ -755,7 +768,8 @@ CLASS_METHOD(ION_Stream, getLine) {
     long size;
 
     CHECK_STREAM_BUFFER(stream);
-    PARSE_ARGS("s|ll", &token.token, &token.token_length, &token.mode, &token.length);
+    PARSE_ARGS("s|ll", &token.token, &token.token_length, &token.flags, &token.length);
+    token.flags &= ION_STREAM_TOKEN_MODE_MASK;
     if(token.token_length == 0) {
         RETURN_FALSE;
     }
@@ -770,7 +784,7 @@ CLASS_METHOD(ION_Stream, getLine) {
     } else {
         size = ion_stream_read_token(stream, &data, &token);
         if(size == -1) {
-            return;
+            RETURN_FALSE;
         } else if(size == 0) {
             RETVAL_EMPTY_STRING();
         } else {
@@ -848,9 +862,11 @@ CLASS_METHOD(ION_Stream, awaitLine) {
     long size;
 
     CHECK_STREAM_BUFFER(stream);
-    PARSE_ARGS("s|ll", &token.token, &token.token_length, &token.mode, &token.length);
+    PARSE_ARGS("s|ll", &token.token, &token.token_length, &token.flags, &token.length);
+    token.flags &= ION_STREAM_TOKEN_MODE_MASK;
     if(token.token_length == 0) {
-        RETURN_FALSE;
+        pion_throw(ION_InvalidArgumentException, "empty token", -1);
+        return;
     }
 
     if(ion_stream_search_token(bufferevent_get_input(stream->buffer), &token) == FAILURE) {
@@ -861,15 +877,26 @@ CLASS_METHOD(ION_Stream, awaitLine) {
     zdeferred = ion_deferred_new_ex(NULL);
 
     if(token.position == -1) { // not found
-        stream->token = emalloc(sizeof(ion_stream_token));
-        memcpy(stream->token, &token, sizeof(ion_stream_token));
-        stream->token->token = estrndup(token.token, (unsigned)token.token_length);
-        RETURN_ZVAL_FAST(zdeferred);
+        if(token.flags & ION_STREAM_TOKEN_LIMIT) {
+            ion_deferred_done_false(zdeferred);
+            RETURN_ZVAL(zdeferred, 1, 0);
+        } else {
+            ion_deferred_store(zdeferred, stream, _deferred_stream_await_dtor);
+            stream->read = zdeferred;
+            zval_add_ref(&zdeferred);
+            stream->token = emalloc(sizeof(ion_stream_token));
+            memcpy(stream->token, &token, sizeof(ion_stream_token));
+            stream->token->token = estrndup(token.token, (unsigned)token.token_length);
+            RETURN_ZVAL_FAST(zdeferred);
+        }
     } else { // found
         size = ion_stream_read_token(stream, &data, &token);
         if(size == -1) {
-            ion_deferred_free(zdeferred);
-            return;
+            if(EG(exception)) {
+                ion_deferred_exception_eg(stream->read);
+            } else {
+                ion_deferred_exception(stream->read, ION_Stream_RuntimeException(), "Stream corrupted: failed to read token from buffer", -1);
+            }
         } else if(size == 0) {
             ion_deferred_done_empty_string(zdeferred);
         } else {

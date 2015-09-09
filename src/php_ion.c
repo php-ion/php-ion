@@ -83,6 +83,7 @@ zend_module_entry ion_module_entry = {
 
 /* Init module callback */
 PHP_MINIT_FUNCTION(ion) {
+    ionBase = NULL;
 #ifdef ION_DEBUG
     event_set_mem_functions(_php_emalloc, _php_realloc, _php_efree);
 #endif
@@ -147,6 +148,10 @@ PHP_MSHUTDOWN_FUNCTION(ion) {
 
 /* Start SAPI request */
 PHP_RINIT_FUNCTION(ion) {
+    if(ionBase != NULL) { // because streams dtor invokes AFTER PHP_RSHUTDOWN_FUNCTION
+        event_base_free( ION(base) );
+        efree(ionBase);
+    }
     ionBase = emalloc(sizeof(IONBase));
     memset(ionBase, 0, sizeof(IONBase));
     ION(i)             = 1;
@@ -157,8 +162,7 @@ PHP_RINIT_FUNCTION(ion) {
 
 /* End SAPI request */
 PHP_RSHUTDOWN_FUNCTION(ion) {
-    event_base_free( ION(base) );
-    efree(ionBase);
+
     return SUCCESS;
 }
 

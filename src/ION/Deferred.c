@@ -1,5 +1,4 @@
 #include "Deferred.h"
-#include "../pion/linkedlist.h"
 
 #define CALL_OBJECT_DTOR(deferred, zDeferred)                          \
     if(deferred->object && deferred->object_dtor) {                    \

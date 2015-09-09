@@ -127,6 +127,10 @@ class StreamTest extends TestCase {
 			19 => [$string, "getLine", ["45", Stream::MODE_TRIM_TOKEN],        "0123", "6789"],
 			20 => [$string, "getLine", ["45", Stream::MODE_WITH_TOKEN],        "012345", "6789"],
 			21 => [$string, "getLine", ["45", Stream::MODE_WITHOUT_TOKEN],     "0123", "456789"],
+
+			22 => [$string, "getLine", ["a", Stream::MODE_TRIM_TOKEN],         false, $string],
+			23 => [$string, "getLine", ["a", Stream::MODE_WITH_TOKEN],         false, $string],
+			24 => [$string, "getLine", ["a", Stream::MODE_WITHOUT_TOKEN],      false, $string],
 		);
 	}
 
@@ -151,10 +155,10 @@ class StreamTest extends TestCase {
 			$this->data[$method] = call_user_func_array([$socket, $method], $args);
 			$this->data["tail_size"] = $socket->getSize();
 			$this->data["tail"]  = $socket->getAll();
+
 			$this->stop();
 		});
 		$this->loop();
-
 		$this->assertEquals([
 			"size"      => strlen($string),
 			$method     => $result,
@@ -168,41 +172,45 @@ class StreamTest extends TestCase {
 		$chunks = ["0123", "456", "789"];
 		$string = implode("", $chunks);
 		return array(
-			0  => [$chunks, "await", [5],                                        "01234", "56789"],
-//			1  => [$chunks, "await", [10],                                       $string, ""],
-//			2  => [$chunks, "await", [16],                                       $string, ""],
-//
-//			3  => [$chunks, "awaitAll",  [],                                     $string, ""],
-//
-//			4  => [$chunks, "awaitLine", ["3", Stream::MODE_TRIM_TOKEN, 8],      "012", "456789"],
-//			5  => [$chunks, "awaitLine", ["3", Stream::MODE_WITH_TOKEN, 8],      "0123", "456789"],
-//			6  => [$chunks, "awaitLine", ["3", Stream::MODE_WITHOUT_TOKEN, 8],   "012", "3456789"],
-//
-//			7  => [$chunks, "awaitLine", ["3", Stream::MODE_TRIM_TOKEN, 18],     "012", "456789"],
-//			8  => [$chunks, "awaitLine", ["3", Stream::MODE_WITH_TOKEN, 18],     "0123", "456789"],
-//			9  => [$chunks, "awaitLine", ["3", Stream::MODE_WITHOUT_TOKEN, 18],  "012", "3456789"],
-//
-//			10 => [$chunks, "awaitLine", ["9", Stream::MODE_TRIM_TOKEN, 4],      false, $string],
-//			11 => [$chunks, "awaitLine", ["9", Stream::MODE_WITH_TOKEN, 4],      false, $string],
-//			12 => [$chunks, "awaitLine", ["9", Stream::MODE_WITHOUT_TOKEN, 4],   false, $string],
-//
-//			13 => [$chunks, "awaitLine", ["01", Stream::MODE_TRIM_TOKEN, 8],     "", "23456789"],
-//			14 => [$chunks, "awaitLine", ["01", Stream::MODE_WITH_TOKEN, 8],     "01", "23456789"],
-//			15 => [$chunks, "awaitLine", ["01", Stream::MODE_WITHOUT_TOKEN, 8],  "", "0123456789"],
-//
-//			16 => [$chunks, "awaitLine", ["89", Stream::MODE_TRIM_TOKEN, 10],    "01234567", ""],
-//			17 => [$chunks, "awaitLine", ["89", Stream::MODE_WITH_TOKEN, 10],    "0123456789", ""],
-//			18 => [$chunks, "awaitLine", ["89", Stream::MODE_WITHOUT_TOKEN, 10], "01234567", "89"],
-//
-//			19 => [$chunks, "awaitLine", ["45", Stream::MODE_TRIM_TOKEN],        "0123", "6789"],
-//			20 => [$chunks, "awaitLine", ["45", Stream::MODE_WITH_TOKEN],        "012345", "6789"],
-//			21 => [$chunks, "awaitLine", ["45", Stream::MODE_WITHOUT_TOKEN],     "0123", "456789"],
+			//     send     method      arguments for method                     read      tail
+			0  => [$chunks, "await",     [5],                                    "01234", "56789"],
+			1  => [$chunks, "await",     [10],                                   $string, ""],
+			2  => [$chunks, "await",     [16],                                   $string, ""],
+
+			3  => [$chunks, "awaitAll",  [],                                     $string, ""],
+
+			4  => [$chunks, "awaitLine", ["3", Stream::MODE_TRIM_TOKEN, 8],      "012", "456789"],
+			5  => [$chunks, "awaitLine", ["3", Stream::MODE_WITH_TOKEN, 8],      "0123", "456789"],
+			6  => [$chunks, "awaitLine", ["3", Stream::MODE_WITHOUT_TOKEN, 8],   "012", "3456789"],
+
+			7  => [$chunks, "awaitLine", ["3", Stream::MODE_TRIM_TOKEN, 18],     "012", "456789"],
+			8  => [$chunks, "awaitLine", ["3", Stream::MODE_WITH_TOKEN, 18],     "0123", "456789"],
+			9  => [$chunks, "awaitLine", ["3", Stream::MODE_WITHOUT_TOKEN, 18],  "012", "3456789"],
+
+			10 => [$chunks, "awaitLine", ["9", Stream::MODE_TRIM_TOKEN, 4],      false, $string],
+			11 => [$chunks, "awaitLine", ["9", Stream::MODE_WITH_TOKEN, 4],      false, $string],
+			12 => [$chunks, "awaitLine", ["9", Stream::MODE_WITHOUT_TOKEN, 4],   false, $string],
+
+			13 => [$chunks, "awaitLine", ["01", Stream::MODE_TRIM_TOKEN, 8],     "", "23456789"],
+			14 => [$chunks, "awaitLine", ["01", Stream::MODE_WITH_TOKEN, 8],     "01", "23456789"],
+			15 => [$chunks, "awaitLine", ["01", Stream::MODE_WITHOUT_TOKEN, 8],  "", "0123456789"],
+
+			16 => [$chunks, "awaitLine", ["89", Stream::MODE_TRIM_TOKEN, 10],    "01234567", ""],
+			17 => [$chunks, "awaitLine", ["89", Stream::MODE_WITH_TOKEN, 10],    "0123456789", ""],
+			18 => [$chunks, "awaitLine", ["89", Stream::MODE_WITHOUT_TOKEN, 10], "01234567", "89"],
+
+			19 => [$chunks, "awaitLine", ["45", Stream::MODE_TRIM_TOKEN],        "0123", "6789"],
+			20 => [$chunks, "awaitLine", ["45", Stream::MODE_WITH_TOKEN],        "012345", "6789"],
+			21 => [$chunks, "awaitLine", ["45", Stream::MODE_WITHOUT_TOKEN],     "0123", "456789"],
+
+			22 => [$chunks, "awaitLine", ["a", Stream::MODE_TRIM_TOKEN],         false, $string],
+			23 => [$chunks, "awaitLine", ["a", Stream::MODE_WITH_TOKEN],         false, $string],
+			24 => [$chunks, "awaitLine", ["a", Stream::MODE_WITHOUT_TOKEN],      false, $string],
 		);
 	}
 
 	/**
-	 * @group dev
-	 * @ memcheck
+	 * @memcheck
 	 *
 	 * @dataProvider providerAwaits
 	 * @param array $chunks
@@ -211,12 +219,11 @@ class StreamTest extends TestCase {
 	 * @param string $result
 	 * @param string $tail
 	 */
-	public function _testAwaits($chunks, $method, $args, $result, $tail) {
+	public function testAwaits($chunks, $method, $args, $result, $tail) {
 		$pid = $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) use ($chunks) {
 			foreach($chunks as $chunk) {
-				$this->out("Send $chunk");
 				fwrite($connect, $chunk);
-				usleep(1e5); // 0.1s
+				usleep(self::SERVER_CHUNK_INTERVAL); // 0.1s
 			}
 		})->start();
 
@@ -225,7 +232,7 @@ class StreamTest extends TestCase {
 		$socket = Stream::socket(ION_TEST_SERVER_HOST)->enable();
 		$socket->awaitClosing()->then(function (Stream $socket) {
 			$this->data["tail"]   = $socket->getAll();
-			$this->stop(3);
+			$this->stop();
 		});
 		$deferred = call_user_func_array([$socket, $method], $args);
 		$this->assertInstanceOf('ION\Deferred', $deferred);
@@ -235,14 +242,14 @@ class StreamTest extends TestCase {
 			$this->data["error"]  = $error;
 		});
 
-		$this->loop(3);
+		$this->loop();
 
 		$this->assertEquals([
 			"result"  => $result,
 			"error"   => null,
 			"tail"    => $tail,
 		], $this->data);
-//		var_dump($pid, pcntl_waitpid($pid, $s), $s);
+
 //		$this->assertWaitPID($pid);
 	}
 }

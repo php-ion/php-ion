@@ -3,6 +3,8 @@
 namespace ION\Test\TestCase;
 
 
+use ION\Test\TestCase;
+
 class Server {
 	/**
 	 * @var resource
@@ -23,7 +25,7 @@ class Server {
 		return $this;
 	}
 
-	public function inWorker($timeout = -0.03) {
+	public function inWorker($timeout = TestCase::WORKER_WAIT_ON_START) {
 		$this->timeout = $timeout;
 		$this->in_worker = true;
 		return $this;

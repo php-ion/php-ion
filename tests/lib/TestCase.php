@@ -7,6 +7,10 @@ use ION\Test\TestCase\Server;
 class TestCase extends \PHPUnit_Framework_TestCase
 {
 
+	const SERVER_CHUNK_INTERVAL = 5e4;
+	const LOOP_TIMEOUT = 0.5;
+	const WORKER_WAIT_ON_START = -0.03;
+
 	private $_stop;
 	private $_error;
 	public $data = [];
@@ -110,7 +114,7 @@ class TestCase extends \PHPUnit_Framework_TestCase
 
 	}
 
-	public function startWorker(callable $callback, $wait = 0.1) {
+	public function startWorker(callable $callback, $wait = self::WORKER_WAIT_ON_START) {
 		$pid = pcntl_fork();
 		if($pid == -1) {
 			$this->fail("Fork failed");
