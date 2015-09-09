@@ -5,6 +5,8 @@ ION Extension [dev]
 
 * **What is it:** PHP extension
 * **Language:** C
+* **OS:** linux, osx
+* **PHP version:** 5.5+
 * [![Build Status](https://travis-ci.org/php-ion/php-ion.png?branch=master)](https://travis-ci.org/php-ion/php-ion)
 * [![Latest Stable Version](https://poser.pugx.org/phpion/phpion/v/stable)](https://packagist.org/packages/phpion/phpion)
 * [![Latest Unstable Version](https://poser.pugx.org/phpion/phpion/v/unstable)](https://packagist.org/packages/phpion/phpion)
@@ -12,6 +14,7 @@ ION Extension [dev]
 * **Versioning:** [semver](http://semver.org/)
 * **Based:** [libevent2](http://libevent.org/)
 * **Composer:** [phpion/phpion](https://packagist.org/packages/phpion/phpion)
+* **Testing system:** [phpunit](https://phpunit.de/)
 
 # Install
 
