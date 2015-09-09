@@ -5,6 +5,7 @@
 ION_DEFINE_CLASS(ION_Stream);
 
 #define ion_stream_input_length(stream) evbuffer_get_length( bufferevent_get_input(stream->buffer) )
+#define ion_stream_output_length(stream) evbuffer_get_length( bufferevent_get_output(stream->buffer) )
 #define ion_stream_read(stream, size_p) _ion_stream_read(stream, size_p TSRMLS_CC);
 #define ion_stream_read_token(stream, data, token) \
     _ion_stream_read_token(stream, data, token TSRMLS_CC)
@@ -982,7 +983,8 @@ CLASS_METHOD(ION_Stream, awaitClosing) {
         ion_deferred_store(zdeferred, stream, _deferred_stream_closing_dtor);
         stream->closing = zdeferred;
         zval_add_ref(&zdeferred);
-        RETURN_ZVAL_FAST(zdeferred);
+//        RETURN_ZVAL_FAST(zdeferred);
+        RETURN_ZVAL(zdeferred, 1, 0);
     }
 }
 
@@ -1014,8 +1016,64 @@ CLASS_METHOD(ION_Stream, getLocalPeer) {
 METHOD_WITHOUT_ARGS(ION_Stream, getLocalPeer)
 
 
-/** public function ION\Stream::__destruct() : void */
+/** public function ION\Stream::__debugInfo() : void */
 CLASS_METHOD(ION_Stream, __debugInfo) {
+    ion_stream * stream = getThisInstance();
+    zval * read   = NULL;
+
+    array_init(return_value);
+    add_assoc_long(return_value, "fd", bufferevent_getfd(stream->buffer));
+    if(stream->state & ION_STREAM_STATE_PAIR) {
+        add_assoc_string(return_value, "type", "pair-socket", 1);
+    } else if(stream->state & ION_STREAM_STATE_SOCKET) {
+        add_assoc_string(return_value, "type", "socket", 1);
+    } else {
+        add_assoc_string(return_value, "type", "pipe", 1);
+    }
+    add_assoc_bool(return_value, "connected",    stream->state & ION_STREAM_STATE_CONNECTED);
+    add_assoc_bool(return_value, "ssl",          0);
+    add_assoc_long(return_value, "input_bytes",  ion_stream_input_length(stream));
+    add_assoc_long(return_value, "output_bytes", ion_stream_output_length(stream));
+
+    if(stream->state & ION_STREAM_STATE_CLOSED) {
+        if(stream->state & ION_STREAM_STATE_EOF) {
+            add_assoc_string(return_value, "closed", "eof", 1);
+        } else if (stream->state & ION_STREAM_STATE_ERROR) {
+            add_assoc_string(return_value, "closed", "error", 1);
+        } else {
+            add_assoc_string(return_value, "closed", "shutdown", 1);
+        }
+
+    } else {
+        add_assoc_bool(return_value, "closed", 0);
+    }
+    if(stream->read) {
+        ALLOC_INIT_ZVAL(read);
+        array_init(read);
+        if(stream->token) {
+            add_assoc_stringl(read, "token", stream->token->token, (uint)stream->token->token_length, 1);
+            add_assoc_long(read, "max_bytes", stream->token->length);
+            add_assoc_long(read, "scanned_bytes", stream->token->offset);
+            if(stream->token->flags & ION_STREAM_MODE_TRIM_TOKEN) {
+                add_assoc_string(read, "mode", "trim_token", 1);
+            } else if(stream->token->flags & ION_STREAM_MODE_WITH_TOKEN) {
+                add_assoc_string(read, "mode", "with_token", 1);
+            } else {
+                add_assoc_string(read, "mode", "without_token", 1);
+            }
+        } else if(stream->length) {
+            add_assoc_long(read, "bytes", stream->length);
+        } else {
+            add_assoc_bool(read, "all",   1);
+        }
+        add_assoc_zval(return_value, "read", read);
+    } else {
+        add_assoc_bool(return_value, "read", 0);
+    }
+
+    add_assoc_bool(return_value, "await_flush",    stream->flush ? 1 : 0);
+    add_assoc_bool(return_value, "await_connect",  stream->connect ? 1 : 0);
+    add_assoc_bool(return_value, "await_shutdown", stream->closing ? 1 : 0);
 
 }
 
