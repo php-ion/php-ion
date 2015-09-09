@@ -16,7 +16,11 @@ BEGIN_EXTERN_C();
 #define ION_STREAM_STATE_FLUSHED   1<<5
 #define ION_STREAM_STATE_HAS_DATA  1<<6
 
+// behavior flags
+#define ION_STREAM_STATE_CLOSE_ON_FLUSH   1<<8
+
 // runtime stream states
+#define ION_STREAM_STATE_ENABLED   1<<9
 #define ION_STREAM_STATE_CONNECTED 1<<10
 #define ION_STREAM_STATE_EOF       1<<11
 #define ION_STREAM_STATE_ERROR     1<<12

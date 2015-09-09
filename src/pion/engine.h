@@ -131,6 +131,13 @@
     ZEND_BEGIN_ARG_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args)
 
 #define METHOD_ARG(name, pass_by_ref)  ZEND_ARG_INFO(pass_by_ref, name)
+#define METHOD_ARG_LONG(name, pass_by_ref)        METHOD_ARG(name, pass_by_ref)
+#define METHOD_ARG_STRING(name, pass_by_ref)      METHOD_ARG(name, pass_by_ref)
+#define METHOD_ARG_DOUBLE(name, pass_by_ref)      METHOD_ARG(name, pass_by_ref)
+#define METHOD_ARG_BOOL(name, pass_by_ref)        METHOD_ARG(name, pass_by_ref)
+#define METHOD_ARG_RESOURCE(name, pass_by_ref)    METHOD_ARG(name, pass_by_ref)
+#define METHOD_ARG_ARRAY(name, pass_by_ref)       METHOD_ARG(name, pass_by_ref)
+#define METHOD_ARG_CALLBACK(name, pass_by_ref, allow_null)    METHOD_ARG(name, pass_by_ref)
 #define METHOD_ARG_TYPE(name, type_hint, allow_null, pass_by_ref)     ZEND_ARG_TYPE_INFO(pass_by_ref, name, type_hint, allow_null)
 #define METHOD_ARG_OBJECT(name, classname, allow_null, pass_by_ref)     ZEND_ARG_OBJ_INFO(pass_by_ref, name, classname, allow_null)
 

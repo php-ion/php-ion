@@ -19,7 +19,7 @@ class Stream {
     const STATE_SHUTDOWN = 8192;
     const STATE_CLOSED = 14336;
 
-    const PUT = 2;
+    const INPUT = 2;
     const OUTPUT = 4;
     const BOTH = 6;
 
@@ -76,16 +76,6 @@ class Stream {
 	 * @return self
 	 */
 	public function disable() {}
-
-	/**
-	 * @return string
-	 */
-	public function __toString() {}
-
-	/**
-	 * @return array
-	 */
-	public function __debugInfo() {}
 
 	/**
 	 * @todo
@@ -178,7 +168,6 @@ class Stream {
 	public function getLine($token, $flag = self::MODE_TRIM_TOKEN, $max_length = 0) {}
 
 	/**
-	 * @todo
 	 * @param int $count
 	 *
 	 * @return Deferred
@@ -186,7 +175,6 @@ class Stream {
 	public function await($count = 0) {}
 
 	/**
-	 * @todo
 	 * @param string $token
 	 * @param int $flag
 	 * @param int $max_length
@@ -196,7 +184,6 @@ class Stream {
 	public function awaitLine($token, $flag = self::MODE_TRIM_TOKEN, $max_length = 8192) {}
 
 	/**
-	 * @todo
 	 * Invoke callback when EOF received and read all data
 	 *
 	 * @return Deferred
@@ -254,6 +241,34 @@ class Stream {
      */
     public function isClosed() {}
 
+    /**
+     * @return bool
+     */
+    public function isConnected() {}
+
+    /**
+     * @return bool
+     */
+    public function isEnabled() {}
+
+    /**
+     * @return bool
+     */
+    public function getState() {}
+
+    /**
+     * @return string
+     */
+    public function __toString() {}
+
+    /**
+     * @return array
+     */
+    public function __debugInfo() {}
+
+    /**
+     *
+     */
 	public function __destruct() {}
 
 	/**
