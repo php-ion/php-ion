@@ -29,6 +29,7 @@ set(ION_SOURCE_FILES
     src/pion/callback.c
     src/pion/engine.c
     src/pion/linkedlist.c
+    src/pion/net.c
     src/pion/deferred.h
     src/pion.c
     src/ION/Debug.c

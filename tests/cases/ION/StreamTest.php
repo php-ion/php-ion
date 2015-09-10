@@ -9,13 +9,15 @@ class StreamTest extends TestCase {
 
     public function setupServer($data, $timeout = TestCase::WORKER_DELAY) {
         return $this->listen(ION_TEST_SERVER_HOST)->inWorker($timeout)->onConnect(function ($connect) use ($data) {
-            if(is_array($data)) {
-                foreach ($data as $chunk) {
-                    fwrite($connect, $chunk);
-                    usleep(self::SERVER_CHUNK_INTERVAL); // 0.1s
+            if($data) {
+                if (is_array($data)) {
+                    foreach ($data as $chunk) {
+                        fwrite($connect, $chunk);
+                        usleep(self::SERVER_CHUNK_INTERVAL); // 0.1s
+                    }
+                } else {
+                    fwrite($connect, $data);
                 }
-            } else {
-                fwrite($connect, $data);
             }
         })->start();
     }
@@ -281,6 +283,7 @@ class StreamTest extends TestCase {
     }
 
     /**
+     * Check memory leaks in the __debugInfo()
      * @memcheck
      */
     public function testDebugInfo() {
@@ -289,12 +292,38 @@ class StreamTest extends TestCase {
         $socket->__debugInfo();
         $socket->awaitLine("a");
         $socket->__debugInfo();
-        $socket->awaitShutdown()->then(function (Stream $stream, $error) {
+        $socket->awaitShutdown()->then(function (Stream $stream) {
             $stream->__debugInfo();
             $this->stop();
         });
 
         $this->loop();
+        $this->assertWaitPID($pid);
+    }
+
+    /**
+     * @group dev
+     * @mem check
+     */
+    public function testToString() {
+        $pid = $this->setupServer(false);
+        $hostname = strstr(ION_TEST_SERVER_HOST, ":", true);
+        $host = ION_TEST_SERVER_HOST;
+        $socket = Stream::socket(ION_TEST_SERVER_HOST)->enable();
+        usleep(1e5); // time to ack
+//        var_dump("$socket");
+//        $this->out("$socket");
+        $this->assertStringMatchesFormat("stream:socket({$hostname}:%d->{$host})", strval($socket));
+        $this->kill($pid);
+//        usleep(1e5); // time to ack
+//        unset($socket);
+//        usleep(1e5);
+    }
+
+    public function _testGetPeerName() {
+        $pid = $this->setupServer(false, 0.03);
+        $socket = Stream::socket(ION_TEST_SERVER_HOST)->enable();
+        var_dump($socket->getRemotePeer());
         $this->assertWaitPID($pid);
     }
 }

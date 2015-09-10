@@ -8,6 +8,7 @@
 #include "pion/callback.h"
 #include "pion/engine.h"
 #include "pion/deferred.h"
+#include "pion/net.h"
 
 /** main structure */
 typedef struct _ion_base {

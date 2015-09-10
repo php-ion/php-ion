@@ -80,6 +80,10 @@ class TestCase extends \PHPUnit_Framework_TestCase {
         }
     }
 
+    public function kill($pid) {
+        posix_kill($pid, SIGTERM);
+    }
+
     /**
      * @param float $timeout
      * @param bool $timeout_as_fail

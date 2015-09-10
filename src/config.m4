@@ -73,6 +73,7 @@ if test "$PHP_ION" != "no"; then
     pion/callback.c
     pion/engine.c
     pion/linkedlist.c
+    pion/net.c
     pion.c
     externals/SkipList/skiplist.c
     ION/Debug.c

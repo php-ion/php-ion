@@ -1,3 +1,4 @@
+
 #include <php.h>
 #include <php_network.h>
 #include "Stream.h"
@@ -10,6 +11,7 @@ ION_DEFINE_CLASS(ION_Stream);
 #define ion_stream_read_token(stream, data, token) \
     _ion_stream_read_token(stream, data, token TSRMLS_CC)
 #define ion_stream_search_token(buffer_p, token_p)  _ion_stream_search_token(buffer_p, token_p TSRMLS_CC)
+#define ion_stream_get_addr(stream, flag, address_p, port_p) _ion_stream_get_addr(stream, flag, address_p, port_p TSRMLS_CC)
 
 #define CHECK_STREAM_BUFFER(stream)                          \
     if(stream->buffer == NULL) {                             \
@@ -36,6 +38,7 @@ ION_DEFINE_CLASS(ION_Stream);
 char * _ion_stream_read(ion_stream * stream, size_t * size TSRMLS_DC);
 long _ion_stream_read_token(ion_stream * stream, char ** data, ion_stream_token * token TSRMLS_DC);
 long _ion_stream_search_token(struct evbuffer * buffer, ion_stream_token * token TSRMLS_DC);
+int _ion_stream_get_addr(ion_stream * stream, short flag, char ** address, int * port TSRMLS_DC);
 
 void _ion_stream_input(bevent * bev, void * ctx) {
     ION_EVCB_START();
@@ -104,6 +107,10 @@ void _ion_stream_output(bevent *bev, void *ctx) {
         stream->flush = NULL;
     }
     stream->state |= ION_STREAM_STATE_FLUSHED;
+    if(stream->state & ION_STREAM_STATE_CLOSE_ON_FLUSH) {
+        bufferevent_disable(stream->buffer, EV_READ | EV_WRITE);
+        stream->state |= ION_STREAM_STATE_SHUTDOWN;
+    }
 
     ION_EVCB_END();
 }
@@ -143,7 +150,7 @@ void _ion_stream_notify(bevent *bev, short what, void *ctx) {
     } else if(what & BEV_EVENT_CONNECTED) {
         stream->state |= ION_STREAM_STATE_CONNECTED;
         if(stream->connect) {
-            // todo done connect-deferred
+            ion_deferred_done(stream->connect, stream->self);
         }
     } else {
         zend_error(E_WARNING, "Unknown type notification: %d", what);
@@ -427,7 +434,7 @@ METHOD_WITHOUT_ARGS(ION_Stream, _notify)
 CLASS_METHOD(ION_Stream, enable) {
     ion_stream * stream = getThisInstance();
 
-    CHECK_STREAM_BUFFER(stream);
+    CHECK_STREAM(stream);
     if(bufferevent_enable(stream->buffer, EV_READ | EV_WRITE)) {
         ThrowRuntime("Failed to enable stream", 1);
         return;
@@ -451,10 +458,30 @@ CLASS_METHOD(ION_Stream, disable) {
 
 METHOD_WITHOUT_ARGS(ION_Stream, disable)
 
+void _deferred_stream_connect_dtor(void * object, zval * zdeferred TSRMLS_DC) {
+    ion_stream * stream = (ion_stream *) object;
+    if(stream->connect) {
+        zval_ptr_dtor(&stream->connect);
+        stream->connect = NULL;
+    }
+    zval_ptr_dtor(&zdeferred);
+}
 
 /** public function ION\Stream::awaitConnection() : Deferred */
 CLASS_METHOD(ION_Stream, awaitConnection) {
-
+    ion_stream * stream = getThisInstance();
+    zval * zdeferred;
+    CHECK_STREAM_BUFFER(stream);
+    zdeferred = ion_deferred_new_ex(NULL);
+    if(stream->state & ION_STREAM_STATE_CONNECTED) {
+        ion_deferred_done(zdeferred, getThis());
+        RETURN_ZVAL(zdeferred, 1, 0);
+    } else {
+        ion_deferred_store(zdeferred, stream, _deferred_stream_connect_dtor);
+        stream->connect = zdeferred;
+        zval_add_ref(&zdeferred);
+        RETURN_ZVAL(zdeferred, 1, 0);
+    }
 }
 
 METHOD_WITHOUT_ARGS(ION_Stream, awaitConnection)
@@ -965,7 +992,7 @@ METHOD_ARGS_BEGIN(ION_Stream, onData, 1)
 METHOD_ARGS_END()
 
 
-void _deferred_stream_closing_dtor(void *object, zval *zdeferred TSRMLS_DC) {
+void _deferred_stream_shutdown_dtor(void * object, zval * zdeferred TSRMLS_DC) {
     ion_stream * stream = (ion_stream *) object;
     if(stream->closing) {
         zval_ptr_dtor(&stream->closing);
@@ -973,7 +1000,6 @@ void _deferred_stream_closing_dtor(void *object, zval *zdeferred TSRMLS_DC) {
     }
     zval_ptr_dtor(&zdeferred);
 }
-
 
 /** public function ION\Stream::awaitClosing() : ION\Deferred */
 CLASS_METHOD(ION_Stream, awaitShutdown) {
@@ -985,10 +1011,9 @@ CLASS_METHOD(ION_Stream, awaitShutdown) {
         ion_deferred_done(zdeferred, getThis());
         RETURN_ZVAL(zdeferred, 1, 0);
     } else {
-        ion_deferred_store(zdeferred, stream, _deferred_stream_closing_dtor);
+        ion_deferred_store(zdeferred, stream, _deferred_stream_shutdown_dtor);
         stream->closing = zdeferred;
         zval_add_ref(&zdeferred);
-//        RETURN_ZVAL_FAST(zdeferred);
         RETURN_ZVAL(zdeferred, 1, 0);
     }
 }
@@ -1004,8 +1029,67 @@ METHOD_ARGS_BEGIN(ION_Stream, ensureSSL, 1)
     METHOD_ARG(ssl, 0)
 METHOD_ARGS_END()
 
+int _ion_stream_get_addr(ion_stream * stream, short flag, char ** address, int * port TSRMLS_DC) {
+    int socket;
+    int type = PION_NET_NAME_UNKNOWN;
+    if(stream->state & ION_STREAM_STATE_PAIR) {
+        *address = estrdup("twin");
+    } else if(stream->state & ION_STREAM_STATE_SOCKET) {
+        socket = bufferevent_getfd(stream->buffer);
+        if(socket == -1) {
+            *address = estrdup("nosocket");
+        } else {
+            type = pion_net_sock_name(socket, flag, address, port);
+            if(type == FAILURE) {
+                *address = estrdup("error");
+            }
+        }
+    } else {
+        *address = estrdup("pipe");
+    }
+
+    return type;
+}
+
 /** public function ION\Stream::getRemotePeer() : string */
 CLASS_METHOD(ION_Stream, getRemotePeer) {
+    ion_stream * stream = getThisInstance();
+
+    long         what = ION_STREAM_NAME_HOST;
+    char       * address;
+    char       * address_combined;
+    int          port = 0;
+    int          type;
+
+    CHECK_STREAM_BUFFER(stream);
+    PARSE_ARGS("|l", what);
+
+    type = ion_stream_get_addr(stream, PION_NET_NAME_REMOTE, &address, &port);
+
+    if(what) {
+        if(what == ION_STREAM_NAME_SHORT_MASK) {
+            array_init(return_value);
+            add_assoc_string(return_value, "ip", address, 0);
+            add_assoc_long(return_value,   "port", port);
+        } else if(what & ION_STREAM_NAME_ADDRESS) {
+            RETURN_STRING(address, 0);
+        } else {
+            RETURN_LONG(port);
+        }
+    } else {
+        if(port == -1) {
+            RETURN_STRING(address, 0);
+        } else {
+            if(type == PION_NET_NAME_IPV6) {
+                spprintf(&address_combined, 0, "[%s]:%d", address, port);
+            } else {
+                spprintf(&address_combined, 0, "%s:%d", address, port);
+            }
+            RETVAL_STRING(address_combined, 1);
+            efree(address);
+            efree(address_combined);
+        }
+    }
 
 }
 
@@ -1017,6 +1101,38 @@ CLASS_METHOD(ION_Stream, getLocalPeer) {
 }
 
 METHOD_WITHOUT_ARGS(ION_Stream, getLocalPeer)
+
+/** public function ION\Stream::isClosed() : int */
+CLASS_METHOD(ION_Stream, isClosed) {
+    ion_stream * stream = getThisInstance();
+    RETURN_LONG(stream->state & ION_STREAM_STATE_CLOSED);
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, isClosed)
+
+/** public function ION\Stream::isEnabled() : bool */
+CLASS_METHOD(ION_Stream, isEnabled) {
+    ion_stream * stream = getThisInstance();
+    RETURN_LONG(stream->state & ION_STREAM_STATE_ENABLED);
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, isEnabled)
+
+/** public function ION\Stream::isConnected() : bool */
+CLASS_METHOD(ION_Stream, isConnected) {
+    ion_stream * stream = getThisInstance();
+    RETURN_LONG(stream->state & ION_STREAM_STATE_CONNECTED);
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, isConnected)
+
+/** public function ION\Stream::getState() : int */
+CLASS_METHOD(ION_Stream, getState) {
+    ion_stream * stream = getThisInstance();
+    RETURN_LONG(stream->state);
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, getState)
 
 
 /** public function ION\Stream::__debugInfo() : void */
@@ -1080,38 +1196,6 @@ CLASS_METHOD(ION_Stream, __debugInfo) {
 
 }
 
-/** public function ION\Stream::isClosed() : int */
-CLASS_METHOD(ION_Stream, isClosed) {
-    ion_stream * stream = getThisInstance();
-    RETURN_LONG(stream->state & ION_STREAM_STATE_CLOSED);
-}
-
-METHOD_WITHOUT_ARGS(ION_Stream, isClosed)
-
-/** public function ION\Stream::isEnabled() : bool */
-CLASS_METHOD(ION_Stream, isEnabled) {
-    ion_stream * stream = getThisInstance();
-    RETURN_LONG(stream->state & ION_STREAM_STATE_ENABLED);
-}
-
-METHOD_WITHOUT_ARGS(ION_Stream, isEnabled)
-
-/** public function ION\Stream::isConnected() : bool */
-CLASS_METHOD(ION_Stream, isConnected) {
-    ion_stream * stream = getThisInstance();
-    RETURN_LONG(stream->state & ION_STREAM_STATE_CONNECTED);
-}
-
-METHOD_WITHOUT_ARGS(ION_Stream, isConnected)
-
-/** public function ION\Stream::getState() : int */
-CLASS_METHOD(ION_Stream, getState) {
-    ion_stream * stream = getThisInstance();
-    RETURN_LONG(stream->state);
-}
-
-METHOD_WITHOUT_ARGS(ION_Stream, getState)
-
 METHOD_WITHOUT_ARGS(ION_Stream, __debugInfo)
 
 /** public function ION\Stream::__destruct() : void */
@@ -1137,12 +1221,49 @@ METHOD_WITHOUT_ARGS(ION_Stream, __destruct)
 /** public function ION\Stream::__toString() : string */
 CLASS_METHOD(ION_Stream, __toString) {
     ion_stream * stream = getThisInstance();
+    char       * address_combined;
+    char       * address_remote;
+    int          port_remote = 0;
+    char       * address_local;
+    int          port_local = 0;
+    int socket;
+    int          type_remote;
+    int          type_local;
+
+    if(stream->buffer == NULL) {
+        RETURN_STRING("stream:broken", 1);
+    }
     if(stream->state & ION_STREAM_STATE_SOCKET) {
-        RETURN_STRING("stream:socket()", 1);
+        socket = bufferevent_getfd(stream->buffer);
+        if(socket == -1) {
+            RETURN_STRING("stream:invalid", 1);
+        } else {
+            type_remote = pion_net_sock_name(socket, PION_NET_NAME_REMOTE, &address_remote, &port_remote);
+            if(type_remote == FAILURE) {
+                address_remote = estrdup("undefined");
+            }
+            type_local = pion_net_sock_name(socket, PION_NET_NAME_LOCAL, &address_local, &port_local);
+            if(type_local == FAILURE) {
+                address_local = estrdup("undefined");
+            }
+        }
+        if(type_local == PION_NET_NAME_IPV4) {
+            spprintf(&address_combined, 0, "stream:socket(%s:%d->%s:%d)", address_local, port_local, address_remote,
+                     port_remote);
+        } else if(type_local == PION_NET_NAME_IPV6) {
+            spprintf(&address_combined, 0, "stream:socket([%s]:%d->[%s]:%d)", address_local, port_local, address_remote,
+                     port_remote);
+        } else {
+            spprintf(&address_combined, 0, "stream:socket(%s->%s)", address_local, address_remote);
+        }
+        RETVAL_STRING(address_combined, 1);
+        efree(address_combined);
+        efree(address_local);
+        efree(address_remote);
     } else if(stream->state & ION_STREAM_STATE_PAIR) {
-        RETURN_STRING("stream:pair", 1);
+        RETURN_STRING("stream:twin", 1);
     } else {
-        RETURN_STRING("stream:pipe()", 1);
+        RETURN_STRING("stream:pipe", 1);
     }
 }
 
@@ -1225,24 +1346,28 @@ CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Stream) {
     PION_REGISTER_CLASS(ION_Stream, "ION\\Stream");
-    PION_CLASS_CONST_LONG(ION_Stream, "MODE_TRIM_TOKEN", ION_STREAM_MODE_TRIM_TOKEN);
-    PION_CLASS_CONST_LONG(ION_Stream, "MODE_WITH_TOKEN", ION_STREAM_MODE_WITH_TOKEN);
+    PION_CLASS_CONST_LONG(ION_Stream, "MODE_TRIM_TOKEN",    ION_STREAM_MODE_TRIM_TOKEN);
+    PION_CLASS_CONST_LONG(ION_Stream, "MODE_WITH_TOKEN",    ION_STREAM_MODE_WITH_TOKEN);
     PION_CLASS_CONST_LONG(ION_Stream, "MODE_WITHOUT_TOKEN", ION_STREAM_MODE_WITHOUT_TOKEN);
 
     PION_CLASS_CONST_LONG(ION_Stream, "STATE_SOCKET", ION_STREAM_STATE_SOCKET);
-    PION_CLASS_CONST_LONG(ION_Stream, "STATE_PAIR", ION_STREAM_STATE_PAIR);
-    PION_CLASS_CONST_LONG(ION_Stream, "STATE_PIPE", ION_STREAM_STATE_PIPE);
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_PAIR",   ION_STREAM_STATE_PAIR);
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_PIPE",   ION_STREAM_STATE_PIPE);
 
 //    PION_CLASS_CONST_LONG(ION_Stream, "STATE_READING", ION_STREAM_STATE_READING);
-    PION_CLASS_CONST_LONG(ION_Stream, "STATE_FLUSHED", ION_STREAM_STATE_FLUSHED);
-    PION_CLASS_CONST_LONG(ION_Stream, "STATE_HAS_DATA", ION_STREAM_STATE_HAS_DATA);
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_FLUSHED",   ION_STREAM_STATE_FLUSHED);
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_HAS_DATA",  ION_STREAM_STATE_HAS_DATA);
 
-    PION_CLASS_CONST_LONG(ION_Stream, "STATE_ENABLED", ION_STREAM_STATE_ENABLED);
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_ENABLED",   ION_STREAM_STATE_ENABLED);
     PION_CLASS_CONST_LONG(ION_Stream, "STATE_CONNECTED", ION_STREAM_STATE_CONNECTED);
-    PION_CLASS_CONST_LONG(ION_Stream, "STATE_EOF", ION_STREAM_STATE_EOF);
-    PION_CLASS_CONST_LONG(ION_Stream, "STATE_ERROR", ION_STREAM_STATE_ERROR);
-    PION_CLASS_CONST_LONG(ION_Stream, "STATE_SHUTDOWN", ION_STREAM_STATE_SHUTDOWN);
-    PION_CLASS_CONST_LONG(ION_Stream, "STATE_CLOSED", ION_STREAM_STATE_CLOSED);
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_EOF",       ION_STREAM_STATE_EOF);
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_ERROR",     ION_STREAM_STATE_ERROR);
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_SHUTDOWN",  ION_STREAM_STATE_SHUTDOWN);
+    PION_CLASS_CONST_LONG(ION_Stream, "STATE_CLOSED",    ION_STREAM_STATE_CLOSED);
+
+    PION_CLASS_CONST_LONG(ION_Stream, "NAME_HOST",     ION_STREAM_NAME_HOST);
+    PION_CLASS_CONST_LONG(ION_Stream, "NAME_ADDRESS",  ION_STREAM_NAME_ADDRESS);
+    PION_CLASS_CONST_LONG(ION_Stream, "NAME_PORT",     ION_STREAM_NAME_PORT);
 
     PION_CLASS_CONST_LONG(ION_Stream, "INPUT",  EV_READ);
     PION_CLASS_CONST_LONG(ION_Stream, "OUTPUT", EV_WRITE);

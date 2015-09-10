@@ -11,6 +11,7 @@ class Stream {
     const STATE_SOCKET = 1;
     const STATE_PAIR = 2;
     const STATE_PIPE = 4;
+
     const STATE_FLUSHED = 32;
     const STATE_HAS_DATA = 64;
     const STATE_CONNECTED = 1024;
@@ -18,6 +19,10 @@ class Stream {
     const STATE_ERROR = 4096;
     const STATE_SHUTDOWN = 8192;
     const STATE_CLOSED = 14336;
+
+    const NAME_HOST = 0;
+    const NAME_ADDRESS = 1;
+    const NAME_PORT = 2;
 
     const INPUT = 2;
     const OUTPUT = 4;
@@ -115,17 +120,18 @@ class Stream {
 	 */
 	public function ensureSSL($ssl) {}
 
-	/**
-	 * @todo
-	 * @return string
-	 */
-	public function getRemotePeer() {}
+    /**
+     * @param int $what
+     * @return mixed
+     */
+	public function getRemotePeer($what = self::NAME_HOST) {}
 
-	/**
-	 * @todo
-	 * @return string
-	 */
-	public function getLocalPeer() {}
+    /**
+     * @todo
+     * @param int $what
+     * @return mixed
+     */
+	public function getLocalPeer($what = self::NAME_HOST) {}
 
 	/**
 	 * Search for a string within an incoming buffer
@@ -228,6 +234,9 @@ class Stream {
 	 */
 	public function close($force = false) {}
 
+    /**
+     * @param callable $cb
+     */
 	public function onData(callable $cb) {}
 
 	/**

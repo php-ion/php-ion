@@ -124,7 +124,7 @@ class BuildRunner {
 		}
 
 		if($this->hasOption('info', 'i')) {
-			$this->exec($this->getBin('php') . ' -dextension=./src/modules/ion.so '.__FILE__." --diagnostic", false, $use_gdb);
+			$this->exec($this->getBin('php') . ' -e -dextension=./src/modules/ion.so '.__FILE__." --diagnostic", false, $use_gdb);
 		}
 
 
@@ -139,7 +139,7 @@ class BuildRunner {
 			} else {
 				$group = "";
 			}
-			$phpunit = $this->getBin('php')." -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --colors=never $group ".$this->getOption('test', 't', '');
+			$phpunit = $this->getBin('php')." -e -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --colors=never $group ".$this->getOption('test', 't', '');
 			$this->exec($phpunit, false, $use_gdb);
 		}
 

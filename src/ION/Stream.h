@@ -36,6 +36,12 @@ BEGIN_EXTERN_C();
 #define ION_STREAM_TOKEN_MODE_MASK    (ION_STREAM_MODE_TRIM_TOKEN | ION_STREAM_MODE_WITH_TOKEN | ION_STREAM_MODE_WITHOUT_TOKEN)
 #define ION_STREAM_TOKEN_LIMIT        8
 
+#define ION_STREAM_NAME_HOST          0
+#define ION_STREAM_NAME_ADDRESS       1
+#define ION_STREAM_NAME_PORT          2
+#define ION_STREAM_NAME_SHORT_MASK    3
+
+
 typedef struct bufferevent bevent;
 
 typedef struct _ion_stream_token {
