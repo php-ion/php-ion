@@ -15,9 +15,9 @@ php:
   - 5.6
 
 before_script:
-  - gcov -version
-  - pip -v
-  - pip install cpp-coveralls
+  - mkdir $(pwd)/bin
+  - pip install --install-option="--prefix=$(pwd)/bin" cpp-coveralls
+  - ls -la $(pwd)/bin
   - bin/build.php --system --phpize --clean --make
   - bin/build.php --info
   - composer install

@@ -15,6 +15,4 @@
 
 int _pion_net_sock_name(int sock, short flags, char ** addr, int * port TSRMLS_DC);
 
-//char * _pion_net_
-
 #endif //PION_NET_H
