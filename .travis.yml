@@ -8,7 +8,6 @@ addons:
       - gdb
       - php5-dbg
       - php5-dev
-      - python-pip
 
 php:
   - 5.5
@@ -16,8 +15,6 @@ php:
 
 before_script:
   - gem install coveralls-gcov
-#  - pip install --install-option="--prefix=$(pwd)/bin" cpp-coveralls
-  - ls -la $(pwd)/bin
   - bin/build.php --system --phpize --clean --make
   - bin/build.php --info
   - composer install
@@ -26,4 +23,4 @@ before_script:
 script: bin/build.php --test --use-gdb
 
 after_success:
-  - coveralls --exclude src/externals --exclude /opt/local --exclude /usr --gcov-options '\-lp'
+  - coveralls-gcov send --exclude src/externals

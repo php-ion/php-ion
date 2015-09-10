@@ -305,7 +305,7 @@ class StreamTest extends TestCase {
      * @group dev
      * @mem check
      */
-    public function testToString() {
+    public function _testToString() {
         $pid = $this->setupServer(false);
         $hostname = strstr(ION_TEST_SERVER_HOST, ":", true);
         $host = ION_TEST_SERVER_HOST;
