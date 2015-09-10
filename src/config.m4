@@ -4,7 +4,8 @@ VERSION=`git describe --tags --long`
 PHP_ARG_WITH(ion, "for asynchronous IO notifications $VERSION",
 [  --with-ion             Include ION support])
 
-CFLAGS="$CFLAGS -Wall -g3 -ggdb -O0 -std=c99"
+CFLAGS="$CFLAGS -Wall -g3 -ggdb -O0 -std=c99 --coverage -fprofile-arcs -ftest-coverage "
+LDFLAGS="$LDFLAGS -fprofile-arcs -ftest-coverage"
 AC_DEFINE(ION_DEBUG, 1, [Enable ION debug support])
 
 AC_DEFINE_UNQUOTED(ION_VERSION, "$VERSION", [Current version])

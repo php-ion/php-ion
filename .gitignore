@@ -9,6 +9,13 @@ cmake_install.cmake
 install_manifest.txt
 
 
+### gcov
+coverage.*
+*.gcov
+*.gcno
+*.gcda
+
+
 ### C template
 # Object files
 *.o

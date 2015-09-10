@@ -1,7 +1,6 @@
-#include <sys/socket.h>
+#include "net.h"
 #include <arpa/inet.h>
 #include <sys/un.h>
-#include "net.h"
 
 int _pion_net_sock_name(int sock, short flags, char ** address, int * port TSRMLS_DC) {
     socklen_t                 addr_len;
