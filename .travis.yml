@@ -15,7 +15,8 @@ php:
   - 5.6
 
 before_script:
-  - pip install --install-option="--prefix=$(pwd)/bin" cpp-coveralls
+  - gem install coveralls-gcov
+#  - pip install --install-option="--prefix=$(pwd)/bin" cpp-coveralls
   - ls -la $(pwd)/bin
   - bin/build.php --system --phpize --clean --make
   - bin/build.php --info
