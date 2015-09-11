@@ -19,7 +19,8 @@ before_script:
   - composer install
 
 # Run tests
-script: bin/build.php --test=tests/cases/IONTest.php --use-gdb
+#script: bin/build.php --test=tests/cases/IONTest.php --use-gdb
+script: bin/build.php --test=tests/cases/IONTest.php
 
 # Send code coverage
 after_success:
