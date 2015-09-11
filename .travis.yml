@@ -6,8 +6,10 @@ addons:
     packages:
       - libevent-dev
       - gdb
+      - make
       - php5-dbg
       - php5-dev
+      - clang
 
 php:
   - 5.5
@@ -15,6 +17,9 @@ php:
 
 before_script:
   - echo $HOME
+  - gdb --help
+  - gcov --help
+  - cc --help
   - bin/build.php --system --phpize --clean --make
   - bin/build.php --info
   - composer install
@@ -24,15 +29,6 @@ script: bin/build.php --test=tests/cases/IONTest.php --use-gdb
 
 # Send code coverage
 after_success:
-  - cd src
-  - pwd
   - gcov $(find . -iname '*.gcda')
-  - gcov src/ION.gcda
-  - gcov src/.libs/ION.gcda
-  - gcov $(find . -iname '*.c')
-  - ../bin/build.php --gcov-fix
-  - find . -iname '*.gcda'
-  - gcov $(find . -iname '*.gcda')
-  - gcov $(find . -iname '*.c')
-  - ../bin/gcov_to_clover.py --exclude src/externals --exclude /opt/local/include --exclude /usr/include -o clover.xml $(find . -iname "*.gcov")
-  - php ../vendor/bin/coveralls
+  - bin/gcov_to_clover.py --exclude src/externals --exclude /opt/local/include --exclude /usr/include -o clover.xml $(find . -iname "*.gcov")
+  - php vendor/bin/coveralls
