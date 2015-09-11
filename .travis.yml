@@ -14,6 +14,7 @@ php:
   - 5.6
 
 before_script:
+  - echo $HOME
   - bin/build.php --system --phpize --clean --make
   - bin/build.php --info
   - composer install
@@ -23,11 +24,15 @@ script: bin/build.php --test=tests/cases/IONTest.php --use-gdb
 
 # Send code coverage
 after_success:
-  - cd src; gcov $(find . -iname '*.gcda')
-  - cd src; gcov $(find . -iname '*.c')
-  - bin/build.php --gcov-fix
-  - find src -iname '*.gcda'
-  - cd src; gcov $(find . -iname '*.gcda')
-  - cd src; gcov $(find . -iname '*.c')
-  - bin/gcov_to_clover.py --exclude src/externals --exclude /opt/local/include --exclude /usr/include -o clover.xml $(find . -iname "*.gcov")
-  - php vendor/bin/coveralls
+  - cd src
+  - pwd
+  - gcov $(find . -iname '*.gcda')
+  - gcov src/ION.gcda
+  - gcov src/.libs/ION.gcda
+  - gcov $(find . -iname '*.c')
+  - ../bin/build.php --gcov-fix
+  - find . -iname '*.gcda'
+  - gcov $(find . -iname '*.gcda')
+  - gcov $(find . -iname '*.c')
+  - ../bin/gcov_to_clover.py --exclude src/externals --exclude /opt/local/include --exclude /usr/include -o clover.xml $(find . -iname "*.gcov")
+  - php ../vendor/bin/coveralls
