@@ -14,6 +14,7 @@ php:
   - 5.6
 
 before_script:
+  - gem install rubysl-securerandom
   - gem install coveralls-gcov
   - bin/build.php --system --phpize --clean --make
   - bin/build.php --info

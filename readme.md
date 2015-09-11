@@ -3,7 +3,7 @@ ION Extension [dev]
 
 **ION** (preg `/^(I)nput(?:, |-)(O)utput,? (N)otifications$/i`) - PHP extension for asynchronous IO and other notifications (such as POSIX signals, timers, inotify).
 
-* **What is it:** PHP extension
+* **Subject:** PHP extension
 * **Language:** C
 * **OS:** linux, osx
 * **PHP version:** 5.5+
@@ -14,7 +14,7 @@ ION Extension [dev]
 * **Versioning:** [semver](http://semver.org/)
 * **Based:** [libevent2](http://libevent.org/)
 * **Composer:** [phpion/phpion](https://packagist.org/packages/phpion/phpion)
-* **Testing system:** [phpunit](https://phpunit.de/)
+* **Testing system:** [phpunit](https://phpunit.de/) (with memory leak detector)
 
 # Install
 
