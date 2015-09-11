@@ -9,7 +9,8 @@ addons:
       - make
       - php5-dbg
       - php5-dev
-      - clang
+      - gcc-4.8
+      - gcc-4.8-base
 
 php:
   - 5.5
