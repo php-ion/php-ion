@@ -14,8 +14,6 @@ php:
   - 5.6
 
 before_script:
-  - gem install rubysl-securerandom
-  - gem install coveralls-gcov
   - bin/build.php --system --phpize --clean --make
   - bin/build.php --info
   - composer install
@@ -23,5 +21,8 @@ before_script:
 # Run tests
 script: bin/build.php --test --use-gdb
 
+# Send code coverage
 after_success:
-  - coveralls-gcov send --exclude src/externals
+  - mkdir -p build/logs
+  - bin/gcov_to_clover.py --exclude src/externals --exclude /opt/local/include --exclude /usr/include -o build/logs/clover.xml $(find src -iname "*.gcov")
+  - php vendor/bin/coveralls
