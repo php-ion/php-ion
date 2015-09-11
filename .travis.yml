@@ -19,11 +19,10 @@ before_script:
   - composer install
 
 # Run tests
-script: bin/build.php --test=tests/cases/IONTest.php --use-gdb
+script: bin/build.php --test=tests/cases/IONTest.php --use-gdb --gcov-fix
 
 # Send code coverage
 after_success:
-  - mkdir -p build/logs
   - gcov $(find src -iname '*.gcda')
-  - bin/gcov_to_clover.py --exclude src/externals --exclude /opt/local/include --exclude /usr/include -o build/logs/clover.xml $(find src -iname "*.gcov")
+  - bin/gcov_to_clover.py --exclude src/externals --exclude /opt/local/include --exclude /usr/include -o clover.xml $(find . -iname "*.gcov")
   - php vendor/bin/coveralls

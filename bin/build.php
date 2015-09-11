@@ -127,7 +127,6 @@ class BuildRunner {
 			$this->exec($this->getBin('php') . ' -e -dextension=./src/modules/ion.so '.__FILE__." --diagnostic", false, $use_gdb);
 		}
 
-
 		if($this->hasOption("dev")) {
 			$this->setOption("test");
 			$this->setOption("group", "dev");
@@ -142,6 +141,20 @@ class BuildRunner {
 			$phpunit = $this->getBin('php')." -e -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --colors=never $group ".$this->getOption('test', 't', '');
 			$this->exec($phpunit, false, $use_gdb);
 		}
+
+        if($this->hasOption("gcov-fix")) {
+            foreach(["*.gcda", "*.gcno"] as $pattern) {
+                $files = [];
+                exec('find src -name '.escapeshellarg($pattern), $files);
+                foreach($files as $path) {
+                    $path_file = str_replace('.libs/', '', $path);
+                    if($path_file != $path) {
+                        $this->line("gcov: $path -> $path_file");
+                        rename($path, $path_file);
+                    }
+                }
+            }
+        }
 
 	}
 
