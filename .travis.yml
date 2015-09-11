@@ -9,18 +9,14 @@ addons:
       - make
       - php5-dbg
       - php5-dev
-      - gcc-4.8
-      - gcc-4.8-base
+      - lcov
 
 php:
   - 5.5
   - 5.6
 
 before_script:
-  - echo $HOME
-  - gdb --help
-  - gcov --help
-  - cc --help
+  - gem install coveralls-lcov
   - bin/build.php --system --phpize --clean --make
   - bin/build.php --info
   - composer install
@@ -30,6 +26,7 @@ script: bin/build.php --test=tests/cases/IONTest.php --use-gdb
 
 # Send code coverage
 after_success:
-  - gcov $(find . -iname '*.gcda')
-  - bin/gcov_to_clover.py --exclude src/externals --exclude /opt/local/include --exclude /usr/include -o clover.xml $(find . -iname "*.gcov")
-  - php vendor/bin/coveralls
+  - lcov --directory . --capture --output-file coverage.info # capture coverage info
+  - lcov --remove coverage.info 'src/externals/*' '/usr/*' '/opt/*' --output-file coverage.info # filter out system and test code
+  - lcov --list coverage.info # debug before upload
+  - coveralls-lcov coverage.info # uploads to coveralls
