@@ -23,11 +23,11 @@ script: bin/build.php --test=tests/cases/IONTest.php --use-gdb
 
 # Send code coverage
 after_success:
-  - gcov $(find src -iname '*.gcda')
-  - gcov $(find src -iname '*.c')
+  - cd src; gcov $(find . -iname '*.gcda')
+  - cd src; gcov $(find . -iname '*.c')
   - bin/build.php --gcov-fix
   - find src -iname '*.gcda'
-  - gcov $(find src -iname '*.gcda')
-  - gcov $(find src -iname '*.c')
+  - cd src; gcov $(find . -iname '*.gcda')
+  - cd src; gcov $(find . -iname '*.c')
   - bin/gcov_to_clover.py --exclude src/externals --exclude /opt/local/include --exclude /usr/include -o clover.xml $(find . -iname "*.gcov")
   - php vendor/bin/coveralls
