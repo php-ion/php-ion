@@ -24,6 +24,7 @@ script: bin/build.php --test=tests/cases/IONTest.php --use-gdb
 # Send code coverage
 after_success:
   - mkdir -p build/logs
-  - echo $(find src -iname "*.gcov")
+  - ls -la src/ION.c.gcov
+  - 'echo $(find src -iname "*.gcov")'
   - bin/gcov_to_clover.py --exclude src/externals --exclude /opt/local/include --exclude /usr/include -o build/logs/clover.xml $(find src -iname "*.gcov")
   - php vendor/bin/coveralls
