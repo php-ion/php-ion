@@ -14,8 +14,7 @@
   "require-dev": {
     "ext-posix": "*",
     "ext-pcntl": "*",
-    "phpunit/phpunit": "*",
-    "satooshi/php-coveralls": "dev-master"
+    "phpunit/phpunit": "*"
   },
   "autoload": {
     "classmap": ["tests/lib", "tests/cases"]
