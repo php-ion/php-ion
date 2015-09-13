@@ -303,26 +303,27 @@ class StreamTest extends TestCase {
 
     /**
      * @group dev
-     * @mem check
+     * @memc heck
      */
-    public function _testToString() {
+    public function testToString() {
         $pid = $this->setupServer(false);
         $hostname = strstr(ION_TEST_SERVER_HOST, ":", true);
         $host = ION_TEST_SERVER_HOST;
         $socket = Stream::socket(ION_TEST_SERVER_HOST)->enable();
         usleep(1e5); // time to ack
-//        var_dump("$socket");
-//        $this->out("$socket");
+//        $this->out(strval($socket));
         $this->assertStringMatchesFormat("stream:socket({$hostname}:%d->{$host})", strval($socket));
         $this->kill($pid);
-//        usleep(1e5); // time to ack
-//        unset($socket);
-//        usleep(1e5);
     }
 
+    /**
+     *
+     * @memcheck
+     */
     public function _testGetPeerName() {
-        $pid = $this->setupServer(false, 0.03);
+        $pid = $this->setupServer(false);
         $socket = Stream::socket(ION_TEST_SERVER_HOST)->enable();
+        usleep(1e5); // time to ack
         var_dump($socket->getRemotePeer());
         $this->assertWaitPID($pid);
     }

@@ -12,13 +12,15 @@ int _pion_net_sock_name(int sock, short flags, char ** address, int * port TSRML
     char					  addr6[INET6_ADDRSTRLEN+1];
 #endif
     struct sockaddr_un		* s_un;
+    char                    * addr_combined;
+    int                       type;
 
-    if(flags == PION_NET_NAME_REMOTE) {
-        if (getpeername(sock, (struct sockaddr*)&addr, &addr_len) < 0) {
+    if(flags & PION_NET_NAME_LOCAL) {
+        if (getsockname(sock, (struct sockaddr*)&addr, &addr_len) < 0) {
             return FAILURE;
         }
     } else {
-        if (getsockname(sock, (struct sockaddr*)&addr, &addr_len) < 0) {
+        if (getpeername(sock, (struct sockaddr*)&addr, &addr_len) < 0) {
             return FAILURE;
         }
     }
@@ -29,22 +31,39 @@ int _pion_net_sock_name(int sock, short flags, char ** address, int * port TSRML
             inet_ntop(AF_INET, &sin->sin_addr, addr4, INET_ADDRSTRLEN);
             *address = estrdup(addr4);
             *port    = htons(sin->sin_port);
-            return PION_NET_NAME_IPV4;
+            type = PION_NET_NAME_IPV4;
+            break;
 #if HAVE_IPV6
         case AF_INET6:
             sin6 = (struct sockaddr_in6 *) &addr;
             inet_ntop(AF_INET6, &sin6->sin6_addr, addr6, INET6_ADDRSTRLEN);
             *address = estrdup(addr6);
             *port    = htons(sin6->sin6_port);
-            return PION_NET_NAME_IPV6;
+            type = PION_NET_NAME_IPV6;
+            break;
 #endif
         case AF_UNIX:
             s_un = (struct sockaddr_un *) &addr;
             *address = estrdup(s_un->sun_path);
-            return PION_NET_NAME_UNIX;
+            *port = 0;
+            type = PION_NET_NAME_UNIX;
+            break;
         default:
             *address = estrdup("unknown");
             zend_error(E_NOTICE, "Unsupported address family %d", addr.ss_family);
-            return PION_NET_NAME_UNKNOWN;
+            *port = 0;
+            type =  PION_NET_NAME_UNKNOWN;
+            break;
     }
+    if((flags & PION_NET_NAME_AS_STRING) && *port > 0) {
+        if(type == PION_NET_NAME_IPV6) {
+            spprintf(&addr_combined, 1000, "[%s]:%d", *address, *port);
+        } else {
+            spprintf(&addr_combined, 1000, "%s:%d", *address, *port);
+        }
+        efree(*address);
+        *address = estrdup(addr_combined);
+        efree(addr_combined);
+    }
+    return type;
 }
