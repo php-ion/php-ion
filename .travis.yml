@@ -17,7 +17,7 @@ php:
 
 before_script:
   - gem install coveralls-lcov
-  - bin/build.php --system --phpize --clean --make
+  - bin/build.php --system --phpize --clean --make --coverage
   - bin/build.php --info
   - composer install
 

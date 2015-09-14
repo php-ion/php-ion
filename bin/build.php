@@ -112,7 +112,11 @@ class BuildRunner {
 				$this->exec($this->getBin('phpize').' --clean', "src/");
 			}
 			$this->exec($this->getBin('phpize'), "src/");
-			$this->exec('./configure --with-ion', "src/");
+            if($this->hasOption('coverage')) {
+                $this->exec('./configure --with-ion --enable-ion-debug --enable-ion-coverage', "src/");
+            } else {
+                $this->exec('./configure --with-ion --with-ion-debug', "src/");
+            }
 		}
 
 		if($this->hasOption('clean', 'c')) {
@@ -259,6 +263,7 @@ Build:
   --help,    -h   — show help
   --clean,   -c   — make clean
   --make,    -m   — make
+  --coverage      - generate code coverage information
   --install, -l   — install module
   --phpize,  -p   — phpize and configure project
   --build,   -b   — alias: --phpize --clean --make

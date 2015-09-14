@@ -1,13 +1,16 @@
 # config.m4 for extension ion
 
+
+PHP_ARG_WITH(ion, for asynchronous IO notifications $VERSION,
+[  --with-ion              Include ION support])
+
+PHP_ARG_ENABLE(ion_debug, whether to enable debug for ION,
+[  --enable-ion-debug      Enable ION debug])
+
+PHP_ARG_ENABLE(ion_coverage, whether to enable code coverage for ION,
+[  --enable-ion-coverage   Enable code coverage for ION])
+
 VERSION=`git describe --tags --long`
-PHP_ARG_WITH(ion, "for asynchronous IO notifications $VERSION",
-[  --with-ion             Include ION support])
-
-CFLAGS="$CFLAGS -Wall -g3 -ggdb -O0 -std=c99 --coverage -fprofile-arcs -ftest-coverage "
-LDFLAGS="$LDFLAGS -fprofile-arcs -ftest-coverage"
-AC_DEFINE(ION_DEBUG, 1, [Enable ION debug support])
-
 AC_DEFINE_UNQUOTED(ION_VERSION, "$VERSION", [Current version])
 
 if test "$PHP_ION" != "no"; then
@@ -31,6 +34,19 @@ if test "$PHP_ION" != "no"; then
         AC_MSG_ERROR([Please reinstall the libevent distribution])
     fi
 
+    if test "$PHP_ION_DEBUG" = "yes"; then
+        AC_DEFINE(ION_DEBUG, 1, [enable ION debug mode])
+        CFLAGS="$CFLAGS -Wall -g3 -ggdb -O0 -std=c99"
+    fi
+
+    if test "$PHP_ION_COVERAGE" = "yes"; then
+        AC_DEFINE(ION_COVERAGE, 1, [enable ION code coverage])
+        CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage"
+        LDFLAGS="$LDFLAGS -fprofile-arcs -ftest-coverage"
+    fi
+
+
+    AC_MSG_RESULT(checking compiler flags: $CFLAGS)
     PHP_ADD_INCLUDE($ION_DIR/include)
 
     EXTRA_LIBS="-lm"
