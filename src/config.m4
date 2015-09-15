@@ -1,19 +1,36 @@
-# config.m4 for extension ion
+# +----------------------------------------------------------------------+
+# | PHP Version 5                                                        |
+# +----------------------------------------------------------------------+
+# | Copyrght (C) 1997-2015 The PHP Group                                 |
+# +----------------------------------------------------------------------+
+# | This source file is subject to version 3.01 of the PHP license,      |
+# | that is bundled with this package in the file LICENSE, and is        |
+# | available through the world-wide-web at the following url:           |
+# | http://www.php.net/license/3_01.txt                                  |
+# | If you did not receive a copy of the PHP license and are unable to   |
+# | obtain it through the world-wide-web, please send a note to          |
+# | license@php.net so we can mail you a copy immediately.               |
+# +----------------------------------------------------------------------+
+# | Author: Ivan Shalganov <ivan@shalganov.me>                           |
+# +----------------------------------------------------------------------+
 
+
+VERSION=`git describe --tags --long`
 
 PHP_ARG_WITH(ion, for asynchronous IO notifications $VERSION,
 [  --with-ion              Include ION support])
 
-PHP_ARG_ENABLE(ion_debug, whether to enable debug for ION,
-[  --enable-ion-debug      Enable ION debug])
+PHP_ARG_ENABLE(ion-debug, whether to enable debug for ION,
+[  --enable-ion-debug      Enable ION debug], no, no)
 
-PHP_ARG_ENABLE(ion_coverage, whether to enable code coverage for ION,
-[  --enable-ion-coverage   Enable code coverage for ION])
+PHP_ARG_ENABLE(ion-coverage, whether to enable code coverage for ION,
+[  --enable-ion-coverage   Enable code coverage for ION], no, no)
 
-VERSION=`git describe --tags --long`
-AC_DEFINE_UNQUOTED(ION_VERSION, "$VERSION", [Current version])
-
+# --with-ion
 if test "$PHP_ION" != "no"; then
+    AC_DEFINE_UNQUOTED(ION_VERSION, "$VERSION", [Current git version])
+
+    # search libevent headers
     SEARCH_PATH="/usr/local /usr /opt/local"
     SEARCH_FOR="/include/event.h"
     if test -r $PHP_ION/; then
@@ -34,12 +51,14 @@ if test "$PHP_ION" != "no"; then
         AC_MSG_ERROR([Please reinstall the libevent distribution])
     fi
 
-    if test "$PHP_ION_DEBUG" = "yes"; then
+    # --enable-ion-debug
+    if test "$PHP_ION_DEBUG" != "no"; then
         AC_DEFINE(ION_DEBUG, 1, [enable ION debug mode])
         CFLAGS="$CFLAGS -Wall -g3 -ggdb -O0 -std=c99"
     fi
 
-    if test "$PHP_ION_COVERAGE" = "yes"; then
+    # --enable-ion-coverage
+    if test "$PHP_ION_COVERAGE" != "no"; then
         AC_DEFINE(ION_COVERAGE, 1, [enable ION code coverage])
         CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage"
         LDFLAGS="$LDFLAGS -fprofile-arcs -ftest-coverage"

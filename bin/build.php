@@ -115,7 +115,7 @@ class BuildRunner {
             if($this->hasOption('coverage')) {
                 $this->exec('./configure --with-ion --enable-ion-debug --enable-ion-coverage', "src/");
             } else {
-                $this->exec('./configure --with-ion --with-ion-debug', "src/");
+                $this->exec('./configure --with-ion --enable-ion-debug', "src/");
             }
 		}
 
