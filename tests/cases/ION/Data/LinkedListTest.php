@@ -78,7 +78,7 @@ class LinkedListTest extends TestCase {
     /**
      * @memcheck
      */
-    public function testHandIterator() {
+    public function _testHandIterator() {
         $result = [];
         $list = new LinkedList();
         $list->rPush("one");
