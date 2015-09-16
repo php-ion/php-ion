@@ -12,6 +12,51 @@ ION_DEFINE_CLASS(ION_Stream);
     _ion_stream_read_token(stream, data, token TSRMLS_CC)
 #define ion_stream_search_token(buffer_p, token_p)  _ion_stream_search_token(buffer_p, token_p TSRMLS_CC)
 
+
+#define ion_stream_get_name_self(stream)  _ion_stream_get_name_self(stream TSRMLS_CC)
+#define ion_stream_get_name_remote(stream)  _ion_stream_get_name_remote(stream TSRMLS_CC)
+#define ion_stream_is_valid_fd(stream) (bufferevent_getfd(stream->buffer) == -1)
+
+char * _ion_stream_get_name_self(ion_stream * stream TSRMLS_DC) {
+    int type   = 0;
+    evutil_socket_t socket;
+    if(stream->name_self == NULL) {
+        socket = bufferevent_getfd(stream->buffer);
+        if(socket == -1) {
+            return NULL;
+        } else {
+            type = pion_net_sock_name(socket, PION_NET_NAME_LOCAL, &stream->name_self);
+            if(type == PION_NET_NAME_IPV6) {
+                stream->state |= ION_STREAM_NAME_IPV6;
+            } else if(type == PION_NET_NAME_UNIX) {
+                stream->state |= ION_STREAM_NAME_UNIX;
+            } else if(type == PION_NET_NAME_UNKNOWN || type == FAILURE) {
+                return NULL;
+            } else {
+                stream->state |= ION_STREAM_NAME_IPV4;
+            }
+        }
+    }
+    return estrdup(stream->name_self);
+}
+
+char * _ion_stream_get_name_remote(ion_stream * stream TSRMLS_DC) {
+    int type   = 0;
+    evutil_socket_t socket;
+    if(stream->name_remote == NULL) {
+        socket = bufferevent_getfd(stream->buffer);
+        if(socket == -1) {
+            return NULL;
+        } else {
+            type = pion_net_sock_name(socket, PION_NET_NAME_REMOTE, &stream->name_remote);
+            if(type == PION_NET_NAME_UNKNOWN || type == FAILURE) {
+                return NULL;
+            }
+        }
+    }
+    return estrdup(stream->name_remote);
+}
+
 #define CHECK_STREAM_BUFFER(stream)                          \
     if(stream->buffer == NULL) {                             \
         ThrowRuntime("Stream buffer is not initialized", 1); \
@@ -1052,21 +1097,6 @@ METHOD_ARGS_BEGIN(ION_Stream, ensureSSL, 1)
     METHOD_ARG(ssl, 0)
 METHOD_ARGS_END()
 
-/** public function ION\Stream::getRemotePeer() : string */
-CLASS_METHOD(ION_Stream, getRemotePeer) {
-    ion_stream * stream = getThisInstance();
-    CHECK_STREAM_BUFFER(stream);
-}
-
-METHOD_WITHOUT_ARGS(ION_Stream, getRemotePeer)
-
-/** public function ION\Stream::getLocalPeer() : string */
-CLASS_METHOD(ION_Stream, getLocalPeer) {
-
-}
-
-METHOD_WITHOUT_ARGS(ION_Stream, getLocalPeer)
-
 /** public function ION\Stream::isClosed() : int */
 CLASS_METHOD(ION_Stream, isClosed) {
     ion_stream * stream = getThisInstance();
@@ -1103,7 +1133,8 @@ METHOD_WITHOUT_ARGS(ION_Stream, getState)
 /** public function ION\Stream::__debugInfo() : void */
 CLASS_METHOD(ION_Stream, __debugInfo) {
     ion_stream * stream = getThisInstance();
-    zval * read   = NULL;
+    zval * read         = NULL;
+    char * address      = NULL;
 
     array_init(return_value);
     add_assoc_long(return_value, "fd", bufferevent_getfd(stream->buffer));
@@ -1118,6 +1149,20 @@ CLASS_METHOD(ION_Stream, __debugInfo) {
     add_assoc_bool(return_value, "ssl",          0);
     add_assoc_long(return_value, "input_bytes",  ion_stream_input_length(stream));
     add_assoc_long(return_value, "output_bytes", ion_stream_output_length(stream));
+
+    address = ion_stream_get_name_self(stream);
+    if(address) {
+        add_assoc_string(return_value, "local_name", address, 0);
+    } else {
+        add_assoc_bool(return_value,   "local_name",          0);
+    }
+
+    address = ion_stream_get_name_remote(stream);
+    if(address) {
+        add_assoc_string(return_value, "remote_peer", address, 0);
+    } else {
+        add_assoc_bool(return_value,   "remote_peer",          0);
+    }
 
     if(stream->state & ION_STREAM_STATE_CLOSED) {
         if(stream->state & ION_STREAM_STATE_EOF) {
@@ -1189,62 +1234,66 @@ CLASS_METHOD(ION_Stream, __destruct) {
 METHOD_WITHOUT_ARGS(ION_Stream, __destruct)
 
 
-#define ion_stream_get_name_self(stream)  _ion_stream_get_name_self(stream TSRMLS_CC)
-#define ion_stream_get_name_remote(stream)  _ion_stream_get_name_remote(stream TSRMLS_CC)
-#define ion_stream_is_valid_fd(stream) (bufferevent_getfd(stream->buffer) == -1)
-
-char * _ion_stream_get_name_self(ion_stream * stream TSRMLS_DC) {
-    int type   = 0;
-    int socket;
-    if(stream->name_self == NULL) {
-        socket = bufferevent_getfd(stream->buffer);
-        if(socket == -1) {
-            return NULL;
-        } else {
-            type = pion_net_sock_name(socket, PION_NET_NAME_LOCAL, &stream->name_self);
-            if(type == PION_NET_NAME_IPV6) {
-                stream->state |= ION_STREAM_NAME_IPV6;
-            } else if(type == PION_NET_NAME_UNIX) {
-                stream->state |= ION_STREAM_NAME_UNIX;
-            } else if(type == PION_NET_NAME_UNKNOWN || type == FAILURE) {
-                return NULL;
-            } else {
-                stream->state |= ION_STREAM_NAME_IPV4;
-            }
-        }
+/** public function ION\Stream::getRemotePeer() : string */
+CLASS_METHOD(ION_Stream, getRemotePeer) {
+    ion_stream * stream = getThisInstance();
+    char       * local_name;
+    if(stream->buffer == NULL) {
+        RETURN_FALSE;
     }
-    return estrdup(stream->name_self);
+    if(stream->state & ION_STREAM_STATE_SOCKET) {
+        if(ion_stream_is_valid_fd(stream)) {
+            RETURN_FALSE;
+        }
+        if(stream->state & ION_STREAM_STATE_PAIR) {
+            RETURN_STRING("twin", 1)
+        }
+        local_name = ion_stream_get_name_remote(stream);
+        if(local_name) {
+            RETURN_STRING(local_name, 0);
+        } else {
+            RETURN_FALSE;
+        }
+    } else {
+        RETURN_FALSE;
+    }
 }
 
-char * _ion_stream_get_name_remote(ion_stream * stream TSRMLS_DC) {
-    int type   = 0;
-    int socket;
-    if(stream->name_remote == NULL) {
-        socket = bufferevent_getfd(stream->buffer);
-        if(socket == -1) {
-            return NULL;
-        } else {
-            type = pion_net_sock_name(socket, PION_NET_NAME_REMOTE, &stream->name_remote);
-            if(type == PION_NET_NAME_UNKNOWN || type == FAILURE) {
-                return NULL;
-            }
-        }
+METHOD_WITHOUT_ARGS(ION_Stream, getRemotePeer)
+
+/** public function ION\Stream::getLocalName() : string */
+CLASS_METHOD(ION_Stream, getLocalName) {
+    ion_stream * stream = getThisInstance();
+    char       * local_name;
+    if(stream->buffer == NULL) {
+        RETURN_FALSE;
     }
-    return estrdup(stream->name_remote);
+    if(stream->state & ION_STREAM_STATE_SOCKET) {
+        if(ion_stream_is_valid_fd(stream)) {
+            RETURN_FALSE;
+        }
+        if(stream->state & ION_STREAM_STATE_PAIR) {
+            RETURN_STRING("twin", 1)
+        }
+        local_name = ion_stream_get_name_self(stream);
+        if(local_name) {
+            RETURN_STRING(local_name, 0);
+        } else {
+            RETURN_FALSE;
+        }
+    } else {
+        RETURN_FALSE;
+    }
 }
+
+METHOD_WITHOUT_ARGS(ION_Stream, getLocalName)
 
 /** public function ION\Stream::__toString() : string */
 CLASS_METHOD(ION_Stream, __toString) {
     ion_stream * stream = getThisInstance();
     char       * address_combined;
     char       * address_remote;
-//    int          port_remote = 0;
     char       * address_local;
-//    int          port_local = 0;
-//    int socket;
-//    int          type_remote;
-//    int          type_local;
-
     if(stream->buffer == NULL) {
         RETURN_STRING("stream:empty", 1);
     }
@@ -1252,10 +1301,10 @@ CLASS_METHOD(ION_Stream, __toString) {
         if(ion_stream_is_valid_fd(stream)) {
             RETURN_STRING("stream:invalid", 1);
         }
-        address_remote = ion_stream_get_name_self(stream);
-        address_local  = ion_stream_get_name_remote(stream);
+        address_local = ion_stream_get_name_self(stream);
+        address_remote  = ion_stream_get_name_remote(stream);
         if(address_remote == NULL) {
-            address_local = estrdup("undefined");
+            address_remote = estrdup("undefined");
         }
         if(address_local == NULL) {
             address_local = estrdup("undefined");
@@ -1345,7 +1394,7 @@ CLASS_METHODS_START(ION_Stream)
     METHOD(ION_Stream, awaitShutdown,   ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, ensureSSL,       ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, getRemotePeer,   ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, getLocalPeer,    ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getLocalName,    ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, isClosed,        ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, isEnabled,       ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, isConnected,     ZEND_ACC_PUBLIC)

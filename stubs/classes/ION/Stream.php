@@ -121,17 +121,16 @@ class Stream {
 	public function ensureSSL($ssl) {}
 
     /**
-     * @param int $what
+     * Queries the remote side of the given socket which may either result in host:port or in a Unix filesystem path, dependent on its type
      * @return mixed
      */
-	public function getRemotePeer($what = self::NAME_HOST) {}
+	public function getRemotePeer() {}
 
     /**
-     * @todo
-     * @param int $what
-     * @return mixed
+     * Queries the local side of the given socket which may either result in host:port or in a Unix filesystem path, dependent on its type
+     * @return string|false
      */
-	public function getLocalPeer($what = self::NAME_HOST) {}
+	public function getLocalName() {}
 
 	/**
 	 * Search for a string within an incoming buffer

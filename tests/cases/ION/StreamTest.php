@@ -7,8 +7,8 @@ use ION\Test\TestCase;
 
 class StreamTest extends TestCase {
 
-    public function setupServer($data, $timeout = TestCase::WORKER_DELAY) {
-        return $this->listen(ION_TEST_SERVER_HOST)->inWorker($timeout)->onConnect(function ($connect) use ($data) {
+    public function setupServer($data) {
+        return $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) use ($data) {
 //            $this->out("connected");
             if($data) {
                 if (is_array($data)) {
@@ -297,12 +297,14 @@ class StreamTest extends TestCase {
     }
 
     /**
+     * @group dev
      * Check memory leaks in the __debugInfo()
      * @memcheck
      */
     public function testDebugInfo() {
         $pid = $this->setupServer(["01234","56789"]);
         $socket = Stream::socket(ION_TEST_SERVER_HOST);
+        usleep(1e4); // time to ack
         $socket->__debugInfo();
         $socket->awaitLine("a");
         $socket->__debugInfo();
@@ -326,38 +328,42 @@ class StreamTest extends TestCase {
         });
         unset($socket);
         $this->assertWaitPID($pid);
-//        $this->kill($pid);
+        $this->kill($pid);
     }
 
     /**
-     *
-     * @mem check
+     * @memcheck
      */
-    public function _testToString() {
-        $pid = $this->setupServer(["01234","56789"], 0);
-        $hostname = strstr(ION_TEST_SERVER_HOST, ":", true);
-        $host = ION_TEST_SERVER_HOST;
+    public function testGetLocalName() {
+        $pid = $this->setupServer(false);
         $socket = Stream::socket(ION_TEST_SERVER_HOST);
-        $socket->await(2)->then(new Cb(function() use ($socket) {
-            $this->out(strval($socket));
-            $this->stop();
-        }));
-        $this->loop(5);
-//        usleep(1e4); // time to ack
-//        $this->out(strval($socket));
-//        $this->assertStringMatchesFormat("stream:socket({$hostname}:%d->{$host})", strval($socket));
-        $this->kill($pid);
+        $hostname = strstr(ION_TEST_SERVER_HOST, ":", true);
+        $this->assertStringMatchesFormat("{$hostname}:%d", $socket->getLocalName());
+        $this->assertWaitPID($pid);
     }
 
     /**
      *
      * @memcheck
      */
-    public function _testGetPeerName() {
+    public function testGetPeerName() {
         $pid = $this->setupServer(false);
         $socket = Stream::socket(ION_TEST_SERVER_HOST);
-        usleep(1e5); // time to ack
-        var_dump($socket->getRemotePeer());
+        usleep(1e4); // time to ack
+        $this->assertStringMatchesFormat(ION_TEST_SERVER_HOST, $socket->getRemotePeer());
+        $this->assertWaitPID($pid);
+    }
+
+    /**
+     * @memcheck
+     */
+    public function testToString() {
+        $pid = $this->setupServer(["01234","56789"]);
+        $hostname = strstr(ION_TEST_SERVER_HOST, ":", true);
+        $host = ION_TEST_SERVER_HOST;
+        $socket = Stream::socket(ION_TEST_SERVER_HOST);
+        usleep(1e4); // time to ack
+        $this->assertStringMatchesFormat("stream:socket({$hostname}:%d->{$host})", strval($socket));
         $this->assertWaitPID($pid);
     }
 }

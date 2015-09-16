@@ -78,6 +78,21 @@ class LinkedListTest extends TestCase {
     /**
      * @memcheck
      */
+    public function testHandIterator() {
+        $result = [];
+        $list = new LinkedList();
+        $list->rPush("one");
+        $list->lPush("two");
+        for($list->rewind(); $list->valid(); $list->next()) {
+            $result[$list->key()] = $list->current();
+        }
+        $this->assertSame(2, $list->count());
+        $this->assertSame(["two", "one"], $result);
+    }
+
+    /**
+     * @memcheck
+     */
     public function testIncreaseIterator() {
         $result = [];
         $data = ["two", "three", "four"];

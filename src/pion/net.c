@@ -1,11 +1,11 @@
 #include "net.h"
-#include <event2/util.h>
+#include <php_network.h>
 #include <arpa/inet.h>
 #include <sys/un.h>
 
-int _pion_net_sock_name(int sock, short flags, char ** address TSRMLS_DC) {
-    socklen_t                 addr_len;
-    struct sockaddr_storage   addr;
+int _pion_net_sock_name(evutil_socket_t sock, short flags, char ** address TSRMLS_DC) {
+    socklen_t                 addr_len = sizeof(php_sockaddr_storage);
+    php_sockaddr_storage      addr;
     struct sockaddr_in      * sin;
     char	                  addr4[INET_ADDRSTRLEN+1];
 #if HAVE_IPV6
@@ -17,14 +17,14 @@ int _pion_net_sock_name(int sock, short flags, char ** address TSRMLS_DC) {
     int                       type;
     int                       port = 0;
 
-    if(flags & PION_NET_NAME_LOCAL) {
+    if(flags == PION_NET_NAME_LOCAL) {
         if (getsockname(sock, (struct sockaddr*)&addr, &addr_len) == FAILURE) {
-            zend_error(E_NOTICE, "getsockname: %s", strerror(errno));
+            zend_error(E_NOTICE, "unable to retrieve socket name: %s", strerror(errno));
             return FAILURE;
         }
     } else {
         if (getpeername(sock, (struct sockaddr*)&addr, &addr_len) == FAILURE) {
-            zend_error(E_NOTICE, "getpeername: %s", strerror(errno));
+            zend_error(E_NOTICE, "unable to retrieve peer name: %s", strerror(errno));
             return FAILURE;
         }
     }

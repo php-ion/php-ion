@@ -48,6 +48,10 @@ class LinkedList implements \Iterator, \Countable {
 	public function key() {}
 	public function next() {}
 	public function rewind() {}
+
+    /**
+     * @return bool
+     */
 	public function valid() {}
 
 	/* JsonSerializable method */

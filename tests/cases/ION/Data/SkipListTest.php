@@ -95,4 +95,16 @@ class SkipListTest extends TestCase {
 
         $this->assertSame(["один", "uno", "one", "two", "three"], $list->toArray());
     }
+
+    /**
+     * @memcheck
+     */
+    public function testExists() {
+        $list = new SkipList();
+        $list->add(1, "one");
+        $list->add(2, "two");
+        $this->assertTrue($list->exists(1));
+        $this->assertTrue($list->exists(2));
+        $this->assertFalse($list->exists(3));
+    }
 }
