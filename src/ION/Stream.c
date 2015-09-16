@@ -898,7 +898,7 @@ CLASS_METHOD(ION_Stream, await) {
         stream->length = length;
         zval_add_ref(&zdeferred);
         bufferevent_setwatermark(stream->buffer, EV_READ, length, (stream->input_size >= length) ? stream->input_size : length);
-        RETURN_ZVAL_FAST(zdeferred);
+        RETURN_ZVAL(zdeferred, 1, 0);
     }
 }
 
