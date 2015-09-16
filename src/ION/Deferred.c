@@ -143,6 +143,8 @@ void _ion_deferred_exception_ex(zval * zdeferred, zend_class_entry * ce, long co
 }
 
 void _ion_deferred_reject(zval *zDeferred, const char *message TSRMLS_DC) {
+//    PHPDBG("deferred reject start")
+
     ion_deferred * deferred = getInstance(zDeferred);
     IONF("Cancellation defer object: %s", message);
     zval *zException = _pion_exception_new(CE(ION_Deferred_RejectException), message, 0 TSRMLS_CC);
@@ -150,15 +152,17 @@ void _ion_deferred_reject(zval *zDeferred, const char *message TSRMLS_DC) {
     if(deferred->reject) {
         deferred->reject(zException, zDeferred TSRMLS_CC);
     }
+    zval_ptr_dtor(&zException);
     CLEAN_DEFERRED(deferred);
     CALL_OBJECT_DTOR(deferred, zDeferred);
+//    PHPDBG("deferred reject done")
 }
 
 
 static void _ion_deferred_reject_php(zval * error, zval * zdeferred TSRMLS_DC) {
     ion_deferred * deferred = getInstance(zdeferred);
     pionCbVoidWith1Arg(deferred->cancel_cb, error TSRMLS_CC);
-    zval_ptr_dtor(&error);
+//    zval_ptr_dtor(&error);
 }
 
 CLASS_INSTANCE_DTOR(ION_Deferred) {
@@ -225,7 +229,7 @@ CLASS_METHOD(ION_Deferred, reject) {
     }
 
     PARSE_ARGS("s", &message, &message_len);
-    _ion_deferred_reject(getThis(), message TSRMLS_CC);
+    ion_deferred_reject(getThis(), message);
     RETURN_THIS();
 }
 
@@ -307,18 +311,20 @@ METHOD_WITHOUT_ARGS(ION_Deferred, getFlags)
 
 /** public function ION\Deferred::__destruct() : int */
 CLASS_METHOD(ION_Deferred, __destruct) {
-//    PHPDBG("deferred destructed")
-//    zend_error(E_USER_NOTICE, "Deferred destruct");
+//    PHPDBG("deferred __destruct start")
     ion_deferred *deferred = getThisInstance();
     if(deferred->result) {
         zval_ptr_dtor(&deferred->result);
         deferred->result = NULL;
     }
     if(deferred->flags & ION_DEFERRED_FINISHED) {
+//        PHPDBG("deferred __destruct done")
         return;
     } else {
         ion_deferred_reject(getThis(), "Object destruct");
+//        PHPDBG("deferred __destruct done")
     }
+
 }
 
 METHOD_WITHOUT_ARGS(ION_Deferred, __destruct)

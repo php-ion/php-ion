@@ -54,6 +54,7 @@ class StreamTest extends TestCase {
 
         $stream = Stream::socket(ION_TEST_SERVER_HOST);
         $this->assertInstanceOf('ION\Stream', $stream);
+        $this->assertWaitPID($pid);
     }
 
     /**
@@ -65,6 +66,31 @@ class StreamTest extends TestCase {
         /* @var Stream $b */
         $a->disable()->enable();
         $b->disable()->enable();
+    }
+
+    /**
+     * @memcheck
+     */
+    public function testAppendToInput() {
+        list($a, $b) = Stream::pair();
+        /* @var Stream $a */
+        /* @var Stream $b */
+        $a->appendToInput("0123456789");
+        $this->assertSame("0123456789", $a->getAll());
+        $this->assertSame("", $b->getAll());
+    }
+
+    /**
+     *
+     * @memcheck
+     */
+    public function testWrite() {
+        list($a, $b) = Stream::pair();
+        /* @var Stream $a */
+        /* @var Stream $b */
+        $a->write("0123456789");
+        $this->assertSame("0123456789", $b->getAll());
+        $this->assertSame("", $a->getAll());
     }
 
 
@@ -88,7 +114,6 @@ class StreamTest extends TestCase {
     }
 
     /**
-     *
      * @memcheck
      * @dataProvider providerString
      * @param $string
@@ -98,17 +123,12 @@ class StreamTest extends TestCase {
      * @param int $limit
      */
     public function testSearch($string, $token, $position, $offset = 0, $limit = 0) {
-        $pid = $this->setupServer($string);
 
-        $socket = Stream::socket(ION_TEST_SERVER_HOST);
-        ION::await(0.03)->then(function () use ($socket, $token, $offset, $limit) {
-            $this->data['search'] = $socket->search($token, $offset, $limit);
-            $this->stop();
-        });
-        $this->loop();
-
-        $this->assertEquals($position, $this->data['search']);
-        $this->assertWaitPID($pid);
+        list($socket, $socket2) = Stream::pair();
+        /* @var Stream $socket */
+        /* @var Stream $socket2 */
+        $socket->appendToInput($string);
+        $this->assertEquals($position, $socket->search($token, $offset, $limit));
     }
 
     public function providerGets() {
@@ -162,24 +182,14 @@ class StreamTest extends TestCase {
      * @group testGets
      */
     public function testGets($string, $method, $args, $result, $tail) {
-        $pid = $this->setupServer($string);
-        $socket = Stream::socket(ION_TEST_SERVER_HOST);
-        ION::await(0.03)->then(function () use ($socket, $method, $args) {
-            $this->data["size"] = $socket->getSize();
-            $this->data[$method] = call_user_func_array([$socket, $method], $args);
-            $this->data["tail_size"] = $socket->getSize();
-            $this->data["tail"] = $socket->getAll();
-
-            $this->stop();
-        });
-        $this->loop();
-        $this->assertEquals([
-            "size" => strlen($string),
-            $method => $result,
-            "tail" => $tail,
-            "tail_size" => strlen($tail)
-        ], $this->data);
-        $this->assertWaitPID($pid);
+        list($socket, $socket2) = Stream::pair();
+        /* @var Stream $socket */
+        /* @var Stream $socket2 */
+        $socket->appendToInput($string);
+        $this->assertEquals(strlen($string), $socket->getSize());
+        $this->assertEquals($result, call_user_func_array([$socket, $method], $args));
+        $this->assertEquals(strlen($tail), $socket->getSize());
+        $this->assertEquals($tail, $socket->getAll());
     }
 
     /**
@@ -306,20 +316,35 @@ class StreamTest extends TestCase {
     }
 
     /**
-     * @group dev
+     * @memcheck
+     */
+    public function testDestructWhileReading() {
+        $pid = $this->setupServer(false);
+        $socket = Stream::socket(ION_TEST_SERVER_HOST);
+        $socket->await(2)->then(function() {
+            $this->stop("then");
+        });
+        unset($socket);
+        $this->assertWaitPID($pid);
+//        $this->kill($pid);
+    }
+
+    /**
+     *
      * @mem check
      */
     public function _testToString() {
-        $pid = $this->setupServer(false, 0);
+        $pid = $this->setupServer(["01234","56789"], 0);
         $hostname = strstr(ION_TEST_SERVER_HOST, ":", true);
         $host = ION_TEST_SERVER_HOST;
         $socket = Stream::socket(ION_TEST_SERVER_HOST);
-        usleep(1e4); // time to ack
-        $this->out(strval($socket));
+        $socket->await(2)->then(new Cb(function() use ($socket) {
+            $this->out(strval($socket));
+            $this->stop();
+        }));
+        $this->loop(5);
+//        usleep(1e4); // time to ack
 //        $this->out(strval($socket));
-//        $this->out(strval($socket));
-//        $this->out(strval($socket));
-
 //        $this->assertStringMatchesFormat("stream:socket({$hostname}:%d->{$host})", strval($socket));
         $this->kill($pid);
     }
@@ -334,5 +359,31 @@ class StreamTest extends TestCase {
         usleep(1e5); // time to ack
         var_dump($socket->getRemotePeer());
         $this->assertWaitPID($pid);
+    }
+}
+
+class Cb {
+    public $cb;
+    public $name;
+    public function __construct(callable $cb, $name = "cb") {
+//        fwrite(STDERR, "{$this->name} construct");
+        $this->cb = $cb;
+        $this->name = $name;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function __invoke() {
+        fwrite(STDERR, "{$this->name} invoke\n");
+        if($this->cb) {
+            return call_user_func_array($this->cb, func_get_args());
+        } else {
+            return null;
+        }
+    }
+
+    public function __destruct() {
+        fwrite(STDERR, "{$this->name} destruct\n");
     }
 }

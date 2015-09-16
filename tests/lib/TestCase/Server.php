@@ -13,11 +13,13 @@ class Server {
 
     public $on_connect;
     public $in_worker;
-    public $timeout;
 
     public function __construct($host) {
         $this->host = $host;
-
+        $this->listen = stream_socket_server("tcp://{$this->host}", $errno, $error);
+        if ($errno) {
+            throw new \RuntimeException("Failed to open server (tcp://{$this->host}): $error");
+        }
     }
 
     public function onConnect(callable $cb) {
@@ -25,8 +27,7 @@ class Server {
         return $this;
     }
 
-    public function inWorker($timeout = TestCase::WORKER_DELAY) {
-        $this->timeout = $timeout;
+    public function inWorker() {
         $this->in_worker = true;
         return $this;
     }
@@ -40,15 +41,11 @@ class Server {
             if ($pid == -1) {
                 throw new \RuntimeException("Fork for server failed");
             } elseif ($pid) {
-                if ($this->timeout < 0) {
-                    usleep(abs($this->timeout) * 1e6);
-                }
+                fclose($this->listen);
+                unset($this->listen);
                 return $pid;
             } else {
                 \ION::reinit();
-                if ($this->timeout > 0) {
-                    usleep($this->timeout * 1e6);
-                }
                 try {
                     $this->_dispatch();
                 } catch (\Exception $e) {
@@ -64,14 +61,10 @@ class Server {
     }
 
     private function _dispatch() {
-
-        $this->listen = stream_socket_server("tcp://{$this->host}", $errno, $error);
-        if ($errno) {
-            throw new \RuntimeException("Failed to open server (tcp://{$this->host}): $error");
-        }
         $connect = stream_socket_accept($this->listen);
         call_user_func($this->on_connect, $connect);
         fclose($connect);
         fclose($this->listen);
+        unset($this->listen);
     }
 }

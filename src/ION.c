@@ -65,7 +65,7 @@ CLASS_METHOD(ION, dispatch) {
 }
 
 METHOD_ARGS_BEGIN(ION, dispatch, 1)
-    METHOD_ARG_TYPE(flags, IS_LONG, 0, 0)
+    METHOD_ARG_LONG(flags, 0)
 METHOD_ARGS_END()
 
 /** public function ION::stop(double $timeout = -1) : self */
@@ -84,7 +84,7 @@ CLASS_METHOD(ION, stop) {
 }
 
 METHOD_ARGS_BEGIN(ION, stop, 0)
-    METHOD_ARG(timeout, 0)
+    METHOD_ARG_DOUBLE(timeout, 0)
 METHOD_ARGS_END()
 
 static void _timer_done(evutil_socket_t fd, short flags, void * arg) {

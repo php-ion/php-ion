@@ -134,6 +134,7 @@
 #define METHOD_ARG_LONG(name, pass_by_ref)        METHOD_ARG(name, pass_by_ref)
 #define METHOD_ARG_STRING(name, pass_by_ref)      METHOD_ARG(name, pass_by_ref)
 #define METHOD_ARG_DOUBLE(name, pass_by_ref)      METHOD_ARG(name, pass_by_ref)
+#define METHOD_ARG_FLOAT(name, pass_by_ref)       METHOD_ARG_DOUBLE(name, pass_by_ref)
 #define METHOD_ARG_BOOL(name, pass_by_ref)        METHOD_ARG(name, pass_by_ref)
 #define METHOD_ARG_RESOURCE(name, pass_by_ref)    METHOD_ARG(name, pass_by_ref)
 #define METHOD_ARG_ARRAY(name, pass_by_ref)       METHOD_ARG(name, pass_by_ref)

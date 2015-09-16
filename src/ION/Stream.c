@@ -11,7 +11,6 @@ ION_DEFINE_CLASS(ION_Stream);
 #define ion_stream_read_token(stream, data, token) \
     _ion_stream_read_token(stream, data, token TSRMLS_CC)
 #define ion_stream_search_token(buffer_p, token_p)  _ion_stream_search_token(buffer_p, token_p TSRMLS_CC)
-#define ion_stream_get_addr(stream, flag, address_p, port_p) _ion_stream_get_addr(stream, flag, address_p, port_p TSRMLS_CC)
 
 #define CHECK_STREAM_BUFFER(stream)                          \
     if(stream->buffer == NULL) {                             \
@@ -38,7 +37,6 @@ ION_DEFINE_CLASS(ION_Stream);
 char * _ion_stream_read(ion_stream * stream, size_t * size TSRMLS_DC);
 long _ion_stream_read_token(ion_stream * stream, char ** data, ion_stream_token * token TSRMLS_DC);
 long _ion_stream_search_token(struct evbuffer * buffer, ion_stream_token * token TSRMLS_DC);
-int _ion_stream_get_addr(ion_stream * stream, short flag, char ** address, int * port TSRMLS_DC);
 
 void _ion_stream_input(bevent * bev, void * ctx) {
     ION_EVCB_START();
@@ -96,7 +94,7 @@ void _ion_stream_input(bevent * bev, void * ctx) {
     ION_EVCB_END();
 }
 
-void _ion_stream_output(bevent *bev, void *ctx) {
+void _ion_stream_output(bevent * bev, void *ctx) {
     ION_EVCB_START();
 
     ion_stream *stream = (ion_stream *)ctx;
@@ -115,7 +113,7 @@ void _ion_stream_output(bevent *bev, void *ctx) {
     ION_EVCB_END();
 }
 
-void _ion_stream_notify(bevent *bev, short what, void *ctx) {
+void _ion_stream_notify(bevent * bev, short what, void *ctx) {
     ION_EVCB_START();
 
     ion_stream *stream = (ion_stream *)ctx;
@@ -148,6 +146,7 @@ void _ion_stream_notify(bevent *bev, short what, void *ctx) {
             // todo reject flush-deferred
         }
     } else if(what & BEV_EVENT_CONNECTED) {
+//        PHPDBG("connected");
         stream->state |= ION_STREAM_STATE_CONNECTED;
         if(stream->connect) {
             ion_deferred_done(stream->connect, stream->self);
@@ -159,7 +158,7 @@ void _ion_stream_notify(bevent *bev, short what, void *ctx) {
     ION_EVCB_END();
 }
 
-zval * _ion_stream_new(bevent * buffer, short flags, zend_class_entry * cls TSRMLS_DC) {
+zval * _ion_stream_new(bevent * buffer, int flags, zend_class_entry * cls TSRMLS_DC) {
     zval * zstream;
     ALLOC_INIT_ZVAL(zstream);
     if(ion_stream_zval_ex(zstream, buffer, flags, cls) == FAILURE) {
@@ -169,7 +168,7 @@ zval * _ion_stream_new(bevent * buffer, short flags, zend_class_entry * cls TSRM
     }
 }
 
-int _ion_stream_zval(zval * zstream, bevent * buffer, short flags, zend_class_entry * cls TSRMLS_DC) {
+int _ion_stream_zval(zval * zstream, bevent * buffer, int flags, zend_class_entry * cls TSRMLS_DC) {
     ion_stream * stream;
     if(!cls) {
         cls = CE(ION_Stream);
@@ -278,6 +277,12 @@ CLASS_INSTANCE_DTOR(ION_Stream) {
     if(stream->self) {
         FREE_ZVAL(stream->self);
     }
+    if(stream->name_self) {
+        efree(stream->name_self);
+    }
+    if(stream->name_remote) {
+        efree(stream->name_remote);
+    }
     efree(stream);
 }
 
@@ -294,7 +299,7 @@ CLASS_METHOD(ION_Stream, resource) {
     zval *zfd;
     int fd = -1, fd2;
     int flags = STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE;
-    short state = 0;
+    int state = 0;
     bevent *buffer = NULL;
 
     PARSE_ARGS("r", &zfd);
@@ -320,7 +325,12 @@ CLASS_METHOD(ION_Stream, resource) {
         ThrowRuntime("Failed to create Stream: buffer corrupted", -1);
         return;
     }
-    ion_stream_zval_ex(return_value, buffer, state, EG(called_scope));
+    if(bufferevent_enable(buffer, EV_READ | EV_WRITE)) {
+        bufferevent_free(buffer);
+        ThrowRuntime("Failed to enable stream", -1);
+        return;
+    }
+    ion_stream_zval_ex(return_value, buffer, state | ION_STREAM_STATE_ENABLED, EG(called_scope));
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, resource, 1)
@@ -330,6 +340,7 @@ METHOD_ARGS_END()
 /** public static function ION\Stream::pair() : self[] */
 CLASS_METHOD(ION_Stream, pair) {
     int flags = STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE;
+    int state = ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_PAIR | ION_STREAM_STATE_ENABLED | ION_STREAM_STATE_CONNECTED;
 
     bevent * pair[2];
     zval *one;
@@ -339,9 +350,16 @@ CLASS_METHOD(ION_Stream, pair) {
         ThrowRuntime("Failed to create pair", 1);
         return;
     }
+    if(bufferevent_enable(pair[0], EV_READ | EV_WRITE) == FAILURE ||
+       bufferevent_enable(pair[1], EV_READ | EV_WRITE) == FAILURE) {
+        bufferevent_free(pair[0]);
+        bufferevent_free(pair[1]);
+        ThrowRuntime("Failed to enable stream", -1);
+        return;
+    }
 
-    one = ion_stream_new_ex(pair[0], ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_PAIR, EG(called_scope));
-    two = ion_stream_new_ex(pair[1], ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_PAIR, EG(called_scope));
+    one = ion_stream_new_ex(pair[0], state, EG(called_scope));
+    two = ion_stream_new_ex(pair[1], state, EG(called_scope));
 
     array_init(return_value);
     add_next_index_zval(return_value, one);
@@ -401,8 +419,13 @@ CLASS_METHOD(ION_Stream, socket) {
         return;
     }
     efree(hostname);
+    if(bufferevent_enable(buffer, EV_READ | EV_WRITE)) {
+        bufferevent_free(buffer);
+        ThrowRuntime("Failed to enable stream", -1);
+        return;
+    }
 
-    ion_stream_zval_ex(return_value, buffer, ION_STREAM_STATE_SOCKET, EG(called_scope));
+    ion_stream_zval_ex(return_value, buffer, ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_ENABLED, EG(called_scope));
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, socket, 1)
@@ -565,11 +588,11 @@ CLASS_METHOD(ION_Stream, write) {
         return;
     }
 
-    bufferevent_flush(stream->buffer, EV_WRITE, BEV_NORMAL);
-
-    if(evbuffer_get_length(bufferevent_get_output(stream->buffer))) {
-        stream->state &= ~ION_STREAM_STATE_FLUSHED;
-    }
+//    bufferevent_flush(stream->buffer, EV_WRITE, BEV_NORMAL);
+//
+//    if(evbuffer_get_length(bufferevent_get_output(stream->buffer))) {
+//        stream->state &= ~ION_STREAM_STATE_FLUSHED;
+//    }
     RETURN_THIS();
 
 
@@ -834,12 +857,12 @@ void _deferred_stream_await_dtor(void *object, zval *zdeferred TSRMLS_DC) {
     bufferevent_setwatermark(stream->buffer, EV_READ, 0, stream->input_size);
     if(stream->read) {
         zval_ptr_dtor(&stream->read);
+        stream->read = NULL;
         if(stream->token) {
             efree(stream->token->token);
             efree(stream->token);
+            stream->token = NULL;
         }
-        stream->read = NULL;
-        stream->token = NULL;
     }
     zval_ptr_dtor(&zdeferred);
 }
@@ -1029,68 +1052,10 @@ METHOD_ARGS_BEGIN(ION_Stream, ensureSSL, 1)
     METHOD_ARG(ssl, 0)
 METHOD_ARGS_END()
 
-int _ion_stream_get_addr(ion_stream * stream, short flag, char ** address, int * port TSRMLS_DC) {
-    int socket;
-    int type = PION_NET_NAME_UNKNOWN;
-    if(stream->state & ION_STREAM_STATE_PAIR) {
-        *address = estrdup("twin");
-    } else if(stream->state & ION_STREAM_STATE_SOCKET) {
-        socket = bufferevent_getfd(stream->buffer);
-        if(socket == -1) {
-            *address = estrdup("nosocket");
-        } else {
-            type = pion_net_sock_name(socket, flag, address, port);
-            if(type == FAILURE) {
-                *address = estrdup("error");
-            }
-        }
-    } else {
-        *address = estrdup("pipe");
-    }
-
-    return type;
-}
-
 /** public function ION\Stream::getRemotePeer() : string */
 CLASS_METHOD(ION_Stream, getRemotePeer) {
     ion_stream * stream = getThisInstance();
-
-    long         what = ION_STREAM_NAME_HOST;
-    char       * address;
-    char       * address_combined;
-    int          port = 0;
-    int          type;
-
     CHECK_STREAM_BUFFER(stream);
-    PARSE_ARGS("|l", what);
-
-    type = ion_stream_get_addr(stream, PION_NET_NAME_REMOTE, &address, &port);
-
-    if(what) {
-        if(what == ION_STREAM_NAME_SHORT_MASK) {
-            array_init(return_value);
-            add_assoc_string(return_value, "ip", address, 0);
-            add_assoc_long(return_value,   "port", port);
-        } else if(what & ION_STREAM_NAME_ADDRESS) {
-            RETURN_STRING(address, 0);
-        } else {
-            RETURN_LONG(port);
-        }
-    } else {
-        if(port == -1) {
-            RETURN_STRING(address, 0);
-        } else {
-            if(type == PION_NET_NAME_IPV6) {
-                spprintf(&address_combined, 0, "[%s]:%d", address, port);
-            } else {
-                spprintf(&address_combined, 0, "%s:%d", address, port);
-            }
-            RETVAL_STRING(address_combined, 1);
-            efree(address);
-            efree(address_combined);
-        }
-    }
-
 }
 
 METHOD_WITHOUT_ARGS(ION_Stream, getRemotePeer)
@@ -1200,6 +1165,9 @@ METHOD_WITHOUT_ARGS(ION_Stream, __debugInfo)
 
 /** public function ION\Stream::__destruct() : void */
 CLASS_METHOD(ION_Stream, __destruct) {
+//    PHPDBG("stream __destruct start")
+
+//    zend_error(E_NOTICE, "Stream destruct");
     ion_stream * stream = getThisInstance();
     if(stream->flush) {
         ion_deferred_reject(stream->flush, "The stream shutdown by the destructor");
@@ -1214,52 +1182,94 @@ CLASS_METHOD(ION_Stream, __destruct) {
         bufferevent_disable(stream->buffer, EV_READ | EV_WRITE);
         stream->state &= ~ION_STREAM_STATE_ENABLED;
     }
+//    PHPDBG("stream __destruct done")
+
 }
 
 METHOD_WITHOUT_ARGS(ION_Stream, __destruct)
+
+
+#define ion_stream_get_name_self(stream)  _ion_stream_get_name_self(stream TSRMLS_CC)
+#define ion_stream_get_name_remote(stream)  _ion_stream_get_name_remote(stream TSRMLS_CC)
+#define ion_stream_is_valid_fd(stream) (bufferevent_getfd(stream->buffer) == -1)
+
+char * _ion_stream_get_name_self(ion_stream * stream TSRMLS_DC) {
+    int type   = 0;
+    int socket;
+    if(stream->name_self == NULL) {
+        socket = bufferevent_getfd(stream->buffer);
+        if(socket == -1) {
+            return NULL;
+        } else {
+            type = pion_net_sock_name(socket, PION_NET_NAME_LOCAL, &stream->name_self);
+            if(type == PION_NET_NAME_IPV6) {
+                stream->state |= ION_STREAM_NAME_IPV6;
+            } else if(type == PION_NET_NAME_UNIX) {
+                stream->state |= ION_STREAM_NAME_UNIX;
+            } else if(type == PION_NET_NAME_UNKNOWN || type == FAILURE) {
+                return NULL;
+            } else {
+                stream->state |= ION_STREAM_NAME_IPV4;
+            }
+        }
+    }
+    return estrdup(stream->name_self);
+}
+
+char * _ion_stream_get_name_remote(ion_stream * stream TSRMLS_DC) {
+    int type   = 0;
+    int socket;
+    if(stream->name_remote == NULL) {
+        socket = bufferevent_getfd(stream->buffer);
+        if(socket == -1) {
+            return NULL;
+        } else {
+            type = pion_net_sock_name(socket, PION_NET_NAME_REMOTE, &stream->name_remote);
+            if(type == PION_NET_NAME_UNKNOWN || type == FAILURE) {
+                return NULL;
+            }
+        }
+    }
+    return estrdup(stream->name_remote);
+}
 
 /** public function ION\Stream::__toString() : string */
 CLASS_METHOD(ION_Stream, __toString) {
     ion_stream * stream = getThisInstance();
     char       * address_combined;
     char       * address_remote;
-    int          port_remote = 0;
+//    int          port_remote = 0;
     char       * address_local;
-    int          port_local = 0;
-    int socket;
-    int          type_remote;
-    int          type_local;
+//    int          port_local = 0;
+//    int socket;
+//    int          type_remote;
+//    int          type_local;
 
     if(stream->buffer == NULL) {
-        RETURN_STRING("stream:broken", 1);
+        RETURN_STRING("stream:empty", 1);
     }
     if(stream->state & ION_STREAM_STATE_SOCKET) {
-        socket = bufferevent_getfd(stream->buffer);
-        if(socket == -1) {
+        if(ion_stream_is_valid_fd(stream)) {
             RETURN_STRING("stream:invalid", 1);
-        } else {
-            type_remote = pion_net_sock_name(socket, PION_NET_NAME_REMOTE, &address_remote, &port_remote);
-            if(type_remote == FAILURE) {
-                address_remote = estrdup("undefined");
-            }
-            type_local = pion_net_sock_name(socket, PION_NET_NAME_LOCAL, &address_local, &port_local);
-            if(type_local == FAILURE) {
-                address_local = estrdup("undefined");
-            }
         }
-        if(type_local == PION_NET_NAME_IPV4) {
-            spprintf(&address_combined, 0, "stream:socket(%s:%d->%s:%d)", address_local, port_local, address_remote,
-                     port_remote);
-        } else if(type_local == PION_NET_NAME_IPV6) {
-            spprintf(&address_combined, 0, "stream:socket([%s]:%d->[%s]:%d)", address_local, port_local, address_remote,
-                     port_remote);
-        } else {
-            spprintf(&address_combined, 0, "stream:socket(%s->%s)", address_local, address_remote);
+        address_remote = ion_stream_get_name_self(stream);
+        address_local  = ion_stream_get_name_remote(stream);
+        if(address_remote == NULL) {
+            address_local = estrdup("undefined");
         }
+        if(address_local == NULL) {
+            address_local = estrdup("undefined");
+        }
+
+        spprintf(&address_combined, 0, "stream:socket(%s->%s)", address_local, address_remote);
         RETVAL_STRING(address_combined, 1);
         efree(address_combined);
-        efree(address_local);
-        efree(address_remote);
+        if(address_local) {
+            efree(address_local);
+        }
+        if(address_remote) {
+            efree(address_remote);
+        }
     } else if(stream->state & ION_STREAM_STATE_PAIR) {
         RETURN_STRING("stream:twin", 1);
     } else {
@@ -1286,6 +1296,7 @@ CLASS_METHOD(ION_Stream, appendToInput) {
 
     input = bufferevent_get_input(stream->buffer);
 
+    evbuffer_unfreeze(input, 0);
     if(evbuffer_add(input, (const void *)data, (size_t)data_len)) {
         ThrowRuntime("Failed to append data to input", 1);
         return;
