@@ -161,11 +161,13 @@ class Stream {
 	public function get($bytes) {}
 
 	/**
+     * Reads remainder of a stream into a string
 	 * @return string
 	 */
 	public function getAll() {}
 
 	/**
+     * Gets line from input buffer up to a given delimiter
 	 * @param string $token
 	 * @param int $flag
 	 * @param int $max_length

@@ -27,12 +27,20 @@ class StreamTest extends TestCase {
     }
 
     public function setupStoreServer() {
-        list($a, $b) = Stream::pair();
-        /* @var Stream $a */
-        /* @var Stream $b */
-        return $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) use ($b) {
-
+        return $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) {
+//            $this->out("open");
+            $file = fopen($this->getVarDir().'/server.data', "w");
+            stream_copy_to_stream($connect, $file);
+            fclose($file);
+//            $this->out("close");
         })->start();
+    }
+
+    public function getServerResult() {
+        $this->assertFileExists($this->getVarDir().'/server.data');
+        $data =  file_get_contents($this->getVarDir().'/server.data');
+        unlink($this->getVarDir().'/server.data');
+        return $data;
     }
 
     /**
@@ -101,12 +109,6 @@ class StreamTest extends TestCase {
         $this->assertSame("0123456789", $b->getAll());
         $this->assertSame("", $a->getAll());
     }
-
-    public function testSendFile() {
-        list($a, $b) = Stream::pair();
-
-    }
-
 
     public function providerString() {
         $string = "0123456789";
@@ -311,7 +313,7 @@ class StreamTest extends TestCase {
     }
 
     /**
-     * @group dev
+     *
      * Check memory leaks in the __debugInfo()
      * @memcheck
      */
@@ -379,6 +381,39 @@ class StreamTest extends TestCase {
         usleep(1e4); // time to ack
         $this->assertStringMatchesFormat("stream:socket({$hostname}:%d->{$host})", strval($socket));
         $this->assertWaitPID($pid);
+    }
+
+    /**
+     * @group dev
+     * @memch eck
+     */
+    public function testClose() {
+        $pid = $this->setupStoreServer();
+
+        $socket = Stream::socket(ION_TEST_SERVER_HOST);
+        $socket->close();
+        $this->loop(0.5, false);
+        $this->assertWaitPID($pid);
+        $this->assertEquals('', $this->getServerResult());
+
+    }
+
+    /**
+     *
+     * @memcheck
+     */
+    public function testFlush() {
+        $pid = $this->setupStoreServer();
+
+        $socket = Stream::socket(ION_TEST_SERVER_HOST);
+        $socket->write('send data')->flush()->then(function () use ($socket) {
+            $this->stop();
+            $socket->close(true);
+        });
+
+        $this->loop();
+        $this->assertWaitPID($pid);
+        $this->assertEquals('send data', $this->getServerResult());
     }
 }
 

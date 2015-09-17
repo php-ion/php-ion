@@ -190,6 +190,12 @@ int _ion_stream_zval(zval * zstream, bevent * buffer, int flags, zend_class_entr
 
     stream->buffer = buffer;
     stream->state |= flags;
+    if(ion_stream_output_length(stream) == 0) {
+        stream->state |= ION_STREAM_STATE_FLUSHED;
+    }
+    if(ion_stream_input_length(stream)) {
+        stream->state |= ION_STREAM_STATE_HAS_DATA;
+    }
     bufferevent_setcb(buffer, _ion_stream_input, _ion_stream_output, _ion_stream_notify, (void *) stream);
     if (cls->constructor) {
         return pionCallConstructorWithoutArgs(cls, zstream);
@@ -515,7 +521,6 @@ void _deferred_stream_connect_dtor(void * object, zval * zdeferred TSRMLS_DC) {
         zval_ptr_dtor(&stream->connect);
         stream->connect = NULL;
     }
-    zval_ptr_dtor(&zdeferred);
 }
 
 /** public function ION\Stream::awaitConnection() : Deferred */
@@ -530,7 +535,6 @@ CLASS_METHOD(ION_Stream, awaitConnection) {
     } else {
         ion_deferred_store(zdeferred, stream, _deferred_stream_connect_dtor);
         stream->connect = zdeferred;
-        zval_add_ref(&zdeferred);
         RETURN_ZVAL(zdeferred, 1, 0);
     }
 }
@@ -669,7 +673,7 @@ METHOD_ARGS_BEGIN(ION_Stream, sendFile, 1)
     METHOD_ARG_LONG(limit, 0)
 METHOD_ARGS_END()
 
-void _deferred_stream_dtor(void *object, zval * zdeferred TSRMLS_DC) {
+void _deferred_stream_dtor(void * object, zval * zdeferred TSRMLS_DC) {
     ion_stream * stream = (ion_stream *) object;
     if(stream->flush) {
         zval_ptr_dtor(&stream->flush);
@@ -687,7 +691,6 @@ CLASS_METHOD(ION_Stream, flush) {
     }
 
     stream->flush = ion_deferred_new_ex(NULL);
-    zval_addref_p(stream->flush);
     ion_deferred_store(stream->flush, stream, _deferred_stream_dtor);
     if(stream->state & ION_STREAM_STATE_FLUSHED) {
         ion_deferred_done_true(stream->flush);
@@ -877,15 +880,14 @@ void _deferred_stream_await_dtor(void *object, zval *zdeferred TSRMLS_DC) {
     ion_stream * stream = (ion_stream *) object;
     bufferevent_setwatermark(stream->buffer, EV_READ, 0, stream->input_size);
     if(stream->read) {
-        zval_ptr_dtor(&stream->read);
-        stream->read = NULL;
         if(stream->token) {
             efree(stream->token->token);
             efree(stream->token);
             stream->token = NULL;
         }
+        zval_ptr_dtor(&stream->read);
+        stream->read = NULL;
     }
-    zval_ptr_dtor(&zdeferred);
 }
 
 /** public function ION\Stream::await(int $bytes) : ION\Deferred */
@@ -917,7 +919,6 @@ CLASS_METHOD(ION_Stream, await) {
         ion_deferred_store(zdeferred, stream, _deferred_stream_await_dtor);
         stream->read = zdeferred;
         stream->length = length;
-        zval_add_ref(&zdeferred);
         bufferevent_setwatermark(stream->buffer, EV_READ, length, (stream->input_size >= length) ? stream->input_size : length);
         RETURN_ZVAL(zdeferred, 1, 0);
     }
@@ -957,7 +958,6 @@ CLASS_METHOD(ION_Stream, awaitLine) {
         } else {
             ion_deferred_store(zdeferred, stream, _deferred_stream_await_dtor);
             stream->read = zdeferred;
-            zval_add_ref(&zdeferred);
             stream->token = emalloc(sizeof(ion_stream_token));
             memcpy(stream->token, &token, sizeof(ion_stream_token));
             stream->token->token = estrndup(token.token, (unsigned)token.token_length);
@@ -1003,8 +1003,7 @@ CLASS_METHOD(ION_Stream, awaitAll) {
         ion_deferred_store(zdeferred, stream, _deferred_stream_await_dtor);
         stream->read = zdeferred;
         stream->length = 0;
-        zval_add_ref(&zdeferred);
-        RETURN_ZVAL_FAST(zdeferred);
+        RETURN_ZVAL(zdeferred, 1, 0);
     }
 }
 
@@ -1049,7 +1048,6 @@ void _deferred_stream_shutdown_dtor(void * object, zval * zdeferred TSRMLS_DC) {
         zval_ptr_dtor(&stream->closing);
         stream->closing = NULL;
     }
-    zval_ptr_dtor(&zdeferred);
 }
 
 /** public function ION\Stream::awaitClosing() : ION\Deferred */
@@ -1064,7 +1062,6 @@ CLASS_METHOD(ION_Stream, awaitShutdown) {
     } else {
         ion_deferred_store(zdeferred, stream, _deferred_stream_shutdown_dtor);
         stream->closing = zdeferred;
-        zval_add_ref(&zdeferred);
         RETURN_ZVAL(zdeferred, 1, 0);
     }
 }

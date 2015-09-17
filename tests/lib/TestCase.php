@@ -19,6 +19,10 @@ class TestCase extends \PHPUnit_Framework_TestCase {
         $this->data = [];
     }
 
+    public function getVarDir() {
+        return dirname(__DIR__)."/var";
+    }
+
     public function tearDown() {
         $doc = \PHPUnit_Util_Test::parseTestMethodAnnotations(get_class($this), $this->getName(false));
 
