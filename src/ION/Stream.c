@@ -1,21 +1,14 @@
 
 #include <php.h>
 #include <php_network.h>
+#include <fcntl.h>
 #include "Stream.h"
 
+#ifndef O_NOATIME
+# define O_NOATIME 0
+#endif
+
 ION_DEFINE_CLASS(ION_Stream);
-
-#define ion_stream_input_length(stream) evbuffer_get_length( bufferevent_get_input(stream->buffer) )
-#define ion_stream_output_length(stream) evbuffer_get_length( bufferevent_get_output(stream->buffer) )
-#define ion_stream_read(stream, size_p) _ion_stream_read(stream, size_p TSRMLS_CC);
-#define ion_stream_read_token(stream, data, token) \
-    _ion_stream_read_token(stream, data, token TSRMLS_CC)
-#define ion_stream_search_token(buffer_p, token_p)  _ion_stream_search_token(buffer_p, token_p TSRMLS_CC)
-
-
-#define ion_stream_get_name_self(stream)  _ion_stream_get_name_self(stream TSRMLS_CC)
-#define ion_stream_get_name_remote(stream)  _ion_stream_get_name_remote(stream TSRMLS_CC)
-#define ion_stream_is_valid_fd(stream) (bufferevent_getfd(stream->buffer) == -1)
 
 char * _ion_stream_get_name_self(ion_stream * stream TSRMLS_DC) {
     int type   = 0;
@@ -56,32 +49,6 @@ char * _ion_stream_get_name_remote(ion_stream * stream TSRMLS_DC) {
     }
     return estrdup(stream->name_remote);
 }
-
-#define CHECK_STREAM_BUFFER(stream)                          \
-    if(stream->buffer == NULL) {                             \
-        ThrowRuntime("Stream buffer is not initialized", 1); \
-        return;                                              \
-    }
-
-#define CHECK_STREAM_STATE(stream)                              \
-    if(stream->state & ION_STREAM_STATE_CLOSED) {               \
-        if(stream->state & ION_STREAM_STATE_EOF) {              \
-            ThrowRuntime("EOF", 1);                             \
-        } else if(stream->state & ION_STREAM_STATE_ERROR) {     \
-            ThrowRuntime("Stream is corrupted", 1);             \
-        } else if(stream->state & ION_STREAM_STATE_SHUTDOWN) {  \
-            ThrowRuntime("Stream shutdown", 1);                 \
-        }                                                       \
-        return;                                                 \
-    }
-
-#define CHECK_STREAM(stream)      \
-    CHECK_STREAM_BUFFER(stream);  \
-    CHECK_STREAM_STATE(stream);
-
-char * _ion_stream_read(ion_stream * stream, size_t * size TSRMLS_DC);
-long _ion_stream_read_token(ion_stream * stream, char ** data, ion_stream_token * token TSRMLS_DC);
-long _ion_stream_search_token(struct evbuffer * buffer, ion_stream_token * token TSRMLS_DC);
 
 void _ion_stream_input(bevent * bev, void * ctx) {
     ION_EVCB_START();
@@ -141,7 +108,6 @@ void _ion_stream_input(bevent * bev, void * ctx) {
 
 void _ion_stream_output(bevent * bev, void *ctx) {
     ION_EVCB_START();
-
     ion_stream *stream = (ion_stream *)ctx;
     TSRMLS_FETCH_FROM_CTX(stream->thread_ctx);
     IONF("all data sent");
@@ -151,8 +117,7 @@ void _ion_stream_output(bevent * bev, void *ctx) {
     }
     stream->state |= ION_STREAM_STATE_FLUSHED;
     if(stream->state & ION_STREAM_STATE_CLOSE_ON_FLUSH) {
-        bufferevent_disable(stream->buffer, EV_READ | EV_WRITE);
-        stream->state |= ION_STREAM_STATE_SHUTDOWN;
+        ion_stream_close_fd(stream);
     }
 
     ION_EVCB_END();
@@ -292,6 +257,24 @@ long _ion_stream_read_token(ion_stream * stream, char ** data_out, ion_stream_to
         }
     }
     return size;
+}
+
+int  _ion_stream_close_fd(ion_stream * stream TSRMLS_DC) {
+    evutil_socket_t socket;
+    bufferevent_disable(stream->buffer, EV_READ | EV_WRITE);
+
+    stream->state |= ION_STREAM_STATE_SHUTDOWN;
+    socket = bufferevent_getfd(stream->buffer);
+    if(socket == -1) {
+        return SUCCESS;
+    }
+    if(stream->state & ION_STREAM_STATE_SOCKET) {
+        evutil_closesocket(socket);
+    } else if(socket > 2) { // skip stdin, stdout, stderr
+        close(socket);
+    }
+    bufferevent_setfd(stream->buffer, -1);
+    return SUCCESS;
 }
 
 CLASS_INSTANCE_DTOR(ION_Stream) {
@@ -649,37 +632,30 @@ METHOD_ARGS_END()
 
 /** public function ION\Stream::sendFile(resource $fd, int $offset = 0, int $limit = -1) : self */
 CLASS_METHOD(ION_Stream, sendFile) {
-    zval * zfd          = NULL;
-    long offset         = 0;
-    long length         = -1;
-    int fd              = -1;
-    int fd2;
+    char * filename     = NULL;
+    long   filename_len = 0;
+    long   offset       = 0;
+    long   length       = -1;
+    int    fd;
     ion_stream * stream = getThisInstance();
 
     CHECK_STREAM(stream);
-    PARSE_ARGS("r|ll", &zfd, &offset, &length);
-
-    php_stream * stream_resource;
-    if (ZEND_FETCH_RESOURCE_NO_RETURN(stream_resource, php_stream *, &zfd, -1, NULL, php_file_le_stream())) {
-        if (php_stream_cast(stream_resource, PHP_STREAM_AS_FD_FOR_SELECT | PHP_STREAM_CAST_INTERNAL, (void *) &fd, REPORT_ERRORS) == FAILURE) {
-            ThrowInvalidArgument("stream argument must be either valid PHP stream");
-            return;
-        }
-    }
+    PARSE_ARGS("s|ll", &filename, &filename_len, &offset, &length);
 
     errno = 0;
-    fd2 = dup(fd);
-    if(fd2 == -1) {
-        ThrowRuntimeEx(errno, "Failed to duplicate fd for add_file: %s", strerror(errno));
+    fd = open(filename, O_RDONLY | O_CLOEXEC | O_NONBLOCK | O_NOATIME);
+    if(fd == -1) {
+        ThrowRuntimeEx(errno, "failed to open file: %s", strerror(errno));
         return;
     }
 
     if(evbuffer_add_file(
             bufferevent_get_output(stream->buffer),
-            fd2,
+            fd,
             (ev_off_t)offset,
             (ev_off_t)length
     )) {
+        close(fd);
         ThrowRuntime("Failed to send file", 1);
         return;
     }
@@ -1037,13 +1013,20 @@ METHOD_WITHOUT_ARGS(ION_Stream, awaitAll)
 /** public function ION\Stream::close(bool $force = false) : self */
 CLASS_METHOD(ION_Stream, close) {
     ion_stream * stream = getThisInstance();
+    zend_bool force = 0;
+
     CHECK_STREAM_BUFFER(stream);
+    PARSE_ARGS("|b", &force);
     if(stream->state & ION_STREAM_STATE_CLOSED) {
         RETURN_THIS();
     }
-    bufferevent_disable(stream->buffer, EV_READ);
-    stream->state |= ION_STREAM_STATE_CLOSE_ON_FLUSH;
-    RETURN_THIS();
+    if((stream->state & ION_STREAM_STATE_FLUSHED) || force) {
+        ion_stream_close_fd(stream);
+    } else {
+        bufferevent_disable(stream->buffer, EV_READ);
+        stream->state |= ION_STREAM_STATE_CLOSE_ON_FLUSH;
+        RETURN_THIS();
+    }
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, close, 0)
@@ -1350,6 +1333,7 @@ CLASS_METHOD(ION_Stream, appendToInput) {
         ThrowRuntime("Failed to append data to input", 1);
         return;
     }
+    stream->state &= ~ION_STREAM_STATE_FLUSHED;
     RETURN_THIS();
 }
 

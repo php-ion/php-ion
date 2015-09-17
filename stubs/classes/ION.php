@@ -101,10 +101,8 @@ class ION {
     /**
      * 
      * @param float $time
-     * @param callable $callback
-     * @param mixed $args
-     * @return int
+     * @return \ION\Deferred\Map
      */
-    public static function setInterval($time, $callback, $args = null) {}
+    public static function setInterval($time) {}
 
 }

@@ -3,6 +3,8 @@
 namespace ION;
 
 
+use ION\Deferred\Map;
+
 class Stream {
     const MODE_TRIM_TOKEN = 1;
     const MODE_WITH_TOKEN = 2;
@@ -209,7 +211,7 @@ class Stream {
 	 * Copy data from a file descriptor into the event buffer for writing to a socket.
 	 * This method avoids unnecessary data copies between userland and kernel.
 	 *
-	 * @param resource $fd the file descriptor
+	 * @param string $filename path to file
 	 * @param int $offset the offset from which to read data
 	 * @param int $limit how much data to read
 	 * @throws \RuntimeException if error occurs
@@ -217,7 +219,7 @@ class Stream {
 	 *
 	 * @return self
 	 */
-	public function sendFile($fd, $offset = 0, $limit = -1) {}
+	public function sendFile($filename, $offset = 0, $limit = -1) {}
 
 	/**
 	 * Done deferred object when outgoing buffer is empty
@@ -234,9 +236,9 @@ class Stream {
 	public function close($force = false) {}
 
     /**
-     * @param callable $cb
+     * @return Map
      */
-	public function onData(callable $cb) {}
+	public function onData() {}
 
 	/**
 	 * Deferred to be resolved when the stream is shutdown

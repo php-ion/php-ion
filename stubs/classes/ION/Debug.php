@@ -2,7 +2,10 @@
 
 namespace ION;
 
-
+/**
+ * For internal testing
+ * @package ION
+ */
 class Debug {
 
 	/**

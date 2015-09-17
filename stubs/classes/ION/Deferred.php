@@ -4,7 +4,7 @@ namespace ION;
  * Ticket for deferred actions
  * @todo more doc
  */
-final class Deferred {
+class Deferred {
 
 	/**
 	 * @todo more doc
@@ -14,7 +14,7 @@ final class Deferred {
 	/**
 	 * Set user callback on finish deferred-event
 	 * @param callable $cb
-	 * @return self
+	 * @return Promise
 	 */
 	public function then(callable $cb) {}
 
@@ -69,6 +69,8 @@ final class Deferred {
 	 * @param callable $cb
 	 */
 	public function progress(callable $cb) {}
+
+    public function __clone() {}
 }
 
 class CancelException extends \Exception {}
