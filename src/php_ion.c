@@ -90,11 +90,17 @@ PHP_MINIT_FUNCTION(ion) {
     event_set_log_callback(_engine_log);
     event_set_fatal_callback(_engine_fatal);
 
+    ionBase            = emalloc(sizeof(IONBase));
+    memset(ionBase, 0, sizeof(IONBase));
+    ION(i)             = 1;
+    ION(base)          = event_base_new();
+
     STARTUP_MODULE(ION_Debug);
     STARTUP_MODULE(ION_Data_LinkedList);
     STARTUP_MODULE(ION_Data_SkipList);
     STARTUP_MODULE(ION_Deferred);
     STARTUP_MODULE(ION);
+    STARTUP_MODULE(ION_DNS);
     STARTUP_MODULE(ION_Process);
     STARTUP_MODULE(ION_Stream);
 
@@ -139,30 +145,26 @@ PHP_MSHUTDOWN_FUNCTION(ion) {
     SHUTDOWN_MODULE(ION_Data_LinkedList);
     SHUTDOWN_MODULE(ION_Data_SkipList);
     SHUTDOWN_MODULE(ION_Deferred);
-    SHUTDOWN_MODULE(ION);
-    SHUTDOWN_MODULE(ION_Process);
+    SHUTDOWN_MODULE(ION_DNS);
     SHUTDOWN_MODULE(ION_Stream);
+    SHUTDOWN_MODULE(ION_Process);
+    SHUTDOWN_MODULE(ION);
+
+    event_base_free( ION(base) );
+    efree(ionBase);
+
+//    UNREGISTER_INI_ENTRIES();
 
     return SUCCESS;
 }
 
 /* Start SAPI request */
 PHP_RINIT_FUNCTION(ion) {
-    if(ionBase != NULL) { // because streams dtor invokes AFTER PHP_RSHUTDOWN_FUNCTION
-        event_base_free( ION(base) );
-        efree(ionBase);
-    }
-    ionBase = emalloc(sizeof(IONBase));
-    memset(ionBase, 0, sizeof(IONBase));
-    ION(i)             = 1;
-    ION(base)          = event_base_new();
-
     return SUCCESS;
 }
 
 /* End SAPI request */
 PHP_RSHUTDOWN_FUNCTION(ion) {
-
     return SUCCESS;
 }
 
@@ -204,7 +206,6 @@ PHP_MINFO_FUNCTION(ion) {
         php_info_print_table_row(2, "ion.engine.fd_allowed", "no");
     }
     php_info_print_table_row(2, "ion.dns.support", "enabled");
-    php_info_print_table_row(2, "ion.dns.resolve.config", "/etc/resolve.conf");
-    php_info_print_table_row(2, "ion.ssl.support", "disabled");
+    php_info_print_table_row(2, "ion.ssl.support", "enabled");
     php_info_print_table_end();
 }

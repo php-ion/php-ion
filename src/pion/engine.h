@@ -167,4 +167,8 @@
 #define RETURN_ZVAL_FAST(z) { RETVAL_ZVAL_FAST(z); return; }
 #endif
 
+
+#define PION_INI_BEGIN(module)		static const zend_ini_entry ini_entries[] = {
+#define PION_INI_END()		{ 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0, 0, NULL } };
+
 #endif //PION_ENGINE_H

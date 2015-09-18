@@ -38,6 +38,7 @@ set(ION_SOURCE_FILES
     src/ION/Data/SkipList.c
     src/ION/Deferred.c
     src/ION.c
+    src/ION/DNS.c
     src/ION/Process.c
     src/ION/Stream.c
 )

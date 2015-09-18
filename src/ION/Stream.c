@@ -447,9 +447,9 @@ CLASS_METHOD(ION_Stream, socket) {
     port = strtol(port_digits, NULL, 10);
     efree(port_digits);
 
-    if(bufferevent_socket_connect_hostname(buffer, ION(evdns), AF_UNSPEC, hostname, (int)port) == FAILURE) {
+    if(bufferevent_socket_connect_hostname(buffer, ION(dns)->evdns, AF_UNSPEC, hostname, (int)port) == FAILURE) {
         efree(hostname);
-        ThrowRuntime("Failed to connect", 1);
+        ThrowRuntime("Failed to connect ", 1);
         return;
     }
     efree(hostname);
@@ -531,12 +531,11 @@ CLASS_METHOD(ION_Stream, awaitConnection) {
     zdeferred = ion_deferred_new_ex(NULL);
     if(stream->state & ION_STREAM_STATE_CONNECTED) {
         ion_deferred_done(zdeferred, getThis());
-        RETURN_ZVAL(zdeferred, 1, 0);
     } else {
         ion_deferred_store(zdeferred, stream, _deferred_stream_connect_dtor);
         stream->connect = zdeferred;
-        RETURN_ZVAL(zdeferred, 1, 0);
     }
+    RETURN_ZVAL(zdeferred, 1, 0);
 }
 
 METHOD_WITHOUT_ARGS(ION_Stream, awaitConnection)
@@ -673,7 +672,7 @@ METHOD_ARGS_BEGIN(ION_Stream, sendFile, 1)
     METHOD_ARG_LONG(limit, 0)
 METHOD_ARGS_END()
 
-void _deferred_stream_dtor(void * object, zval * zdeferred TSRMLS_DC) {
+void _deferred_stream_flush_dtor(void * object, zval * zdeferred TSRMLS_DC) {
     ion_stream * stream = (ion_stream *) object;
     if(stream->flush) {
         zval_ptr_dtor(&stream->flush);
@@ -684,18 +683,22 @@ void _deferred_stream_dtor(void * object, zval * zdeferred TSRMLS_DC) {
 /** public function ION\Stream::state() : ION\Deferred */
 CLASS_METHOD(ION_Stream, flush) {
     ion_stream * stream = getThisInstance();
+    zval * zdeferred = NULL;
 
     CHECK_STREAM(stream);
     if(stream->flush) {
         RETURN_ZVAL(stream->flush, 1, 0);
     }
 
-    stream->flush = ion_deferred_new_ex(NULL);
-    ion_deferred_store(stream->flush, stream, _deferred_stream_dtor);
+    CHECK_STREAM_BUFFER(stream);
+    zdeferred = ion_deferred_new_ex(NULL);
     if(stream->state & ION_STREAM_STATE_FLUSHED) {
-        ion_deferred_done_true(stream->flush);
+        ion_deferred_done_true(zdeferred);
+    } else {
+        ion_deferred_store(zdeferred, stream, _deferred_stream_flush_dtor);
+        stream->flush = zdeferred;
     }
-    RETURN_ZVAL(stream->flush, 1, 0);
+    RETURN_ZVAL(zdeferred, 1, 0);
 }
 
 METHOD_WITHOUT_ARGS(ION_Stream, flush)
@@ -914,14 +917,13 @@ CLASS_METHOD(ION_Stream, await) {
             return;
         }
         ion_deferred_done_stringl(zdeferred, data, length, 0);
-        RETURN_ZVAL(zdeferred, 1, 0);
     } else {
         ion_deferred_store(zdeferred, stream, _deferred_stream_await_dtor);
         stream->read = zdeferred;
         stream->length = length;
         bufferevent_setwatermark(stream->buffer, EV_READ, length, (stream->input_size >= length) ? stream->input_size : length);
-        RETURN_ZVAL(zdeferred, 1, 0);
     }
+    RETURN_ZVAL(zdeferred, 1, 0);
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, await, 1)
@@ -954,14 +956,12 @@ CLASS_METHOD(ION_Stream, awaitLine) {
     if(token.position == -1) { // not found
         if(token.flags & ION_STREAM_TOKEN_LIMIT) {
             ion_deferred_done_false(zdeferred);
-            RETURN_ZVAL(zdeferred, 1, 0);
         } else {
             ion_deferred_store(zdeferred, stream, _deferred_stream_await_dtor);
             stream->read = zdeferred;
             stream->token = emalloc(sizeof(ion_stream_token));
             memcpy(stream->token, &token, sizeof(ion_stream_token));
             stream->token->token = estrndup(token.token, (unsigned)token.token_length);
-            RETURN_ZVAL(zdeferred, 1, 0);
         }
     } else { // found
         size = ion_stream_read_token(stream, &data, &token);
@@ -976,8 +976,8 @@ CLASS_METHOD(ION_Stream, awaitLine) {
         } else {
             ion_deferred_done_stringl(zdeferred, data, size, 0);
         }
-        RETURN_ZVAL(zdeferred, 1, 0);
     }
+    RETURN_ZVAL(zdeferred, 1, 0);
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, awaitLine, 1)
@@ -989,7 +989,7 @@ METHOD_ARGS_END()
 /** public function ION\Stream::awaitAll() : ION\Deferred */
 CLASS_METHOD(ION_Stream, awaitAll) {
     ion_stream * stream = getThisInstance();
-    zval * zdeferred;
+    zval * zdeferred = NULL;
     CHECK_STREAM_BUFFER(stream);
     if(stream->read) {
         ThrowLogic("Stream already reading", -1);
@@ -998,13 +998,12 @@ CLASS_METHOD(ION_Stream, awaitAll) {
     zdeferred = ion_deferred_new_ex(NULL);
     if(stream->state & ION_STREAM_STATE_EOF) {
         ion_deferred_done_empty_string(zdeferred);
-        RETURN_ZVAL(zdeferred, 1, 0);
     } else {
         ion_deferred_store(zdeferred, stream, _deferred_stream_await_dtor);
         stream->read = zdeferred;
         stream->length = 0;
-        RETURN_ZVAL(zdeferred, 1, 0);
     }
+    RETURN_ZVAL(zdeferred, 1, 0);
 }
 
 METHOD_WITHOUT_ARGS(ION_Stream, awaitAll)
@@ -1053,17 +1052,16 @@ void _deferred_stream_shutdown_dtor(void * object, zval * zdeferred TSRMLS_DC) {
 /** public function ION\Stream::awaitClosing() : ION\Deferred */
 CLASS_METHOD(ION_Stream, awaitShutdown) {
     ion_stream * stream = getThisInstance();
-    zval * zdeferred;
+    zval * zdeferred = NULL;
     CHECK_STREAM_BUFFER(stream);
     zdeferred = ion_deferred_new_ex(NULL);
     if(stream->state & ION_STREAM_STATE_CLOSED) {
         ion_deferred_done(zdeferred, getThis());
-        RETURN_ZVAL(zdeferred, 1, 0);
     } else {
         ion_deferred_store(zdeferred, stream, _deferred_stream_shutdown_dtor);
         stream->closing = zdeferred;
-        RETURN_ZVAL(zdeferred, 1, 0);
     }
+    RETURN_ZVAL(zdeferred, 1, 0);
 }
 
 METHOD_WITHOUT_ARGS(ION_Stream, awaitShutdown)

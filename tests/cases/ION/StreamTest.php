@@ -28,11 +28,11 @@ class StreamTest extends TestCase {
 
     public function setupStoreServer() {
         return $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) {
-//            $this->out("open");
+            $this->out("open");
             $file = fopen($this->getVarDir().'/server.data', "w");
             stream_copy_to_stream($connect, $file);
             fclose($file);
-//            $this->out("close");
+            $this->out("close");
         })->start();
     }
 
@@ -385,24 +385,27 @@ class StreamTest extends TestCase {
 
     /**
      * @group dev
-     * @memch eck
+     * @memcheck
      */
-    public function testClose() {
+    public function _testClose() {
         $pid = $this->setupStoreServer();
+        usleep(1e4); // time to ack
 
         $socket = Stream::socket(ION_TEST_SERVER_HOST);
         $socket->close();
         $this->loop(0.5, false);
+        $this->out("wait");
         $this->assertWaitPID($pid);
+        $this->out("assert");
         $this->assertEquals('', $this->getServerResult());
 
     }
 
     /**
      *
-     * @memcheck
+     * @memc heck
      */
-    public function testFlush() {
+    public function _testFlush() {
         $pid = $this->setupStoreServer();
 
         $socket = Stream::socket(ION_TEST_SERVER_HOST);

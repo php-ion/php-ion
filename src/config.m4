@@ -117,6 +117,7 @@ if test "$PHP_ION" != "no"; then
     ION/Data/SkipList.c
     ION/Deferred.c
     ION.c
+    ION/DNS.c
     ION/Process.c
     ION/Stream.c"
     PHP_NEW_EXTENSION(ion, $ion_src, $ext_shared,, $CFLAGS)

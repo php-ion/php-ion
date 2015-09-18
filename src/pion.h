@@ -10,16 +10,25 @@
 #include "pion/deferred.h"
 #include "pion/net.h"
 
+typedef struct _ion_dns {
+    struct evdns_base * evdns;
+    HashTable         * requests;
+    char              * resolv_conf;
+} ion_dns;
+
+typedef struct _ion_proc {
+    HashTable * signals;          // array of listening signals
+    HashTable * execs;            // array of process childs
+} ion_proc;
+
 /** main structure */
 typedef struct _ion_base {
-    struct event_base *base;     // event base
-    struct evdns_base *evdns;    // event DNS base
-    struct event_config *config; // event config
-//    zval *dns;                   // DNS instance
+    struct event_base   * base;     // event base
+    struct event_config * config; // event config
+    ion_dns             * dns;    // event DNS base
+    ion_proc            * proc;
     long  i;                     // internal counter of timers
-    HashTable *signals;          // array of listening signals
     HashTable *timers;           // array of timers
-    HashTable *execs;            // array of process childs
 //    struct event *sigsegv;
 //    pion_llist *queue;                // queue of defers object
 #ifdef ZTS
