@@ -13,12 +13,12 @@
 typedef struct _ion_dns {
     struct evdns_base * evdns;
     HashTable         * requests;
-    char              * resolv_conf;
 } ion_dns;
 
 typedef struct _ion_proc {
     HashTable * signals;          // array of listening signals
-    HashTable * execs;            // array of process childs
+    HashTable * execs;            //
+    HashTable * childs;           // array of process childs
 } ion_proc;
 
 /** main structure */
@@ -34,9 +34,9 @@ typedef struct _ion_base {
 #ifdef ZTS
     void ***thread_ctx;
 #endif
-} IONBase;
+} ion_base;
 
-extern IONBase *ionBase;
+extern ion_base *ionBase;
 
 #define ION(prop) \
     ionBase->prop

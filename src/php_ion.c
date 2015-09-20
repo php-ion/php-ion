@@ -14,7 +14,7 @@
 #include "php_ion.h"
 #include "pion.h"
 
-extern IONBase *ionBase;
+extern ion_base *ionBase;
 
 #ifdef COMPILE_DL_ION
 ZEND_GET_MODULE(ion);
@@ -83,15 +83,11 @@ zend_module_entry ion_module_entry = {
 
 /* Init module callback */
 PHP_MINIT_FUNCTION(ion) {
-    ionBase = NULL;
-#ifdef ION_DEBUG
-    event_set_mem_functions(_php_emalloc, _php_realloc, _php_efree);
-#endif
     event_set_log_callback(_engine_log);
     event_set_fatal_callback(_engine_fatal);
 
-    ionBase            = emalloc(sizeof(IONBase));
-    memset(ionBase, 0, sizeof(IONBase));
+    ionBase            = pemalloc(sizeof(ion_base), 1);
+    memset(ionBase, 0, sizeof(ion_base));
     ION(i)             = 1;
     ION(base)          = event_base_new();
 
@@ -103,6 +99,10 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_DNS);
     STARTUP_MODULE(ION_Process);
     STARTUP_MODULE(ION_Stream);
+
+#ifdef ION_DEBUG
+    event_set_mem_functions(_php_emalloc, _php_realloc, _php_efree);
+#endif
 
     long KB = 1000;
     long MB = 1000 * KB;

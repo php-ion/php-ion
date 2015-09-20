@@ -8,7 +8,7 @@
 typedef struct event ev;
 
 DEFINE_CLASS(ION);
-IONBase *ionBase;
+ion_base *ionBase;
 void ion_reinit(long flags) {
     IONF("Reinit event loop: %d. Cleanup exec events...", (int)flags);
     //zend_hash_clean(ION(execs));

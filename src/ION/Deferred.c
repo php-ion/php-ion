@@ -72,6 +72,7 @@ void _ion_deferred_resolve(zval *zDeferred, zval * zresult, short type TSRMLS_DC
     int result = 0;
     deferred->flags |= type;
     deferred->result = zresult;
+    zval_add_ref(&zDeferred);
     zval_add_ref(&zresult);
     if(deferred->finish_cb) {
         zval * helper = NULL;
@@ -89,6 +90,7 @@ void _ion_deferred_resolve(zval *zDeferred, zval * zresult, short type TSRMLS_DC
 
     CLEAN_DEFERRED(deferred);
     CALL_OBJECT_DTOR(deferred, zDeferred);
+    zval_ptr_dtor(&zDeferred);
 }
 
 void _ion_deferred_done_long(zval *zdeferred, long * lval TSRMLS_DC) {
@@ -148,6 +150,7 @@ void _ion_deferred_reject(zval *zDeferred, const char *message TSRMLS_DC) {
     ion_deferred * deferred = getInstance(zDeferred);
     IONF("Cancellation defer object: %s", message);
     zval *zException = _pion_exception_new(CE(ION_Deferred_RejectException), message, 0 TSRMLS_CC);
+    zval_add_ref(&zDeferred);
     deferred->flags |= ION_DEFERRED_REJECTED | ION_DEFERRED_FAILED;
     if(deferred->reject) {
         deferred->reject(zException, zDeferred TSRMLS_CC);
@@ -155,6 +158,7 @@ void _ion_deferred_reject(zval *zDeferred, const char *message TSRMLS_DC) {
     zval_ptr_dtor(&zException);
     CLEAN_DEFERRED(deferred);
     CALL_OBJECT_DTOR(deferred, zDeferred);
+    zval_ptr_dtor(&zDeferred);
 //    PHPDBG("deferred reject done")
 }
 
