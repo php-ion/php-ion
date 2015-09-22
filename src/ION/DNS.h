@@ -20,6 +20,9 @@ typedef struct _ion_dns_addr_request {
     char * domain;
     uint   domain_len;
     zval * deferred;
+#ifdef ZTS
+    void ***thread_ctx;
+#endif
 } ion_dns_addr_request;
 
 ZEND_BEGIN_MODULE_GLOBALS(ION_DNS)

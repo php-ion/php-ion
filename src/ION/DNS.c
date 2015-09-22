@@ -5,6 +5,7 @@ DEFINE_CLASS(ION_DNS);
 
 void _ion_dns_getaddrinfo_callback(int errcode, struct evutil_addrinfo * addr, void * arg) {
     ion_dns_addr_request * req = (ion_dns_addr_request *) arg;
+    TSRMLS_FETCH_FROM_CTX(req->thread_ctx);
     zval * result, * A, * AAAA;
     if (!errcode) {
         ALLOC_INIT_ZVAL(result);
@@ -64,6 +65,7 @@ void _ion_dns_getaddrinfo_cancel(zval * error, zval *zdeferred TSRMLS_DC) {
 
 void _ion_dns_clean_requests(void * r) {
     ion_dns_addr_request * req = *(ion_dns_addr_request **) r;
+    TSRMLS_FETCH_FROM_CTX(req->thread_ctx);
     if(req->deferred) {
         ion_deferred_free(req->deferred);
     }
@@ -108,6 +110,7 @@ CLASS_METHOD(ION_DNS, resolve) {
     hints.ai_protocol = IPPROTO_TCP;
     req = emalloc(sizeof(ion_dns_addr_request));
     memset(req, 0, sizeof(ion_dns_addr_request));
+    TSRMLS_SET_CTX(req->thread_ctx);
     req->domain = estrndup(domain, domain_len + 1);
     req->domain_len = domain_len;
     req->deferred = ion_deferred_new_ex(_ion_dns_getaddrinfo_cancel);

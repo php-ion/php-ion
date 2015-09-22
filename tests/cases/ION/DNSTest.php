@@ -25,5 +25,6 @@ class DNSTest extends TestCase {
         });
         $this->loop();
         $this->assertSame(self::$example_com, $this->data['addr']);
+        unset($this->data);
     }
 }
