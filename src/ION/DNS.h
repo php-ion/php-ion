@@ -7,13 +7,18 @@ BEGIN_EXTERN_C();
 
 #define ION_DNS_RESOLV_CONF_DEFAULT "/etc/resolv.conf"
 
-#define ION_DNS_ADDR_IPV4 1
-#define ION_DNS_ADDR_IPV6 2
-#define ION_DNS_ADDR_IP_ANY (ION_DNS_ADDR_IPV4 | ION_DNS_ADDR_IPV6)
+#define ION_DNS_RECORD_A       1
+#define ION_DNS_RECORD_AAAA    2
+#define ION_DNS_RECORDS_A_AAAA (ION_DNS_RECORD_A | ION_DNS_RECORD_AAAA)
+#define ION_DNS_RECORD_CNAME   4
+#define ION_DNS_ADDR_MASK      (ION_DNS_RECORD_A | ION_DNS_RECORD_AAAA)
+
+#define ION_DNS_RECORD_BASE    (ION_DNS_RECORD_A | ION_DNS_RECORD_AAAA | ION_DNS_RECORD_CNAME)
 
 typedef struct _ion_dns_addr_request {
     struct evdns_getaddrinfo_request * request;
     char * domain;
+    uint   domain_len;
     zval * deferred;
 } ion_dns_addr_request;
 

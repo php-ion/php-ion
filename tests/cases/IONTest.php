@@ -5,7 +5,6 @@ use ION\Test\TestCase;
 class IONTest extends TestCase {
 
     /**
-     * @group dev
      * Always should be fine
      * @memcheck
      */

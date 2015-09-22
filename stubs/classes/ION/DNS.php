@@ -5,32 +5,21 @@ namespace ION;
 
 class DNS {
 
-    const ADDR_IPV4 = 1;
-    const ADDR_IPV6 = 2;
-    const ADDR_IP_ANY = 2;
+    const RECORD_A     = 1;
+    const RECORD_AAAA  = 2;
+    const RECORD_CNAME = 4;
 
-    const RECORD_TYPE_A     = 1;
-    const RECORD_TYPE_AAAA  = 28;
-    const RECORD_TYPE_CNAME = 5;
-    const RECORD_TYPE_MX    = 15;
-    const RECORD_TYPE_NS    = 2;
-    const RECORD_TYPE_PTR   = 12;
-    const RECORD_TYPE_SOA   = 6;
-    const RECORD_TYPE_TXT   = 16;
+    // todo
+    const RECORD_NS    = 2;
+    const RECORD_SOA   = 6;
+    const RECORD_PTR   = 12;
+    const RECORD_MX    = 15;
+    const RECORD_TXT   = 16;
 
-    /** Make a non-blocking getaddrinfo request.
+    /** Make a non-blocking getaddrinfo(3) request.
      * @param string $domain
      * @param int $flags
      * @return Deferred
      */
-    public static function getAddrInfo($domain, $flags = self::ADDR_IP_ANY) {}
-
-    /**
-     * @param $domain
-     * @param int $types
-     * @return Deferred
-     */
-    public static function resolve($domain, $types = self::RECORD_TYPE_A | self::RECORD_TYPE_AAAA) {}
-
-    public static function resolveReverse($ip) {}
+    public static function resolve($domain, $flags = self::RECORD_A | self::RECORD_AAAA) {}
 }

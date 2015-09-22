@@ -151,7 +151,7 @@ PHP_MSHUTDOWN_FUNCTION(ion) {
     SHUTDOWN_MODULE(ION);
 
     event_base_free( ION(base) );
-    efree(ionBase);
+    pefree(ionBase, 1);
 
 //    UNREGISTER_INI_ENTRIES();
 
@@ -160,11 +160,13 @@ PHP_MSHUTDOWN_FUNCTION(ion) {
 
 /* Start SAPI request */
 PHP_RINIT_FUNCTION(ion) {
+    ACTIVATE_MODULE(ION_DNS);
     return SUCCESS;
 }
 
 /* End SAPI request */
 PHP_RSHUTDOWN_FUNCTION(ion) {
+    DEACTIVATE_MODULE(ION_DNS);
     return SUCCESS;
 }
 
@@ -181,7 +183,7 @@ PHP_MINFO_FUNCTION(ion) {
     php_info_print_table_row(2, "ion.engine", ION_EVENT_ENGINE);
     php_info_print_table_row(2, "ion.engine.version", event_get_version());
     php_info_print_table_row(2, "ion.engine.builtin", "no");
-//    php_info_print_table_row(2, "ion.engine.method", event_base_get_method(base));
+    php_info_print_table_row(2, "ion.engine.method", event_base_get_method(base));
 #ifdef _EVENT_HAVE_SENDFILE
     php_info_print_table_row(2, "ion.engine.sendfile", "sendfile");
 #elif _EVENT_HAVE_MMAP

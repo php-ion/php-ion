@@ -16,6 +16,7 @@
         deferred->finish_cb = NULL;             \
     }
 
+
 zval *_ion_deferred_new(zval *zCancelCb TSRMLS_DC) {
     zval *zDeferred = NULL;
     if(zCancelCb) {
@@ -172,13 +173,15 @@ static void _ion_deferred_reject_php(zval * error, zval * zdeferred TSRMLS_DC) {
 CLASS_INSTANCE_DTOR(ION_Deferred) {
     ion_deferred *deferred = getInstanceObject(ion_deferred *);
     CLEAN_DEFERRED(deferred);
+    if(deferred->result) {
+        zval_ptr_dtor(&deferred->result);
+    }
     efree(deferred);
 }
 
 CLASS_INSTANCE_CTOR(ION_Deferred) {
     ion_deferred *object = emalloc(sizeof(ion_deferred));
     memset(object, 0, sizeof(ion_deferred));
-
     RETURN_INSTANCE(ION_Deferred, object);
 }
 

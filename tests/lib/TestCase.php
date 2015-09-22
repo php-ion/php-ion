@@ -25,7 +25,6 @@ class TestCase extends \PHPUnit_Framework_TestCase {
 
     public function tearDown() {
         $doc = \PHPUnit_Util_Test::parseTestMethodAnnotations(get_class($this), $this->getName(false));
-
         if (isset($doc['method']['memcheck'])) {
             $memory = 0; // allocate variable
             $zero = 0; // allocate zero value
