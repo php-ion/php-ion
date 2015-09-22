@@ -28,11 +28,11 @@ class StreamTest extends TestCase {
 
     public function setupStoreServer() {
         return $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) {
-            $this->out("open");
+//            $this->out("open");
             $file = fopen($this->getVarDir().'/server.data', "w");
             stream_copy_to_stream($connect, $file);
             fclose($file);
-            $this->out("close");
+//            $this->out("close");
         })->start();
     }
 

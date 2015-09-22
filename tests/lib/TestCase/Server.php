@@ -33,7 +33,7 @@ class Server {
     }
 
     public function start() {
-        var_dump("start"); ob_flush();
+//        var_dump("start"); ob_flush();
         if (!$this->on_connect) {
             throw new \LogicException("No connection dispatcher");
         }
@@ -48,13 +48,13 @@ class Server {
             } else {
                 \ION::reinit();
                 try {
-                    var_dump("dispatch"); ob_flush();
+//                    var_dump("dispatch"); ob_flush();
                     $this->_dispatch();
                 } catch (\Exception $e) {
                     error_log(strval($e));
                     exit(127);
                 }
-                var_dump("done"); ob_flush();
+//                var_dump("done"); ob_flush();
                 exit(0);
             }
         } else {
