@@ -2,6 +2,7 @@
 #include <php.h>
 #include <php_network.h>
 #include <fcntl.h>
+#include <ext/standard/url.h>
 #include "Stream.h"
 
 #ifndef O_NOATIME
@@ -418,12 +419,18 @@ CLASS_METHOD(ION_Stream, socket) {
     char * host;
     char * port_digits;
     char * hostname;
-    long host_len     = 0;
+    php_url * resource;
+    int host_len     = 0;
     long port         = 0;
     bevent * buffer   = NULL;
     struct sockaddr;
     PARSE_ARGS("s", &host, &host_len);
-
+    resource = php_url_parse_ex(host, host_len);
+    if (resource == NULL) {
+        ThrowRuntime("Invalid resource name", 1);
+        return;
+    }
+    php_url_free(resource);
     buffer = bufferevent_socket_new(ION(base), -1, STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE);
 
     if(buffer == NULL) {

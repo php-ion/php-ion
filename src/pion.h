@@ -5,6 +5,7 @@
 #include "config.h"
 #include "pion/exceptions.h"
 #include "pion/debug.h"
+#include "pion/linkedlist.h"
 #include "pion/callback.h"
 #include "pion/engine.h"
 #include "pion/deferred.h"

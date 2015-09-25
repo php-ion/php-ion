@@ -11,12 +11,15 @@ class Deferred {
 	 * @param callable $cancel_cb
 	 */
 	public function __construct(callable $cancel_cb = null) {}
-	/**
-	 * Set user callback on finish deferred-event
-	 * @param callable $cb
-	 * @return Promise
-	 */
-	public function then(callable $cb) {}
+
+    /**
+     * Set user callback on finish deferred-event
+     * @param callable $done
+     * @param callable $fail
+     * @param callable $progress
+     * @return Promise
+     */
+	public function then(callable $done, callable $fail = null, callable $progress = null) {}
 
 	/**
 	 * Cancel deferred object
@@ -39,6 +42,7 @@ class Deferred {
 	/**
 	 * Auto reject deferred object after N seconds
 	 * @param int $seconds
+     * @return self
 	 */
 	public function timeout($seconds) {}
 
@@ -56,17 +60,20 @@ class Deferred {
 	/**
 	 * @todo
 	 * @param callable $cb
+     * @return Promise
 	 */
 	public function done(callable $cb) {}
 
 	/**
 	 * @todo
 	 * @param callable $cb
+     * @return Promise
 	 */
 	public function fail(callable $cb) {}
 	/**
 	 * @todo
 	 * @param callable $cb
+     * @return self
 	 */
 	public function progress(callable $cb) {}
 

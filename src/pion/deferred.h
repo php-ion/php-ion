@@ -29,6 +29,7 @@ void   _ion_deferred_exception(zval * zdeferred, zend_class_entry * ce, const ch
 void   _ion_deferred_exception_eg(zval * zdeferred TSRMLS_DC);
 void   _ion_deferred_exception_ex(zval * zdeferred, zend_class_entry * ce, long code TSRMLS_DC, const char * message, ...);
 void   _ion_deferred_reject(zval *zdeferred, const char *message TSRMLS_DC);
+void   _ion_deferred_notify(zval * zdeferred, zval * zdata TSRMLS_CC);
 void   _ion_deferred_free(zval *zdeferred TSRMLS_DC);
 int    _ion_deferred_dequeue(TSRMLS_D);
 
@@ -53,6 +54,7 @@ int    _ion_deferred_dequeue(TSRMLS_D);
 #define ion_deferred_exception_ex(zdeferred, ce, code, message, ...)  \
     _ion_deferred_exception_ex(zdeferred, ce, code TSRMLS_CC, message ##__VA_ARGS__)
 
+#define ion_deferred_notify(zdeferred)                      _ion_deferred_notify(zdeferred, zdata TSRMLS_CC)
 #define ion_deferred_reject(zdeferred, message)             _ion_deferred_reject(zdeferred, message TSRMLS_CC)
 #define ion_deferred_free(zdeferred)                        _ion_deferred_free(zdeferred TSRMLS_CC)
 #endif //PION_DEFERRED_H
