@@ -18,8 +18,7 @@ struct _ion_deferred {
     zval             * result;
     zend_class_entry * scope;
     struct event     * ttl;
-    pion_llist       * done;
-    pion_llist       * fail;
+    pion_llist       * resolve;
     pion_llist       * progress;
     pionCb           * finish_cb;
     pionCb           * cancel_cb;
@@ -34,9 +33,6 @@ DEFINE_CLASS(ION_Deferred_TimeoutException);
 
 CLASS_INSTANCE_DTOR(ION_Deferred);
 CLASS_INSTANCE_CTOR(ION_Deferred);
-
-
-
 
 END_EXTERN_C();
 

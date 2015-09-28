@@ -384,7 +384,6 @@ class StreamTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
      */
     public function _testClose() {

@@ -33,14 +33,18 @@ pionCb *pionCbCreate(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr TS
 }
 
 pionCb *pionCbCreateFromZval(zval *zCb TSRMLS_DC) {
-    pionCb *cb = safe_emalloc(1, sizeof(pionCb), 0);
+    zval * copy_cb;
+//    ALLOC_INIT_ZVAL(copy_cb);
+//    ZVAL_COPY_VALUE(zCb, copy_cb);
+    pionCb *cb = emalloc(sizeof(pionCb));
     char *is_callable_error = NULL;
     memset(cb, 0, sizeof(pionCb));
     cb->fci = safe_emalloc(1, sizeof(empty_fcall_info), 0);
     cb->fcc = safe_emalloc(1, sizeof(empty_fcall_info_cache), 0);
     *cb->fci = empty_fcall_info;
     *cb->fcc = empty_fcall_info_cache;
-    if (zend_fcall_info_init(zCb, 0, cb->fci, cb->fcc, NULL, &is_callable_error TSRMLS_CC) == SUCCESS) {
+    zval_addref_p(zCb);
+    if (zend_fcall_info_init(zCb, IS_CALLABLE_STRICT, cb->fci, cb->fcc, NULL, &is_callable_error TSRMLS_CC) == SUCCESS) {
         if (is_callable_error) {
             return NULL;
         } else {

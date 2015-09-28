@@ -12,6 +12,11 @@
 #define ION_DEFERRED_INTERNAL  1<<3
 #define ION_DEFERRED_TIMED_OUT 1<<4
 
+#define ION_PROMISE_HAS_DONE      1<<0
+#define ION_PROMISE_HAS_FAIL      1<<1
+#define ION_PROMISE_HAS_DONE_WITH_FAIL   1<<2
+#define ION_PROMISE_HAS_PROGRESS  1<<3
+
 typedef void (*deferred_reject_callback)(zval *error, zval * zdeferred TSRMLS_DC);
 typedef void (*deferred_object_dtor)(void *object, zval * zdeferred TSRMLS_DC);
 
@@ -32,6 +37,9 @@ void   _ion_deferred_reject(zval *zdeferred, const char *message TSRMLS_DC);
 void   _ion_deferred_notify(zval * zdeferred, zval * zdata TSRMLS_CC);
 void   _ion_deferred_free(zval *zdeferred TSRMLS_DC);
 int    _ion_deferred_dequeue(TSRMLS_D);
+
+zval * _ion_promise_push_callbacks(zval * zpromise, zval * zdone_cb, zval * zfail_cb, zval * zprogress_cb TSRMLS_DC);
+int    _ion_promise_set_callback(zval * zpromise, zval * done, zval * fail, zval * progress TSRMLS_DC);
 
 #define ion_deferred_new(zcancel_cb)                        _ion_deferred_new(cancel_cb TSRMLS_CC)
 #define ion_deferred_new_ex(cancel_cb)                      _ion_deferred_new_ex(cancel_cb TSRMLS_CC)
@@ -57,4 +65,10 @@ int    _ion_deferred_dequeue(TSRMLS_D);
 #define ion_deferred_notify(zdeferred)                      _ion_deferred_notify(zdeferred, zdata TSRMLS_CC)
 #define ion_deferred_reject(zdeferred, message)             _ion_deferred_reject(zdeferred, message TSRMLS_CC)
 #define ion_deferred_free(zdeferred)                        _ion_deferred_free(zdeferred TSRMLS_CC)
+
+#define ion_promise_push_callbacks(zpromise, zdone_cb, zfail_cb, zprogress_cb) \
+    _ion_promise_push_callbacks(zpromise, zdone_cb, zfail_cb, zprogress_cb TSRMLS_CC)
+#define ion_promise_set_callbacks(zpromise, zdone_cb, zfail_cb, zprogress_cb) \
+    _ion_promise_set_callback(zpromise, zdone_cb, zfail_cb, zprogress_cb TSRMLS_CC)
+
 #endif //PION_DEFERRED_H

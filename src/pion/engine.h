@@ -109,6 +109,11 @@
     spl_register_std_class(&c ## class, class_name, NULL, m ## class TSRMLS_CC);   \
     memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
 
+#define PION_REGISTER_EXTENDED_CLASS_WITH_CTOR(class, parent_class, class_name) \
+    spl_register_sub_class(&c ## class, c ## parent_class, class_name, _ ## parent_class ## Ctor, m ## class TSRMLS_CC); \
+    memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
+
+
 #define REGISTER_VOID_EXTENDED_CLASS(class, parent_class, class_name, obj_ctor) \
     spl_register_sub_class(&c ## class, c ## parent_class, class_name, obj_ctor, NULL TSRMLS_CC); \
     memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
@@ -130,17 +135,17 @@
 #define METHOD_ARGS_BEGIN(class_name, method_name, required_num_args) \
     ZEND_BEGIN_ARG_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args)
 
-#define METHOD_ARG(name, pass_by_ref)  ZEND_ARG_INFO(pass_by_ref, name)
+#define METHOD_ARG(name, pass_by_ref)             ZEND_ARG_INFO(pass_by_ref, name)
 #define METHOD_ARG_LONG(name, pass_by_ref)        METHOD_ARG(name, pass_by_ref)
 #define METHOD_ARG_STRING(name, pass_by_ref)      METHOD_ARG(name, pass_by_ref)
 #define METHOD_ARG_DOUBLE(name, pass_by_ref)      METHOD_ARG(name, pass_by_ref)
 #define METHOD_ARG_FLOAT(name, pass_by_ref)       METHOD_ARG_DOUBLE(name, pass_by_ref)
 #define METHOD_ARG_BOOL(name, pass_by_ref)        METHOD_ARG(name, pass_by_ref)
 #define METHOD_ARG_RESOURCE(name, pass_by_ref)    METHOD_ARG(name, pass_by_ref)
-#define METHOD_ARG_ARRAY(name, pass_by_ref)       METHOD_ARG(name, pass_by_ref)
-#define METHOD_ARG_CALLBACK(name, pass_by_ref, allow_null)    METHOD_ARG(name, pass_by_ref)
+#define METHOD_ARG_ARRAY(name, pass_by_ref)       ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_ARRAY, allow_null)
+#define METHOD_ARG_CALLBACK(name, pass_by_ref, allow_null)            ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_CALLABLE, allow_null)
 #define METHOD_ARG_TYPE(name, type_hint, allow_null, pass_by_ref)     ZEND_ARG_TYPE_INFO(pass_by_ref, name, type_hint, allow_null)
-#define METHOD_ARG_OBJECT(name, classname, allow_null, pass_by_ref)     ZEND_ARG_OBJ_INFO(pass_by_ref, name, classname, allow_null)
+#define METHOD_ARG_OBJECT(name, classname, allow_null, pass_by_ref)   ZEND_ARG_OBJ_INFO(pass_by_ref, name, classname, allow_null)
 
 #define METHOD_ARGS_END() \
     ZEND_END_ARG_INFO()

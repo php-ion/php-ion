@@ -15,7 +15,6 @@ class DNSTest extends TestCase {
     ];
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testGetAddrInfo() {

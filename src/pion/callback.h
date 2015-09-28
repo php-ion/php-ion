@@ -16,6 +16,11 @@ typedef struct _pionCb {
 #endif
 } pionCb;
 
+
+#define pion_cb_create(fci, fcc) pionCbCreate(fci, fcc TSRMLS_CC)
+#define pion_cb_create_from_zval(zcb) pionCbCreateFromZval(zcb TSRMLS_CC)
+#define pion_cb_free(cb) pionCbFree(cb)
+
 /* Create native callback */
 pionCb * pionCbCreate(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr TSRMLS_DC);
 pionCb * pionCbCreateFromZval(zval *zCb TSRMLS_DC);
@@ -55,6 +60,13 @@ int   pionCallConstructor(zend_class_entry *class_name, zval *object, int num_ar
 #define pionCallConstructorWithoutArgs(cls, object)  pionCallConstructor(cls, object, 0, NULL TSRMLS_CC)
 
 /* Create an object */
+
+#define pion_new_object(ce, num_args, args)               pionNewObject(ce, num_args, args TSRMLS_CC)
+#define pion_new_object_without_args(ce)                  pionNewObject(ce, 0 TSRMLS_CC)
+#define pion_new_object_with_1_arg(ce, arg1)              pionNewObjectWith1Arg(ce, arg1 TSRMLS_CC)
+#define pion_new_object_with_2_args(ce, arg1, arg2)       pionNewObjectWith2Args(ce, arg1, arg2 TSRMLS_CC)
+#define pion_new_object_with_3_args(ce, arg1, arg2, arg3) pionNewObjectWith3Args(ce, arg1, arg2, arg3 TSRMLS_CC)
+
 zval* pionNewObject(zend_class_entry *ce, int num_args, zval ***args TSRMLS_DC);
 zval* pionNewObjectWithoutArgs(zend_class_entry *ce TSRMLS_DC);
 zval* pionNewObjectWith1Arg(zend_class_entry *ce, zval *arg1 TSRMLS_DC);

@@ -84,23 +84,24 @@ class DebugTest extends TestCase {
      * @memcheck
      */
     public function testCbCreate() {
-        $this->assertEquals(0, Debug::pionCbCreate(function ($a) {
+        Debug::globalCbCreate(function ($a) {
             $this->testCbCreate = 1;
             return "retval";
-        }, "test pionCbCreate"));
+        });
+        $this->assertEquals(0, Debug::globalCbCall("test testCbCreateFromZval"));
         $this->assertEquals(1, $this->testCbCreate);
     }
 
     /**
      * @group testCbCreateFromZval
      * @memcheck
-     * @deprecated
      */
-    public function _testCbCreateFromZval() {
-        $this->assertEquals(0, pionCbCreateFromZval(function ($a) {
+    public function testCbCreateFromZval() {
+        Debug::globalCbCreateFromZval(function ($a) {
             $this->testCbCreateFromZval = 1;
             return "retval";
-        }, "test pionCbCreateFromZval"));
+        });
+        $this->assertEquals(0, Debug::globalCbCall("test testCbCreateFromZval"));
         $this->assertEquals(1, $this->testCbCreateFromZval);
     }
 }

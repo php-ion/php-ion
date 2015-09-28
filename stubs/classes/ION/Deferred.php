@@ -8,9 +8,9 @@ class Deferred {
 
 	/**
 	 * @todo more doc
-	 * @param callable $cancel_cb
+	 * @param callable $canceler
 	 */
-	public function __construct(callable $cancel_cb = null) {}
+	public function __construct(callable $canceler = null) {}
 
     /**
      * Set user callback on finish deferred-event
@@ -19,7 +19,7 @@ class Deferred {
      * @param callable $progress
      * @return Promise
      */
-	public function then(callable $done, callable $fail = null, callable $progress = null) {}
+	public function then(callable $done = null, callable $fail = null, callable $progress = null) {}
 
 	/**
 	 * Cancel deferred object

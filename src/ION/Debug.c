@@ -1,6 +1,6 @@
 #include "Debug.h"
 
-
+pionCb * global_cb;
 DEFINE_CLASS(ION_Debug);
 
 CLASS_METHOD(ION_Debug, fcallVoid) {
@@ -68,42 +68,48 @@ METHOD_ARGS_BEGIN(ION_Debug, cbCallVoid, 1)
     METHOD_ARG(arg3, 0)
 METHOD_ARGS_END();
 
-
-CLASS_METHOD(ION_Debug, pionCbCreate) {
+CLASS_METHOD(ION_Debug, globalCbCall) {
     zval *zarg = NULL;
-    zend_fcall_info        fci = empty_fcall_info;
-    zend_fcall_info_cache  fcc = empty_fcall_info_cache;
-    PARSE_ARGS("fz", &fci, &fcc, &zarg);
-    pionCb *cb = pionCbCreate(&fci, &fcc TSRMLS_CC);
-    int result = pionCbVoidWith1Arg(cb, zarg TSRMLS_CC);
-    pionCbFree(cb);
+    PARSE_ARGS("z", &zarg);
+    int result = pionCbVoidWith1Arg(global_cb, zarg TSRMLS_CC);
+    pionCbFree(global_cb);
+    global_cb = NULL;
     RETURN_LONG((long)result);
 }
 
-METHOD_ARGS_BEGIN(ION_Debug, pionCbCreate, 1)
-    METHOD_ARG_TYPE(callback, IS_CALLABLE, 0, 0)
+METHOD_ARGS_BEGIN(ION_Debug, globalCbCall, 1)
+    METHOD_ARG(arg, 0)
 METHOD_ARGS_END();
 
-CLASS_METHOD(ION_Debug, pionCbCreateFromZval) {
-    zval *zarg = NULL;
-    zval *zcb = NULL;
-    PARSE_ARGS("zz", &zcb, &zarg);
-    pionCb *cb = pionCbCreateFromZval(zcb TSRMLS_CC);
-    int result = pionCbVoidWith1Arg(cb, zarg TSRMLS_CC);
-    pionCbFree(cb);
-    RETURN_LONG((long)result);
+
+CLASS_METHOD(ION_Debug, globalCbCreate) {
+    zend_fcall_info        fci = empty_fcall_info;
+    zend_fcall_info_cache  fcc = empty_fcall_info_cache;
+    PARSE_ARGS("f", &fci, &fcc);
+    global_cb = pionCbCreate(&fci, &fcc TSRMLS_CC);
 }
 
-METHOD_ARGS_BEGIN(ION_Debug, pionCbCreateFromZval, 1)
-    METHOD_ARG_TYPE(callback, IS_CALLABLE, 0, 0)
+METHOD_ARGS_BEGIN(ION_Debug, globalCbCreate, 1)
+    METHOD_ARG_CALLBACK(callback, 0, 0)
+METHOD_ARGS_END();
+
+CLASS_METHOD(ION_Debug, globalCbCreateFromZval) {
+    zval *zcb = NULL;
+    PARSE_ARGS("z", &zcb);
+    global_cb = pion_cb_create_from_zval(zcb);
+}
+
+METHOD_ARGS_BEGIN(ION_Debug, globalCbCreateFromZval, 1)
+    METHOD_ARG_CALLBACK(callback, 0, 0)
 METHOD_ARGS_END();
 
 
 CLASS_METHODS_START(ION_Debug)
-    METHOD(ION_Debug, fcallVoid,            ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Debug, cbCallVoid,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Debug, pionCbCreate,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Debug, pionCbCreateFromZval, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, fcallVoid,              ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, cbCallVoid,             ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, globalCbCall,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, globalCbCreate,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, globalCbCreateFromZval, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Debug) {

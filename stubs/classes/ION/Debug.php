@@ -27,4 +27,25 @@ class Debug {
 	 * @return int
 	 */
 	public static function cbCallVoid(callable $cb, $arg1 = null, $arg2 = null, $arg3 = null) {}
+
+    /**
+     * @param mixed $arg
+     *
+     * @return mixed
+     */
+    public static function globalCbCall($arg) {}
+
+    /**
+     * @param callable $cb
+     *
+     * @return mixed
+     */
+    public static function globalCbCreate(callable $cb) {}
+
+    /**
+     * @param callable $cb
+     *
+     * @return mixed
+     */
+    public static function globalCbCreateFromZval(callable $cb) {}
 }
