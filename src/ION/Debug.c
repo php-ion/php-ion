@@ -71,13 +71,26 @@ METHOD_ARGS_END();
 CLASS_METHOD(ION_Debug, globalCbCall) {
     zval *zarg = NULL;
     PARSE_ARGS("z", &zarg);
+    zval * result = pion_cb_call_with_1_arg(global_cb, zarg);
+    pion_cb_free(global_cb);
+    global_cb = NULL;
+    RETURN_ZVAL(result, 0, 1);
+}
+
+METHOD_ARGS_BEGIN(ION_Debug, globalCbCall, 1)
+    METHOD_ARG(arg, 0)
+METHOD_ARGS_END();
+
+CLASS_METHOD(ION_Debug, globalCbCallVoid) {
+    zval *zarg = NULL;
+    PARSE_ARGS("z", &zarg);
     int result = pionCbVoidWith1Arg(global_cb, zarg TSRMLS_CC);
     pionCbFree(global_cb);
     global_cb = NULL;
     RETURN_LONG((long)result);
 }
 
-METHOD_ARGS_BEGIN(ION_Debug, globalCbCall, 1)
+METHOD_ARGS_BEGIN(ION_Debug, globalCbCallVoid, 1)
     METHOD_ARG(arg, 0)
 METHOD_ARGS_END();
 
@@ -108,6 +121,7 @@ CLASS_METHODS_START(ION_Debug)
     METHOD(ION_Debug, fcallVoid,              ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, cbCallVoid,             ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, globalCbCall,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, globalCbCallVoid,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, globalCbCreate,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, globalCbCreateFromZval, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 CLASS_METHODS_END;

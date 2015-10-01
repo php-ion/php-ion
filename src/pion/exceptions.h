@@ -4,6 +4,7 @@
 #include <php.h>
 #include <zend_exceptions.h>
 #include <ext/spl/spl_exceptions.h>
+#include "engine.h"
 
 BEGIN_EXTERN_C()
 
@@ -11,23 +12,27 @@ BEGIN_EXTERN_C()
 #define cException zend_exception_get_default(TSRMLS_C)
 #define getExceptionClass() zend_exception_get_default(TSRMLS_C)
 
-// Spl
-#define LogicException              spl_ce_LogicException
-#define BadFunctionCallException    spl_ce_BadFunctionCallException
-#define BadMethodCallException      spl_ce_BadMethodCallException
-#define DomainException             spl_ce_DomainException
-#define InvalidArgumentException    spl_ce_InvalidArgumentException
-#define LengthException             spl_ce_LengthException
-#define OutOfRangeException         spl_ce_OutOfRangeException
-#define RuntimeException            spl_ce_RuntimeException
-#define OutOfBoundsException        spl_ce_OutOfBoundsException
-#define OverflowException           spl_ce_OverflowException
-#define RangeException              spl_ce_RangeException
-#define UnderflowException          spl_ce_UnderflowException
-#define UnexpectedValueException    spl_ce_UnexpectedValueException
+#define _ion_get_class_Exception() zend_exception_get_default(TSRMLS_C)
+#define ion_define_get_spl_class(cls) _ion_get_class_Exception()
+zend_class_entry * ion_get_class(LogicException);
+
+// Spl exceptions
+#define _ion_get_class_LogicException()              spl_ce_LogicException
+#define _ion_get_class_BadFunctionCallException()    spl_ce_BadFunctionCallException
+#define _ion_get_class_BadMethodCallException()      spl_ce_BadMethodCallException
+#define _ion_get_class_DomainException()             spl_ce_DomainException
+#define _ion_get_class_InvalidArgumentException()    spl_ce_InvalidArgumentException
+#define _ion_get_class_LengthException()             spl_ce_LengthException
+#define _ion_get_class_OutOfRangeException()         spl_ce_OutOfRangeException
+#define _ion_get_class_RuntimeException()            spl_ce_RuntimeException
+#define _ion_get_class_OutOfBoundsException()        spl_ce_OutOfBoundsException
+#define _ion_get_class_OverflowException()           spl_ce_OverflowException
+#define _ion_get_class_RangeException()              spl_ce_RangeException
+#define _ion_get_class_UnderflowException()          spl_ce_UnderflowException
+#define _ion_get_class_UnexpectedValueException()    spl_ce_UnexpectedValueException
 // basic ion exceptions
-#define ION_InvalidArgumentException spl_ce_InvalidArgumentException
-#define ION_RuntimeException         spl_ce_RuntimeException
+#define ion_get_class_ION_InvalidArgumentException() spl_ce_InvalidArgumentException
+#define ion_get_class_ION_RuntimeException()         spl_ce_RuntimeException
 
 zval * _pion_exception_new(zend_class_entry * exception_ce, const char * message, long code TSRMLS_DC);
 zval * _pion_exception_new_ex(zend_class_entry * exception_ce, long code TSRMLS_DC, const char * message, ...);

@@ -33,6 +33,13 @@ class Debug {
      *
      * @return mixed
      */
+    public static function globalCbCallVoid($arg) {}
+
+    /**
+     * @param mixed $arg
+     *
+     * @return mixed
+     */
     public static function globalCbCall($arg) {}
 
     /**

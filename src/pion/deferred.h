@@ -4,7 +4,8 @@
 #include <php.h>
 
 #define ION_DEFERRED_DONE      1<<0
-#define ION_DEFERRED_FAILED    1<<1
+#define ION_DEFERRED_FAIL      1<<1
+#define ION_DEFERRED_FAILED    ION_DEFERRED_FAIL
 #define ION_DEFERRED_REJECTED  1<<2
 
 #define ION_DEFERRED_FINISHED  (ION_DEFERRED_DONE | ION_DEFERRED_FAILED)
@@ -12,10 +13,20 @@
 #define ION_DEFERRED_INTERNAL  1<<3
 #define ION_DEFERRED_TIMED_OUT 1<<4
 
-#define ION_PROMISE_HAS_DONE      1<<0
-#define ION_PROMISE_HAS_FAIL      1<<1
-#define ION_PROMISE_HAS_DONE_WITH_FAIL   1<<2
-#define ION_PROMISE_HAS_PROGRESS  1<<3
+#define ION_PROMISE_HAS_DONE      1<<5
+#define ION_PROMISE_HAS_FAIL      1<<6
+#define ION_PROMISE_HAS_DONE_WITH_FAIL   1<<7
+#define ION_PROMISE_HAS_PROGRESS  1<<8
+
+#define PION_PUSH_TO_ARRAY(array, counter, elem)              \
+    if(counter) {                                             \
+        array = erealloc(array, sizeof(zval *) * ++counter);  \
+        array[counter - 1] = elem;                            \
+    } else {                                                  \
+        array = emalloc(sizeof(zval *));                      \
+        array[0] = elem;                                      \
+        counter = 1;                                          \
+    }
 
 typedef void (*deferred_reject_callback)(zval *error, zval * zdeferred TSRMLS_DC);
 typedef void (*deferred_object_dtor)(void *object, zval * zdeferred TSRMLS_DC);
@@ -40,6 +51,7 @@ int    _ion_deferred_dequeue(TSRMLS_D);
 
 zval * _ion_promise_push_callbacks(zval * zpromise, zval * zdone_cb, zval * zfail_cb, zval * zprogress_cb TSRMLS_DC);
 int    _ion_promise_set_callback(zval * zpromise, zval * done, zval * fail, zval * progress TSRMLS_DC);
+void   _ion_promise_resolve(zval * zpromise, zval * result, short type TSRMLS_CC);
 
 #define ion_deferred_new(zcancel_cb)                        _ion_deferred_new(cancel_cb TSRMLS_CC)
 #define ion_deferred_new_ex(cancel_cb)                      _ion_deferred_new_ex(cancel_cb TSRMLS_CC)
@@ -66,6 +78,12 @@ int    _ion_promise_set_callback(zval * zpromise, zval * done, zval * fail, zval
 #define ion_deferred_reject(zdeferred, message)             _ion_deferred_reject(zdeferred, message TSRMLS_CC)
 #define ion_deferred_free(zdeferred)                        _ion_deferred_free(zdeferred TSRMLS_CC)
 
+#define ion_promise_resolve(zpromise, data, type) \
+    _ion_promise_resolve(zpromise, data, type TSRMLS_CC)
+#define ion_promise_done(zpromise, zresult) \
+     _ion_promise_resolve(zpromise, zresult, ION_DEFERRED_DONE TSRMLS_CC)
+#define ion_promise_fail(zpromise, zerror) \
+     _ion_promise_resolve(zpromise, zerror, ION_DEFERRED_FAIL TSRMLS_CC)
 #define ion_promise_push_callbacks(zpromise, zdone_cb, zfail_cb, zprogress_cb) \
     _ion_promise_push_callbacks(zpromise, zdone_cb, zfail_cb, zprogress_cb TSRMLS_CC)
 #define ion_promise_set_callbacks(zpromise, zdone_cb, zfail_cb, zprogress_cb) \

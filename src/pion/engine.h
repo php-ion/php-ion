@@ -3,6 +3,8 @@
 
 #include <ext/spl/spl_functions.h>
 
+#define ion_get_class(class_name) _ion_get_class_ ## class_name()
+
 #define CE(class) \
     c ## class
 
@@ -20,11 +22,13 @@
 
 #define ION_DEFINE_CLASS(cls)    \
     zend_class_entry *c ## cls; \
-    zend_object_handlers h ## cls;
+    zend_object_handlers h ## cls; \
+    zend_class_entry * _ion_get_class_ ## cls() {       \
+        return c ## cls;             \
+    }
 
-#define DEFINE_CLASS(class) \
-    zend_class_entry *c ## class; \
-    zend_object_handlers h ## class;
+
+#define DEFINE_CLASS(class) ION_DEFINE_CLASS(class);
 
 #define getThisInstance()             zend_object_store_get_object(this_ptr TSRMLS_CC)
 #define getThisInstanceEx(obj_type)   (obj_type) zend_object_store_get_object(this_ptr TSRMLS_CC)

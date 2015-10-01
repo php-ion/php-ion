@@ -32,8 +32,10 @@ class TestCase extends \PHPUnit_Framework_TestCase {
 
             for ($i = 0; $i < 2; $i++) {
                 $memory = memory_get_usage();
+                $this->data = [];
                 $this->runTest();
-                ION::dispatch(ION::LOOP_NONBLOCK); // ammm, i think libevent free unpinned data-chunks deferred
+                unset($this->data);
+                ION::dispatch(ION::LOOP_NONBLOCK); // ammm, i think libevent free unpinned data-chunks after all
                 $r[$i] = memory_get_usage() - $memory;
                 if ($r[$i] < 0) { // free memory o_O
                     $r[$i] = $zero; // this hack works - no one 8-bytes-memory-leak

@@ -78,6 +78,58 @@ void pionCbFree(pionCb *cb) {
     efree(cb);
 }
 
+
+int _pion_verify_arg_type(pionCb * cb, zend_uint arg_num, zval * arg TSRMLS_DC) {
+
+    zend_arg_info *cur_arg_info;
+    zend_class_entry *ce;
+
+    if(!cb->fcc->function_handler->common.arg_info) {
+        return FAILURE;
+    }
+
+    if(arg_num <= cb->fcc->function_handler->common.num_args) {
+        cur_arg_info = &cb->fcc->function_handler->common.arg_info[arg_num];
+    } else if(cb->fcc->function_handler->common.fn_flags & ZEND_ACC_VARIADIC) {
+        cur_arg_info = &cb->fcc->function_handler->common.arg_info[cb->fcc->function_handler->common.num_args-1];
+    } else {
+        return FAILURE;
+    }
+
+    if(!cur_arg_info->type_hint) {
+        return SUCCESS;
+    }
+
+//    return SUCCESS;
+
+    if(cur_arg_info->class_name) {
+        if (Z_TYPE_P(arg) == IS_OBJECT) {
+            ce = zend_fetch_class(cur_arg_info->class_name, cur_arg_info->class_name_len, (ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD) TSRMLS_CC);
+            if (!ce || !instanceof_function(Z_OBJCE_P(arg), ce TSRMLS_CC)) {
+                return FAILURE;
+            }
+        } else if (Z_TYPE_P(arg) != IS_NULL || !cur_arg_info->allow_null) {
+            return FAILURE;
+        }
+    } else if(cur_arg_info->type_hint) {
+        switch(cur_arg_info->type_hint) {
+            case IS_ARRAY:
+                if (Z_TYPE_P(arg) != IS_ARRAY && (Z_TYPE_P(arg) != IS_NULL || !(cur_arg_info->allow_null))) {
+                    return FAILURE;
+                }
+                break;
+            case IS_CALLABLE:
+                if (!zend_is_callable(arg, IS_CALLABLE_CHECK_SILENT, NULL TSRMLS_CC) && (Z_TYPE_P(arg) != IS_NULL || !(cur_arg_info->allow_null))) {
+                    return FAILURE;
+                }
+                break;
+            default:
+                return FAILURE;
+        }
+    }
+    return SUCCESS;
+}
+
 int _pion_fcall(zval ** result, zend_fcall_info * fci_ptr, zend_fcall_info_cache * fcc_ptr, int num, zval *** args TSRMLS_DC) {
     if (ZEND_FCI_INITIALIZED(*fci_ptr)) {
         fci_ptr->retval_ptr_ptr = result;
@@ -109,13 +161,6 @@ int _pion_fcall_void(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr TS
 }
 
 
-/**
- * Invoke pionCb and destroy result
- * @param pionCb* cb
- * @param int num count of the arguments
- * @param zval*** args array of the arguments
- * @return
- */
 int pionCbVoidCall(pionCb *cb, int num, zval ***args TSRMLS_DC) {
     zval *pretval = NULL;
     if (ZEND_FCI_INITIALIZED(*cb->fci)) {
@@ -166,6 +211,52 @@ int pionCbVoidWith4Args(pionCb *cb, zval *arg1, zval *arg2, zval *arg3, zval *ar
     args[2] = &arg3;
     args[3] = &arg4;
     return pionCbVoidCall(cb, 4, args TSRMLS_CC);
+}
+
+
+zval * _pion_cb_call(pionCb *cb, int num, zval ***args TSRMLS_DC) {
+    zval *pretval = NULL;
+    if (ZEND_FCI_INITIALIZED(*cb->fci)) {
+        cb->fci->retval_ptr_ptr = &pretval;
+        cb->fci->params = args;
+        cb->fci->param_count = (zend_uint)num;
+        if(zend_call_function(cb->fci, cb->fcc TSRMLS_CC) == FAILURE) {
+            return NULL;
+        }
+        return pretval;
+    } else {
+        return NULL;
+    }
+}
+
+zval * _pion_cb_call_with_1_arg(pionCb * cb, zval* arg1 TSRMLS_DC) {
+    zval **args[1];
+    args[0] = &arg1;
+    return pion_cb_call(cb, 1, args);
+}
+
+zval * _pion_cb_call_with_2_args(pionCb *cb, zval *arg1, zval *arg2 TSRMLS_DC) {
+    zval **args[2];
+    args[0] = &arg1;
+    args[1] = &arg2;
+    return pion_cb_call(cb, 2, args);
+}
+
+zval * _pion_cb_call_with_3_args(pionCb *cb, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC) {
+    zval **args[3];
+    args[0] = &arg1;
+    args[1] = &arg2;
+    args[2] = &arg3;
+    return pion_cb_call(cb, 3, args);
+}
+
+zval * _pion_cb_call_with_4_args(pionCb *cb, zval *arg1, zval *arg2, zval *arg3, zval *arg4 TSRMLS_DC) {
+    zval **args[4];
+    args[0] = &arg1;
+    args[1] = &arg2;
+    args[2] = &arg3;
+    args[3] = &arg4;
+    return pion_cb_call(cb, 4, args);
 }
 
 /**

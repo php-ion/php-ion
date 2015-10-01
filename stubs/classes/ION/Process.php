@@ -3,23 +3,41 @@
 namespace ION;
 
 
+use ION\Deferred\Map;
+use ION\Process\Message;
+
 class Process {
 	/**
 	 * Create a child process and restore event loop.
 	 *
 	 * @param int $flags
-	 * @param Stream[] $ipc
 	 * @return int On success, the PID of the child process is returned in the parent, and 0 is returned in the child.
 	 * @see man fork
 	 * @see \ION::reinit()
 	 */
-	public static function fork($flags = 0, &$ipc = null) {}
+	public static function fork($flags = 0) {}
 
-	/**
-	 * Set signal handler
-	 * @param int|string $signo signal number or text name
-	 * */
-	public static function onSignal($signo, callable $cb) {}
+    /**
+     * @todo
+     * @param callable $callback
+     * @return Map
+     */
+    public static function onMessage(callable $callback) {}
+
+    /**
+     * @todo
+     * @param int $pid
+     * @return Message
+     */
+    public static function message($pid) {}
+
+    /**
+     * Set signal handler
+     * @param int|string $signo signal number or text name
+     * @param callable $callback
+     * @return Map
+     */
+	public static function onSignal($signo, callable $callback) {}
 
 	/**
 	 * Set signal handler

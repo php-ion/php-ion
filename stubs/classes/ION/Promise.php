@@ -5,48 +5,50 @@ namespace ION;
 
 class Promise {
 
-    public function __construct(callable $done = null, callable $fail = null, callable $progress = null) {}
+//    public function __construct(callable $done = null, callable $progress = null) {}
+//    public function __construct(callable $done = null, callable $fail = null, callable $progress = null) {}
+    public function __construct(callable ...$callbacks) {}
 
     /**
      * @param callable $done
      * @param callable $fail
      * @param callable $progress
-     * @return self
+     * @return Promise
      */
     public function then(callable $done = null, callable $fail = null, callable $progress = null) {}
 
     /**
      * @param callable $callback
-     * @return self
+     * @return Promise
      */
-    public function done(callable $callback) {}
+    public function onDone(callable $callback) {}
 
     /**
      * @param callable $callback
-     * @return self
+     * @return Promise
      */
-    public function fail(callable $callback) {}
+    public function onFail(callable $callback) {}
 
     /**
      * @param callable $callback
-     * @return self
+     * @return Promise
      */
-    public function progress(callable $callback) {}
+    public function onProgress(callable $callback) {}
 
     /**
-     * @return self
+     * @return Promise
      */
-    public function cancel() {}
+//    public function cancel() {}
 
     /**
      * @param int|float $sec
      * @return self
      */
-    public function timeout($sec) {}
+//    public function timeout($sec) {}
 
     /**
      * @param Promise $head
      * @return array
      */
-    public static function analyseChain(self $head) {}
+//    public static function analyseChain(self $head) {}
 }

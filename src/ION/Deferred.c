@@ -1,4 +1,9 @@
 #include "Deferred.h"
+#include "Promise.h"
+
+ION_DEFINE_CLASS(ION_Deferred);
+ION_DEFINE_CLASS(ION_Deferred_RejectException);
+ION_DEFINE_CLASS(ION_Deferred_TimeoutException);
 
 #define CALL_OBJECT_DTOR(deferred, zDeferred)                          \
     if(deferred->object && deferred->object_dtor) {                    \
@@ -199,6 +204,30 @@ METHOD_ARGS_BEGIN(ION_Deferred, __construct, 1)
     METHOD_ARG_TYPE(cancel_callback, IS_CALLABLE, 0, 0)
 METHOD_ARGS_END();
 
+zval * _ion_deferred_add_promise(zval * zdeferred, zval * zdone_cb, zval * zfail_cb, zval * zprogress_cb TSRMLS_DC) {
+    ion_deferred * deferred = getInstance(zdeferred);
+    zval         * zpromise = NULL;
+    ALLOC_INIT_ZVAL(zpromise);
+    object_init_ex(zpromise, ion_get_class(ION_Promise) TSRMLS_CC);
+    ion_promise_set_callbacks(zpromise, zdone_cb, zfail_cb, zprogress_cb);
+    if(deferred->flags & ION_DEFERRED_FINISHED) {
+        if(deferred->flags & ION_DEFERRED_DONE) {
+            ion_promise_done(zpromise, deferred->result);
+        } else {
+            ion_promise_fail(zpromise, deferred->result);
+        }
+    }
+    if(deferred->handlers_count) {
+        deferred->handlers = erealloc(deferred->handlers, sizeof(zval *) * ++deferred->handlers_count);
+        deferred->handlers[deferred->handlers_count - 1] = zpromise;
+    } else {
+        deferred->handlers = emalloc(sizeof(zval *));
+        deferred->handlers[0] = zpromise;
+        deferred->handlers_count = 1;
+    }
+    return zpromise;
+}
+
 /** public function ION\Deferred::then(callable $callback) : self */
 CLASS_METHOD(ION_Deferred, then) {
     ion_deferred *deferred = getThisInstance();
@@ -216,6 +245,7 @@ CLASS_METHOD(ION_Deferred, then) {
         }
         zval_ptr_dtor(&znull);
     } else {
+
         deferred->finish_cb = pionCbCreate(&fci, &fcc TSRMLS_CC);
     }
     RETURN_THIS();
