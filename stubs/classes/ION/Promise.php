@@ -5,7 +5,7 @@ namespace ION;
 
 class Promise {
 
-//    public function __construct(callable $done = null, callable $progress = null) {}
+//    public function __construct(callable $done, callable $progress = null) {}
 //    public function __construct(callable $done = null, callable $fail = null, callable $progress = null) {}
     public function __construct(callable ...$callbacks) {}
 

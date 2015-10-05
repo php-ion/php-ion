@@ -4,7 +4,7 @@ namespace ION;
  * Ticket for deferred actions
  * @todo more doc
  */
-class Deferred {
+class Deferred extends Promise {
 
 	/**
 	 * @todo more doc
@@ -31,13 +31,13 @@ class Deferred {
 	 * Successfully complete the deferred-event
 	 * @param mixed $data
 	 */
-	public function resolve($data) {}
+	public function done($data) {}
 
 	/**
 	 * @todo more doc
 	 * @param \Exception $error
 	 */
-	public function error(\Exception $error) {}
+	public function fail(\Exception $error) {}
 
 	/**
 	 * Auto reject deferred object after N seconds
@@ -62,20 +62,20 @@ class Deferred {
 	 * @param callable $cb
      * @return Promise
 	 */
-	public function done(callable $cb) {}
+	public function onDone(callable $cb) {}
 
 	/**
 	 * @todo
 	 * @param callable $cb
      * @return Promise
 	 */
-	public function fail(callable $cb) {}
+	public function onFail(callable $cb) {}
 	/**
 	 * @todo
 	 * @param callable $cb
      * @return self
 	 */
-	public function progress(callable $cb) {}
+	public function onProgress(callable $cb) {}
 
     public function __clone() {}
 }

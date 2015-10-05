@@ -9,6 +9,9 @@ BEGIN_EXTERN_C();
 
 typedef struct _ion_promise {
     zend_object        std;
+#ifdef ION_DEBUG
+    long               uid;
+#endif
     ushort             flags;
     pionCb           * done;
     pionCb           * fail;
@@ -17,22 +20,14 @@ typedef struct _ion_promise {
     zval             * result;
     zval             * generator;
     struct event     * ttl;
-    zval             * parent;
-    zval            ** childs;
-    zval            ** pending;
-    ushort             childs_count;
-    ushort             pending_count;
+    zval            ** handlers;
+    ushort             handler_count;
 #ifdef ZTS
     void ***thread_ctx;
 #endif
 } ion_promise;
 
 zend_class_entry * ion_get_class(ION_Promise);
-
-//DEFINE_CLASS(ION_Promise);
-
-CLASS_INSTANCE_DTOR(ION_Promise);
-CLASS_INSTANCE_CTOR(ION_Promise);
 
 END_EXTERN_C();
 

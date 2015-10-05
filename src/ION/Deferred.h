@@ -20,7 +20,6 @@ struct _ion_deferred {
     struct event     * ttl;
     zval            ** handlers;
     uint               handlers_count;
-    pionCb           * finish_cb;
     pionCb           * cancel_cb;
 #ifdef ZTS
     void ***thread_ctx;
@@ -30,9 +29,6 @@ struct _ion_deferred {
 zend_class_entry * ion_get_class(ION_Deferred);
 zend_class_entry * ion_get_class(ION_Deferred_RejectException);
 zend_class_entry * ion_get_class(ION_Deferred_TimeoutException);
-
-CLASS_INSTANCE_DTOR(ION_Deferred);
-CLASS_INSTANCE_CTOR(ION_Deferred);
 
 END_EXTERN_C();
 

@@ -117,10 +117,10 @@ class PromiseTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
+     *
      */
-    public function testSimpleDone() {
+    public function testSimpleChain() {
         $promise = new Promise(function($x) {
             $this->data["x0"] = $x;
             return $x + 1;
@@ -144,12 +144,12 @@ class PromiseTest extends TestCase {
                 $this->data["result"] = $x;
             })
             ->onFail(function ($error) {
-                $this->data["error"] =$error;
+                $this->data["error"] = $error;
             })
         ;
 
         $promise->done(1);
-        $this->assertSame([
+        $this->assertEquals([
             'x0' => 1,
             'x2' => 2,
             'x2.error' => null,
@@ -157,5 +157,131 @@ class PromiseTest extends TestCase {
         ], $this->data);
     }
 
+    /**
+     * @memcheck
+     */
+    public function testEmptyHeadChain() {
+        $promise  = new Promise();
+        $promise->onDone(function ($result) {
+            $this->data["result"] = $result;
+        })->onFail(function ($error) {
+            $this->data["error"] = $error;
+        });
+        $promise->done(2);
+        $this->assertSame([
+            'result' => 2,
+        ], $this->data);
+    }
+
+    /**
+     * @memcheck
+     */
+    public function testAwaitSuccessDeferred() {
+        $promise = new Promise(function($x) {
+            $this->data["x0"] = $x;
+            return $x + 1;
+        });
+        $promise
+            ->then(function ($x) {
+                $this->data["x1"] = $x;
+                return \ION::await(0.1);
+            })
+            ->onDone(function ($result) {
+                $this->data["result"] = $result;
+                $this->stop();
+            })
+            ->onFail(function ($error) {
+                $this->data["error"] = $error;
+                $this->stop();
+            })
+        ;
+        $promise->done(1);
+
+        $this->loop();
+        $this->assertEquals([
+            'x0' => 1,
+            'x1' => 2,
+            'result' => true,
+        ], $this->data);
+    }
+
+    /**
+     * @memcheck
+     */
+    public function testAwaitSuccessPromise() {
+        $promise = new Promise(function($x) {
+            $this->data["x0"] = $x;
+            return $x + 1;
+        });
+        $promise
+            ->then(function ($x) {
+                $this->data["x1"] = $x;
+                return \ION::await(0.1)->then(function($result) use ($x) {
+                    $this->data["await"] = $result;
+                    return $x + 10;
+                });
+            })
+            ->onDone(function ($result) {
+                $this->data["result"] = $result;
+                $this->stop();
+            })
+            ->onFail(function ($error) {
+                $this->data["error"] = $error;
+                $this->stop();
+            })
+        ;
+        $promise->done();
+
+        $this->loop(1);
+        $this->assertEquals([
+            'x0' => 1,
+            'x1' => 2,
+            'await' => true,
+            'result' => 12,
+        ], $this->data);
+    }
+
+    /**
+     * @memcheck
+     * @group dev
+     */
+    public function testAwaitFailedPromise() {
+        $promise = new Promise(function($x) {
+            $this->data["x0"] = $x;
+            return $x + 1;
+        });
+        $promise
+            ->then(function ($x) {
+                $this->data["x1"] = $x;
+                return \ION::await(0.1)->then(function($result) use ($x) {
+                    $this->data["await"] = $result;
+                    throw new \RuntimeException("problem description");
+                });
+            })
+            ->onDone(function ($result) {
+                $this->data["result"] = $result;
+                $this->stop();
+            })
+            ->onFail(function ($error) {
+                $this->data["error"] = [
+                    'class' => get_class($error),
+                    'message' => $error->getMessage()
+                ];
+                $this->stop();
+            })
+        ;
+        $promise->done(1);
+
+        $this->loop();
+        $this->assertEquals([
+            'x0' => 1,
+            'x1' => 2,
+            'await' => true,
+            'error' => [
+                'class' => 'RuntimeException',
+                'message' => 'problem description'
+            ],
+        ], $this->data);
+    }
 
 }

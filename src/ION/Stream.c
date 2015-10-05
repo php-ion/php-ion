@@ -596,7 +596,7 @@ CLASS_METHOD(ION_Stream, setInputSize) {
     CHECK_STREAM_BUFFER(stream);
     PARSE_ARGS("l", &bytes);
     if(bytes < 0) {
-        pion_throw(InvalidArgumentException, "The number of bytes cannot be negative", -1);
+        pion_throw(ion_get_class(ION_InvalidArgumentException), "The number of bytes cannot be negative", -1);
         return;
     }
     stream->input_size = (size_t)bytes;
@@ -949,7 +949,7 @@ CLASS_METHOD(ION_Stream, awaitLine) {
     PARSE_ARGS("s|ll", &token.token, &token.token_length, &token.flags, &token.length);
     token.flags &= ION_STREAM_TOKEN_MODE_MASK;
     if(token.token_length == 0) {
-        pion_throw(ION_InvalidArgumentException, "empty token", -1);
+        pion_throw(ion_get_class(ION_InvalidArgumentException), "empty token", -1);
         return;
     }
 
@@ -1200,13 +1200,13 @@ CLASS_METHOD(ION_Stream, __destruct) {
 //    zend_error(E_NOTICE, "Stream destruct");
     ion_stream * stream = getThisInstance();
     if(stream->flush) {
-        ion_deferred_reject(stream->flush, "The stream shutdown by the destructor");
+        ion_deferred_cancel(stream->flush, "The stream shutdown by the destructor");
     }
     if(stream->read) {
-        ion_deferred_reject(stream->read, "The stream shutdown by the destructor");
+        ion_deferred_cancel(stream->read, "The stream shutdown by the destructor");
     }
     if(stream->connect) {
-        ion_deferred_reject(stream->connect, "The stream shutdown by the destructor");
+        ion_deferred_cancel(stream->connect, "The stream shutdown by the destructor");
     }
     if(stream->state & ION_STREAM_STATE_ENABLED) {
         bufferevent_disable(stream->buffer, EV_READ | EV_WRITE);

@@ -31,8 +31,8 @@ zend_class_entry * ion_get_class(LogicException);
 #define _ion_get_class_UnderflowException()          spl_ce_UnderflowException
 #define _ion_get_class_UnexpectedValueException()    spl_ce_UnexpectedValueException
 // basic ion exceptions
-#define ion_get_class_ION_InvalidArgumentException() spl_ce_InvalidArgumentException
-#define ion_get_class_ION_RuntimeException()         spl_ce_RuntimeException
+#define _ion_get_class_ION_InvalidArgumentException() spl_ce_InvalidArgumentException
+#define _ion_get_class_ION_RuntimeException()         spl_ce_RuntimeException
 
 zval * _pion_exception_new(zend_class_entry * exception_ce, const char * message, long code TSRMLS_DC);
 zval * _pion_exception_new_ex(zend_class_entry * exception_ce, long code TSRMLS_DC, const char * message, ...);
@@ -43,6 +43,8 @@ int zend_spprintf(char **message, int max_len, const char *format, ...);
 #define pion_exception_new_ex(ce, code, format, ...)  _pion_exception_new_ex(ce, code TSRMLS_CC, format, ##__VA_ARGS__)
 #define pion_throw(ce, message, code) zend_throw_exception(ce,  message, code TSRMLS_CC)
 #define pion_throw_ex(ce, code, format, ...) zend_throw_exception_ex(class_name, code TSRMLS_CC, message, ##__VA_ARGS__)
+
+#define ion_throw_invalid_argument_exception(message) pion_throw(ion_get_class(ION_InvalidArgumentException), message, -1)
 
 #define Throw(class_name, message, code)                                            \
     zend_throw_exception(class_name,  message, code TSRMLS_CC);                     \

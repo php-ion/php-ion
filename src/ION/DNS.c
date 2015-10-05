@@ -38,7 +38,7 @@ void _ion_dns_getaddrinfo_callback(int errcode, struct evutil_addrinfo * addr, v
         evutil_freeaddrinfo(addr);
         ion_deferred_done(req->deferred, result);
     } else {
-        result = pion_exception_new_ex(ION_RuntimeException, errcode, "DNS request failed: %s", evutil_gai_strerror(errcode));
+        result = pion_exception_new_ex(ion_get_class(ION_RuntimeException), errcode, "DNS request failed: %s", evutil_gai_strerror(errcode));
         ion_deferred_fail(req->deferred, result);
     }
     zval_ptr_dtor(&result);

@@ -23,12 +23,12 @@ class DeferredTest extends TestCase {
         $defer = new Deferred(function () {
             $this->should_fail = true;
         });
-        $defer->then(function ($data, $error) {
+        $defer->then(function ($data, $error = null) {
             $this->should_success = true;
             $this->assertNull($error);
             $this->assertSame($data, "some result");
         });
-        $defer->resolve("some result");
+        $defer->done("some result");
         $this->assertFalse($this->should_fail);
         $this->assertTrue($this->should_success);
     }
@@ -46,7 +46,7 @@ class DeferredTest extends TestCase {
         $defer->then(function ($data, $error) {
             throw new \RuntimeException("Test exception in then()");
         });
-        $defer->resolve("some result");
+        $defer->done("some result");
         $this->fail("should be exception");
     }
 

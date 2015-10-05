@@ -17,6 +17,9 @@
 #define ION_PROMISE_HAS_FAIL      1<<6
 #define ION_PROMISE_HAS_DONE_WITH_FAIL   1<<7
 #define ION_PROMISE_HAS_PROGRESS  1<<8
+#define ION_PROMISE_AWAIT         1<<9
+#define ION_DEFERRED_AWAIT        1<<10
+#define ION_PROMISE_HAS        1<<10
 
 #define PION_PUSH_TO_ARRAY(array, counter, elem)              \
     if(counter) {                                             \
@@ -75,7 +78,7 @@ void   _ion_promise_resolve(zval * zpromise, zval * result, short type TSRMLS_CC
     _ion_deferred_exception_ex(zdeferred, ce, code TSRMLS_CC, message ##__VA_ARGS__)
 
 #define ion_deferred_notify(zdeferred)                      _ion_deferred_notify(zdeferred, zdata TSRMLS_CC)
-#define ion_deferred_reject(zdeferred, message)             _ion_deferred_reject(zdeferred, message TSRMLS_CC)
+#define ion_deferred_cancel(zdeferred, message)             _ion_deferred_reject(zdeferred, message TSRMLS_CC)
 #define ion_deferred_free(zdeferred)                        _ion_deferred_free(zdeferred TSRMLS_CC)
 
 #define ion_promise_resolve(zpromise, data, type) \

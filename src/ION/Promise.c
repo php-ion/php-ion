@@ -2,43 +2,53 @@
 #include "Deferred.h"
 
 ION_DEFINE_CLASS(ION_Promise);
+CLASS_INSTANCE_DTOR(ION_Promise);
+CLASS_INSTANCE_CTOR(ION_Promise);
 
-void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_CC) {
+void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
     ion_promise * promise = getInstance(zpromise);
     zval        * helper = NULL;
     zval        * retval = NULL;
     zval        * result = NULL;
-    zend_bool     result_type = ION_DEFERRED_DONE;
+    short         result_type = ION_DEFERRED_DONE;
     zend_bool     resume = 1;
-    zend_class_entry * deferred_ce = ion_get_class(ION_Deferred);
-    zend_class_entry * promise_ce = ion_get_class(ION_Promise);
+    zend_class_entry * deferred_ce  = ion_get_class(ION_Deferred);
+    zend_class_entry * promise_ce   = ion_get_class(ION_Promise);
+    zend_class_entry * generator_ce = ion_get_class(Generator);
+    zend_class_entry * deferred_map_ce    = NULL;
+    zend_class_entry * deferred_result_ce = NULL;
 
     zval_add_ref(&zpromise);
-    zval_add_ref(&data);
-    promise->result = data;
-    if(type == ION_DEFERRED_DONE) {
-        if(promise->done) {
-            if(pion_cb_num_args(promise->done)) { // has arguments
-                if(pion_verify_arg_type(promise->done, 0, data) == SUCCESS) {
-                    retval = pion_cb_call_with_1_arg(promise->done, data);
-                }
-            } else {
-                retval = pion_cb_call_without_args(promise->done);
-            }
-        }
+    if(promise->await) {
+        result_type = type;
+        zval_ptr_dtor(&promise->await);
+        promise->await = NULL;
+        zval_ptr_dtor(&zpromise);
     } else {
-        if(promise->fail) {
-            if(pion_verify_arg_type(promise->fail, 0, data) == SUCCESS) {
-                retval = pion_cb_call_with_1_arg(promise->fail, data);
-            }
-        } else if(promise->flags & ION_PROMISE_HAS_DONE_WITH_FAIL) {
-            if(pion_verify_arg_type(promise->done, 1, data) == SUCCESS) {
-                ALLOC_INIT_ZVAL(helper);
-                retval = pion_cb_call_with_2_args(promise->done, helper, data);
-                zval_ptr_dtor(&helper);
+        if (type == ION_DEFERRED_DONE) {
+            if (promise->done) {
+                if (pion_cb_num_args(promise->done)) { // has arguments
+                    if (pion_verify_arg_type(promise->done, 0, data) == SUCCESS) {
+                        retval = pion_cb_call_with_1_arg(promise->done, data);
+                    }
+                } else {
+                    retval = pion_cb_call_without_args(promise->done);
+                }
             }
         } else {
-            result_type = ION_DEFERRED_FAIL;
+            if (promise->fail) {
+                if (pion_verify_arg_type(promise->fail, 0, data) == SUCCESS) {
+                    retval = pion_cb_call_with_1_arg(promise->fail, data);
+                }
+            } else if (promise->flags & ION_PROMISE_HAS_DONE_WITH_FAIL) {
+                if (pion_verify_arg_type(promise->done, 1, data) == SUCCESS) {
+                    ALLOC_INIT_ZVAL(helper);
+                    retval = pion_cb_call_with_2_args(promise->done, helper, data);
+                    zval_ptr_dtor(&helper);
+                }
+            } else {
+                result_type = ION_DEFERRED_FAIL;
+            }
         }
     }
 
@@ -58,34 +68,59 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_CC) {
 
     if(result) {
         if(Z_TYPE_P(result) == IS_OBJECT) {
-            if(Z_OBJCE_P(result) == deferred_ce) { // is ION\Deferred
-                zval_add_ref(&result);
+            if(Z_OBJCE_P(result) == deferred_ce) { // ION\Deferred || ION\Promise
                 promise->await = result;
+//                promise->flags |= ION_DEFERRED_AWAIT;
+                ion_deferred * deferred = getInstance(result);
+                PION_PUSH_TO_ARRAY(deferred->handlers, deferred->handlers_count, zpromise);
+                zval_add_ref(&zpromise);
                 resume = 0;
             } else if(Z_OBJCE_P(result) == promise_ce) { // is ION\Promise
-                zval_add_ref(&result);
                 promise->await = result;
+//                promise->flags |= ION_PROMISE_AWAIT;
+                ion_promise * next = getInstance(result);
+                PION_PUSH_TO_ARRAY(next->handlers, next->handler_count, zpromise);
+                zval_add_ref(&zpromise);
                 resume = 0;
+            } else if(Z_OBJCE_P(result) == generator_ce) {
+            } else if(Z_OBJCE_P(result) == deferred_map_ce) {
+            } else if(Z_OBJCE_P(result) == deferred_result_ce) {
+                resume = 1;
             } else {
 
             }
+        } else {
+            resume = 1;
         }
 
-        if(promise->childs_count && resume) {
-            for(ushort i = 0; i < promise->childs_count; i++) {
-                ion_promise_resolve(promise->childs[i], result, result_type);
-                zval_ptr_dtor(&promise->childs[i]);
-                promise->childs[i] = NULL;
+        if(resume) {
+            promise->result = result;
+            if(promise->handler_count) {
+                for(ushort i = 0; i < promise->handler_count; i++) {
+                    ion_promise_resolve(promise->handlers[i], result, result_type);
+                    zval_ptr_dtor(&promise->handlers[i]);
+                    promise->handlers[i] = NULL;
+                }
+
+                efree(promise->handlers);
+                promise->handlers = NULL;
+                promise->handler_count = 0;
             }
-
-            efree(promise->childs);
-            promise->childs = NULL;
-            promise->childs_count = 0;
         }
-        zval_ptr_dtor(&result);
+
+//        zval_ptr_dtor(&result);
     }
 
     zval_ptr_dtor(&zpromise);
+}
+
+void _ion_promise_resume(zval * zpromise TSRMLS_DC) {
+    ion_promise * promise = getInstance(zpromise);
+    if(promise->await) {
+        if(promise->flags & ION_DEFERRED_AWAIT) {
+
+        }
+    }
 }
 
 int _ion_promise_set_callback(zval * zpromise, zval * zdone, zval * zfail, zval * zprogress TSRMLS_DC) {
@@ -96,8 +131,7 @@ int _ion_promise_set_callback(zval * zpromise, zval * zdone, zval * zfail, zval 
 
         if(pion_cb_num_args(promise->done) > 1) {
             if(pion_cb_required_num_args(promise->done) > 1) {
-
-                return NULL;
+                return FAILURE;
             }
             promise->flags |= ION_PROMISE_HAS_DONE_WITH_FAIL;
         }
@@ -119,7 +153,7 @@ zval * _ion_promise_push_callbacks(zval * zpromise, zval * zdone_cb, zval * zfai
     ALLOC_INIT_ZVAL(zchild);
     object_init_ex(zchild, CE(ION_Promise) TSRMLS_CC);
     ion_promise_set_callbacks(zchild, zdone_cb, zfail_cb, zprogress_cb);
-    PION_PUSH_TO_ARRAY(promise->childs, promise->childs_count, zchild);
+    PION_PUSH_TO_ARRAY(promise->handlers, promise->handler_count, zchild);
     return zchild;
 }
 
@@ -163,7 +197,8 @@ CLASS_METHOD(ION_Promise, then) {
     PARSE_ARGS("|z!z!z!", &done, &fail, &progress);
     zpromise = ion_promise_push_callbacks(getThis(), done, fail, progress);
     if(zpromise == NULL) {
-        // throw
+        ion_throw_invalid_argument_exception("Can't promise");
+        return;
     }
     RETURN_ZVAL(zpromise, 1, 0);
 }
@@ -181,7 +216,8 @@ CLASS_METHOD(ION_Promise, onDone) {
     PARSE_ARGS("z", &callback);
     zpromise = ion_promise_push_callbacks(getThis(), callback, NULL, NULL);
     if(zpromise == NULL) {
-        // throw
+        ion_throw_invalid_argument_exception("Can't promise");
+        return;
     }
     RETVAL_ZVAL(zpromise, 1, 0);
 }
@@ -197,7 +233,8 @@ CLASS_METHOD(ION_Promise, onFail) {
     PARSE_ARGS("z", &callback);
     zpromise = ion_promise_push_callbacks(getThis(), NULL, callback, NULL);
     if(zpromise == NULL) {
-        // throw
+        ion_throw_invalid_argument_exception("Can't promise");
+        return;
     }
     RETVAL_ZVAL(zpromise, 1, 0);
 }
@@ -214,7 +251,8 @@ CLASS_METHOD(ION_Promise, onProgress) {
 
     zpromise = ion_promise_push_callbacks(getThis(), NULL, NULL, callback);
     if(zpromise == NULL) {
-        // throw
+        ion_throw_invalid_argument_exception("Can't promise");
+        return;
     }
     RETVAL_ZVAL(zpromise, 1, 0);
 }
@@ -226,8 +264,8 @@ METHOD_ARGS_END();
 
 /** public function ION\Promise::__destruct() : int */
 CLASS_METHOD(ION_Promise, __destruct) {
-//    PHPDBG("Clean promise");
     ion_promise * promise = getThisInstance();
+//    PHPDBG("Clean promise %d", (int)promise->uid);
     if(promise->done) {
         pion_cb_free(promise->done);
         promise->done = NULL;
@@ -240,12 +278,12 @@ CLASS_METHOD(ION_Promise, __destruct) {
         pion_cb_free(promise->progress);
         promise->progress = NULL;
     }
-    if(promise->childs_count) {
-        for(uint i=0; i<promise->childs_count; i++) {
-            zval_ptr_dtor(&promise->childs[i]);
+    if(promise->handler_count) {
+        for(uint i=0; i<promise->handler_count; i++) {
+            zval_ptr_dtor(&promise->handlers[i]);
         }
-        efree(promise->childs);
-        promise->childs_count = 0;
+        efree(promise->handlers);
+        promise->handler_count = 0;
     }
     if(promise->result) {
         zval_ptr_dtor(&promise->result);
@@ -255,7 +293,7 @@ CLASS_METHOD(ION_Promise, __destruct) {
 
 METHOD_WITHOUT_ARGS(ION_Promise, __destruct)
 
-
+#ifdef ION_DEBUG
 /** public function ION\Promise::done(mixed $data) : self */
 CLASS_METHOD(ION_Promise, done) {
     ion_promise * promise = getThisInstance();
@@ -297,6 +335,21 @@ METHOD_ARGS_BEGIN(ION_Promise, fail, 1)
     METHOD_ARG_OBJECT(data, Exception, 0, 0)
 METHOD_ARGS_END()
 
+/** public function ION\Promise::setUID(int $uid) : self */
+CLASS_METHOD(ION_Promise, setUID) {
+    ion_promise * promise = getThisInstance();
+    long uid = 0;
+    PARSE_ARGS("l", &uid);
+    promise->uid = uid;
+    RETURN_THIS();
+}
+
+METHOD_ARGS_BEGIN(ION_Promise, setUID, 1)
+    METHOD_ARG(uid, 0)
+METHOD_ARGS_END()
+
+#endif
+
 
 CLASS_METHODS_START(ION_Promise)
     METHOD(ION_Promise, __construct,   ZEND_ACC_PUBLIC)
@@ -308,6 +361,7 @@ CLASS_METHODS_START(ION_Promise)
 #ifdef ION_DEBUG
     METHOD(ION_Promise, done,          ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, fail,          ZEND_ACC_PUBLIC)
+    METHOD(ION_Promise, setUID,        ZEND_ACC_PUBLIC)
 #endif
 CLASS_METHODS_END;
 

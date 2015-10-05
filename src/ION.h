@@ -8,6 +8,5 @@
 #define PRESERVE_FLAGS   3
 #define RECREATE_BASE    4
 
-DEFINE_CLASS(ION);
 
 #endif //ION_ION_H

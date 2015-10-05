@@ -2,8 +2,11 @@
 #define PION_ENGINE_H
 
 #include <ext/spl/spl_functions.h>
+#include <Zend/zend_generators.h>
 
 #define ion_get_class(class_name) _ion_get_class_ ## class_name()
+
+#define _ion_get_class_Generator() zend_ce_generator;
 
 #define CE(class) \
     c ## class

@@ -98,7 +98,7 @@ static void ion_llist_it_rewind(zend_object_iterator *iter TSRMLS_DC) {
     object->key = 0;
 }
 
-/* iterator handler table */
+/* iterator handlers table */
 zend_object_iterator_funcs ion_llist_it_funcs = {
     ion_llist_it_dtor,
     ion_llist_it_valid,

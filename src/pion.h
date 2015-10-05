@@ -19,7 +19,7 @@ typedef struct _ion_dns {
 typedef struct _ion_proc {
     HashTable * signals;          // array of listening signals
     HashTable * execs;            //
-    HashTable * childs;           // array of process childs
+    HashTable * childs;           // array of process handlers
 } ion_proc;
 
 /** main structure */

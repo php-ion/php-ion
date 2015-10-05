@@ -5,7 +5,6 @@
 
 BEGIN_EXTERN_C();
 
-DEFINE_CLASS(ION_Process);
 
 END_EXTERN_C();
 
