@@ -48,13 +48,13 @@ void   _ion_deferred_exception(zval * zdeferred, zend_class_entry * ce, const ch
 void   _ion_deferred_exception_eg(zval * zdeferred TSRMLS_DC);
 void   _ion_deferred_exception_ex(zval * zdeferred, zend_class_entry * ce, long code TSRMLS_DC, const char * message, ...);
 void   _ion_deferred_reject(zval *zdeferred, const char *message TSRMLS_DC);
-void   _ion_deferred_notify(zval * zdeferred, zval * zdata TSRMLS_CC);
+void   _ion_deferred_notify(zval * zdeferred, zval * zdata TSRMLS_DC);
 void   _ion_deferred_free(zval *zdeferred TSRMLS_DC);
 int    _ion_deferred_dequeue(TSRMLS_D);
 
 zval * _ion_promise_push_callbacks(zval * zpromise, zval * zdone_cb, zval * zfail_cb, zval * zprogress_cb TSRMLS_DC);
 int    _ion_promise_set_callback(zval * zpromise, zval * done, zval * fail, zval * progress TSRMLS_DC);
-void   _ion_promise_resolve(zval * zpromise, zval * result, short type TSRMLS_CC);
+void   _ion_promise_resolve(zval * zpromise, zval * result, short type TSRMLS_DC);
 
 #define ion_deferred_new(zcancel_cb)                        _ion_deferred_new(cancel_cb TSRMLS_CC)
 #define ion_deferred_new_ex(cancel_cb)                      _ion_deferred_new_ex(cancel_cb TSRMLS_CC)
