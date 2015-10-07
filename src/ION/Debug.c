@@ -81,6 +81,21 @@ METHOD_ARGS_BEGIN(ION_Debug, globalCbCall, 1)
     METHOD_ARG(arg, 0)
 METHOD_ARGS_END();
 
+CLASS_METHOD(ION_Debug, globalCbObjCall) {
+    zval * obj = NULL;
+    zval * zarg = NULL;
+    PARSE_ARGS("zz", &obj, &zarg);
+    zval * result = pion_cb_obj_call_with_1_arg(global_cb, obj, zarg);
+    pion_cb_free(global_cb);
+    global_cb = NULL;
+    RETURN_ZVAL(result, 0, 1);
+}
+
+METHOD_ARGS_BEGIN(ION_Debug, globalCbObjCall, 2)
+    METHOD_ARG(obj, 0)
+    METHOD_ARG(arg, 0)
+METHOD_ARGS_END();
+
 CLASS_METHOD(ION_Debug, globalCbCallVoid) {
     zval *zarg = NULL;
     PARSE_ARGS("z", &zarg);
@@ -116,14 +131,30 @@ METHOD_ARGS_BEGIN(ION_Debug, globalCbCreateFromZval, 1)
     METHOD_ARG_CALLBACK(callback, 0, 0)
 METHOD_ARGS_END();
 
+CLASS_METHOD(ION_Debug, globalCbFetchMethod) {
+    char * class_name = NULL;
+    char * class_name_len = 0;
+    char * method_name = NULL;
+    char * method_name_len = 0;
+    PARSE_ARGS("ss", &class_name, &class_name_len, &method_name, &method_name_len);
+    global_cb = pion_cb_fetch_method(class_name, method_name);
+}
+
+METHOD_ARGS_BEGIN(ION_Debug, globalCbFetchMethod, 2)
+    METHOD_ARG_STRING(class_name, 0)
+    METHOD_ARG_STRING(method_name, 0)
+METHOD_ARGS_END();
+
 
 CLASS_METHODS_START(ION_Debug)
     METHOD(ION_Debug, fcallVoid,              ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, cbCallVoid,             ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, globalCbCall,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, globalCbObjCall,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, globalCbCallVoid,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, globalCbCreate,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, globalCbCreateFromZval, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, globalCbFetchMethod,    ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Debug) {

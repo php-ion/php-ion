@@ -43,6 +43,14 @@ class Debug {
     public static function globalCbCall($arg) {}
 
     /**
+     * @param object $obj
+     * @param mixed $arg
+     *
+     * @return mixed
+     */
+    public static function globalCbObjCall($obj, $arg) {}
+
+    /**
      * @param callable $cb
      *
      * @return mixed
@@ -55,4 +63,11 @@ class Debug {
      * @return mixed
      */
     public static function globalCbCreateFromZval(callable $cb) {}
+
+    /**
+     * @param string $class_name
+     * @param string $method_name
+     * @return mixed
+     */
+    public static function globalCbFetchMethod($class_name, $method_name) {}
 }

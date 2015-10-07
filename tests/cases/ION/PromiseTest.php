@@ -243,13 +243,9 @@ class PromiseTest extends TestCase {
 
     /**
      * @memcheck
-     * @group dev
      */
     public function testAwaitFailedPromise() {
-        $promise = new Promise(function($x) {
-            $this->data["x0"] = $x;
-            return $x + 1;
-        });
+        $promise = new Promise();
         $promise
             ->then(function ($x) {
                 $this->data["x1"] = $x;
@@ -274,14 +270,41 @@ class PromiseTest extends TestCase {
 
         $this->loop();
         $this->assertEquals([
-            'x0' => 1,
-            'x1' => 2,
+            'x1' => 1,
             'await' => true,
             'error' => [
                 'class' => 'RuntimeException',
                 'message' => 'problem description'
             ],
         ], $this->data);
+    }
+
+    /**
+     * @group d ev
+     */
+    public function testYields() {
+        $promise = new Promise();
+        $promise
+            ->then(function ($x) {
+                $this->out("x0: $x");
+                $x = (yield $x + 1);
+                $this->out("x1: $x");
+                yield $x + 10;
+                $this->out("x2: $x");
+            })
+            ->onDone(function ($result) {
+                $this->data["result"] = $result;
+                $this->stop();
+            })
+            ->onFail(function ($error) {
+                $this->data["error"] = [
+                    'class' => get_class($error),
+                    'message' => $error->getMessage()
+                ];
+                $this->stop();
+            })
+        ;
+        $promise->done(1);
     }
 
 }

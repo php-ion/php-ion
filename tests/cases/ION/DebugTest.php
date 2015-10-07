@@ -105,6 +105,22 @@ class DebugTest extends TestCase {
         $this->assertEquals(1, $this->testCbCreateFromZval);
     }
 
+    public function example($a) {
+        $this->testCbFetchMethod = 1;
+        return "retval";
+    }
+
+    /**
+     * @memcheck
+     * @group dev
+     */
+    public function testCbFetchMethod() {
+        Debug::globalCbFetchMethod(__CLASS__, 'example');
+        $obj = new ExampleObj();
+        $this->assertEquals('retval', Debug::globalCbObjCall($obj, "test testCbCreateFromZval"));
+        $this->assertEquals(1, $obj->testCbFetchMethod);
+    }
+
     /**
      * @memcheck
      */
@@ -116,4 +132,8 @@ class DebugTest extends TestCase {
         $this->assertEquals('retval', Debug::globalCbCall("test testCbCreateFromZval"));
         $this->assertEquals(1, $this->testCbCreate);
     }
+}
+
+class ExampleObj extends DebugTest {
+
 }

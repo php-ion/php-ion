@@ -163,11 +163,13 @@ PHP_MSHUTDOWN_FUNCTION(ion) {
 /* Start SAPI request */
 PHP_RINIT_FUNCTION(ion) {
     ACTIVATE_MODULE(ION_DNS);
+    ACTIVATE_MODULE(ION_Promise);
     return SUCCESS;
 }
 
 /* End SAPI request */
 PHP_RSHUTDOWN_FUNCTION(ion) {
+    DEACTIVATE_MODULE(ION_Promise);
     DEACTIVATE_MODULE(ION_DNS);
     return SUCCESS;
 }

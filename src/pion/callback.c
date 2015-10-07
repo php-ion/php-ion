@@ -2,6 +2,7 @@
 #include "debug.h"
 #include "engine.h"
 #include "exceptions.h"
+#include "Zend/zend_hash.h"
 
 /**
  * Create pionCb callback from FCI
@@ -33,9 +34,6 @@ pionCb *pionCbCreate(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr TS
 }
 
 pionCb *pionCbCreateFromZval(zval *zCb TSRMLS_DC) {
-    zval * copy_cb;
-//    ALLOC_INIT_ZVAL(copy_cb);
-//    ZVAL_COPY_VALUE(zCb, copy_cb);
     pionCb *cb = emalloc(sizeof(pionCb));
     char *is_callable_error = NULL;
     memset(cb, 0, sizeof(pionCb));
@@ -44,12 +42,13 @@ pionCb *pionCbCreateFromZval(zval *zCb TSRMLS_DC) {
     *cb->fci = empty_fcall_info;
     *cb->fcc = empty_fcall_info_cache;
     zval_addref_p(zCb);
-    if (zend_fcall_info_init(zCb, IS_CALLABLE_STRICT, cb->fci, cb->fcc, NULL, &is_callable_error TSRMLS_CC) == SUCCESS) {
+    if (zend_fcall_info_init(zCb, IS_CALLABLE_CHECK_NO_ACCESS | IS_CALLABLE_CHECK_SILENT, cb->fci, cb->fcc, NULL, &is_callable_error TSRMLS_CC) == SUCCESS) {
         if (is_callable_error) {
+            efree(is_callable_error);
             return NULL;
         } else {
             if (cb->fci->object_ptr) {
-                zval_add_ref(&cb->fci->object_ptr);
+                Z_ADDREF_P(cb->fci->object_ptr);
             }
             return cb;
         }
@@ -57,6 +56,57 @@ pionCb *pionCbCreateFromZval(zval *zCb TSRMLS_DC) {
         return NULL;
     }
 }
+
+pionCb * _pion_cb_fetch_method(const char * class_name, const char * method_name TSRMLS_DC) {
+    zval * callable = NULL;
+    pionCb * cb;
+    zend_function * fptr;
+    zend_class_entry *ce;
+    zend_class_entry **pce;
+    char * function_name_lc;
+
+    if (zend_lookup_class(class_name, (int) strlen(class_name), &pce TSRMLS_CC) == FAILURE) {
+        return NULL;
+    }
+    ce = *pce;
+
+    function_name_lc = zend_str_tolower_dup(method_name, (int) strlen(method_name));
+
+    if(zend_hash_find(&ce->function_table, function_name_lc, (int) strlen(method_name) + 1, (void **) &fptr) == FAILURE)  {
+        efree(function_name_lc);
+        return NULL;
+    }
+    efree(function_name_lc);
+
+    ALLOC_INIT_ZVAL(callable);
+    array_init(callable);
+    add_next_index_string(callable, class_name, 1);
+    add_next_index_string(callable, method_name, 1);
+
+    cb = emalloc(sizeof(pionCb));
+    cb->fci = emalloc(sizeof(empty_fcall_info));
+    cb->fcc = emalloc(sizeof(empty_fcall_info_cache));
+    *cb->fci = empty_fcall_info;
+    *cb->fcc = empty_fcall_info_cache;
+    cb->fci->size = sizeof(zend_fcall_info);
+    cb->fci->function_table = NULL;
+    cb->fci->function_name = callable;
+    cb->fci->symbol_table = NULL;
+    cb->fci->object_ptr =   NULL;
+    cb->fci->retval_ptr_ptr = NULL;
+    cb->fci->param_count = 0;
+    cb->fci->params = NULL;
+    cb->fci->no_separation = 1;
+
+    cb->fcc->initialized = 1;
+    cb->fcc->function_handler = fptr;
+    cb->fcc->calling_scope = NULL;
+    cb->fcc->called_scope = ce;
+    cb->fcc->object_ptr  = NULL;
+
+    return cb;
+}
+
 
 /**
  * Destroy pionCb callback
@@ -70,9 +120,6 @@ void pionCbFree(pionCb *cb) {
         if (cb->fci->object_ptr) {
             zval_ptr_dtor(&cb->fci->object_ptr);
         }
-    }
-    if(cb->zcb) {
-        zval_ptr_dtor(&cb->zcb);
     }
     efree(cb->fci);
     efree(cb);
@@ -251,6 +298,63 @@ zval * _pion_cb_call_with_3_args(pionCb *cb, zval *arg1, zval *arg2, zval *arg3 
 }
 
 zval * _pion_cb_call_with_4_args(pionCb *cb, zval *arg1, zval *arg2, zval *arg3, zval *arg4 TSRMLS_DC) {
+    zval **args[4];
+    args[0] = &arg1;
+    args[1] = &arg2;
+    args[2] = &arg3;
+    args[3] = &arg4;
+    return pion_cb_call(cb, 4, args);
+}
+
+zval * _pion_cb_obj_call(pionCb *cb, zval * obj, int num, zval ***args TSRMLS_DC) {
+    zval *pretval = NULL;
+    if (ZEND_FCI_INITIALIZED(*cb->fci)) {
+        cb->fci->retval_ptr_ptr = &pretval;
+        cb->fci->params = args;
+        cb->fci->param_count = (zend_uint)num;
+        if(obj) {
+            cb->fci->object_ptr = obj;
+
+            Z_ADDREF_P(obj);
+            cb->fcc->object_ptr = obj;
+            cb->fcc->calling_scope = Z_OBJCE_P(obj);
+        }
+        zend_call_function(cb->fci, cb->fcc TSRMLS_CC);
+        if(cb->fcc->object_ptr) {
+            Z_DELREF_P(cb->fcc->object_ptr);
+            cb->fcc->object_ptr = NULL;
+            cb->fcc->calling_scope = NULL;
+            cb->fci->object_ptr = NULL;
+
+        }
+        return pretval;
+    } else {
+        return NULL;
+    }
+}
+
+zval * _pion_cb_obj_call_with_1_arg(pionCb * cb, zval * obj, zval* arg1 TSRMLS_DC) {
+    zval **args[1];
+    args[0] = &arg1;
+    return pion_cb_obj_call(cb, obj, 1, args);
+}
+
+zval * _pion_cb_obj_call_with_2_args(pionCb *cb, zval * obj, zval *arg1, zval *arg2 TSRMLS_DC) {
+    zval **args[2];
+    args[0] = &arg1;
+    args[1] = &arg2;
+    return pion_cb_call(cb, 2, args);
+}
+
+zval * _pion_cb_obj_call_with_3_args(pionCb *cb, zval * obj, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC) {
+    zval **args[3];
+    args[0] = &arg1;
+    args[1] = &arg2;
+    args[2] = &arg3;
+    return pion_cb_call(cb, 3, args);
+}
+
+zval * _pion_cb_obj_call_with_4_args(pionCb *cb, zval * obj, zval *arg1, zval *arg2, zval *arg3, zval *arg4 TSRMLS_DC) {
     zval **args[4];
     args[0] = &arg1;
     args[1] = &arg2;

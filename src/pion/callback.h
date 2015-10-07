@@ -10,7 +10,6 @@
 typedef struct _pionCb {
     zend_fcall_info *fci;
     zend_fcall_info_cache *fcc;
-    zval *zcb;
 #ifdef ZTS
     void ***thread_ctx;
 #endif
@@ -19,12 +18,15 @@ typedef struct _pionCb {
 /* Create native callback */
 pionCb * pionCbCreate(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr TSRMLS_DC);
 pionCb * pionCbCreateFromZval(zval *zCb TSRMLS_DC);
+pionCb * _pion_cb_fetch_method(const char * class_name, const char * method_name TSRMLS_DC);
 void   pionCbFree(pionCb *cb);
 int _pion_verify_arg_type(pionCb * cb, zend_uint arg_num, zval * arg TSRMLS_DC);
 
 
 #define pion_cb_create(fci, fcc) pionCbCreate(fci, fcc TSRMLS_CC)
 #define pion_cb_create_from_zval(zcb) pionCbCreateFromZval(zcb TSRMLS_CC)
+#define pion_cb_create_from_name(name) _pion_cb_create_from_name(name TSRMLS_CC)
+#define pion_cb_fetch_method(class, method) _pion_cb_fetch_method(class, method TSRMLS_CC)
 #define pion_cb_free(cb) pionCbFree(cb)
 #define pion_cb_num_args(cb) cb->fcc->function_handler->common.num_args
 #define pion_cb_required_num_args(cb) cb->fcc->function_handler->common.required_num_args
@@ -58,6 +60,12 @@ zval * _pion_cb_call_with_2_args(pionCb *cb, zval *arg1, zval *arg2 TSRMLS_DC);
 zval * _pion_cb_call_with_3_args(pionCb *cb, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC);
 zval * _pion_cb_call_with_4_args(pionCb *cb, zval *arg1, zval *arg2, zval *arg3, zval *arg4 TSRMLS_DC);
 
+zval * _pion_cb_obj_call(pionCb *cb, zval * obj, int num, zval ***args TSRMLS_DC);
+zval * _pion_cb_obj_call_with_1_arg(pionCb * cb, zval * obj, zval* arg1 TSRMLS_DC);
+zval * _pion_cb_obj_call_with_2_args(pionCb *cb, zval * obj, zval *arg1, zval *arg2 TSRMLS_DC);
+zval * _pion_cb_obj_call_with_3_args(pionCb *cb, zval * obj, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC);
+zval * _pion_cb_obj_call_with_4_args(pionCb *cb, zval * obj, zval *arg1, zval *arg2, zval *arg3, zval *arg4 TSRMLS_DC);
+
 #define pion_cb_call(cb, num_args, args) \
     _pion_cb_call(cb, num_args, args TSRMLS_CC)
 #define pion_cb_call_without_args(cb) \
@@ -70,6 +78,19 @@ zval * _pion_cb_call_with_4_args(pionCb *cb, zval *arg1, zval *arg2, zval *arg3,
     _pion_cb_call_with_3_args(cb, arg1, arg2, arg3 TSRMLS_CC)
 #define pion_cb_call_with_4_args(cb, arg1, arg2, arg3, arg4) \
     _pion_cb_call_with_4_args(cb, arg1, arg2, arg3, arg4 TSRMLS_CC)
+
+#define pion_cb_obj_call(cb, obj, num_args, args) \
+    _pion_cb_obj_call(cb, obj, num_args, args TSRMLS_CC)
+#define pion_cb_obj_call_without_args(cb, obj) \
+    _pion_cb_obj_call(cb, obj, 0, NULL TSRMLS_CC)
+#define pion_cb_obj_call_with_1_arg(cb, obj, arg) \
+    _pion_cb_obj_call_with_1_arg(cb, obj, arg TSRMLS_CC)
+#define pion_cb_obj_call_with_2_args(cb, obj, arg1, arg2) \
+    _pion_cb_obj_call_with_2_args(cb, obj, arg1, arg2 TSRMLS_CC)
+#define pion_cb_obj_call_with_3_args(cb, obj, arg1, arg2, arg3) \
+    _pion_cb_obj_call_with_3_args(cb, obj, arg1, arg2, arg3 TSRMLS_CC)
+#define pion_cb_obj_call_with_4_args(cb, obj, arg1, arg2, arg3, arg4) \
+    _pion_cb_obj_call_with_4_args(cb, obj, arg1, arg2, arg3, arg4 TSRMLS_CC)
 
 
 /* Call callbacks */

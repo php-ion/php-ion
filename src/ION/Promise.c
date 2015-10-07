@@ -1,9 +1,18 @@
 #include "Promise.h"
 #include "Deferred.h"
+#include <Zend/zend_generators.h>
 
 ION_DEFINE_CLASS(ION_Promise);
 CLASS_INSTANCE_DTOR(ION_Promise);
 CLASS_INSTANCE_CTOR(ION_Promise);
+pionCb * generator_send    = NULL;
+pionCb * generator_throw   = NULL;
+pionCb * generator_current = NULL;
+pionCb * generator_key     = NULL;
+
+zval * _ion_promise_iterate_generator(zval * zgenerator TSRMLS_DC) {
+
+}
 
 void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
     ion_promise * promise = getInstance(zpromise);
@@ -83,6 +92,8 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
                 zval_add_ref(&zpromise);
                 resume = 0;
             } else if(Z_OBJCE_P(result) == generator_ce) {
+//                promise->generator = result;
+//                result = _ion_promise_iterate_generator(promise->generator TSRMLS_CC);
             } else if(Z_OBJCE_P(result) == deferred_map_ce) {
             } else if(Z_OBJCE_P(result) == deferred_result_ce) {
                 resume = 1;
@@ -372,10 +383,18 @@ PHP_MINIT_FUNCTION(ION_Promise) {
 }
 
 PHP_RINIT_FUNCTION(ION_Promise) {
+    generator_send    = pion_cb_fetch_method("Generator", "send");
+    generator_current = pion_cb_fetch_method("Generator", "current");
+    generator_key     = pion_cb_fetch_method("Generator", "key");
+    generator_throw   = pion_cb_fetch_method("Generator", "throw");
     return SUCCESS;
 }
 
 PHP_RSHUTDOWN_FUNCTION(ION_Promise) {
+    pion_cb_free(generator_send);
+    pion_cb_free(generator_current);
+    pion_cb_free(generator_key);
+    pion_cb_free(generator_throw);
     return SUCCESS;
 }
 
