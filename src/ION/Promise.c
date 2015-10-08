@@ -2,6 +2,8 @@
 #include "Deferred.h"
 #include <Zend/zend_generators.h>
 
+#define HAS_GENERATOR_RESULT
+
 ION_DEFINE_CLASS(ION_Promise);
 CLASS_INSTANCE_DTOR(ION_Promise);
 CLASS_INSTANCE_CTOR(ION_Promise);
@@ -22,7 +24,7 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
     zend_class_entry * promise_ce   = ion_get_class(ION_Promise);
     zend_class_entry * generator_ce = ion_get_class(Generator);
     zend_class_entry * deferred_map_ce    = NULL;
-    zend_class_entry * deferred_result_ce = NULL;
+    zend_class_entry * promise_result_ce = NULL;
 
     Z_ADDREF_P(zpromise);
     if(promise->await) {
@@ -79,17 +81,25 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
 
         if(Z_TYPE_P(result) == IS_OBJECT) {
             if(Z_OBJCE_P(result) == deferred_ce) { // ION\Deferred
-                promise->await = result;
                 ion_deferred * await = getInstance(result);
-                PION_PUSH_TO_ARRAY(await->handlers, await->handlers_count, zpromise);
-                zval_add_ref(&zpromise);
-                resolved = 0;
+                if(await->flags & ION_DEFERRED_FINISHED) {
+                    // todo: extract result and goto watch_result
+                } else {
+                    promise->await = result;
+                    PION_PUSH_TO_ARRAY(await->handlers, await->handlers_count, zpromise);
+                    zval_add_ref(&zpromise);
+                    resolved = 0;
+                }
             } else if(Z_OBJCE_P(result) == promise_ce) { // is ION\Promise
-                promise->await = result;
                 ion_promise * await = getInstance(result);
-                PION_PUSH_TO_ARRAY(await->handlers, await->handler_count, zpromise);
-                zval_add_ref(&zpromise);
-                resolved = 0;
+                if(await->flags & ION_DEFERRED_FINISHED) {
+                    // todo: extract result and goto watch_result
+                } else {
+                    promise->await = result;
+                    PION_PUSH_TO_ARRAY(await->handlers, await->handler_count, zpromise);
+                    zval_add_ref(&zpromise);
+                    resolved = 0;
+                }
             } else if(Z_OBJCE_P(result) == generator_ce) {
                 if(promise->generator) { // push the generator to stack
                     PION_PUSH_TO_ARRAY(promise->generators_stack, promise->generators_count, promise->generator);
@@ -98,37 +108,54 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
                 result = pion_cb_obj_call_without_args(generator_current, promise->generator);
                 goto watch_result;
             } else if(Z_OBJCE_P(result) == deferred_map_ce) {
-            } else if(Z_OBJCE_P(result) == deferred_result_ce) {
-            }
-        }
-        if(promise->generator) {
-            resume_generator:
-            next = pion_cb_obj_call_with_1_arg(generator_send, promise->generator, result);
-            zval_ptr_dtor(&result);
-            result = next;
-            is_valid = pion_cb_obj_call_without_args(generator_valid, promise->generator);
-            if(Z_BVAL_P(is_valid) == 1) {
-                zval_ptr_dtor(&is_valid);
-            } else {
-                zval_ptr_dtor(&is_valid);
-                zval_ptr_dtor(&result);
-                ALLOC_INIT_ZVAL(result);
-                zval_ptr_dtor(&promise->generator);
-                if(promise->generators_count) {
-                    promise->generator = promise->generators_stack[promise->generators_count - 1];
-                    if(promise->generators_count == 1) {
-                        efree(promise->generators_stack);
-                        promise->generators_stack = NULL;
-                        promise->generators_count = 0;
-                    } else {
-                        promise->generators_stack = erealloc(promise->generators_stack, sizeof(zval *) * --promise->generators_count);
-                    }
-                    goto resume_generator;
-                } else {
-                    promise->generator = NULL;
+            } else if(Z_OBJCE_P(result) == promise_result_ce) {
+                if(promise->generator_result) {
+                    zval_ptr_dtor(&promise->generator_result);
                 }
+                promise->generator_result = result; // todo: extract result from zval
+                resolved = 1;
             }
-            goto watch_result;
+        } else {
+            resolved = 1;
+        }
+        if(promise->generator && resolved) {
+            resume_generator: {
+                if(result_type == ION_DEFERRED_DONE) {
+                    next = pion_cb_obj_call_with_1_arg(generator_send, promise->generator, result);
+                } else {
+                    next = pion_cb_obj_call_with_1_arg(generator_throw, promise->generator, result);
+                }
+                zval_ptr_dtor(&result);
+                result = next;
+                is_valid = pion_cb_obj_call_without_args(generator_valid, promise->generator);
+                if(Z_BVAL_P(is_valid) == 1) {
+                    zval_ptr_dtor(&is_valid);
+                } else {
+                    zval_ptr_dtor(&is_valid);
+                    zval_ptr_dtor(&result);
+                    if(promise->generator_result) {
+                        result = promise->generator_result;
+                        promise->generator_result = NULL;
+                    } else {
+                        ALLOC_INIT_ZVAL(result);
+                    }
+                    zval_ptr_dtor(&promise->generator);
+                    if(promise->generators_count) { // has more generators?
+                        promise->generator = promise->generators_stack[promise->generators_count - 1];
+                        if(promise->generators_count == 1) {
+                            efree(promise->generators_stack);
+                            promise->generators_stack = NULL;
+                            promise->generators_count = 0;
+                        } else {
+                            promise->generators_stack = erealloc(promise->generators_stack, sizeof(zval *) * --promise->generators_count);
+                        }
+                        goto resume_generator;
+                    } else {
+                        promise->generator = NULL;
+                    }
+                }
+                goto watch_result;
+            };
         }
 
         if(resolved) {

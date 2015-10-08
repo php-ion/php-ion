@@ -10,7 +10,7 @@ BEGIN_EXTERN_C();
 typedef struct _ion_promise {
     zend_object        std;
 #ifdef ION_DEBUG
-    long               uid;
+    long               uid; // to distinguish promise-objects
 #endif
     ushort             flags;
     pionCb           * done;
@@ -19,6 +19,7 @@ typedef struct _ion_promise {
     zval             * await;
     zval             * result;
     zval             * generator;
+    zval             * generator_result;
     zval            ** generators_stack;
     ushort             generators_count;
     struct event     * ttl;

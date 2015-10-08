@@ -281,7 +281,6 @@ class PromiseTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testYieldScalars() {
@@ -313,13 +312,17 @@ class PromiseTest extends TestCase {
         ], $this->data);
     }
 
-    public function _testYieldDeferred() {
+    /**
+     * @group dev
+     * @memcheck
+     */
+    public function testYieldDeferred() {
         $promise = new Promise();
         $promise
             ->then(function ($x) {
                 $this->data["await"] = (yield ION::await(0.1));
                 $this->data["x1"] = $x;
-                yield $x + 10;
+                $x = (yield $x + 10);
                 $this->data["x2"] = $x;
             })
             ->onDone(function ($result) {
@@ -334,6 +337,15 @@ class PromiseTest extends TestCase {
                 $this->stop();
             })
         ;
+
+        $promise->done(1);
+        $this->loop();
+        $this->assertEquals([
+            "await" => true,
+            "x1" => 1,
+            "x2" => 11,
+            "result" => null,
+        ], $this->data);
     }
 
 }
