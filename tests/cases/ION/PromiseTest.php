@@ -313,7 +313,6 @@ class PromiseTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testYieldDeferred() {
@@ -345,6 +344,92 @@ class PromiseTest extends TestCase {
             "x1" => 1,
             "x2" => 11,
             "result" => null,
+        ], $this->data);
+    }
+
+    /**
+     * @memcheck
+     */
+    public function testYieldSuccessPromise() {
+        $promise = new Promise();
+        $promise
+            ->then(function ($x) {
+                $this->data["x0"] = $x;
+                $x = $x + (yield ION::await(0.1)->then(function ($result) {
+                    $this->data["await"] = $result;
+                    return 100;
+                }));
+                $this->data["x1"] = $x;
+                $x = (yield $x + 10);
+                $this->data["x2"] = $x;
+            })
+            ->onDone(function ($result) {
+                $this->data["result"] = $result;
+                $this->stop();
+            })
+            ->onFail(function ($error) {
+                $this->data["error"] = [
+                    'class' => get_class($error),
+                    'message' => $error->getMessage()
+                ];
+                $this->stop();
+            })
+        ;
+
+        $promise->done(1);
+        $this->loop();
+        $this->assertEquals([
+            "x0" => 1,
+            "await" => true,
+            "x1" => 101,
+            "x2" => 111,
+            "result" => null,
+        ], $this->data);
+    }
+
+    /**
+     * @group dev
+     * @memcheck
+     */
+    public function testYieldFailedPromise() {
+        $promise = new Promise();
+        $promise
+            ->then(function ($x) {
+                try {
+                    $this->data["x0"] = $x;
+                    $x = $x + (yield ION::await(0.1)->then(function ($result) {
+                        $this->data["await"] = $result;
+                        throw new \RuntimeException("problem description");
+                    }));
+                    $this->data["x1"] = $x;
+                } catch (\Exception $e) {
+                    $this->data["failed"] = true;
+                    throw $e;
+                }
+            })
+            ->onDone(function ($result) {
+                $this->data["result"] = $result;
+                $this->stop();
+            })
+            ->onFail(function ($error) {
+                $this->data["error"] = [
+                    'class' => get_class($error),
+                    'message' => $error->getMessage()
+                ];
+                $this->stop();
+            })
+        ;
+
+        $promise->done(1);
+        $this->loop();
+        $this->assertEquals([
+            "x0" => 1,
+            "await" => true,
+            "failed" => true,
+            "error" => [
+                'class' => 'RuntimeException',
+                'message' => "problem description"
+            ]
         ], $this->data);
     }
 

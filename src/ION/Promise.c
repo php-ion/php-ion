@@ -20,6 +20,9 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
     zval        * result = NULL;
     short         result_type = ION_DEFERRED_DONE;
     zend_bool     resolved = 1;
+    zval        * is_valid = NULL;
+    zval        * next = NULL;
+    zend_bool     is_valid_generator = 0;
     zend_class_entry * deferred_ce  = ion_get_class(ION_Deferred);
     zend_class_entry * promise_ce   = ion_get_class(ION_Promise);
     zend_class_entry * generator_ce = ion_get_class(Generator);
@@ -73,8 +76,6 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
     } else {
         result = retval;
     }
-    zval * is_valid = NULL;
-    zval * next = NULL;
     if(result) {
         resolved = 1;
         watch_result:
@@ -126,19 +127,29 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
                     next = pion_cb_obj_call_with_1_arg(generator_throw, promise->generator, result);
                 }
                 zval_ptr_dtor(&result);
-                result = next;
-                is_valid = pion_cb_obj_call_without_args(generator_valid, promise->generator);
-                if(Z_BVAL_P(is_valid) == 1) {
-                    zval_ptr_dtor(&is_valid);
+                if(EG(exception)) {
+                    result = EG(exception);
+                    EG(exception) = NULL;
+                    result_type = ION_DEFERRED_FAIL;
+                    is_valid_generator = 0;
                 } else {
+                    result = next;
+                    is_valid = pion_cb_obj_call_without_args(generator_valid, promise->generator);
+                    is_valid_generator = Z_BVAL_P(is_valid);
                     zval_ptr_dtor(&is_valid);
-                    zval_ptr_dtor(&result);
-                    if(promise->generator_result) {
-                        result = promise->generator_result;
-                        promise->generator_result = NULL;
-                    } else {
-                        ALLOC_INIT_ZVAL(result);
+                    if(!is_valid_generator) {
+                        zval_ptr_dtor(&result);
+                        result_type = ION_DEFERRED_DONE;
+                        if(promise->generator_result) {
+                            result = promise->generator_result;
+                            promise->generator_result = NULL;
+                        } else {
+                            ALLOC_INIT_ZVAL(result);
+                        }
                     }
+                }
+
+                if(!is_valid_generator) {
                     zval_ptr_dtor(&promise->generator);
                     if(promise->generators_count) { // has more generators?
                         promise->generator = promise->generators_stack[promise->generators_count - 1];
