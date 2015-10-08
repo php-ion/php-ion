@@ -85,11 +85,11 @@ class DebugTest extends TestCase {
      */
     public function testCbCreate() {
         Debug::globalCbCreate(function ($a) {
-            $this->testCbCreate = 1;
+            $this->data['testCbCreate'] = $a;
             return "retval";
         });
         $this->assertEquals(0, Debug::globalCbCallVoid("test testCbCreateFromZval"));
-        $this->assertEquals(1, $this->testCbCreate);
+        $this->assertEquals("test testCbCreateFromZval", $this->data['testCbCreate']);
     }
 
     /**
@@ -98,27 +98,26 @@ class DebugTest extends TestCase {
      */
     public function testCbCreateFromZval() {
         Debug::globalCbCreateFromZval(function ($a) {
-            $this->testCbCreateFromZval = 1;
+            $this->data['testCbCreateFromZval'] = $a;
             return "retval";
         });
         $this->assertEquals(0, Debug::globalCbCallVoid("test testCbCreateFromZval"));
-        $this->assertEquals(1, $this->testCbCreateFromZval);
+        $this->assertEquals("test testCbCreateFromZval", $this->data['testCbCreateFromZval']);
     }
 
     public function example($a) {
-        $this->testCbFetchMethod = 1;
+        $this->data['testCbFetchMethod'] = $a;
         return "retval";
     }
 
     /**
      * @memcheck
-     * @group dev
      */
     public function testCbFetchMethod() {
         Debug::globalCbFetchMethod(__CLASS__, 'example');
         $obj = new ExampleObj();
         $this->assertEquals('retval', Debug::globalCbObjCall($obj, "test testCbCreateFromZval"));
-        $this->assertEquals(1, $obj->testCbFetchMethod);
+        $this->assertEquals("test testCbCreateFromZval", $obj->data['testCbFetchMethod']);
     }
 
     /**
@@ -126,11 +125,11 @@ class DebugTest extends TestCase {
      */
     public function testCbCall() {
         Debug::globalCbCreate(function ($a) {
-            $this->testCbCreate = 1;
+            $this->data['testCbCreate'] = $a;
             return "retval";
         });
         $this->assertEquals('retval', Debug::globalCbCall("test testCbCreateFromZval"));
-        $this->assertEquals(1, $this->testCbCreate);
+        $this->assertEquals("test testCbCreateFromZval", $this->data['testCbCreate']);
     }
 }
 

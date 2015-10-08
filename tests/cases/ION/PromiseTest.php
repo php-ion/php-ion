@@ -280,9 +280,10 @@ class PromiseTest extends TestCase {
     }
 
     /**
-     * @group d ev
+     * @group dev
+     * @memcheck
      */
-    public function testYields() {
+    public function testYieldScalars() {
         $promise = new Promise();
         $promise
             ->then(function ($x) {
@@ -294,17 +295,16 @@ class PromiseTest extends TestCase {
             })
             ->onDone(function ($result) {
                 $this->data["result"] = $result;
-                $this->stop();
             })
             ->onFail(function ($error) {
                 $this->data["error"] = [
                     'class' => get_class($error),
                     'message' => $error->getMessage()
                 ];
-                $this->stop();
             })
         ;
         $promise->done(1);
+        var_dump($this->data);
     }
 
 }

@@ -9,10 +9,7 @@ pionCb * generator_send    = NULL;
 pionCb * generator_throw   = NULL;
 pionCb * generator_current = NULL;
 pionCb * generator_key     = NULL;
-
-zval * _ion_promise_iterate_generator(zval * zgenerator TSRMLS_DC) {
-
-}
+pionCb * generator_valid   = NULL;
 
 void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
     ion_promise * promise = getInstance(zpromise);
@@ -27,7 +24,7 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
     zend_class_entry * deferred_map_ce    = NULL;
     zend_class_entry * deferred_result_ce = NULL;
 
-    zval_add_ref(&zpromise);
+    Z_ADDREF_P(zpromise);
     if(promise->await) {
         result_type = type;
         zval_ptr_dtor(&promise->await);
@@ -77,23 +74,40 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
 
     if(result) {
         if(Z_TYPE_P(result) == IS_OBJECT) {
-            if(Z_OBJCE_P(result) == deferred_ce) { // ION\Deferred || ION\Promise
+            if(Z_OBJCE_P(result) == deferred_ce) { // ION\Deferred
                 promise->await = result;
-//                promise->flags |= ION_DEFERRED_AWAIT;
                 ion_deferred * deferred = getInstance(result);
                 PION_PUSH_TO_ARRAY(deferred->handlers, deferred->handlers_count, zpromise);
                 zval_add_ref(&zpromise);
                 resume = 0;
             } else if(Z_OBJCE_P(result) == promise_ce) { // is ION\Promise
                 promise->await = result;
-//                promise->flags |= ION_PROMISE_AWAIT;
                 ion_promise * next = getInstance(result);
                 PION_PUSH_TO_ARRAY(next->handlers, next->handler_count, zpromise);
                 zval_add_ref(&zpromise);
                 resume = 0;
             } else if(Z_OBJCE_P(result) == generator_ce) {
-//                promise->generator = result;
-//                result = _ion_promise_iterate_generator(promise->generator TSRMLS_CC);
+                zval * is_valid = NULL;
+                zval * next = NULL;
+                zval * current = pion_cb_obj_call_without_args(generator_current, result);
+                do {
+                    if (Z_TYPE_P(current) == IS_OBJECT) {
+                        break; // todo
+                    } else {
+                        next = pion_cb_obj_call_with_1_arg(generator_send, result, current);
+                        zval_ptr_dtor(&current);
+                        current = next;
+                    }
+                    is_valid = pion_cb_obj_call_without_args(generator_valid, result);
+                    if(Z_BVAL_P(is_valid) == 1) {
+                        zval_ptr_dtor(&is_valid);
+                    } else {
+                        zval_ptr_dtor(&is_valid);
+                        zval_ptr_dtor(&current);
+                        break;
+                    }
+                } while(1);
+                zval_ptr_dtor(&result);
             } else if(Z_OBJCE_P(result) == deferred_map_ce) {
             } else if(Z_OBJCE_P(result) == deferred_result_ce) {
                 resume = 1;
@@ -387,6 +401,7 @@ PHP_RINIT_FUNCTION(ION_Promise) {
     generator_current = pion_cb_fetch_method("Generator", "current");
     generator_key     = pion_cb_fetch_method("Generator", "key");
     generator_throw   = pion_cb_fetch_method("Generator", "throw");
+    generator_valid   = pion_cb_fetch_method("Generator", "valid");
     return SUCCESS;
 }
 
@@ -395,6 +410,7 @@ PHP_RSHUTDOWN_FUNCTION(ION_Promise) {
     pion_cb_free(generator_current);
     pion_cb_free(generator_key);
     pion_cb_free(generator_throw);
+    pion_cb_free(generator_valid);
     return SUCCESS;
 }
 

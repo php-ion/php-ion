@@ -314,7 +314,6 @@ zval * _pion_cb_obj_call(pionCb *cb, zval * obj, int num, zval ***args TSRMLS_DC
         cb->fci->param_count = (zend_uint)num;
         if(obj) {
             cb->fci->object_ptr = obj;
-
             Z_ADDREF_P(obj);
             cb->fcc->object_ptr = obj;
             cb->fcc->calling_scope = Z_OBJCE_P(obj);
@@ -343,7 +342,7 @@ zval * _pion_cb_obj_call_with_2_args(pionCb *cb, zval * obj, zval *arg1, zval *a
     zval **args[2];
     args[0] = &arg1;
     args[1] = &arg2;
-    return pion_cb_call(cb, 2, args);
+    return pion_cb_obj_call(cb, obj, 2, args);
 }
 
 zval * _pion_cb_obj_call_with_3_args(pionCb *cb, zval * obj, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC) {
@@ -351,7 +350,7 @@ zval * _pion_cb_obj_call_with_3_args(pionCb *cb, zval * obj, zval *arg1, zval *a
     args[0] = &arg1;
     args[1] = &arg2;
     args[2] = &arg3;
-    return pion_cb_call(cb, 3, args);
+    return pion_cb_obj_call(cb, obj, 3, args);
 }
 
 zval * _pion_cb_obj_call_with_4_args(pionCb *cb, zval * obj, zval *arg1, zval *arg2, zval *arg3, zval *arg4 TSRMLS_DC) {
@@ -360,7 +359,7 @@ zval * _pion_cb_obj_call_with_4_args(pionCb *cb, zval * obj, zval *arg1, zval *a
     args[1] = &arg2;
     args[2] = &arg3;
     args[3] = &arg4;
-    return pion_cb_call(cb, 4, args);
+    return pion_cb_obj_call(cb, obj, 4, args);
 }
 
 /**
