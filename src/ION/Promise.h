@@ -19,6 +19,8 @@ typedef struct _ion_promise {
     zval             * await;
     zval             * result;
     zval             * generator;
+    zval            ** generators_stack;
+    ushort             generators_count;
     struct event     * ttl;
     zval            ** handlers;
     ushort             handler_count;

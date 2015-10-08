@@ -31,6 +31,8 @@
         counter = 1;                                          \
     }
 
+#define PION_ARRAY_POP()
+
 typedef void (*deferred_reject_callback)(zval *error, zval * zdeferred TSRMLS_DC);
 typedef void (*deferred_object_dtor)(void *object, zval * zdeferred TSRMLS_DC);
 

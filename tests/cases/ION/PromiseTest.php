@@ -2,6 +2,7 @@
 
 namespace cases\ION;
 
+use ION;
 use ION\Promise;
 use ION\Test\Callback;
 use ION\Test\TestCase;
@@ -39,7 +40,7 @@ class PromiseTest extends TestCase {
     /**
      * @memcheck
      */
-    public function testManyThens() {
+    public function testThenThenThen() {
         $promise = new Promise(function() {}, function() {}, function() {});
         $promise
             ->then(function() {}, null, null)
@@ -55,7 +56,7 @@ class PromiseTest extends TestCase {
     /**
      * @memcheck
      */
-    public function testManyChilds() {
+    public function testParallelThenThenThen() {
         $promise = new Promise(function() {}, function() {}, function() {});
         $promise->then(function() {}, null, null);
         $promise->then(null, function() {}, null);
@@ -184,7 +185,7 @@ class PromiseTest extends TestCase {
         $promise
             ->then(function ($x) {
                 $this->data["x1"] = $x;
-                return \ION::await(0.1);
+                return ION::await(0.1);
             })
             ->onDone(function ($result) {
                 $this->data["result"] = $result;
@@ -230,7 +231,7 @@ class PromiseTest extends TestCase {
                 $this->stop();
             })
         ;
-        $promise->done();
+        $promise->done(1);
 
         $this->loop(1);
         $this->assertEquals([
@@ -287,11 +288,11 @@ class PromiseTest extends TestCase {
         $promise = new Promise();
         $promise
             ->then(function ($x) {
-                $this->out("x0: $x");
+                $this->data["x0"] = $x;
                 $x = (yield $x + 1);
-                $this->out("x1: $x");
+                $this->data["x1"] = $x;
                 yield $x + 10;
-                $this->out("x2: $x");
+                $this->data["x2"] = $x;
             })
             ->onDone(function ($result) {
                 $this->data["result"] = $result;
@@ -304,7 +305,35 @@ class PromiseTest extends TestCase {
             })
         ;
         $promise->done(1);
-        var_dump($this->data);
+        $this->assertEquals([
+            "x0" => 1,
+            "x1" => 2,
+            "x2" => 2,
+            "result" => null,
+        ], $this->data);
+    }
+
+    public function _testYieldDeferred() {
+        $promise = new Promise();
+        $promise
+            ->then(function ($x) {
+                $this->data["await"] = (yield ION::await(0.1));
+                $this->data["x1"] = $x;
+                yield $x + 10;
+                $this->data["x2"] = $x;
+            })
+            ->onDone(function ($result) {
+                $this->data["result"] = $result;
+                $this->stop();
+            })
+            ->onFail(function ($error) {
+                $this->data["error"] = [
+                    'class' => get_class($error),
+                    'message' => $error->getMessage()
+                ];
+                $this->stop();
+            })
+        ;
     }
 
 }

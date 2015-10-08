@@ -4,6 +4,10 @@
 #include "exceptions.h"
 #include "Zend/zend_hash.h"
 
+#ifndef ZEND_ACC_VARIADIC
+#   define ZEND_ACC_VARIADIC 0
+#endif
+
 /**
  * Create pionCb callback from FCI
  **/
@@ -435,7 +439,7 @@ int pionCallConstructorWith3Args(zend_class_entry *cls, zval *this_ptr, zval *ar
 zval* pionNewObject(zend_class_entry *ce, int args_num, zval ***args TSRMLS_DC) {
     zval *object = NULL;
     ALLOC_INIT_ZVAL(object);
-    object_init_ex(object, ce TSRMLS_CC);
+    object_init_ex(object, ce);
     if(ce->constructor) {
         if(pionCallConstructor(ce, object, args_num, args TSRMLS_CC) == FAILURE) {
             zval_ptr_dtor(&object);
