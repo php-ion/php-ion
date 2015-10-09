@@ -2,8 +2,15 @@
 
 namespace ION;
 
+use ION\Promise\Result;
 
 class Promise {
+
+    /**
+     * @param mixed $data
+     * @return Result
+     */
+    public static function result($data) {}
 
 //    public function __construct(callable $done, callable $progress = null) {}
 //    public function __construct(callable $done = null, callable $fail = null, callable $progress = null) {}
@@ -15,7 +22,7 @@ class Promise {
      * @param callable $progress
      * @return Promise
      */
-    public function then(callable $done = null, callable $fail = null, callable $progress = null) {}
+    public function then(callable ...$callbacks) {}
 
     /**
      * @param callable $callback
@@ -46,9 +53,4 @@ class Promise {
      */
 //    public function timeout($sec) {}
 
-    /**
-     * @param Promise $head
-     * @return array
-     */
-//    public static function analyseChain(self $head) {}
 }

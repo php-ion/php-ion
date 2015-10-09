@@ -63,7 +63,7 @@ class DeferredTest extends TestCase {
         $defer->then(function ($data, $error) {
             $this->should_fail = true;
         });
-        $defer->reject("just reject");
+        $defer->cancel("just reject");
         $this->assertFalse($this->should_fail);
         $this->assertTrue($this->should_success);
     }
@@ -81,7 +81,7 @@ class DeferredTest extends TestCase {
         $defer->then(function ($data, $error) {
             $this->fail("deferred already rejected");
         });
-        $defer->reject("just reject");
+        $defer->cancel("just reject");
         $this->fail("should be exception");
     }
 
@@ -98,7 +98,7 @@ class DeferredTest extends TestCase {
             $this->assertNull($data);
             $this->assertException($error, "some error", 2);
         });
-        $defer->error(new \Exception("some error", 2));
+        $defer->fail(new \Exception("some error", 2));
         $this->assertTrue($this->should_success);
     }
 
@@ -115,7 +115,7 @@ class DeferredTest extends TestCase {
         $defer->then(function ($data, $error) {
             throw new \RuntimeException("Test exception in then()");
         });
-        $defer->error(new \Exception("some error", 2));
+        $defer->fail(new \Exception("some error", 2));
         $this->fail("should be exception");
     }
 
@@ -132,7 +132,8 @@ class DeferredTest extends TestCase {
         $defer->then(function ($data, $error) {
             // throw new \RuntimeException("Test exception in then()");
         });
-        $defer->resolve("some result")->reject("bad reason");
+        $defer->done("some result");
+        $defer->cancel("bad reason");
         $this->fail("should be exception");
     }
 
@@ -143,7 +144,7 @@ class DeferredTest extends TestCase {
     public function _testThenAfterDone() {
         $defer = new Deferred(function () {
         });
-        $defer->resolve("already done");
+        $defer->done("already done");
         $defer->then(function ($data, $error) {
             $this->assertSame("already done", $data);
             $this->assertNull($error);

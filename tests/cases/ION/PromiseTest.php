@@ -362,6 +362,7 @@ class PromiseTest extends TestCase {
                 $this->data["x1"] = $x;
                 $x = (yield $x + 10);
                 $this->data["x2"] = $x;
+                yield Promise::result($x);
             })
             ->onDone(function ($result) {
                 $this->data["result"] = $result;
@@ -383,12 +384,11 @@ class PromiseTest extends TestCase {
             "await" => true,
             "x1" => 101,
             "x2" => 111,
-            "result" => null,
+            "result" => 111,
         ], $this->data);
     }
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testYieldFailedPromise() {

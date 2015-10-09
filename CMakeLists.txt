@@ -23,26 +23,27 @@ add_custom_target(
 )
 
 set(ION_SOURCE_FILES
-    src/php_ion.c
-    src/pion/exceptions.c
-    src/pion/debug.c
-    src/pion/callback.c
-    src/pion/engine.c
-    src/pion/linkedlist.c
-    src/pion/net.c
-    src/pion/deferred.h
-    src/pion.c
-    src/ION/Debug.c
-    src/ION/Data/LinkedList.c
-    src/externals/SkipList/skiplist.c
-    src/ION/Data/SkipList.c
-    src/ION/Deferred.c
-    src/ION/Promise.c
-    src/ION.c
-    src/ION/DNS.c
-    src/ION/Process.c
-    src/ION/Stream.c
-)
+        src/php_ion.c
+        src/pion/exceptions.c
+        src/pion/debug.c
+        src/pion/callback.c
+        src/pion/engine.c
+        src/pion/linkedlist.c
+        src/pion/net.c
+        src/pion/deferred.h
+        src/pion.c
+        src/ION/Debug.c
+        src/ION/Data/LinkedList.c
+        src/externals/SkipList/skiplist.c
+        src/ION/Data/SkipList.c
+        src/ION/Deferred.c
+        src/ION/Promise/Result.c
+        src/ION/Promise.c
+        src/ION.c
+        src/ION/DNS.c
+        src/ION/Process.c
+        src/ION/Stream.c
+        )
 
 add_library(ion ${ION_SOURCE_FILES})
 add_dependencies(ion external_ion)

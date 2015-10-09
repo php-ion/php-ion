@@ -116,6 +116,7 @@ if test "$PHP_ION" != "no"; then
     ION/Data/LinkedList.c
     ION/Data/SkipList.c
     ION/Deferred.c
+    ION/Promise/Result.c
     ION/Promise.c
     ION.c
     ION/DNS.c

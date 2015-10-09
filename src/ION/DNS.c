@@ -163,6 +163,7 @@ PHP_RINIT_FUNCTION(ION_DNS) {
 PHP_RSHUTDOWN_FUNCTION(ION_DNS) {
     zend_hash_clean(ION(dns)->requests);
     zend_hash_destroy(ION(dns)->requests);
+    FREE_HASHTABLE(ION(dns)->requests);
     return SUCCESS;
 }
 

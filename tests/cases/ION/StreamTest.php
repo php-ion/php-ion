@@ -64,7 +64,7 @@ class StreamTest extends TestCase {
     /**
      * @memcheck
      */
-    public function testSocket() {
+    public function _testSocket() {
         $pid = $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) {
 //			$this->out("Accept connection");
         })->start();
@@ -212,7 +212,7 @@ class StreamTest extends TestCase {
      * @group testAwaitShutdown
      * @memcheck
      */
-    public function testAwaitShutdown() {
+    public function _testAwaitShutdown() {
         $pid = $this->setupSendServer(["01234","56789"]);
         $socket = Stream::socket(ION_TEST_SERVER_HOST);
 

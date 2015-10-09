@@ -1,17 +1,18 @@
 #include "Promise.h"
 #include "Deferred.h"
+#include "Promise/Result.h"
 #include <Zend/zend_generators.h>
-
-#define HAS_GENERATOR_RESULT
 
 ION_DEFINE_CLASS(ION_Promise);
 CLASS_INSTANCE_DTOR(ION_Promise);
 CLASS_INSTANCE_CTOR(ION_Promise);
+// pre-cache methods
 pionCb * generator_send    = NULL;
 pionCb * generator_throw   = NULL;
 pionCb * generator_current = NULL;
 pionCb * generator_key     = NULL;
 pionCb * generator_valid   = NULL;
+pionCb * generator_result  = NULL;
 
 void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
     ion_promise * promise = getInstance(zpromise);
@@ -23,11 +24,15 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
     zval        * is_valid = NULL;
     zval        * next = NULL;
     zend_bool     is_valid_generator = 0;
-    zend_class_entry * deferred_ce  = ion_get_class(ION_Deferred);
-    zend_class_entry * promise_ce   = ion_get_class(ION_Promise);
-    zend_class_entry * generator_ce = ion_get_class(Generator);
-    zend_class_entry * deferred_map_ce    = NULL;
-    zend_class_entry * promise_result_ce = NULL;
+    zend_class_entry * object_ce         = NULL;
+    zend_class_entry * deferred_ce       = ion_get_class(ION_Deferred);
+    zend_class_entry * promise_ce        = ion_get_class(ION_Promise);
+    zend_class_entry * generator_ce      = ion_get_class(Generator);
+    zend_class_entry * deferred_map_ce   = NULL;
+    zend_class_entry * promise_result_ce = ion_get_class(ION_Promise_Result);
+
+    zval * _tmp1;
+    zval * _tmp2;
 
     Z_ADDREF_P(zpromise);
     if(promise->await) {
@@ -69,7 +74,6 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
             EG(exception) = NULL;
             result_type = ION_DEFERRED_FAIL;
         } else {
-            // result = data;
             ALLOC_INIT_ZVAL(result);
             MAKE_COPY_ZVAL(&data, result);
         }
@@ -113,7 +117,11 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
                 if(promise->generator_result) {
                     zval_ptr_dtor(&promise->generator_result);
                 }
-                promise->generator_result = result; // todo: extract result from zval
+                ion_promise_result * promise_result = getInstance(result);
+                ALLOC_INIT_ZVAL(promise->generator_result);
+                MAKE_COPY_ZVAL(&promise_result->data, promise->generator_result);
+                zval_ptr_dtor(&result);
+                ALLOC_INIT_ZVAL(result);
                 resolved = 1;
             }
         } else {
@@ -131,6 +139,10 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
                     result = EG(exception);
                     EG(exception) = NULL;
                     result_type = ION_DEFERRED_FAIL;
+                    if(promise->generator_result) {
+                        zval_ptr_dtor(&promise->generator_result);
+                        promise->generator_result = NULL;
+                    }
                     is_valid_generator = 0;
                 } else {
                     result = next;
@@ -140,6 +152,10 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
                     if(!is_valid_generator) {
                         zval_ptr_dtor(&result);
                         result_type = ION_DEFERRED_DONE;
+#ifdef HAS_GENERATOR_RESULT
+                        result = pion_cb_obj_call_without_args(generator_result, promise->generator)
+                        // todo
+#endif
                         if(promise->generator_result) {
                             result = promise->generator_result;
                             promise->generator_result = NULL;
@@ -190,15 +206,6 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
     zval_ptr_dtor(&zpromise);
 }
 
-void _ion_promise_resume(zval * zpromise TSRMLS_DC) {
-    ion_promise * promise = getInstance(zpromise);
-    if(promise->await) {
-        if(promise->flags & ION_DEFERRED_AWAIT) {
-
-        }
-    }
-}
-
 int _ion_promise_set_callback(zval * zpromise, zval * zdone, zval * zfail, zval * zprogress TSRMLS_DC) {
     ion_promise * promise = getInstance(zpromise);
     if(zdone) {
@@ -246,6 +253,20 @@ CLASS_INSTANCE_DTOR(ION_Promise) {
     }
     efree(promise);
 }
+
+/** public static function ION\Promise::result(mixed $data) : self */
+CLASS_METHOD(ION_Promise, result) {
+    zval * data = NULL;
+    zval * result = NULL;
+    PARSE_ARGS("z", &data);
+
+    result = pion_new_object_with_1_arg(ion_get_class(ION_Promise_Result), data);
+    RETURN_ZVAL(result, 0, 1);
+}
+
+METHOD_ARGS_BEGIN(ION_Promise, result, 1)
+    METHOD_ARG(data, 0)
+METHOD_ARGS_END()
 
 /** public function ION\Promise::__construct(callable $done = null, callable $fail = null, callable $progress = null) : int */
 /** public function ION\Promise::__construct(callable $done = null, callable $progress = null) : int */
@@ -428,6 +449,7 @@ METHOD_ARGS_END()
 
 
 CLASS_METHODS_START(ION_Promise)
+    METHOD(ION_Promise, result,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Promise, __construct,   ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, __destruct,    ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, then,          ZEND_ACC_PUBLIC)
@@ -453,6 +475,9 @@ PHP_RINIT_FUNCTION(ION_Promise) {
     generator_key     = pion_cb_fetch_method("Generator", "key");
     generator_throw   = pion_cb_fetch_method("Generator", "throw");
     generator_valid   = pion_cb_fetch_method("Generator", "valid");
+#ifdef HAS_GENERATOR_RESULT
+    generator_result   = pion_cb_fetch_method("Generator", "getResult");
+#endif
     return SUCCESS;
 }
 
@@ -462,6 +487,9 @@ PHP_RSHUTDOWN_FUNCTION(ION_Promise) {
     pion_cb_free(generator_key);
     pion_cb_free(generator_throw);
     pion_cb_free(generator_valid);
+#ifdef HAS_GENERATOR_RESULT
+    pion_cb_free(generator_result);
+#endif
     return SUCCESS;
 }
 
