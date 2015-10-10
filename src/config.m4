@@ -118,6 +118,7 @@ if test "$PHP_ION" != "no"; then
     ION/Deferred.c
     ION/Promise/Result.c
     ION/Promise.c
+    ION/ResolvablePromise.c
     ION.c
     ION/DNS.c
     ION/Process.c

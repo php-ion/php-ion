@@ -94,7 +94,7 @@
  * Define instance constructor function
  */
 #define CLASS_INSTANCE_CTOR(class) \
-    static zend_object_value _ ## class ## Ctor(zend_class_entry *ce TSRMLS_DC)
+    static zend_object_value _ ## class ## Ctor(zend_class_entry * ce TSRMLS_DC)
 
 
 #define getInstance(zobj)   zend_object_store_get_object(zobj TSRMLS_CC)
@@ -102,8 +102,8 @@
 
 #define RETURN_INSTANCE(class, object) \
     zend_object_value instance;   \
-    zend_object_std_init(&(object->std), c ## class TSRMLS_CC); \
-    object_properties_init(&object->std, c ## class); \
+    zend_object_std_init(&(object->std), ce TSRMLS_CC); \
+    object_properties_init(&object->std, ce); \
     instance.handle = zend_objects_store_put(object, (zend_objects_store_dtor_t) zend_objects_destroy_object, (zend_objects_free_object_storage_t) _ ## class ## Dtor, NULL TSRMLS_CC); \
     instance.handlers = &h ## class; \
     return instance;
@@ -120,6 +120,9 @@
     spl_register_sub_class(&c ## class, c ## parent_class, class_name, _ ## parent_class ## Ctor, m ## class TSRMLS_CC); \
     memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
 
+#define REGISTER_EXTENDED_CLASS(class, parent_class, class_name) \
+    spl_register_sub_class(&c ## class, ion_get_class(parent_class), class_name, NULL, m ## class TSRMLS_CC); \
+    memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
 
 #define REGISTER_VOID_EXTENDED_CLASS(class, parent_class, class_name, obj_ctor) \
     spl_register_sub_class(&c ## class, c ## parent_class, class_name, obj_ctor, NULL TSRMLS_CC); \

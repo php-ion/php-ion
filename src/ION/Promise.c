@@ -391,46 +391,6 @@ CLASS_METHOD(ION_Promise, __destruct) {
 METHOD_WITHOUT_ARGS(ION_Promise, __destruct)
 
 #ifdef ION_DEBUG
-/** public function ION\Promise::done(mixed $data) : self */
-CLASS_METHOD(ION_Promise, done) {
-    ion_promise * promise = getThisInstance();
-    zval *data = NULL;
-    if(promise->flags & ION_DEFERRED_FINISHED) {
-        ThrowLogic("Failed to cancel finished defer-event", -1);
-        return;
-    }
-    if(promise->flags & ION_DEFERRED_INTERNAL) {
-        ThrowLogic("Internal defer-event cannot be finished from user-space", -1);
-    }
-    PARSE_ARGS("z", &data);
-    ion_promise_done(getThis(), data);
-    RETURN_THIS();
-}
-
-METHOD_ARGS_BEGIN(ION_Promise, done, 1)
-    METHOD_ARG(data, 0)
-METHOD_ARGS_END()
-
-/** public function ION\Promise::fail(Exception $error) : self */
-CLASS_METHOD(ION_Promise, fail) {
-    ion_deferred *deferred = getThisInstance();
-    zval *error;
-    if(deferred->flags & ION_DEFERRED_FINISHED) {
-        ThrowLogic("Failed to cancel finished defer-event", -1);
-        return;
-    }
-    if(deferred->flags & ION_DEFERRED_INTERNAL) {
-        ThrowLogic("Internal defer-event cannot be finished from user-space", -1);
-        return;
-    }
-    PARSE_ARGS("z", &error);
-    ion_promise_fail(getThis(), error);
-    RETURN_THIS();
-}
-
-METHOD_ARGS_BEGIN(ION_Promise, fail, 1)
-    METHOD_ARG_OBJECT(data, Exception, 0, 0)
-METHOD_ARGS_END()
 
 /** public function ION\Promise::setUID(int $uid) : self */
 CLASS_METHOD(ION_Promise, setUID) {
@@ -457,8 +417,6 @@ CLASS_METHODS_START(ION_Promise)
     METHOD(ION_Promise, onFail,        ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, onProgress,    ZEND_ACC_PUBLIC)
 #ifdef ION_DEBUG
-    METHOD(ION_Promise, done,          ZEND_ACC_PUBLIC)
-    METHOD(ION_Promise, fail,          ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, setUID,        ZEND_ACC_PUBLIC)
 #endif
 CLASS_METHODS_END;

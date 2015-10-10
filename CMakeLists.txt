@@ -39,6 +39,7 @@ set(ION_SOURCE_FILES
         src/ION/Deferred.c
         src/ION/Promise/Result.c
         src/ION/Promise.c
+        src/ION/ResolvablePromise.c
         src/ION.c
         src/ION/DNS.c
         src/ION/Process.c

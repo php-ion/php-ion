@@ -4,6 +4,7 @@ namespace cases\ION;
 
 use ION;
 use ION\Promise;
+use ION\ResolvablePromise;
 use ION\Test\Callback;
 use ION\Test\TestCase;
 
@@ -122,7 +123,7 @@ class PromiseTest extends TestCase {
      *
      */
     public function testSimpleChain() {
-        $promise = new Promise(function($x) {
+        $promise = new ResolvablePromise(function($x) {
             $this->data["x0"] = $x;
             return $x + 1;
         }, function($error) {
@@ -162,7 +163,7 @@ class PromiseTest extends TestCase {
      * @memcheck
      */
     public function testEmptyHeadChain() {
-        $promise  = new Promise();
+        $promise  = new ResolvablePromise();
         $promise->onDone(function ($result) {
             $this->data["result"] = $result;
         })->onFail(function ($error) {
@@ -178,7 +179,7 @@ class PromiseTest extends TestCase {
      * @memcheck
      */
     public function testAwaitSuccessDeferred() {
-        $promise = new Promise(function($x) {
+        $promise = new ResolvablePromise(function($x) {
             $this->data["x0"] = $x;
             return $x + 1;
         });
@@ -210,7 +211,7 @@ class PromiseTest extends TestCase {
      * @memcheck
      */
     public function testAwaitSuccessPromise() {
-        $promise = new Promise(function($x) {
+        $promise = new ResolvablePromise(function($x) {
             $this->data["x0"] = $x;
             return $x + 1;
         });
@@ -246,7 +247,7 @@ class PromiseTest extends TestCase {
      * @memcheck
      */
     public function testAwaitFailedPromise() {
-        $promise = new Promise();
+        $promise = new ResolvablePromise();
         $promise
             ->then(function ($x) {
                 $this->data["x1"] = $x;
@@ -260,6 +261,7 @@ class PromiseTest extends TestCase {
                 $this->stop();
             })
             ->onFail(function ($error) {
+                /* @var \Exception $error */
                 $this->data["error"] = [
                     'class' => get_class($error),
                     'message' => $error->getMessage()
@@ -284,7 +286,7 @@ class PromiseTest extends TestCase {
      * @memcheck
      */
     public function testYieldScalars() {
-        $promise = new Promise();
+        $promise = new ResolvablePromise();
         $promise
             ->then(function ($x) {
                 $this->data["x0"] = $x;
@@ -297,6 +299,7 @@ class PromiseTest extends TestCase {
                 $this->data["result"] = $result;
             })
             ->onFail(function ($error) {
+                /* @var \Exception $error */
                 $this->data["error"] = [
                     'class' => get_class($error),
                     'message' => $error->getMessage()
@@ -316,7 +319,7 @@ class PromiseTest extends TestCase {
      * @memcheck
      */
     public function testYieldDeferred() {
-        $promise = new Promise();
+        $promise = new ResolvablePromise();
         $promise
             ->then(function ($x) {
                 $this->data["await"] = (yield ION::await(0.1));
@@ -329,6 +332,7 @@ class PromiseTest extends TestCase {
                 $this->stop();
             })
             ->onFail(function ($error) {
+                /* @var \Exception $error */
                 $this->data["error"] = [
                     'class' => get_class($error),
                     'message' => $error->getMessage()
@@ -351,7 +355,7 @@ class PromiseTest extends TestCase {
      * @memcheck
      */
     public function testYieldSuccessPromise() {
-        $promise = new Promise();
+        $promise = new ResolvablePromise();
         $promise
             ->then(function ($x) {
                 $this->data["x0"] = $x;
@@ -369,6 +373,7 @@ class PromiseTest extends TestCase {
                 $this->stop();
             })
             ->onFail(function ($error) {
+                /* @var \Exception $error */
                 $this->data["error"] = [
                     'class' => get_class($error),
                     'message' => $error->getMessage()
@@ -392,7 +397,7 @@ class PromiseTest extends TestCase {
      * @memcheck
      */
     public function testYieldFailedPromise() {
-        $promise = new Promise();
+        $promise = new ResolvablePromise();
         $promise
             ->then(function ($x) {
                 try {
@@ -412,6 +417,7 @@ class PromiseTest extends TestCase {
                 $this->stop();
             })
             ->onFail(function ($error) {
+                /* @var \Exception $error */
                 $this->data["error"] = [
                     'class' => get_class($error),
                     'message' => $error->getMessage()
