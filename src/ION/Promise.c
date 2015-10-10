@@ -31,9 +31,6 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
     zend_class_entry * deferred_map_ce   = NULL;
     zend_class_entry * promise_result_ce = ion_get_class(ION_Promise_Result);
 
-    zval * _tmp1;
-    zval * _tmp2;
-
     Z_ADDREF_P(zpromise);
     if(promise->await) {
         result_type = type;
@@ -85,34 +82,15 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
         watch_result:
 
         if(Z_TYPE_P(result) == IS_OBJECT) {
-            if(Z_OBJCE_P(result) == deferred_ce) { // ION\Deferred
-                ion_deferred * await = getInstance(result);
-                if(await->flags & ION_DEFERRED_FINISHED) {
-                    // todo: extract result and goto watch_result
-                } else {
-                    promise->await = result;
-                    PION_PUSH_TO_ARRAY(await->handlers, await->handlers_count, zpromise);
-                    zval_add_ref(&zpromise);
-                    resolved = 0;
-                }
-            } else if(Z_OBJCE_P(result) == promise_ce) { // is ION\Promise
-                ion_promise * await = getInstance(result);
-                if(await->flags & ION_DEFERRED_FINISHED) {
-                    // todo: extract result and goto watch_result
-                } else {
-                    promise->await = result;
-                    PION_PUSH_TO_ARRAY(await->handlers, await->handler_count, zpromise);
-                    zval_add_ref(&zpromise);
-                    resolved = 0;
-                }
-            } else if(Z_OBJCE_P(result) == generator_ce) {
+            object_ce = Z_OBJCE_P(result);
+             if(object_ce == generator_ce) {
                 if(promise->generator) { // push the generator to stack
                     PION_PUSH_TO_ARRAY(promise->generators_stack, promise->generators_count, promise->generator);
                 }
                 promise->generator = result;
                 result = pion_cb_obj_call_without_args(generator_current, promise->generator);
                 goto watch_result;
-            } else if(Z_OBJCE_P(result) == deferred_map_ce) {
+
             } else if(Z_OBJCE_P(result) == promise_result_ce) {
                 if(promise->generator_result) {
                     zval_ptr_dtor(&promise->generator_result);
@@ -123,6 +101,26 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
                 zval_ptr_dtor(&result);
                 ALLOC_INIT_ZVAL(result);
                 resolved = 1;
+            } else if(object_ce == deferred_ce || instanceof_function(object_ce, deferred_ce TSRMLS_CC)) {
+                ion_deferred * await = getInstance(result);
+                if(await->flags & ION_DEFERRED_FINISHED) {
+                    // todo: extract result and goto watch_result
+                } else {
+                    promise->await = result;
+                    PION_PUSH_TO_ARRAY(await->handlers, await->handlers_count, zpromise);
+                    zval_add_ref(&zpromise);
+                    resolved = 0;
+                }
+            } else if(object_ce == promise_ce || instanceof_function(object_ce, promise_ce TSRMLS_CC)) {
+                ion_promise * await = getInstance(result);
+                if(await->flags & ION_DEFERRED_FINISHED) {
+                    // todo: extract result and goto watch_result
+                } else {
+                    promise->await = result;
+                    PION_PUSH_TO_ARRAY(await->handlers, await->handler_count, zpromise);
+                    zval_add_ref(&zpromise);
+                    resolved = 0;
+                }
             }
         } else {
             resolved = 1;
