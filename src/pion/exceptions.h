@@ -34,14 +34,15 @@ zend_class_entry * ion_get_class(LogicException);
 #define _ion_get_class_ION_InvalidArgumentException() spl_ce_InvalidArgumentException
 #define _ion_get_class_ION_RuntimeException()         spl_ce_RuntimeException
 
-zval * _pion_exception_new(zend_class_entry * exception_ce, const char * message, long code TSRMLS_DC);
-zval * _pion_exception_new_ex(zend_class_entry * exception_ce, long code TSRMLS_DC, const char * message, ...);
+zend_object * _pion_exception_new(zend_class_entry * exception_ce, const char * message, long code TSRMLS_DC);
+zend_object * _pion_exception_new_ex(zend_class_entry * exception_ce, long code TSRMLS_DC, const char * message, ...);
 /* do not export, in php it's available thru spprintf directly */
-int zend_spprintf(char **message, int max_len, const char *format, ...);
-
+//int zend_spprintf(char **message, int max_len, const char *format, ...);
+//zend_spprintf
 #define pion_exception_new(ce, message, code)  _pion_exception_new(ce, message, code TSRMLS_CC)
 #define pion_exception_new_ex(ce, code, format, ...)  _pion_exception_new_ex(ce, code TSRMLS_CC, format, ##__VA_ARGS__)
 #define pion_throw(ce, message, code) zend_throw_exception(ce,  message, code TSRMLS_CC)
+#define pion_throw_invalid_argument_exception(message) zend_throw_exception(ion_get_class(ION_InvalidArgumentException),  message, -1 TSRMLS_CC)
 #define pion_throw_ex(ce, code, format, ...) zend_throw_exception_ex(class_name, code TSRMLS_CC, message, ##__VA_ARGS__)
 
 #define ion_throw_invalid_argument_exception(message) pion_throw(ion_get_class(ION_InvalidArgumentException), message, -1)

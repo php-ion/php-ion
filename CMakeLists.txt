@@ -33,19 +33,21 @@ set(ION_SOURCE_FILES
         src/pion/deferred.h
         src/pion.c
         src/ION/Debug.c
-        src/ION/Data/LinkedList.c
-        src/externals/SkipList/skiplist.c
-        src/ION/Data/SkipList.c
-        src/ION/Deferred.c
-        src/ION/Promise/Result.c
-        src/ION/Promise.c
-        src/ION/ResolvablePromise.c
-        src/ION.c
-        src/ION/DNS.c
-        src/ION/Process.c
-        src/ION/Stream.c
         )
+
+#src/ION/Data/LinkedList.c
+#src/externals/SkipList/skiplist.c
+#src/ION/Data/SkipList.c
+#src/ION/Deferred.c
+#src/ION/Promise/Result.c
+#src/ION/Promise.c
+#src/ION/ResolvablePromise.c
+#src/ION.c
+#src/ION/DNS.c
+#src/ION/Process.c
+#src/ION/Stream.c
+#src/ION/Promise/Map.c src/ION/Promise/Map.h
 
 add_library(ion ${ION_SOURCE_FILES})
 add_dependencies(ion external_ion)
-include_directories("/opt/local/include" "/opt/local/include/php56/php" "/opt/local/include/php56/php/main" "/opt/local/include/php56/php/Zend" "/opt/local/include/php56/php/TSRM" "/opt/local/var/macports/build/_opt_local_var_macports_sources_rsync.macports.org_release_tarballs_ports_devel_libevent/libevent/work/libevent-2.0.22-stable/")
+include_directories("/opt/local/include" "/opt/local/include/php70/php" "/opt/local/include/php70/php/main" "/opt/local/include/php70/php/Zend" "/opt/local/include/php70/php/TSRM" "/opt/local/var/macports/build/_opt_local_var_macports_sources_rsync.macports.org_release_tarballs_ports_devel_libevent/libevent/work/libevent-2.0.22-stable/")

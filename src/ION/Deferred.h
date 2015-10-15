@@ -20,7 +20,7 @@ struct _ion_deferred {
     struct event     * ttl;
     zval            ** handlers;
     uint               handlers_count;
-    pionCb           * cancel_cb;
+    pion_cb * cancel_cb;
 #ifdef ZTS
     void ***thread_ctx;
 #endif

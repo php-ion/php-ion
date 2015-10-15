@@ -29,6 +29,7 @@ PHP_ARG_ENABLE(ion-coverage, whether to enable code coverage for ION,
 # --with-ion
 if test "$PHP_ION" != "no"; then
     AC_DEFINE_UNQUOTED(ION_VERSION, "$VERSION", [Current git version])
+    AC_DEFINE(PHP7, 1, [ php7+ ])
 
     # search libevent headers
     SEARCH_PATH="/usr/local /usr /opt/local"
@@ -113,16 +114,17 @@ if test "$PHP_ION" != "no"; then
     pion.c
     externals/SkipList/skiplist.c
     ION/Debug.c
-    ION/Data/LinkedList.c
-    ION/Data/SkipList.c
-    ION/Deferred.c
-    ION/Promise/Result.c
-    ION/Promise.c
-    ION/ResolvablePromise.c
-    ION.c
-    ION/DNS.c
-    ION/Process.c
-    ION/Stream.c"
+    "
+#    ION/Data/LinkedList.c
+#        ION/Data/SkipList.c
+#        ION/Deferred.c
+#        ION/Promise/Result.c
+#        ION/Promise.c
+#        ION/ResolvablePromise.c
+#        ION.c
+#        ION/DNS.c
+#        ION/Process.c
+#        ION/Stream.c
     PHP_NEW_EXTENSION(ion, $ion_src, $ext_shared,, $CFLAGS)
 
     PHP_SUBST(ION_SHARED_LIBADD)

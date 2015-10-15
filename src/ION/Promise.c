@@ -7,12 +7,12 @@ ION_DEFINE_CLASS(ION_Promise);
 CLASS_INSTANCE_DTOR(ION_Promise);
 CLASS_INSTANCE_CTOR(ION_Promise);
 // pre-cache methods
-pionCb * generator_send    = NULL;
-pionCb * generator_throw   = NULL;
-pionCb * generator_current = NULL;
-pionCb * generator_key     = NULL;
-pionCb * generator_valid   = NULL;
-pionCb * generator_result  = NULL;
+pion_cb * generator_send    = NULL;
+pion_cb * generator_throw   = NULL;
+pion_cb * generator_current = NULL;
+pion_cb * generator_key     = NULL;
+pion_cb * generator_valid   = NULL;
+pion_cb * generator_result  = NULL;
 
 void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
     ion_promise * promise = getInstance(zpromise);
@@ -180,7 +180,7 @@ void _ion_promise_resolve(zval * zpromise, zval * data, short type TSRMLS_DC) {
                     }
                 }
                 goto watch_result;
-            };
+            }
         }
 
         if(resolved) {
@@ -421,7 +421,6 @@ CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Promise) {
     PION_REGISTER_CLASS(ION_Promise, "ION\\Promise");
-//    PION_REGISTER_EXTENDED_CLASS_WITH_CTOR(ION_Promise, ION_Deferred, "ION\\Promise");
     return SUCCESS;
 }
 

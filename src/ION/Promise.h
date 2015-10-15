@@ -13,9 +13,9 @@ typedef struct _ion_promise {
     long               uid; // to distinguish promise-objects
 #endif
     ushort             flags;
-    pionCb           * done;
-    pionCb           * fail;
-    pionCb           * progress;
+    pion_cb * done;
+    pion_cb * fail;
+    pion_cb * progress;
     zval             * await;
     zval             * result;
     zval             * generator;

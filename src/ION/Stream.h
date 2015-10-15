@@ -81,7 +81,7 @@ typedef struct _ion_stream {
     zval             * flush;   // state deferred object
     zval             * connect; // connection deferred object
     zval             * closing; // closing deferred object
-    pionCb           * on_data;
+    pion_cb * on_data;
     char             * name_self;    // cache of getsockname
     char             * name_remote;  // cache of getpeername
 #ifdef ZTS

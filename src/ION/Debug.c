@@ -1,6 +1,6 @@
 #include "Debug.h"
 
-pionCb * global_cb;
+pion_cb * global_cb;
 DEFINE_CLASS(ION_Debug);
 
 CLASS_METHOD(ION_Debug, fcallVoid) {
@@ -11,7 +11,17 @@ CLASS_METHOD(ION_Debug, fcallVoid) {
     int r = 0;
     zend_fcall_info        fci = empty_fcall_info;
     zend_fcall_info_cache  fcc = empty_fcall_info_cache;
+//#ifndef FAST_ZPP
     PARSE_ARGS("f|zzz", &fci, &fcc, &arg1, &arg2, &arg3);
+//#else
+//    ZEND_PARSE_PARAMETERS_START(1, 4)
+//        Z_PARAM_FUNC(fci, fcc)
+//        Z_PARAM_OPTIONAL
+//        Z_PARAM_ZVAL(arg1)
+//        Z_PARAM_ZVAL(arg2)
+//        Z_PARAM_ZVAL(arg3)
+//    ZEND_PARSE_PARAMETERS_END();
+//#endif
     if(ZEND_NUM_ARGS() == 1) {
         r = pion_fcall_void_no_args(&fci, &fcc);
     } else if (ZEND_NUM_ARGS() == 2) {
@@ -22,13 +32,9 @@ CLASS_METHOD(ION_Debug, fcallVoid) {
         r = pion_fcall_void_3_args(&fci, &fcc, arg1, arg2, arg3);
     }
     RETURN_LONG(r);
-//    zval_ptr_dtor(&fci.function_name);
-//    if (fci.object_ptr) {
-//        zval_ptr_dtor(&fci.object_ptr);
-//    }
 }
 
-METHOD_ARGS_BEGIN(ION_Debug, fcallVoid, 1)
+METHOD_ARGS_BEGIN_RETURN_INT(ION_Debug, fcallVoid, 1)
     METHOD_ARG_TYPE(callback, IS_CALLABLE, 0, 0)
     METHOD_ARG(arg1, 0)
     METHOD_ARG(arg2, 0)
@@ -36,32 +42,42 @@ METHOD_ARGS_BEGIN(ION_Debug, fcallVoid, 1)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, cbCallVoid) {
-
     zval * arg1 = NULL;
     zval * arg2 = NULL;
     zval * arg3 = NULL;
-    pionCb * cb = NULL;
+    pion_cb * cb = NULL;
     int r = 0;
     zend_fcall_info        fci = empty_fcall_info;
     zend_fcall_info_cache  fcc = empty_fcall_info_cache;
+//#ifndef FAST_ZPP
     PARSE_ARGS("f|zzz", &fci, &fcc, &arg1, &arg2, &arg3);
-    cb = pionCbCreate(&fci, &fcc TSRMLS_CC);
+
+//#else
+//    ZEND_PARSE_PARAMETERS_START(1, 4)
+//        Z_PARAM_FUNC(fci, fcc)
+//        Z_PARAM_OPTIONAL
+//        Z_PARAM_ZVAL(arg1)
+//        Z_PARAM_ZVAL(arg2)
+//        Z_PARAM_ZVAL(arg3)
+//    ZEND_PARSE_PARAMETERS_END();
+//#endif
+    cb = pion_cb_create(&fci, &fcc);
 
     if(ZEND_NUM_ARGS() == 1) {
-        r = pionCbVoidWithoutArgs(cb TSRMLS_CC);
+        r = pion_cb_void_without_args(cb);
     } else if (ZEND_NUM_ARGS() == 2) {
-        r =pionCbVoidWith1Arg(cb, arg1 TSRMLS_CC);
+        r = pion_cb_void_with_1_arg(cb, arg1);
     } else if (ZEND_NUM_ARGS() == 3) {
-        r =pionCbVoidWith2Args(cb, arg1, arg2 TSRMLS_CC);
+        r = pion_cb_void_with_2_args(cb, arg1, arg2);
     } else if (ZEND_NUM_ARGS() == 4) {
-        r =pionCbVoidWith3Args(cb, arg1, arg2, arg3 TSRMLS_CC);
+        r = pion_cb_void_with_3_args(cb, arg1, arg2, arg3);
     }
 
-    pionCbFree(cb);
+    pion_cb_free(cb);
     RETURN_LONG(r);
 }
 
-METHOD_ARGS_BEGIN(ION_Debug, cbCallVoid, 1)
+METHOD_ARGS_BEGIN_RETURN_INT(ION_Debug, cbCallVoid, 1)
     METHOD_ARG_TYPE(callback, IS_CALLABLE, 0, 0)
     METHOD_ARG(arg1, 0)
     METHOD_ARG(arg2, 0)
@@ -71,10 +87,13 @@ METHOD_ARGS_END();
 CLASS_METHOD(ION_Debug, globalCbCall) {
     zval *zarg = NULL;
     PARSE_ARGS("z", &zarg);
-    zval * result = pion_cb_call_with_1_arg(global_cb, zarg);
+    zval result = pion_cb_call_with_1_arg(global_cb, zarg);
     pion_cb_free(global_cb);
+    if(Z_ISUNDEF(result)) {
+        RETURN_FALSE;
+    }
     global_cb = NULL;
-    RETURN_ZVAL(result, 0, 1);
+    RETURN_ZVAL(&result, 0, 1);
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, globalCbCall, 1)
@@ -85,10 +104,13 @@ CLASS_METHOD(ION_Debug, globalCbObjCall) {
     zval * obj = NULL;
     zval * zarg = NULL;
     PARSE_ARGS("zz", &obj, &zarg);
-    zval * result = pion_cb_obj_call_with_1_arg(global_cb, obj, zarg);
+    zval result = pion_cb_obj_call_with_1_arg(global_cb, obj, zarg);
     pion_cb_free(global_cb);
     global_cb = NULL;
-    RETURN_ZVAL(result, 0, 1);
+    if(Z_ISUNDEF(result)) {
+        RETURN_FALSE;
+    }
+    RETURN_ZVAL(&result, 0, 1);
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, globalCbObjCall, 2)
@@ -97,15 +119,19 @@ METHOD_ARGS_BEGIN(ION_Debug, globalCbObjCall, 2)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, globalCbCallVoid) {
-    zval *zarg = NULL;
-    PARSE_ARGS("z", &zarg);
-    int result = pionCbVoidWith1Arg(global_cb, zarg TSRMLS_CC);
-    pionCbFree(global_cb);
+    zval *arg = NULL;
+    PARSE_ARGS("z", &arg);
+//    ZEND_PARSE_PARAMETERS_START(1, 1)
+//        Z_PARAM_ZVAL(arg)
+//    ZEND_PARSE_PARAMETERS_END();
+
+    int result = pion_cb_void_with_1_arg(global_cb, arg);
+    pion_cb_free(global_cb);
     global_cb = NULL;
     RETURN_LONG((long)result);
 }
 
-METHOD_ARGS_BEGIN(ION_Debug, globalCbCallVoid, 1)
+METHOD_ARGS_BEGIN_RETURN_INT(ION_Debug, globalCbCallVoid, 1)
     METHOD_ARG(arg, 0)
 METHOD_ARGS_END();
 
@@ -114,7 +140,10 @@ CLASS_METHOD(ION_Debug, globalCbCreate) {
     zend_fcall_info        fci = empty_fcall_info;
     zend_fcall_info_cache  fcc = empty_fcall_info_cache;
     PARSE_ARGS("f", &fci, &fcc);
-    global_cb = pionCbCreate(&fci, &fcc TSRMLS_CC);
+//    ZEND_PARSE_PARAMETERS_START(1, 1)
+//        Z_PARAM_FUNC(fci, fcc)
+//    ZEND_PARSE_PARAMETERS_END();
+    global_cb = pion_cb_create(&fci, &fcc);
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, globalCbCreate, 1)

@@ -4,6 +4,10 @@
 #include <ext/spl/spl_functions.h>
 #include <Zend/zend_generators.h>
 
+#ifndef zend_uint
+#define zend_uint uint32_t
+#endif
+
 #define ion_get_class(class_name) _ion_get_class_ ## class_name()
 
 #define _ion_get_class_Generator() zend_ce_generator;
@@ -145,6 +149,24 @@
 #define METHOD_ARGS_BEGIN(class_name, method_name, required_num_args) \
     ZEND_BEGIN_ARG_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args)
 
+#define METHOD_ARGS_BEGIN_RETURN_INT(class_name, method_name, required_num_args) \
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_LONG, NULL, 0)
+
+#define METHOD_ARGS_BEGIN_RETURN_CALLABLE(class_name, method_name, required_num_args) \
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args, IS_CALLABLE, NULL, 0)
+
+#define METHOD_ARGS_BEGIN_RETURN_STRING(class_name, method_name, required_num_args) \
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args, IS_STRING, NULL, 0)
+
+#define METHOD_ARGS_BEGIN_RETURN_BOOL(class_name, method_name, required_num_args) \
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args, IS_STRING, NULL, 0)
+
+#define METHOD_ARGS_BEGIN_RETURN_OBJECT(class_name, method_name, required_num_args, return_class_name, allow_null) \
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args, IS_OBJECT, return_class_name, allow_null)
+
+#define METHOD_ARGS_BEGIN_RETURN_ARRAY(class_name, method_name, required_num_args) \
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args, IS_ARRAY, NULL, 0)
+
 #define METHOD_ARG(name, pass_by_ref)             ZEND_ARG_INFO(pass_by_ref, name)
 #define METHOD_ARG_LONG(name, pass_by_ref)        METHOD_ARG(name, pass_by_ref)
 #define METHOD_ARG_STRING(name, pass_by_ref)      METHOD_ARG(name, pass_by_ref)
@@ -182,7 +204,12 @@
 #define RETURN_ZVAL_FAST(z) { RETVAL_ZVAL_FAST(z); return; }
 #endif
 
-
+#ifdef PHP7
+#define  ZEND_PARSE_PARAMETERS_END_THROW(ION_InvaliArgumentException)
+#else
+#define  ZEND_PARSE_PARAMETERS_END_THROW(ION_InvalidArgumentException)  \
+            ZEND_PARSE_PARAMETERS_END(pion_throw_invalid_argument_exception(""))
+#endif
 #define PION_INI_BEGIN(module)		static const zend_ini_entry ini_entries[] = {
 #define PION_INI_END()		{ 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0, 0, NULL } };
 

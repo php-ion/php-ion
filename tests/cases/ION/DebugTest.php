@@ -26,7 +26,7 @@ class DebugTest extends TestCase {
      */
     public function testFcallVoid($arg1 = null, $arg2 = null, $arg3 = null) {
         $callback = function () {
-            return array_sum(func_get_args());
+            return new \StdClass;
         };
         $res = 1;
 
@@ -111,6 +111,7 @@ class DebugTest extends TestCase {
     }
 
     /**
+     *
      * @memcheck
      */
     public function testCbFetchMethod() {

@@ -19,7 +19,9 @@
 #define ION_PROMISE_HAS_PROGRESS  1<<8
 #define ION_PROMISE_AWAIT         1<<9
 #define ION_DEFERRED_AWAIT        1<<10
-#define ION_PROMISE_HAS        1<<10
+#define ION_PROMISE_HAS           1<<11
+
+#define ION_PROMISE_MAP           1<<12
 
 #define PION_PUSH_TO_ARRAY(array, counter, elem)              \
     if(counter) {                                             \
