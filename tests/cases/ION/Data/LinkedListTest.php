@@ -4,6 +4,10 @@ namespace ION\Data;
 
 use ION\Test\TestCase;
 
+/**
+ * Class LinkedListTest
+ * @package ION\Data
+ */
 class LinkedListTest extends TestCase {
     /**
      * @memcheck
@@ -17,6 +21,17 @@ class LinkedListTest extends TestCase {
     }
 
     /**
+     *
+     * @memcheck
+     */
+    public function testDtor() {
+        $list = new LinkedList();
+        $list->rPush("one");
+        $list->lPush("two");
+    }
+
+    /**
+     *
      * @memcheck
      */
     public function testOneItem() {
@@ -30,6 +45,7 @@ class LinkedListTest extends TestCase {
     }
 
     /**
+     * @group dev
      * @memcheck
      */
     public function testSomeItems() {
@@ -49,15 +65,6 @@ class LinkedListTest extends TestCase {
         $this->assertSame(1, $list->count());
         $this->assertSame("b", $list->rPop());
         $this->assertSame(0, $list->count());
-    }
-
-    /**
-     * @memcheck
-     */
-    public function testDtor() {
-        $list = new LinkedList();
-        $list->rPush("one");
-        $list->lPush("two");
     }
 
     /**

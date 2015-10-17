@@ -28,15 +28,15 @@ class TestCase extends \PHPUnit_Framework_TestCase {
         if (isset($doc['method']['memcheck'])) {
             $memory = 0; // allocate variable
             $zero = 0; // allocate zero value
-            $r = array(0, 0);  // allocate result
+            $r = array(0, 0, 0);  // allocate result
 
-            for ($i = 0; $i < 2; $i++) {
-                $memory = memory_get_usage();
+            for ($i = 0; $i < 3; $i++) {
+                $memory = memory_get_usage(0);
                 $this->data = [];
                 $this->runTest();
                 unset($this->data);
 //                ION::dispatch(ION::LOOP_NONBLOCK); // ammm, i think libevent free unpinned data-chunks after all
-                $r[$i] = memory_get_usage() - $memory;
+                $r[$i] = memory_get_usage(0) - $memory;
                 if ($r[$i] < 0) { // free memory o_O
                     $r[$i] = $zero; // this hack works - no one 8-bytes-memory-leak
                 }
@@ -156,5 +156,9 @@ class TestCase extends \PHPUnit_Framework_TestCase {
             var_dump($message);
         }
         ob_flush();
+    }
+
+    public function dummy() {
+
     }
 }

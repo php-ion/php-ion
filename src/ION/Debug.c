@@ -12,15 +12,15 @@ CLASS_METHOD(ION_Debug, fcallVoid) {
     zend_fcall_info        fci = empty_fcall_info;
     zend_fcall_info_cache  fcc = empty_fcall_info_cache;
 //#ifndef FAST_ZPP
-    PARSE_ARGS("f|zzz", &fci, &fcc, &arg1, &arg2, &arg3);
+//    PARSE_ARGS("f|zzz", &fci, &fcc, &arg1, &arg2, &arg3);
 //#else
-//    ZEND_PARSE_PARAMETERS_START(1, 4)
-//        Z_PARAM_FUNC(fci, fcc)
-//        Z_PARAM_OPTIONAL
-//        Z_PARAM_ZVAL(arg1)
-//        Z_PARAM_ZVAL(arg2)
-//        Z_PARAM_ZVAL(arg3)
-//    ZEND_PARSE_PARAMETERS_END();
+    ZEND_PARSE_PARAMETERS_START(1, 4)
+        Z_PARAM_FUNC(fci, fcc)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_ZVAL(arg1)
+        Z_PARAM_ZVAL(arg2)
+        Z_PARAM_ZVAL(arg3)
+    ZEND_PARSE_PARAMETERS_END();
 //#endif
     if(ZEND_NUM_ARGS() == 1) {
         r = pion_fcall_void_no_args(&fci, &fcc);
@@ -50,16 +50,16 @@ CLASS_METHOD(ION_Debug, cbCallVoid) {
     zend_fcall_info        fci = empty_fcall_info;
     zend_fcall_info_cache  fcc = empty_fcall_info_cache;
 //#ifndef FAST_ZPP
-    PARSE_ARGS("f|zzz", &fci, &fcc, &arg1, &arg2, &arg3);
+//    PARSE_ARGS("f|zzz", &fci, &fcc, &arg1, &arg2, &arg3);
 
 //#else
-//    ZEND_PARSE_PARAMETERS_START(1, 4)
-//        Z_PARAM_FUNC(fci, fcc)
-//        Z_PARAM_OPTIONAL
-//        Z_PARAM_ZVAL(arg1)
-//        Z_PARAM_ZVAL(arg2)
-//        Z_PARAM_ZVAL(arg3)
-//    ZEND_PARSE_PARAMETERS_END();
+    ZEND_PARSE_PARAMETERS_START(1, 4)
+        Z_PARAM_FUNC(fci, fcc)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_ZVAL(arg1)
+        Z_PARAM_ZVAL(arg2)
+        Z_PARAM_ZVAL(arg3)
+    ZEND_PARSE_PARAMETERS_END();
 //#endif
     cb = pion_cb_create(&fci, &fcc);
 
@@ -86,7 +86,9 @@ METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, globalCbCall) {
     zval *zarg = NULL;
-    PARSE_ARGS("z", &zarg);
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_ZVAL(zarg)
+    ZEND_PARSE_PARAMETERS_END();
     zval result = pion_cb_call_with_1_arg(global_cb, zarg);
     pion_cb_free(global_cb);
     if(Z_ISUNDEF(result)) {
@@ -103,7 +105,11 @@ METHOD_ARGS_END();
 CLASS_METHOD(ION_Debug, globalCbObjCall) {
     zval * obj = NULL;
     zval * zarg = NULL;
-    PARSE_ARGS("zz", &obj, &zarg);
+//    PARSE_ARGS("zz", &obj, &zarg);
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_ZVAL(obj)
+        Z_PARAM_ZVAL(zarg)
+    ZEND_PARSE_PARAMETERS_END();
     zval result = pion_cb_obj_call_with_1_arg(global_cb, obj, zarg);
     pion_cb_free(global_cb);
     global_cb = NULL;
@@ -120,10 +126,10 @@ METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, globalCbCallVoid) {
     zval *arg = NULL;
-    PARSE_ARGS("z", &arg);
-//    ZEND_PARSE_PARAMETERS_START(1, 1)
-//        Z_PARAM_ZVAL(arg)
-//    ZEND_PARSE_PARAMETERS_END();
+//    PARSE_ARGS("z", &arg);
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_ZVAL(arg)
+    ZEND_PARSE_PARAMETERS_END();
 
     int result = pion_cb_void_with_1_arg(global_cb, arg);
     pion_cb_free(global_cb);
@@ -139,10 +145,10 @@ METHOD_ARGS_END();
 CLASS_METHOD(ION_Debug, globalCbCreate) {
     zend_fcall_info        fci = empty_fcall_info;
     zend_fcall_info_cache  fcc = empty_fcall_info_cache;
-    PARSE_ARGS("f", &fci, &fcc);
-//    ZEND_PARSE_PARAMETERS_START(1, 1)
-//        Z_PARAM_FUNC(fci, fcc)
-//    ZEND_PARSE_PARAMETERS_END();
+//    PARSE_ARGS("f", &fci, &fcc);
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_FUNC(fci, fcc)
+    ZEND_PARSE_PARAMETERS_END();
     global_cb = pion_cb_create(&fci, &fcc);
 }
 
@@ -152,7 +158,10 @@ METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, globalCbCreateFromZval) {
     zval *zcb = NULL;
-    PARSE_ARGS("z", &zcb);
+//    PARSE_ARGS("z", &zcb);
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_ZVAL(zcb)
+    ZEND_PARSE_PARAMETERS_END();
     global_cb = pion_cb_create_from_zval(zcb);
 }
 
@@ -161,12 +170,13 @@ METHOD_ARGS_BEGIN(ION_Debug, globalCbCreateFromZval, 1)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, globalCbFetchMethod) {
-    char * class_name = NULL;
-    char * class_name_len = 0;
-    char * method_name = NULL;
-    char * method_name_len = 0;
-    PARSE_ARGS("ss", &class_name, &class_name_len, &method_name, &method_name_len);
-    global_cb = pion_cb_fetch_method(class_name, method_name);
+    zend_string * class_name = NULL;
+    zend_string * method_name = NULL;
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_STR(class_name)
+        Z_PARAM_STR(method_name)
+    ZEND_PARSE_PARAMETERS_END();
+    global_cb = pion_cb_fetch_method(class_name->val, method_name->val);
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, globalCbFetchMethod, 2)
@@ -174,6 +184,22 @@ METHOD_ARGS_BEGIN(ION_Debug, globalCbFetchMethod, 2)
     METHOD_ARG_STRING(method_name, 0)
 METHOD_ARGS_END();
 
+
+CLASS_METHOD(ION_Debug, sandbox) {
+    char * tmp = emalloc(sizeof(char)*7);
+    memcpy(tmp, "alloc1", sizeof("alloc1")+1);
+    efree(tmp);
+    efree(tmp);
+    char * tmp1 = emalloc(sizeof(char)*4);
+    memcpy(tmp1, "alloc2", sizeof("alloc1")+1);
+    char * tmp2 = emalloc(sizeof(char)*4);
+    memcpy(tmp2, "alloc2", sizeof("alloc1")+1);
+//    char * tmp3 = emalloc(sizeof(char)*7);
+//    char * tmp4 = emalloc(sizeof(char)*7);
+}
+
+
+METHOD_WITHOUT_ARGS(ION_Debug, sandbox)
 
 CLASS_METHODS_START(ION_Debug)
     METHOD(ION_Debug, fcallVoid,              ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
@@ -184,6 +210,7 @@ CLASS_METHODS_START(ION_Debug)
     METHOD(ION_Debug, globalCbCreate,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, globalCbCreateFromZval, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, globalCbFetchMethod,    ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, sandbox,               ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Debug) {

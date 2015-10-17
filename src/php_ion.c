@@ -92,7 +92,7 @@ PHP_MINIT_FUNCTION(ion) {
 //    ION(base)          = event_base_new();
 
     STARTUP_MODULE(ION_Debug);
-//    STARTUP_MODULE(ION_Data_LinkedList);
+    STARTUP_MODULE(ION_Data_LinkedList);
 //    STARTUP_MODULE(ION_Data_SkipList);
 //    STARTUP_MODULE(ION_Deferred);
 //    STARTUP_MODULE(ION_Promise_Result);
@@ -145,7 +145,7 @@ PHP_MINIT_FUNCTION(ion) {
 
 PHP_MSHUTDOWN_FUNCTION(ion) {
     SHUTDOWN_MODULE(ION_Debug);
-//    SHUTDOWN_MODULE(ION_Data_LinkedList);
+    SHUTDOWN_MODULE(ION_Data_LinkedList);
 //    SHUTDOWN_MODULE(ION_Data_SkipList);
 //    SHUTDOWN_MODULE(ION_Process);
 //    SHUTDOWN_MODULE(ION_Stream);

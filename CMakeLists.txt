@@ -33,8 +33,12 @@ set(ION_SOURCE_FILES
         src/pion/deferred.h
         src/pion.c
         src/ION/Debug.c
+        src/ION/Data/LinkedList.c
+        src/externals/SkipList/skiplist.c
+
         )
 
+#src/ION/Data/SkipList.c
 #src/ION/Data/LinkedList.c
 #src/externals/SkipList/skiplist.c
 #src/ION/Data/SkipList.c

@@ -37,6 +37,18 @@
 
 #define DEFINE_CLASS(class) ION_DEFINE_CLASS(class);
 
+#define get_object_instance(obj, type) \
+    (type *)(obj)
+//    (type *)((char*)(obj) - XtOffsetOf(type, std))
+
+#define get_instance(pz, type) \
+    get_object_instance(Z_OBJ_P(pz), type)
+
+#define get_this_instance(type) \
+    get_instance(getThis(), type)
+
+#define Z_REFLECTION_P(zv)  reflection_object_from_obj(Z_OBJ_P((zv)))
+
 #define getThisInstance()             zend_object_store_get_object(this_ptr TSRMLS_CC)
 #define getThisInstanceEx(obj_type)   (obj_type) zend_object_store_get_object(this_ptr TSRMLS_CC)
 
@@ -44,12 +56,6 @@
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, format, ##__VA_ARGS__) == FAILURE) {    \
         return;                                                                 \
     }
-
-#define NOT_ALLOWED_NULL 0
-#define ALLOWED_NULL 1
-
-#define IS_NOT_REF  0
-#define IS_REF  1
 
 #define CLASS_METHODS_START(class_name) \
     static const zend_function_entry m ## class_name[] = {
@@ -60,61 +66,44 @@
 
 #define RETURN_THIS()                           \
     if(return_value_used) {                     \
-        RETVAL_ZVAL(this_ptr, 1, NULL);          \
+        RETVAL_ZVAL(this_ptr, 1, 0);            \
     }                                           \
     return;
-
-
-#define ALLOC_STRING_ZVAL(var, str, dup)     \
-    ALLOC_INIT_ZVAL(var);   \
-    ZVAL_STRING(var, str, dup);
-
-#define ALLOC_STRINGL_ZVAL(var, str, len, dup)     \
-    ALLOC_INIT_ZVAL(var);   \
-    ZVAL_STRINGL(var, str, len, dup);
-
-#define ALLOC_EMPTY_STRING_ZVAL(var)     \
-    ALLOC_INIT_ZVAL(var);   \
-    ZVAL_EMPTY_STRING(var);
-
-#define ALLOC_LONG_ZVAL(var, num)   \
-    ALLOC_INIT_ZVAL(var);   \
-    ZVAL_LONG(var, num);
-
-#define ALLOC_BOOL_ZVAL(var, bval)   \
-    ALLOC_INIT_ZVAL(var);   \
-    ZVAL_BOOL(var, bval);
-
 
 /**
  * Define instance destructor function
  */
-#define CLASS_INSTANCE_DTOR(class) \
-    static void _ ## class ## Dtor(void *object TSRMLS_DC)
+#define CLASS_INSTANCE_FREE(class) \
+    static void _ ## class ## _free(zend_object * object TSRMLS_DC)
 
-#define getInstanceObject(obj_type)   ((obj_type) object);
+//#define getInstanceObject(obj_type)   ((obj_type) object);
 
 /**
  * Define instance constructor function
  */
-#define CLASS_INSTANCE_CTOR(class) \
-    static zend_object_value _ ## class ## Ctor(zend_class_entry * ce TSRMLS_DC)
+#define CLASS_INSTANCE_INIT(class) \
+    static zend_object * _ ## class ## _init(zend_class_entry * ce TSRMLS_DC)
 
 
 #define getInstance(zobj)   zend_object_store_get_object(zobj TSRMLS_CC)
 
+#define emalloc_instance(type) ecalloc(1, sizeof(type) + zend_object_properties_size(ce))
 
 #define RETURN_INSTANCE(class, object) \
-    zend_object_value instance;   \
-    zend_object_std_init(&(object->std), ce TSRMLS_CC); \
+    object->std.ce = ce; \
+    zend_object_std_init(&object->std, ce); \
     object_properties_init(&object->std, ce); \
-    instance.handle = zend_objects_store_put(object, (zend_objects_store_dtor_t) zend_objects_destroy_object, (zend_objects_free_object_storage_t) _ ## class ## Dtor, NULL TSRMLS_CC); \
-    instance.handlers = &h ## class; \
-    return instance;
+    object->std.handlers = &h ## class; \
+    return &object->std;
 
-#define PION_REGISTER_CLASS(class, class_name)                                    \
+#define _PION_REGISTER_CLASS(class, class_name)                                    \
     spl_register_std_class(&c ## class, class_name, _ ## class ## Ctor, m ## class TSRMLS_CC);   \
     memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
+
+#define PION_REGISTER_CLASS(class, class_name)     \
+    pion_register_std_class(&c ## class, class_name, _ ## class ## _init, m ## class TSRMLS_CC);   \
+    memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers)); \
+    h ## class.free_obj = _ ## class ## _free;
 
 #define PION_REGISTER_PLAIN_CLASS(class, class_name)                                    \
     spl_register_std_class(&c ## class, class_name, NULL, m ## class TSRMLS_CC);   \
@@ -212,5 +201,10 @@
 #endif
 #define PION_INI_BEGIN(module)		static const zend_ini_entry ini_entries[] = {
 #define PION_INI_END()		{ 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0, 0, NULL } };
+
+
+PHPAPI void pion_register_interface(zend_class_entry ** ppce, char * class_name, const zend_function_entry * functions);
+PHPAPI void pion_register_std_class(zend_class_entry ** ppce, char * class_name, void * obj_ctor, const zend_function_entry * function_list);
+PHPAPI void pion_register_sub_class(zend_class_entry ** ppce, zend_class_entry * parent_ce, char * class_name, void *obj_ctor, const zend_function_entry * function_list);
 
 #endif //PION_ENGINE_H

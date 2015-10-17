@@ -68,16 +68,8 @@ pion_cb * _pion_cb_fetch_method(const char * class_name, const char * method_nam
     pion_cb * cb;
     zend_function * fptr;
     zend_class_entry *ce;
-//    zend_class_entry **pce;
     char * function_name_lc;
-//    zend_string class_name_zs;
     zend_string * class_name_zs = zend_string_init(class_name, strlen(class_name), 0);
-//    class_name_zs.val = class_name;
-//    ZVAL_STRINGL
-//    class_name_zs.len = strlen(class_name);
-//    zend_string * method_name_zs = zend_string_init(method_name, strlen(method_name), 0);
-//    zend_str zend_string_init();
-//    ALLOC_STRING_ZVAL()
 
     ce = zend_lookup_class(class_name_zs);
     zend_string_free(class_name_zs);
@@ -85,22 +77,16 @@ pion_cb * _pion_cb_fetch_method(const char * class_name, const char * method_nam
     if (ce == NULL) {
         return NULL;
     }
-//    ce = *pce;
 
     function_name_lc = zend_str_tolower_dup(method_name, (int) strlen(method_name));
 
     fptr = zend_hash_str_find_ptr(&ce->function_table, function_name_lc, (int) strlen(method_name));
+
     if(fptr == NULL) {
         efree(function_name_lc);
         return NULL;
     }
     efree(function_name_lc);
-
-//    ALLOC_INIT_ZVAL(callable);
-//    array_init(callable);
-//    add_next_index_string(callable, class_name, 1);
-//    add_next_index_string(callable, method_name, 1);
-
     cb = emalloc(sizeof(pion_cb));
     cb->fci = emalloc(sizeof(empty_fcall_info));
     cb->fcc = emalloc(sizeof(empty_fcall_info_cache));
@@ -130,8 +116,6 @@ void _pion_cb_free(pion_cb *cb) {
     zval_ptr_dtor(&cb->fci->function_name);
     efree(cb->fcc);
     efree(cb->fci);
-//    if(cb->zcb) {
-//    }
     efree(cb);
 }
 
@@ -156,8 +140,6 @@ int _pion_verify_arg_type(pion_cb * cb, zend_uint arg_num, zval * arg TSRMLS_DC)
     if(!cur_arg_info->type_hint) {
         return SUCCESS;
     }
-
-//    return SUCCESS;
 
     if(cur_arg_info->class_name) {
         if (Z_TYPE_P(arg) == IS_OBJECT) {
