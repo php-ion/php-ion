@@ -45,7 +45,6 @@ class LinkedListTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testSomeItems() {

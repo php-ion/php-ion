@@ -64,10 +64,9 @@
         {NULL, NULL, NULL} \
     }
 
-#define RETURN_THIS()                           \
-    if(return_value_used) {                     \
-        RETVAL_ZVAL(this_ptr, 1, 0);            \
-    }                                           \
+#define RETURN_THIS()   \
+    RETVAL_OBJ(Z_OBJ_P(getThis()));            \
+    Z_ADDREF_P(return_value); \
     return;
 
 /**
@@ -86,6 +85,9 @@
 
 
 #define getInstance(zobj)   zend_object_store_get_object(zobj TSRMLS_CC)
+
+#define MAKE_COPY_ZVAL(copy, orig) \
+    copy = emalloc(zval);
 
 #define emalloc_instance(type) ecalloc(1, sizeof(type) + zend_object_properties_size(ce))
 
@@ -135,6 +137,14 @@
     METHOD_ARGS_BEGIN(class_name, method_name, 0)    \
     ZEND_END_ARG_INFO()
 
+#define METHOD_WITHOUT_ARGS_RETURN_INT(class_name, method_name) \
+    METHOD_ARGS_BEGIN_RETURN_INT(class_name, method_name, 0)    \
+    ZEND_END_ARG_INFO()
+
+#define METHOD_WITHOUT_ARGS_RETURN_ARRAY(class_name, method_name) \
+    METHOD_ARGS_BEGIN_RETURN_ARRAY(class_name, method_name, 0)    \
+    ZEND_END_ARG_INFO()
+
 #define METHOD_ARGS_BEGIN(class_name, method_name, required_num_args) \
     ZEND_BEGIN_ARG_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args)
 
@@ -142,19 +152,19 @@
     ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_LONG, NULL, 0)
 
 #define METHOD_ARGS_BEGIN_RETURN_CALLABLE(class_name, method_name, required_num_args) \
-    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args, IS_CALLABLE, NULL, 0)
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_CALLABLE, NULL, 0)
 
 #define METHOD_ARGS_BEGIN_RETURN_STRING(class_name, method_name, required_num_args) \
-    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args, IS_STRING, NULL, 0)
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_STRING, NULL, 0)
 
 #define METHOD_ARGS_BEGIN_RETURN_BOOL(class_name, method_name, required_num_args) \
-    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args, IS_STRING, NULL, 0)
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_STRING, NULL, 0)
 
 #define METHOD_ARGS_BEGIN_RETURN_OBJECT(class_name, method_name, required_num_args, return_class_name, allow_null) \
-    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args, IS_OBJECT, return_class_name, allow_null)
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_OBJECT, return_class_name, allow_null)
 
 #define METHOD_ARGS_BEGIN_RETURN_ARRAY(class_name, method_name, required_num_args) \
-    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args, IS_ARRAY, NULL, 0)
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_ARRAY, NULL, 0)
 
 #define METHOD_ARG(name, pass_by_ref)             ZEND_ARG_INFO(pass_by_ref, name)
 #define METHOD_ARG_LONG(name, pass_by_ref)        METHOD_ARG(name, pass_by_ref)

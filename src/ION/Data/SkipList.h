@@ -11,7 +11,7 @@ typedef struct _ion_skiplist {
     zend_object       std;
     struct skiplist  *list;
     long              count;
-} IONSkipList;
+} ion_skiplist;
 
 typedef struct _ion_skiplist_range {
     int      flags;
@@ -21,13 +21,13 @@ typedef struct _ion_skiplist_range {
 #ifdef ZTS
     void ***thread_ctx;
 #endif
-} IONSkipListRange;
+} ion_skiplist_range;
 
-static IONSkipListRange *IONSListGetRange(int flags, zval *result, zval *to TSRMLS_DC);
+static ion_skiplist_range * _ion_skiplist_get_range(int flags, zval * result, zval * to TSRMLS_DC);
+
+#define  ion_skiplist_get_range(flags, result, to) _ion_skiplist_get_range(flags, result, to TSRMLS_CC)
 
 #define ION_SKIPLIST_RANGE_WITH_KEYS 1
 #define ION_SKIPLIST_RANGE_WITHOUT_KEYS  0
-
-PHP_MINIT_FUNCTION(ION_Data_SkipList);
 
 #endif //ION_SKIPLIST_H

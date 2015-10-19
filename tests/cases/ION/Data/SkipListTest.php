@@ -6,6 +6,7 @@ use ION\Test\TestCase;
 
 class SkipListTest extends TestCase {
     /**
+     *
      * @memcheck
      */
     public function testCreate() {
@@ -29,7 +30,7 @@ class SkipListTest extends TestCase {
 
     /**
      * @memcheck
-     * @group testSetItem
+     *
      * @dataProvider providerSetItem
      * @param $items
      * @param $result
@@ -50,6 +51,7 @@ class SkipListTest extends TestCase {
     }
 
     /**
+     *
      * @memcheck
      */
     public function testGet() {
@@ -65,6 +67,7 @@ class SkipListTest extends TestCase {
     }
 
     /**
+     *
      * @memcheck
      * @group testGetAll
      */

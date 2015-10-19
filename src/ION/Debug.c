@@ -186,16 +186,14 @@ METHOD_ARGS_END();
 
 
 CLASS_METHOD(ION_Debug, sandbox) {
-    char * tmp = emalloc(sizeof(char)*7);
-    memcpy(tmp, "alloc1", sizeof("alloc1")+1);
-    efree(tmp);
-    efree(tmp);
-    char * tmp1 = emalloc(sizeof(char)*4);
-    memcpy(tmp1, "alloc2", sizeof("alloc1")+1);
-    char * tmp2 = emalloc(sizeof(char)*4);
-    memcpy(tmp2, "alloc2", sizeof("alloc1")+1);
-//    char * tmp3 = emalloc(sizeof(char)*7);
-//    char * tmp4 = emalloc(sizeof(char)*7);
+//    char * tmp = emalloc(sizeof(char)*7);
+//    memcpy(tmp, "alloc1", sizeof("alloc1")+1);
+//    efree(tmp);
+//    efree(tmp);
+//    char * tmp1 = emalloc(sizeof(char)*4);
+//    memcpy(tmp1, "all2", sizeof("all2")+1);
+//    char * tmp2 = emalloc(sizeof(char)*4);
+//    memcpy(tmp2, "all3", sizeof("all3")+1);
 }
 
 
@@ -210,7 +208,7 @@ CLASS_METHODS_START(ION_Debug)
     METHOD(ION_Debug, globalCbCreate,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, globalCbCreateFromZval, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, globalCbFetchMethod,    ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Debug, sandbox,               ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, sandbox,                ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Debug) {

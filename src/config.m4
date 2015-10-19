@@ -115,9 +115,10 @@ if test "$PHP_ION" != "no"; then
     externals/SkipList/skiplist.c
     ION/Debug.c
     ION/Data/LinkedList.c
+    ION/Data/SkipList.c
     "
 #
-#        ION/Data/SkipList.c
+#
 #        ION/Deferred.c
 #        ION/Promise/Result.c
 #        ION/Promise.c
