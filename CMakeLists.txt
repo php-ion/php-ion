@@ -30,13 +30,16 @@ set(ION_SOURCE_FILES
         src/pion/engine.c
         src/pion/linkedlist.c
         src/pion/net.c
-        src/pion/deferred.h
         src/pion.c
         src/ION/Debug.c
         src/ION/Data/LinkedList.c
         src/externals/SkipList/skiplist.c
         src/ION/Data/SkipList.c
-        )
+        src/ION/Promise.c
+        src/ION/ResolvablePromise.c
+        src/ION/Deferred.c
+        src/ION/PromiseMap.c
+        src/ION.c src/pion/promisor.c)
 
 #src/ION/Deferred.c
 #src/ION/Promise/Result.c

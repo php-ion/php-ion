@@ -2,21 +2,23 @@
 #define PION_ENGINE_H
 
 #include <ext/spl/spl_functions.h>
-#include <Zend/zend_generators.h>
+//#include <Zend/zend_generators.h>
 
 #ifndef zend_uint
 #define zend_uint uint32_t
 #endif
 
+typedef struct _class_info {
+    zend_class_entry * ce;
+    zend_object_handlers * handlers;
+} class_info;
+
 #define ion_get_class(class_name) _ion_get_class_ ## class_name()
 
-#define _ion_get_class_Generator() zend_ce_generator;
-
-#define CE(class) \
-    c ## class
-
-#define ion_class_entry(cls) \
-    c ## cls
+#define CE2(class) class ## _info.ce
+#define CE(class) c ## class
+#define ion_class_entry(class_name) ion_ce_ ## class_name
+#define ion_object_handlers(class_name) ion_oh_ ## class_name
 
 #define ion_class_handlers(cls) \
     h ## cls
@@ -38,7 +40,7 @@
 #define DEFINE_CLASS(class) ION_DEFINE_CLASS(class);
 
 #define get_object_instance(obj, type) \
-    (type *)(obj)
+    ((type *)(obj))
 //    (type *)((char*)(obj) - XtOffsetOf(type, std))
 
 #define get_instance(pz, type) \
@@ -47,7 +49,13 @@
 #define get_this_instance(type) \
     get_instance(getThis(), type)
 
-#define Z_REFLECTION_P(zv)  reflection_object_from_obj(Z_OBJ_P((zv)))
+#define Z_ISTRUE(zval)				(Z_TYPE(zval) == IS_TRUE)
+#define Z_ISTRUE_P(zval_p)			Z_ISTRUE(*(zval_p))
+
+#define Z_ISFALSE(zval)				(Z_TYPE(zval) == IS_FALSE)
+#define Z_ISFALSE_P(zval_p)			Z_ISFALSE(*(zval_p))
+
+#define Z_BVAL_P(z) (zend_bool)Z_LVAL_P(z)
 
 #define getThisInstance()             zend_object_store_get_object(this_ptr TSRMLS_CC)
 #define getThisInstanceEx(obj_type)   (obj_type) zend_object_store_get_object(this_ptr TSRMLS_CC)
@@ -57,8 +65,10 @@
         return;                                                                 \
     }
 
+#define CLASS_METHODS(class_name) methods_ ## class_name
+
 #define CLASS_METHODS_START(class_name) \
-    static const zend_function_entry m ## class_name[] = {
+    static const zend_function_entry methods_ ## class_name[] = {
 
 #define CLASS_METHODS_END \
         {NULL, NULL, NULL} \
@@ -68,6 +78,22 @@
     RETVAL_OBJ(Z_OBJ_P(getThis()));            \
     Z_ADDREF_P(return_value); \
     return;
+
+#define OBJ_ADDREF(obj) \
+    GC_REFCOUNT(obj)++;
+
+#define OBJ_DELREF(obj) \
+    do { \
+        zval _z; \
+        ZVAL_OBJ(&_z, obj); \
+        zval_ptr_dtor(&_z); \
+    } while(0)
+
+#define obj_ptr_dtor(obj) OBJ_DELREF(obj)
+
+#define RETURN_OBJ_ADDREF(obj) \
+    OBJ_ADDREF(obj); \
+    RETURN_OBJ(obj);
 
 /**
  * Define instance destructor function
@@ -92,43 +118,56 @@
 #define emalloc_instance(type) ecalloc(1, sizeof(type) + zend_object_properties_size(ce))
 
 #define RETURN_INSTANCE(class, object) \
-    object->std.ce = ce; \
     zend_object_std_init(&object->std, ce); \
     object_properties_init(&object->std, ce); \
-    object->std.handlers = &h ## class; \
+    object->std.handlers = &ion_oh_ ## class; \
     return &object->std;
 
-#define _PION_REGISTER_CLASS(class, class_name)                                    \
-    spl_register_std_class(&c ## class, class_name, _ ## class ## Ctor, m ## class TSRMLS_CC);   \
-    memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
+#define pion_register_class(class, class_name, init, methods) \
+    pion_register_std_class(&ion_ce_ ## class, class_name, init, methods)
+
+#define pion_register_extended_class(class, parent_class, class_name, init, methods) \
+    pion_register_sub_class(&ion_ce_ ## class, parent_class, class_name, init, methods)
+
+#define pion_init_std_object_handlers(class) \
+     memcpy(&ion_oh_ ## class, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+
+#define pion_set_object_handler(class, handler, funct)  \
+    ion_oh_ ## class.handler = funct;
 
 #define PION_REGISTER_CLASS(class, class_name)     \
-    pion_register_std_class(&c ## class, class_name, _ ## class ## _init, m ## class TSRMLS_CC);   \
+    pion_register_std_class(&ion_ce_ ## class, class_name, _ ## class ## _init, methods_ ## class TSRMLS_CC);   \
+    pion_init_std_object_handlers(class); \
+    pion_set_object_handler(class, free_obj, _ ## class ## _free);
+
+#define PION_REGISTER_STATIC_CLASS(class, class_name)                                       \
+    pion_register_std_class(&ion_ce_ ## class, class_name, NULL, methods_  ## class);       \
+    memcpy(&ion_oh_ ## class, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+
+#define PION_REGISTER_EXTENDED_CLASS(class, parent_class, class_name) \
+    pion_register_sub_class(&c ## class, c ## parent_class, class_name, _ ## class ## _init, methods_ ## class); \
     memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers)); \
     h ## class.free_obj = _ ## class ## _free;
 
-#define PION_REGISTER_PLAIN_CLASS(class, class_name)                                    \
-    spl_register_std_class(&c ## class, class_name, NULL, m ## class TSRMLS_CC);   \
-    memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
-
-#define PION_REGISTER_EXTENDED_CLASS_WITH_CTOR(class, parent_class, class_name) \
-    spl_register_sub_class(&c ## class, c ## parent_class, class_name, _ ## parent_class ## Ctor, m ## class TSRMLS_CC); \
-    memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
+#define PION_REGISTER_EXTENDED_CLASS_EX(class, parent_class, class_name) \
+    pion_register_sub_class(&c ## class, c ## parent_class, class_name, _ ## parent_class ## _init, methods_ ## class TSRMLS_CC); \
+    pion_init_std_object_handlers(class); \
+    pion_set_object_handler(class, free_obj, _ ## class ## _free);
 
 #define REGISTER_EXTENDED_CLASS(class, parent_class, class_name) \
     spl_register_sub_class(&c ## class, ion_get_class(parent_class), class_name, NULL, m ## class TSRMLS_CC); \
     memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
 
-#define REGISTER_VOID_EXTENDED_CLASS(class, parent_class, class_name, obj_ctor) \
-    spl_register_sub_class(&c ## class, c ## parent_class, class_name, obj_ctor, NULL TSRMLS_CC); \
-    memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
+#define PION_REGISTER_VOID_EXTENDED_CLASS(class, parent_class, class_name) \
+    spl_register_sub_class(&ion_ce_ ## class, parent_class, class_name, NULL, NULL); \
+    memcpy(&ion_oh_ ## class, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 
 
 #define PION_CLASS_CONST_LONG(class, const_name, value) \
-    zend_declare_class_constant_long(c ## class, const_name, sizeof(const_name)-1, (long)value TSRMLS_CC);
+    zend_declare_class_constant_long(ion_ce_ ## class, const_name, sizeof(const_name)-1, (long)value TSRMLS_CC);
 
 #define PION_CLASS_CONST_STRING(class, const_name, value) \
-    zend_declare_class_constant_string(c ## class, const_name, sizeof(const_name)-1, value TSRMLS_CC);
+    zend_declare_class_constant_string(ion_ce_ ## class, const_name, sizeof(const_name)-1, value TSRMLS_CC);
 
 #define CLASS_METHOD(class, method) \
     PHP_METHOD(class, method)
@@ -187,28 +226,10 @@
 #define METHOD(class_name, method_name, flags) \
     ZEND_ME(class_name, method_name, args ## class_name ## method_name, flags)
 
-// for old php
 
-#ifndef RETURN_ZVAL_FAST
-#define RETVAL_ZVAL_FAST(z) do {      \
-	zval *_z = (z);                   \
-	if (Z_ISREF_P(_z)) {              \
-		RETVAL_ZVAL(_z, 1, 0);        \
-	} else {                          \
-		zval_ptr_dtor(&return_value); \
-		Z_ADDREF_P(_z);               \
-		*return_value_ptr = _z;       \
-	}                                 \
-} while (0)
-#define RETURN_ZVAL_FAST(z) { RETVAL_ZVAL_FAST(z); return; }
-#endif
-
-#ifdef PHP7
-#define  ZEND_PARSE_PARAMETERS_END_THROW(ION_InvaliArgumentException)
-#else
 #define  ZEND_PARSE_PARAMETERS_END_THROW(ION_InvalidArgumentException)  \
             ZEND_PARSE_PARAMETERS_END(pion_throw_invalid_argument_exception(""))
-#endif
+
 #define PION_INI_BEGIN(module)		static const zend_ini_entry ini_entries[] = {
 #define PION_INI_END()		{ 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0, 0, NULL } };
 

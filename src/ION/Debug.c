@@ -1,6 +1,8 @@
-#include "Debug.h"
+#include "../pion.h"
 
 pion_cb * global_cb;
+zend_class_entry * ion_ce_ION_Debug;
+zend_object_handlers ion_oh_ION_Debug;
 DEFINE_CLASS(ION_Debug);
 
 CLASS_METHOD(ION_Debug, fcallVoid) {
@@ -110,7 +112,7 @@ CLASS_METHOD(ION_Debug, globalCbObjCall) {
         Z_PARAM_ZVAL(obj)
         Z_PARAM_ZVAL(zarg)
     ZEND_PARSE_PARAMETERS_END();
-    zval result = pion_cb_obj_call_with_1_arg(global_cb, obj, zarg);
+    zval result = pion_cb_obj_call_with_1_arg(global_cb, Z_OBJ_P(obj), zarg);
     pion_cb_free(global_cb);
     global_cb = NULL;
     if(Z_ISUNDEF(result)) {
@@ -212,7 +214,7 @@ CLASS_METHODS_START(ION_Debug)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Debug) {
-    PION_REGISTER_PLAIN_CLASS(ION_Debug, "ION\\Debug");
+    PION_REGISTER_STATIC_CLASS(ION_Debug, "ION\\Debug");
     return SUCCESS;
 }
 

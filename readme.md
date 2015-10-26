@@ -15,7 +15,7 @@ ION Extension [dev]
 * **Versioning:** [semver](http://semver.org/)
 * **Based:** [libevent2](http://libevent.org/)
 * **Composer:** [phpion/phpion](https://packagist.org/packages/phpion/phpion)
-* **Testing system:** [phpunit](https://phpunit.de/) (with memory leak detector)
+* **Testing system:** [phpunit](https://phpunit.de/) (+ memory leak detector)
 
 # Install
 
@@ -25,7 +25,7 @@ todo
 
 todo
 
-## Deferred object
+## Promises
 
 todo
 

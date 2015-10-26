@@ -3,13 +3,20 @@
 #define ION_FRAMEWORK_H
 
 #include "config.h"
+#include "php.h"
 #include "pion/exceptions.h"
 #include "pion/debug.h"
 #include "pion/linkedlist.h"
 #include "pion/callback.h"
 #include "pion/engine.h"
-#include "pion/deferred.h"
+#include "pion/promisor.h"
 #include "pion/net.h"
+
+#if defined(ZTS) && defined(COMPILE_DL_MYSQLI)
+ZEND_TSRMLS_CACHE_EXTERN();
+#endif
+
+typedef struct event event;
 
 typedef struct _ion_dns {
     struct evdns_base * evdns;
@@ -22,14 +29,17 @@ typedef struct _ion_proc {
     HashTable * childs;           // array of process handlers
 } ion_proc;
 
+#define ION_IN_LOOP 1
+
 /** main structure */
 typedef struct _ion_base {
-    struct event_base   * base;     // event base
+    struct event_base   * base;   // event base
     struct event_config * config; // event config
+    uint                  flags;
     ion_dns             * dns;    // event DNS base
     ion_proc            * proc;
-    long  i;                     // internal counter of timers
-    HashTable *timers;           // array of timers
+    long  i;                      // internal counter of timers
+    HashTable           * timers; // array of timers
 //    struct event *sigsegv;
 //    pion_llist *queue;                // queue of defers object
 #ifdef ZTS

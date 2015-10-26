@@ -1,21 +1,21 @@
 #include "exceptions.h"
 #include <spprintf.h>
 
-zend_object * _pion_exception_new(zend_class_entry * exception_ce, const char * message, long code TSRMLS_DC) {
+zend_object * pion_exception_new(zend_class_entry * exception_ce, const char * message, long code) {
     zval ex;
 //    A(ex);
     object_init_ex(&ex, exception_ce);
-    zend_class_entry *default_exception_ce = zend_exception_get_default(TSRMLS_C);
+//    zend_objects_new();
     if (message) {
-        zend_update_property_string(default_exception_ce, &ex, "message", sizeof("message")-1, message TSRMLS_CC);
+        zend_update_property_string(exception_ce, &ex, "message", sizeof("message")-1, message);
     }
     if (code) {
-        zend_update_property_long(default_exception_ce, &ex, "code", sizeof("code")-1, code TSRMLS_CC);
+        zend_update_property_long(exception_ce, &ex, "code", sizeof("code")-1, code);
     }
     return Z_OBJ(ex);
 }
 
-zend_object * _pion_exception_new_ex(zend_class_entry * exception_ce, long code TSRMLS_DC, const char * format, ...) {
+zend_object * pion_exception_new_ex(zend_class_entry * exception_ce, long code, const char * format, ...) {
     va_list arg;
     char *message;
     zend_object * exception;

@@ -17,6 +17,9 @@
 extern ion_base *ionBase;
 
 #ifdef COMPILE_DL_ION
+#ifdef ZTS
+    ZEND_TSRMLS_CACHE_DEFINE();
+#endif
 ZEND_GET_MODULE(ion);
 #endif
 
@@ -92,13 +95,14 @@ PHP_MINIT_FUNCTION(ion) {
 //    ION(base)          = event_base_new();
 
     STARTUP_MODULE(ION_Debug);
-    STARTUP_MODULE(ION_Data_LinkedList);
+//    STARTUP_MODULE(ION_Data_LinkedList);
 //    STARTUP_MODULE(ION_Data_SkipList);
-//    STARTUP_MODULE(ION_Deferred);
-//    STARTUP_MODULE(ION_Promise_Result);
-//    STARTUP_MODULE(ION_Promise);
-//    STARTUP_MODULE(ION_ResolvablePromise);
-//    STARTUP_MODULE(ION);
+    STARTUP_MODULE(promisor);
+    STARTUP_MODULE(ION_Promise);
+    STARTUP_MODULE(ION_ResolvablePromise);
+    STARTUP_MODULE(ION_Deferred);
+    STARTUP_MODULE(ION_PromiseMap);
+    STARTUP_MODULE(ION);
 //    STARTUP_MODULE(ION_DNS);
 //    STARTUP_MODULE(ION_Process);
 //    STARTUP_MODULE(ION_Stream);
@@ -145,16 +149,17 @@ PHP_MINIT_FUNCTION(ion) {
 
 PHP_MSHUTDOWN_FUNCTION(ion) {
     SHUTDOWN_MODULE(ION_Debug);
-    SHUTDOWN_MODULE(ION_Data_LinkedList);
+//    SHUTDOWN_MODULE(ION_Data_LinkedList);
 //    SHUTDOWN_MODULE(ION_Data_SkipList);
 //    SHUTDOWN_MODULE(ION_Process);
 //    SHUTDOWN_MODULE(ION_Stream);
 //    SHUTDOWN_MODULE(ION_DNS);
-//    SHUTDOWN_MODULE(ION_ResolvablePromise);
-//    SHUTDOWN_MODULE(ION_Promise);
-//    SHUTDOWN_MODULE(ION_Promise_Result);
-//    SHUTDOWN_MODULE(ION_Deferred);
-//    SHUTDOWN_MODULE(ION);
+    SHUTDOWN_MODULE(ION_PromiseMap);
+    SHUTDOWN_MODULE(ION_Deferred);
+    SHUTDOWN_MODULE(ION_ResolvablePromise);
+    SHUTDOWN_MODULE(ION_Promise);
+    SHUTDOWN_MODULE(promisor);
+    SHUTDOWN_MODULE(ION);
 
 //    event_base_free( ION(base) );
 //    pefree(ionBase, 1);

@@ -1,22 +1,26 @@
-#include "ResolvablePromise.h"
-#include "Promise.h"
+#include "../pion.h"
 
-ION_DEFINE_CLASS(ION_ResolvablePromise);
+zend_class_entry * ion_ce_ION_ResolvablePromise;
+zend_object_handlers ion_oh_ION_ResolvablePromise;
 
 
 /** public function ION\ResolvablePromise::done(mixed $data) : self */
 CLASS_METHOD(ION_ResolvablePromise, done) {
-    ion_promise * promise = getThisInstance();
+    ion_promisor * promise = get_this_instance(ion_promisor);
     zval *data = NULL;
-    if(promise->flags & ION_DEFERRED_FINISHED) {
-        ThrowLogic("Failed to cancel finished defer-event", -1);
+    if(promise->flags & ION_PROMISOR_FINISHED) {
+        zend_throw_error(NULL, "Failed to cancel finished defer-event", -1);
         return;
     }
-    if(promise->flags & ION_DEFERRED_INTERNAL) {
-        ThrowLogic("Internal defer-event cannot be finished from user-space", -1);
+    if(promise->flags & ION_PROMISOR_INTERNAL) {
+        zend_throw_error(NULL, "Internal defer-event cannot be finished from user-space", -1);
+        return;
     }
-    PARSE_ARGS("z", &data);
-    ion_promise_done(getThis(), data);
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_ZVAL(data)
+    ZEND_PARSE_PARAMETERS_END();
+
+    ion_promisor_done(Z_OBJ_P(getThis()), data);
     RETURN_THIS();
 }
 
@@ -24,25 +28,28 @@ METHOD_ARGS_BEGIN(ION_ResolvablePromise, done, 1)
     METHOD_ARG(data, 0)
 METHOD_ARGS_END()
 
-/** public function ION\ResolvablePromise::fail(Exception $error) : self */
+/** public function ION\ResolvablePromise::fail(Throwable $error) : self */
 CLASS_METHOD(ION_ResolvablePromise, fail) {
-    ion_promise * promise = getThisInstance();
-    zval *error;
-    if(promise->flags & ION_DEFERRED_FINISHED) {
-        ThrowLogic("Failed to cancel finished defer-event", -1);
+    ion_promisor * promise = get_this_instance(ion_promisor);
+    zval * error = NULL;
+    if(promise->flags & ION_PROMISOR_FINISHED) {
+        zend_throw_error(NULL, "Failed to cancel finished defer-event", -1);
         return;
     }
-    if(promise->flags & ION_DEFERRED_INTERNAL) {
-        ThrowLogic("Internal defer-event cannot be finished from user-space", -1);
+    if(promise->flags & ION_PROMISOR_INTERNAL) {
+        zend_throw_error(NULL, "Internal defer-event cannot be finished from user-space", -1);
         return;
     }
-    PARSE_ARGS("z", &error);
-    ion_promise_fail(getThis(), error);
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_ZVAL(error)
+    ZEND_PARSE_PARAMETERS_END();
+
+    ion_promisor_fail(Z_OBJ_P(getThis()), error);
     RETURN_THIS();
 }
 
 METHOD_ARGS_BEGIN(ION_ResolvablePromise, fail, 1)
-    METHOD_ARG_OBJECT(data, Exception, 0, 0)
+    METHOD_ARG_OBJECT(data, Throwable, 0, 0)
 METHOD_ARGS_END()
 
 
@@ -52,7 +59,10 @@ CLASS_METHODS_START(ION_ResolvablePromise)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_ResolvablePromise) {
-    REGISTER_EXTENDED_CLASS(ION_ResolvablePromise, ION_Promise, "ION\\ResolvablePromise");
+    pion_register_extended_class(ION_ResolvablePromise, ion_class_entry(ION_Promise), "ION\\ResolvablePromise", ion_promise_init, CLASS_METHODS(ION_ResolvablePromise));
+    pion_init_std_object_handlers(ION_ResolvablePromise);
+    pion_set_object_handler(ION_ResolvablePromise, free_obj, ion_promisor_free);
+    pion_set_object_handler(ION_ResolvablePromise, clone_obj, ion_promisor_clone_obj);
     return SUCCESS;
 }
 

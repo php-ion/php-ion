@@ -110,15 +110,20 @@ if test "$PHP_ION" != "no"; then
     pion/callback.c
     pion/engine.c
     pion/linkedlist.c
+    pion/promisor.c
     pion/net.c
     pion.c
     externals/SkipList/skiplist.c
     ION/Debug.c
-    ION/Data/LinkedList.c
-    ION/Data/SkipList.c
+    ION/Promise.c
+    ION/ResolvablePromise.c
+    ION/Deferred.c
+    ION/PromiseMap.c
+    ION.c
     "
 #
-#
+#ION/Data/LinkedList.c
+#     ION/Data/SkipList.c
 #        ION/Deferred.c
 #        ION/Promise/Result.c
 #        ION/Promise.c
@@ -127,7 +132,7 @@ if test "$PHP_ION" != "no"; then
 #        ION/DNS.c
 #        ION/Process.c
 #        ION/Stream.c
-    PHP_NEW_EXTENSION(ion, $ion_src, $ext_shared,, $CFLAGS)
+    PHP_NEW_EXTENSION(ion, $ion_src, $ext_shared,, $CFLAGS -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1)
 
     PHP_SUBST(ION_SHARED_LIBADD)
 fi

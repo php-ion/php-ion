@@ -1,16 +1,11 @@
 <?php
 
 namespace ION;
-
 use ION\Promise\Result;
 
-class Promise {
+declare(strict_types=1);
 
-    /**
-     * @param mixed $data
-     * @return Result
-     */
-    public static function result($data) {}
+class Promise {
 
 //    public function __construct(callable $done, callable $progress = null) {}
 //    public function __construct(callable $done = null, callable $fail = null, callable $progress = null) {}
@@ -22,35 +17,47 @@ class Promise {
      * @param callable $progress
      * @return Promise
      */
-    public function then(callable ...$callbacks) {}
+    public function then(callable ...$callbacks) : Promise {}
 
     /**
      * @param callable $callback
      * @return Promise
      */
-    public function onDone(callable $callback) {}
+    public function onDone(callable $callback) : Promise {}
 
     /**
      * @param callable $callback
      * @return Promise
      */
-    public function onFail(callable $callback) {}
+    public function onFail(callable $callback) : Promise {}
 
     /**
      * @param callable $callback
      * @return Promise
      */
-    public function onProgress(callable $callback) {}
+    public function onProgress(callable $callback) : Promise {}
 
     /**
+     * @todo
+     */
+    public function getState() : string {}
+
+    /**
+     * @todo
+     */
+    public function getFlags() : int {}
+
+    /**
+     * @todo
+     * @param mixed $info
      * @return Promise
      */
-//    public function cancel() {}
+    public function notify(mixed $info) : Promise {}
 
     /**
-     * @param int|float $sec
-     * @return self
+     * @param float $sec
+     * @return Promise
      */
-//    public function timeout($sec) {}
+    public function timeout(float $sec) : Promise {}
 
 }

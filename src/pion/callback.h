@@ -23,7 +23,7 @@ pion_cb * _pion_cb_create_from_zval(zval * zcb TSRMLS_DC);
 pion_cb * _pion_cb_fetch_method(const char * class_name, const char * method_name TSRMLS_DC);
 void      _pion_cb_free(pion_cb *cb TSRMLS_DC);
 int       _pion_verify_arg_type(pion_cb * cb, zend_uint arg_num, zval * arg TSRMLS_DC);
-
+pion_cb * pion_cb_dup(pion_cb * proto);
 
 #define pion_cb_create(fci, fcc) _pion_cb_create(fci, fcc TSRMLS_CC)
 #define pion_cb_create_from_zval(zcb) _pion_cb_create_from_zval(zcb TSRMLS_CC)
@@ -65,11 +65,11 @@ zval _pion_cb_call_with_2_args(pion_cb *cb, zval *arg1, zval *arg2 TSRMLS_DC);
 zval _pion_cb_call_with_3_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC);
 zval _pion_cb_call_with_4_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3, zval *arg4 TSRMLS_DC);
 
-zval _pion_cb_obj_call(pion_cb *cb, zval * obj, int num, zval *args TSRMLS_DC);
-zval _pion_cb_obj_call_with_1_arg(pion_cb * cb, zval * obj, zval* arg1 TSRMLS_DC);
-zval _pion_cb_obj_call_with_2_args(pion_cb *cb, zval * obj, zval *arg1, zval *arg2 TSRMLS_DC);
-zval _pion_cb_obj_call_with_3_args(pion_cb *cb, zval * obj, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC);
-zval _pion_cb_obj_call_with_4_args(pion_cb *cb, zval * obj, zval *arg1, zval *arg2, zval *arg3, zval *arg4 TSRMLS_DC);
+zval _pion_cb_obj_call(pion_cb *cb, zend_object * obj, int num, zval *args TSRMLS_DC);
+zval _pion_cb_obj_call_with_1_arg(pion_cb * cb, zend_object * obj, zval* arg1 TSRMLS_DC);
+zval _pion_cb_obj_call_with_2_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2 TSRMLS_DC);
+zval _pion_cb_obj_call_with_3_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC);
+zval _pion_cb_obj_call_with_4_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2, zval *arg3, zval *arg4 TSRMLS_DC);
 
 #define pion_cb_call(cb, num_args, args) \
     _pion_cb_call(cb, num_args, args TSRMLS_CC)

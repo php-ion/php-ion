@@ -3,11 +3,8 @@
 
 #include "ION.h"
 
-//#define event struct event
-
-typedef struct event ev;
-
-DEFINE_CLASS(ION);
+zend_class_entry * ion_ce_ION;
+zend_object_handlers ion_oh_ION;
 ion_base *ionBase;
 void ion_reinit(long flags) {
     IONF("Reinit event loop: %d. Cleanup exec events...", (int)flags);
@@ -35,8 +32,10 @@ void ion_reinit(long flags) {
 
 /** public function ION::reinit(int $flags = 0) : self */
 CLASS_METHOD(ION, reinit) {
-    long flags = 0;
-    PARSE_ARGS("|l", &flags);
+    zend_long flags = 0;
+    ZEND_PARSE_PARAMETERS_START(0,1)
+        Z_PARAM_LONG(flags)
+    ZEND_PARSE_PARAMETERS_END();
 
     ion_reinit(flags);
 }
@@ -44,17 +43,27 @@ METHOD_ARGS_BEGIN(ION, reinit, 1)
     METHOD_ARG(flags, 0)
 METHOD_ARGS_END()
 
-/** public function ION::dispatch(int $flags = 0) : self */
+/** public function ION::dispatch(int $flags = 0) : bool */
 CLASS_METHOD(ION, dispatch) {
-    long flags = 0;
+    zend_long flags = 0;
     int ret;
 
-    PARSE_ARGS("|ld", &flags);
+    if(ION(flags) & ION_IN_LOOP) {
+        zend_throw_error(NULL, "Dispatching in progress", 1);
+        return;
+    }
 
+    ZEND_PARSE_PARAMETERS_START(0,1)
+        Z_PARAM_LONG(flags)
+    ZEND_PARSE_PARAMETERS_END();
+
+    ION(flags) |= ION_IN_LOOP;
     ret = event_base_loop(ION(base), (int)flags);
+    ION(flags) &= ~ION_IN_LOOP;
 
     if(ret == -1) {
-        ThrowRuntime("Dispatching runtime error", 1);
+        zend_throw_error(NULL, "Dispatching runtime error", 1);
+        return;
     }
 
     if(ret) {
@@ -70,12 +79,15 @@ METHOD_ARGS_END()
 
 /** public function ION::stop(double $timeout = -1) : self */
 CLASS_METHOD(ION, stop) {
-    double timeout = 0.0;
+    double timeout = -1.0;
     struct timeval time;
-    PARSE_ARGS("|d", &timeout);
+
+    ZEND_PARSE_PARAMETERS_START(0,1)
+        Z_PARAM_DOUBLE(timeout)
+    ZEND_PARSE_PARAMETERS_END();
 
     if(timeout > 0) {
-        time.tv_usec = (int)((int)(timeout*1000000) % 1000000);
+        time.tv_usec = ((int)(timeout*1000000) % 1000000);
         time.tv_sec = (int)timeout;
         event_base_loopexit(ION(base), &time);
     } else {
@@ -88,42 +100,49 @@ METHOD_ARGS_BEGIN(ION, stop, 0)
 METHOD_ARGS_END()
 
 static void _timer_done(evutil_socket_t fd, short flags, void * arg) {
-    zval * zdeferred = (zval * )arg;
-    TSRMLS_FETCH();
-    ion_deferred_done_true(zdeferred);
+    ion_promisor * deferred = get_object_instance(arg, ion_promisor);
+//    zval * zdeferred = (zval * )arg;
+    ion_promisor_done_true(&deferred->std);
 
     ION_CHECK_LOOP();
 //    zval_ptr_dtor(&zdeferred);
 }
 
-static void _timer_dtor(void * object, zval * zdeferred TSRMLS_DC) {
-    ev * timer = (ev *) object;
+static void _timer_dtor(zend_object * object) {
+    ion_promisor * deferred = get_object_instance(object, ion_promisor);
+    event * timer = (event *) deferred->object;
     event_del(timer);
     event_free(timer);
-    zval_ptr_dtor(&zdeferred);
+//    zval_ptr_dtor(&zdeferred);
 }
 
 /** public function ION::await(double $time) : ION\Deferred */
 CLASS_METHOD(ION, await) {
-    zval *zDeferred = NULL;
+    zend_object * deferred;
     double timeout = 0.0;
     struct timeval tv = { 0, 0 };
     PARSE_ARGS("d", &timeout);
     if(timeout < 0) {
-        ThrowRuntime("timeout sould be unsigned", 1);
+        zend_throw_error(ion_class_entry(InvalidArgumentException), "Timeout sould be unsigned");
         return;
     }
-    tv.tv_usec = (int)((int)(timeout*1000000) % 1000000);
+    tv.tv_usec = ((int)(timeout*1000000) % 1000000);
     tv.tv_sec = (int)timeout;
-    zDeferred = ion_deferred_new_ex(NULL);
-    ev * timer = event_new(ION(base), -1, EV_TIMEOUT, _timer_done, zDeferred);
+    deferred = ion_promisor_deferred_new_ex(NULL);
+//    zDeferred = ion_deferred_new_ex(NULL);
+    event * timer = event_new(ION(base), -1, EV_TIMEOUT, _timer_done, deferred);
     if(event_add(timer, &tv) == FAILURE) {
         event_del(timer);
         event_free(timer);
-        ion_deferred_free(zDeferred);
+        obj_ptr_dtor(deferred);
+        zend_throw_error(ion_class_entry(ION_RuntimeException), "Event failed");
+        return;
+//        ion_deferred_free(zDeferred);
     } else {
-        ion_deferred_store(zDeferred, timer, _timer_dtor);
-        RETURN_ZVAL(zDeferred, 1, 0);
+        ion_promisor_store(deferred, timer);
+        ion_promisor_dtor(deferred, _timer_dtor);
+//        ion_deferred_store(zDeferred, timer, _timer_dtor);
+        RETURN_OBJ_ADDREF(deferred);
     }
 
 }
@@ -140,7 +159,7 @@ CLASS_METHODS_START(ION)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION) {
-    PION_REGISTER_PLAIN_CLASS(ION, "ION");
+    PION_REGISTER_STATIC_CLASS(ION, "ION");
     PION_CLASS_CONST_STRING(ION, "VERSION",        ION_VERSION);
     PION_CLASS_CONST_STRING(ION, "ENGINE",         ION_EVENT_ENGINE);
     PION_CLASS_CONST_STRING(ION, "ENGINE_VERSION", event_get_version());

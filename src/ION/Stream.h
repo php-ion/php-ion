@@ -58,8 +58,9 @@ typedef struct _ion_stream_group {
 } ion_stream_group;
 
 typedef struct _ion_stream_token {
-    char           * token;   // token string
-    long             token_length; // strlen of token
+    zend_string    * token;
+//    char           * token;   // token string
+//    long             token_length; // strlen of token
     long             length;
     long             offset;
     short            flags;
@@ -70,22 +71,30 @@ const ion_stream_token empty_stream_token = { NULL, 0, 0, 0, ION_STREAM_MODE_TRI
 
 typedef struct _ion_stream {
     zend_object        std;
-    uint               state;   // flags
+    zend_uint          state;   // flags
     bevent           * buffer;  // input and output bufferevent
     ion_stream_group * group;
     size_t             length;  // bytes for reading
     size_t             input_size;
     ion_stream_token * token;
-    zval             * self;
-    zval             * read;    // read deferred object
-    zval             * flush;   // state deferred object
-    zval             * connect; // connection deferred object
-    zval             * closing; // closing deferred object
-    pion_cb * on_data;
-    char             * name_self;    // cache of getsockname
-    char             * name_remote;  // cache of getpeername
+    zend_object      * read;
+    zend_object      * flush;
+    zend_object      * connect;
+    zend_object      * shutdown;
+    zend_object      * on_data;
+    zend_string      * name_self;
+    zend_string      * name_remote;
+
+//    zval             * self;
+//    zval             * read;    // read deferred object
+//    zval             * flush;   // state deferred object
+//    zval             * connect; // connection deferred object
+//    zval             * closing; // closing deferred object
+//    pion_cb * on_data;
+//    char             * name_self;    // cache of getsockname
+//    char             * name_remote;  // cache of getpeername
 #ifdef ZTS
-    void ***thread_ctx;
+    void           *** thread_ctx;
 #endif
 } ion_stream;
 
