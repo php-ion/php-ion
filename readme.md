@@ -19,7 +19,14 @@ ION Extension [dev]
 
 # Install
 
-todo
+```
+git clone https://github.com/php-ion/php-ion.git
+cd php-ion
+phpize
+./configure --with-ion
+make
+make install
+```
 
 # Features
 
@@ -27,15 +34,52 @@ todo
 
 ## Promises
 
-todo
+```php
+use ION\Promise;
+use ION\ResolvablePromise;
+use ION\Deferred;
+use ION\PromiseMap;
+```
 
-### Coroutines
+```php
 
-todo
+App::someEventualAction()
+    ->then(function () {})
+    ->onFail(function() {})
+    ->onDone(function() {})
+    ->then(/* ... */)
+    // ...
+
+```
+
+```php
+App::someEventualAction()
+    ->then(function ($x) {
+        // ...
+    }, function (Throwable $error)) {
+        // ...
+    }, function ($info) {
+        // ...
+    })
+
+```
+
+
 
 ## Timers
 
-todo
+```php
+use ION;
+use ION\Promise;
+```
+
+```php
+ION::await(0.4)->then() // ...
+```
+
+```php
+ION::interval(30)->then() // ...
+```
 
 ## Process
 
