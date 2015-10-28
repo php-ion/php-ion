@@ -151,14 +151,35 @@ CLASS_METHOD(ION, await) {
 }
 
 METHOD_ARGS_BEGIN(ION, await, 1)
-    METHOD_ARG(time, 0)
+                METHOD_ARG(time, 0)
+METHOD_ARGS_END()
+
+/** public function ION::startInterval(double $time, string $name = NULL) : ION\Deferred */
+CLASS_METHOD(ION, startInterval) {
+
+}
+
+METHOD_ARGS_BEGIN(ION, startInterval, 1)
+    METHOD_ARG_DOUBLE(time, 0)
+    METHOD_ARG_STRING(name, 0)
+METHOD_ARGS_END()
+
+/** public function ION::stopInterval(string $name) : bool */
+CLASS_METHOD(ION, stopInterval) {
+
+}
+
+METHOD_ARGS_BEGIN_RETURN_BOOL(ION, stopInterval, 1)
+    METHOD_ARG_STRING(name, 0)
 METHOD_ARGS_END()
 
 CLASS_METHODS_START(ION)
-    METHOD(ION, reinit,   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION, dispatch, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION, stop,     ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION, await,    ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION, reinit,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION, dispatch,      ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION, stop,          ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION, await,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION, startInterval, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION, stopInterval,  ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION) {

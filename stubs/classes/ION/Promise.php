@@ -1,7 +1,6 @@
 <?php
 
 namespace ION;
-use ION\Promise\Result;
 
 declare(strict_types=1);
 

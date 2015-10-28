@@ -43,8 +43,50 @@ PHP_RSHUTDOWN_FUNCTION(promisor) {
 }
 
 
-static zend_always_inline zval ion_promisor_invoke_cb(ion_promisor * promisor, zval data, int type) {
+static zend_always_inline int ion_promisor_invoke(ion_promisor * promisor, zval * retval, zval * data, int type) {
+    int result_type = ION_PROMISOR_DONE;
+    if (type & ION_PROMISOR_DONE) {
+        if (promisor->done) {
+            if((promisor->flags & ION_PROMISOR_HAS_DONE_WITH_FAIL) && pion_cb_required_num_args(promisor->done) == 2) {
+                zval helper;
+                ZVAL_NULL(&helper);
+                // second argument may has incompatible type hint
+                if(pion_verify_arg_type(promisor->done, 1, &helper) != SUCCESS) {
+                    zend_error(E_NOTICE, "Second argument has incompatible type hint");
+                } else if (pion_verify_arg_type(promisor->done, 0, data) == SUCCESS) {
+                    *retval = pion_cb_call_with_2_args(promisor->done, data, &helper);
+                }
+            } else if (pion_cb_num_args(promisor->done)) { // has arguments
+                if (pion_verify_arg_type(promisor->done, 0, data) == SUCCESS) {
+                    *retval = pion_cb_call_with_1_arg(promisor->done, data);
+                }
+            } else {
+                *retval = pion_cb_call_without_args(promisor->done);
+            }
+        }
+    } else if(!(promisor->flags & ION_PROMISOR_TYPE_DEFERRED) // deferred has no fail callback but has cancel callback
+              || (type & ION_PROMISOR_CANCELED && promisor->flags & ION_PROMISOR_TYPE_DEFERRED)) {
 
+        if (promisor->fail) {
+            if (pion_verify_arg_type(promisor->fail, 0, data) == SUCCESS) {
+                *retval = pion_cb_call_with_1_arg(promisor->fail, data);
+            }
+        } else if (promisor->flags & ION_PROMISOR_HAS_DONE_WITH_FAIL) {
+            if (pion_verify_arg_type(promisor->done, 1, data) == SUCCESS) {
+                zval helper;
+                ZVAL_NULL(&helper);
+                // first argument may has incompatible type hint
+                if(pion_verify_arg_type(promisor->done, 0, &helper) != SUCCESS) {
+                    zend_error(E_NOTICE, "First argument has incompatible type hint");
+                }
+                *retval = pion_cb_call_with_2_args(promisor->done, &helper, data);
+            }
+        } else {
+            result_type = ION_PROMISOR_FAILED;
+        }
+    }
+
+    return result_type;
 }
 
 void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
@@ -52,12 +94,11 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
     zval           zpromise;
     zval           retval;
     zval           result;
-    int          result_type = ION_PROMISOR_DONE;
+    int            result_type = 0;
     zend_bool      resolved;
     zend_class_entry * object_ce         = NULL;
     zend_class_entry * deferred_ce       = NULL;
     zend_class_entry * promise_ce        = ion_class_entry(ION_Promise);
-    zend_class_entry * promise_map_ce    = ion_class_entry(ION_PromiseMap);
     zend_class_entry * generator_ce      = ion_class_entry(Generator);
 
     ZVAL_OBJ(&zpromise, promise_obj);
@@ -69,46 +110,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
         promise->await = NULL;
         zval_ptr_dtor(&zpromise);
     } else {
-        if (type & ION_PROMISOR_DONE) {
-            if (promise->done) {
-                if((promise->flags & ION_PROMISOR_HAS_DONE_WITH_FAIL) && pion_cb_required_num_args(promise->done) == 2) {
-                    zval helper;
-                    ZVAL_NULL(&helper);
-                    // second argument may has incompatible type hint
-                    if(pion_verify_arg_type(promise->done, 1, &helper) != SUCCESS) {
-                        zend_error(E_NOTICE, "Second argument has incompatible type hint");
-                    } else if (pion_verify_arg_type(promise->done, 0, data) == SUCCESS) {
-                        retval = pion_cb_call_with_2_args(promise->done, data, &helper);
-                    }
-                } else if (pion_cb_num_args(promise->done)) { // has arguments
-                    if (pion_verify_arg_type(promise->done, 0, data) == SUCCESS) {
-                        retval = pion_cb_call_with_1_arg(promise->done, data);
-                    }
-                } else {
-                    retval = pion_cb_call_without_args(promise->done);
-                }
-            }
-        } else if(!(promise->flags & ION_PROMISOR_TYPE_DEFERRED) // deferred has no fail callback but has cancel callback
-            || (type & ION_PROMISOR_CANCELED && promise->flags & ION_PROMISOR_TYPE_DEFERRED)) {
-
-            if (promise->fail) {
-                if (pion_verify_arg_type(promise->fail, 0, data) == SUCCESS) {
-                    retval = pion_cb_call_with_1_arg(promise->fail, data);
-                }
-            } else if (promise->flags & ION_PROMISOR_HAS_DONE_WITH_FAIL) {
-                if (pion_verify_arg_type(promise->done, 1, data) == SUCCESS) {
-                    zval helper;
-                    ZVAL_NULL(&helper);
-                    // first argument may has incompatible type hint
-                    if(pion_verify_arg_type(promise->done, 0, &helper) != SUCCESS) {
-                        zend_error(E_NOTICE, "First argument has incompatible type hint");
-                    }
-                    retval = pion_cb_call_with_2_args(promise->done, &helper, data);
-                }
-            } else {
-                result_type = ION_PROMISOR_FAILED;
-            }
-        }
+        result_type = ion_promisor_invoke(promise, &retval, data, type);
     }
 
     if(Z_ISUNDEF(retval)) {
@@ -123,6 +125,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
     } else {
         result = retval;
     }
+    ZEND_ASSERT(Z_TYPE(result));
     if(!Z_ISUNDEF(result)) {
         resolved = 1;
         watch_result:
@@ -136,11 +139,13 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
                 promise->generator = Z_OBJ(result);
                 result = pion_cb_obj_call_without_args(generator_current, promise->generator);
                 goto watch_result;
-
             } else if(object_ce == promise_ce || object_ce == deferred_ce || instanceof_function(object_ce, promise_ce)) {
                 ion_promisor * await = get_instance(&result, ion_promisor);
                 if(await->flags & ION_PROMISOR_FINISHED) {
-                    // todo: extract result and goto watch_result
+                    ZVAL_COPY(&result, &await->result);
+                    result_type = await->flags & ION_PROMISOR_FINISHED;
+//                    obj_ptr_dtor(await);
+                    goto watch_result;
                 } else {
                     promise->await = Z_OBJ(result);
                     PION_ARRAY_PUSH(await->handlers, await->handler_count, promise_obj);
@@ -202,6 +207,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
         if(resolved) {
             promise->result = result;
             promise->flags |= result_type;
+            ion_promisor_unset_callbacks(promise_obj);
             if(promise->handler_count) {
                 for(ushort i = 0; i < promise->handler_count; i++) {
                     ion_promisor_resolve(promise->handlers[i], &result, result_type);
@@ -224,7 +230,7 @@ zend_object * ion_promisor_promise_new(zval * done, zval * fail, zval * progress
 
 
 zend_object * ion_promisor_map_new(zval * init) {
-    return pion_new_object_arg_1(ion_class_entry(ION_PromiseMap), init);
+    return pion_new_object_arg_1(ion_class_entry(ION_Sequence), init);
 }
 
 zend_object * ion_promisor_deferred_new(zval * canceler) {
@@ -247,10 +253,10 @@ zend_object * ion_promisor_deferred_new_ex(promisor_canceler_t canceler) {
 
 
 
-int ion_promisor_set_callbacks(zend_object * promise_obj, zval * zdone, zval * zfail, zval * zprogress) {
+int ion_promisor_set_callbacks(zend_object * promise_obj, zval * done, zval * fail, zval * progress) {
     ion_promisor * promise = get_object_instance(promise_obj, ion_promisor);
-    if(zdone) {
-        promise->done = pion_cb_create_from_zval(zdone);
+    if(done) {
+        promise->done = pion_cb_create_from_zval(done);
         promise->flags |= ION_PROMISOR_HAS_DONE;
 
         if(pion_cb_num_args(promise->done) > 1) {
@@ -260,15 +266,31 @@ int ion_promisor_set_callbacks(zend_object * promise_obj, zval * zdone, zval * z
             promise->flags |= ION_PROMISOR_HAS_DONE_WITH_FAIL;
         }
     }
-    if(zfail) {
-        promise->fail = pion_cb_create_from_zval(zfail);
+    if(fail) {
+        promise->fail = pion_cb_create_from_zval(fail);
         promise->flags |= ION_PROMISOR_HAS_FAIL;
     }
-    if(zprogress) {
-        promise->progress = pion_cb_create_from_zval(zprogress);
+    if(progress) {
+        promise->progress = pion_cb_create_from_zval(progress);
         promise->flags |= ION_PROMISOR_HAS_PROGRESS;
     }
     return SUCCESS;
+}
+
+void ion_promisor_unset_callbacks(zend_object * promise_obj) {
+    ion_promisor * promisor = get_object_instance(promise_obj, ion_promisor);
+    if(promisor->done) {
+        pion_cb_free(promisor->done);
+        promisor->done = NULL;
+    }
+    if(promisor->fail) {
+        pion_cb_free(promisor->fail);
+        promisor->fail = NULL;
+    }
+    if(promisor->progress) {
+        pion_cb_free(promisor->progress);
+        promisor->progress = NULL;
+    }
 }
 
 zend_object * ion_promisor_push_callbacks(zend_object * promise_obj, zval * on_done, zval * on_fail, zval * on_progress) {
@@ -276,10 +298,15 @@ zend_object * ion_promisor_push_callbacks(zend_object * promise_obj, zval * on_d
     zend_object * handler;
     zval zpromisor;
 
-    object_init_ex(&zpromisor, ion_class_entry(ION_Promise));
-    handler = Z_OBJ(zpromisor);
-    ion_promisor_set_callbacks(handler, on_done, on_fail, on_progress);
-    PION_ARRAY_PUSH(promisor->handlers, promisor->handler_count, handler);
+    if(promisor->flags & ION_PROMISOR_FINISHED) {
+        handler = ion_promisor_promise_new(on_done, on_fail, on_progress);
+        ion_promisor_resolve(handler, &promisor->result, promisor->flags & ION_PROMISOR_FINISHED);
+    } else {
+        object_init_ex(&zpromisor, ion_class_entry(ION_Promise));
+        handler = Z_OBJ(zpromisor);
+        ion_promisor_set_callbacks(handler, on_done, on_fail, on_progress);
+        PION_ARRAY_PUSH(promisor->handlers, promisor->handler_count, handler);
+    }
     return handler;
 }
 

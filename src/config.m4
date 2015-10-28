@@ -113,12 +113,11 @@ if test "$PHP_ION" != "no"; then
     pion/promisor.c
     pion/net.c
     pion.c
-    externals/SkipList/skiplist.c
     ION/Debug.c
     ION/Promise.c
     ION/ResolvablePromise.c
     ION/Deferred.c
-    ION/PromiseMap.c
+    ION/Sequence.c
     ION.c
     "
 #

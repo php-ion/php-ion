@@ -138,7 +138,7 @@ CLASS_METHOD(ION_Promise, getState) {
     RETURN_STR(state);
 }
 
-METHOD_WITHOUT_ARGS(ION_Promise, getState)
+METHOD_WITHOUT_ARGS_RETURN_STRING(ION_Promise, getState)
 
 /** public function ION\Promise::getFlags() : string */
 CLASS_METHOD(ION_Promise, getFlags) {
@@ -146,7 +146,7 @@ CLASS_METHOD(ION_Promise, getFlags) {
     RETURN_LONG(promise->flags);
 }
 
-METHOD_WITHOUT_ARGS(ION_Promise, getFlags)
+METHOD_WITHOUT_ARGS_RETURN_INT(ION_Promise, getFlags)
 
 /** public function ION\Promise::__destruct() : int */
 CLASS_METHOD(ION_Promise, __destruct) {

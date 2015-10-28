@@ -3,7 +3,7 @@
 namespace ION;
 
 
-use ION\PromiseMap;
+use ION\Sequence;
 
 class Stream {
     const MODE_TRIM_TOKEN = 1;
@@ -239,7 +239,7 @@ class Stream {
 	public function close($force = false) {}
 
     /**
-     * @return PromiseMap
+     * @return Sequence
      */
 	public function onData() {}
 

@@ -17,8 +17,8 @@
 #define ION_PROMISOR_TIMED_OUT 1<<4
 
 // Types
-#define ION_PROMISOR_TYPE_PROMISE  (1<<5)
-#define ION_PROMISOR_TYPE_MAP      1<<6
+#define ION_PROMISOR_TYPE_PROMISE  1<<5
+#define ION_PROMISOR_TYPE_SEQUENCE 1<<6
 #define ION_PROMISOR_TYPE_DEFERRED 1<<7
 #define ION_PROMISOR_INTERNAL      1<<8
 #define ION_PROMISOR_PROTOTYPE     1<<9
@@ -32,7 +32,7 @@
 extern ZEND_API zend_class_entry * ion_ce_ION_Promise;
 extern ZEND_API zend_class_entry * ion_ce_ION_ResolvablePromise;
 extern ZEND_API zend_class_entry * ion_ce_ION_Deferred;
-extern ZEND_API zend_class_entry * ion_ce_ION_PromiseMap;
+extern ZEND_API zend_class_entry * ion_ce_ION_Sequence;
 extern ZEND_API zend_class_entry * ion_ce_ION_Promise_CancelException;
 extern ZEND_API zend_class_entry * ion_ce_ION_Promise_TimeoutException;
 
@@ -92,6 +92,7 @@ void   ion_promisor_notify(zend_object * promisor, zval * info);
 
 // Callbacks
 int ion_promisor_set_callbacks(zend_object * promisor, zval * done, zval * fail, zval * progress);
+void ion_promisor_unset_callbacks(zend_object * promisor);
 zend_object * ion_promisor_push_callbacks(zend_object * promisor, zval * done, zval * fail, zval * progress);
 
 // Instance
@@ -99,7 +100,7 @@ zend_object * ion_promisor_push_callbacks(zend_object * promisor, zval * done, z
 void ion_promisor_free(zend_object * promisor_obj);
 zend_object * ion_promise_init(zend_class_entry * ce);
 zend_object * ion_deferred_init(zend_class_entry * ce);
-zend_object * ion_promise_map_init(zend_class_entry * ce);
+zend_object * ion_promisor_sequence_init(zend_class_entry * ce);
 
 // Utils
 #define PION_ARRAY_PUSH(array, counter, elem)                 \

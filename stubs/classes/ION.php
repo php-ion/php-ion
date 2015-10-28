@@ -1,5 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
+use ION\Sequence;
+use ION\Deferred;
+use ION\RuntimeException;
+
 /**
  * @author Ivan Shalganov <a.cobest@gmail.com>
  * @since 1.0
@@ -68,17 +74,18 @@ class ION {
      * */
     public static function reinit($flags = 0) {}
 
-	/**
-	 * Run event dispatcher.
-	 * Wait for events to become active, and run their callbacks.
-	 * By default, this loop will run the event dispatcher until either there are no more added events,
-	 * or until something calls ION::stop().
-	 *
-	 * @since 1.0
-	 * @param int $flags any combination of ION::ONCE, ION::NONBLOCK
-     * @todo remove flags
-	 */
-    public static function dispatch($flags = 0) {}
+    /**
+     * Run event dispatcher.
+     * Wait for events to become active, and run their callbacks.
+     * By default, this loop will run the event dispatcher until either there are no more added events,
+     * or until something calls ION::stop().
+     *
+     * @since 1.0
+     * @param int $flags any combination of ION::ONCE, ION::NONBLOCK
+     * @throws RuntimeException if error occurs
+     * @return bool
+     */
+    public static function dispatch(int $flags = 0) : bool {}
 
     /**
      * Exit the event dispatcher after the specified time.
@@ -86,23 +93,38 @@ class ION {
      * then exit without blocking for events again.
      *
      * @since 1.0
-     * @param int $timeout the amount of time after which the loop should terminate, or NULL to exit after running all currently active events.
-     * @throws \RuntimeException if error occurs
+     * @param float $timeout the amount of time after which the loop should terminate, or NULL to exit after running all currently active events.
+     * @throws RuntimeException if error occurs
      * */
-    public static function stop($timeout = -1) {}
+    public static function stop(float $timeout = -1) {}
 
     /**
-     * 
+     * Asynchronous sleep.
+     * Resolve promisor after
+     *
+     * @see startInterval
+     * @since 1.0
      * @param float $time time in seconds. Minimal value is 1e-6
-     * @return \ION\Deferred
+     * @return Deferred
      */
-    public static function await($time) {}
+    public static function await(float $time) : Deferred {}
 
     /**
-     * 
+     * @see await
+     * @since 1.0
      * @param float $time
-     * @return \ION\Deferred\Map
+     * @param string $name
+     * @return Sequence
      */
-    public static function setInterval($time) {}
+    public static function startInterval(float $time, string $name = null) : Sequence {}
+
+    /**
+     * Stop named timer
+     *
+     * @see startInterval
+     * @since 1.0
+     * @param string $name
+     */
+    public static function stopInterval(string $name) {}
 
 }

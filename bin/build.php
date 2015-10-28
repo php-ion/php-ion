@@ -25,7 +25,7 @@ class BuildRunner {
 				$this->binaries[$name] = getenv(strtoupper("ion_{$name}_exec"));
 			}
 	    }
-        set_exception_handler(function (\Exception $exception) {
+        set_exception_handler(function (\Throwable $exception) {
             $this->line(get_class($exception).": ".$exception->getMessage()." in ".$exception->getFile().":".$exception->getLine()."\n".$exception->getTraceAsString()."\n");
 	        exit(1);
         });
@@ -160,13 +160,33 @@ class BuildRunner {
         foreach($ion->getFunctions() as $function) {
             $params = [];
             foreach($function->getParameters() as $param) {
+                /* @var ReflectionParameter $param */
+                $type = "";
+                $param_name = "$".$param->name;
+                if($param->getClass()) {
+                    $type = $param->getClass()->name;
+                } elseif ($param->hasType()) {
+                    $type = $param->getType();
+                } elseif ($type->isArray()) {
+                    $type = "Array";
+                } elseif ($type->isCallable()) {
+                    $type = "Callable";
+                }
+                if($type->isVaridic()) {
+                    $param_name = "...".$param_name;
+                }
                 if($param->isOptional()) {
-                    $params[] = '[ $'.$param->name.' ]';
+                    $params[] = "[$type ".$param->name." ]";
                 } else {
-                    $params[] = '$'.$param->name;
+                    $params[] = $param->name;
                 }
             }
-            $info[] = "function {$function->name}(".implode(", ", $params).")";
+            if($function->hasReturnType()) {
+                $return = " : ".$function->getReturnType();
+            } else {
+                $return = "";
+            }
+            $info[] = "function {$function->name}(".implode(", ", $params).")$return";
         }
         foreach($ion->getClasses() as $class) {
 	        $mods = [];
@@ -198,20 +218,67 @@ class BuildRunner {
                 $info[] = "  const {$class->name}::{$constant} = ".var_export($value, true);
             }
             foreach($class->getMethods() as $method) {
-                $params = [];
-                foreach($method->getParameters() as $param) {
-                    if($param->isOptional()) {
-                        $params[] = '[ $'.$param->name.' ]';
-                    } else {
-                        $params[] = '$'.$param->name;
-                    }
-                }
-                $info[] = "  method ".implode(' ', Reflection::getModifierNames($method->getModifiers()))." {$method->class}::{$method->name}(".implode(", ", $params).")";
+//                $params = [];
+//                foreach($method->getParameters() as $param) {
+//                    if($param->isOptional()) {
+//                        $params[] = '[ $'.$param->name.' ]';
+//                    } else {
+//                        $params[] = '$'.$param->name;
+//                    }
+//                }
+//                if($method->hasReturnType()) {
+//                    $return = " : ".$method->getReturnType();
+//                } else {
+//                    $return = "";
+//                }
+                $info[] = $this->_scanFunction($method);
+//                $info[] = "  method ".implode(' ', Reflection::getModifierNames($method->getModifiers()))." {$method->class}::{$method->name}(".implode(", ", $params).")$return";
             }
 
             $info[] = "}";
         }
         echo implode("\n", $info)."\n";
+    }
+
+    private function _scanFunction(ReflectionFunctionAbstract $function) {
+        $params = [];
+        foreach($function->getParameters() as $param) {
+            /* @var ReflectionParameter $param */
+            $type = "";
+            $param_name = "$".$param->name;
+            if($param->getClass()) {
+                $type = $param->getClass()->name;
+            } elseif ($param->hasType()) {
+                $type = $param->getType();
+            } elseif ($param->isArray()) {
+                $type = "Array";
+            } elseif ($param->isCallable()) {
+                $type = "Callable";
+            }
+            if($param->isVariadic()) {
+                $param_name = "...".$param_name;
+            }
+            if($type) {
+                $param_name = $type." ".$param_name;
+            }
+            if($param->isOptional()) {
+                $params[] = "[ ".$param_name." ]";
+            } else {
+                $params[] = $param_name;
+            }
+        }
+        if($function->hasReturnType()) {
+            $return = " : ".$function->getReturnType();
+        } else {
+            $return = "";
+        }
+        $declare = $function->name;
+        if($function instanceof ReflectionFunction) {
+            $declare = "function {$function->name}";
+        } elseif ($function instanceof ReflectionMethod) {
+            $declare = "  method ".implode(' ', Reflection::getModifierNames($function->getModifiers()))." {$function->class}::{$function->name}";
+        }
+        return "{$declare}(".implode(", ", $params).")$return";
     }
 
 	public function li($name, $value) {
