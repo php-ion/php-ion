@@ -56,6 +56,18 @@ class TestCase extends \PHPUnit_Framework_TestCase {
         return new Server($host);
     }
 
+    public function exception2array($exception) {
+        if($exception instanceof \Throwable) {
+            return [
+                'exception' => get_class($exception),
+                'message' => $exception->getMessage(),
+                'code'    => $exception->getCode()
+            ];
+        } else {
+            return null;
+        }
+    }
+
     public function assertException($exception, $message = null, $code = null) {
         $this->assertInstanceOf('Exception', $exception);
         /* @var \Exception $exception */

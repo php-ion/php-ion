@@ -48,7 +48,6 @@ class DebugTest extends TestCase {
     }
 
     /**
-     *
      * @memcheck
      * @dataProvider providerFcallVoid()
      * @param mixed $arg1

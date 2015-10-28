@@ -3,7 +3,7 @@
 namespace ION;
 
 
-use ION\Deferred\Map;
+use ION\PromiseMap;
 
 class Stream {
     const MODE_TRIM_TOKEN = 1;
@@ -239,7 +239,7 @@ class Stream {
 	public function close($force = false) {}
 
     /**
-     * @return Map
+     * @return PromiseMap
      */
 	public function onData() {}
 
@@ -292,7 +292,3 @@ class Stream {
 	public function appendToInput($data) {}
 
 }
-
-class StreamException extends \Exception {}
-class RuntimeException extends StreamException {}
-class ConnectionException extends StreamException {}

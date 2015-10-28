@@ -32,7 +32,7 @@ CLASS_METHOD(ION_Deferred, cancel) {
     ion_promisor * deferred = get_this_instance(ion_promisor);
     zend_string * message = NULL;
     if(deferred->flags & ION_PROMISOR_FINISHED) {
-        zend_throw_error(ion_class_entry(ION_InvalidUsageException), "Failed to cancel finished deferred object");
+        zend_throw_exception(ion_class_entry(ION_InvalidUsageException), "Deferred has been finished", 0);
         return;
     }
 

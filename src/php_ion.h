@@ -6,6 +6,8 @@
 extern zend_module_entry ion_module_entry;
 #define phpext_ion_ptr &ion_module_entry
 
+PHP_MINIT_FUNCTION(exceptions);
+
 PHP_MINIT_FUNCTION(ion);
 PHP_MSHUTDOWN_FUNCTION(ion);
 
@@ -21,8 +23,6 @@ PHP_MINIT_FUNCTION(ION_Data_SkipList);
 PHP_MSHUTDOWN_FUNCTION(ION_Data_SkipList);
 
 PHP_MINIT_FUNCTION(promisor);
-PHP_RINIT_FUNCTION(promisor);
-PHP_RSHUTDOWN_FUNCTION(promisor);
 PHP_MSHUTDOWN_FUNCTION(promisor);
 
 PHP_MINIT_FUNCTION(ION_Promise);

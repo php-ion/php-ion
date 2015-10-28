@@ -2,6 +2,7 @@
 #define PION_PROMISOR_H
 
 #include <php.h>
+#include "../config.h"
 #include "callback.h"
 #include "exceptions.h"
 #include <Zend/zend_generators.h>
@@ -16,7 +17,7 @@
 #define ION_PROMISOR_TIMED_OUT 1<<4
 
 // Types
-#define ION_PROMISOR_TYPE_PROMISE  1<<5
+#define ION_PROMISOR_TYPE_PROMISE  (1<<5)
 #define ION_PROMISOR_TYPE_MAP      1<<6
 #define ION_PROMISOR_TYPE_DEFERRED 1<<7
 #define ION_PROMISOR_INTERNAL      1<<8
@@ -40,12 +41,13 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Promise_TimeoutException;
 typedef void (* promisor_canceler_t)(zend_object * promisor);
 typedef void (* promisor_dtor_t)(zend_object * promisor);
 
+
 typedef struct _ion_promisor {
     zend_object         std;
 #ifdef ION_DEBUG
     long                uid; // to distinguish promise-objects
 #endif
-    uint                flags;
+    int                flags;
     pion_cb           * done;
     pion_cb           * fail;
     pion_cb           * progress;
@@ -80,17 +82,7 @@ zend_object * ion_promisor_clone_obj(zval * zobject);
 #define ion_promisor_dtor(promisor, dtor_cb) get_object_instance(promisor, ion_promisor)->dtor = dtor_cb
 
 // Resolvers
-void   ion_promisor_resolve(zend_object * promisor, zval * result, short type);
-// Done
-//void   ion_promisor_done_long(zend_object * promisor, long lval);
-//void   ion_promisor_done_true(zend_object * promisor);
-//void   ion_promisor_done_false(zend_object * promisor);
-//void   ion_promisor_done_string(zend_object * promisor, zend_string * str, int dup);
-//void   ion_promisor_done_empty_string(zend_object * promisor);
-// Fail
-//void   ion_promisor_exception(zend_object * promisor, zend_class_entry * ce, const char * message, long code);
-//void   ion_promisor_exception_eg(zend_object * promisor, zend_class_entry * ce, const char * message, long code);
-//void   ion_promisor_exception_ex(zend_object * promisor, zend_class_entry * ce, long code, const char * message, ...);
+void   ion_promisor_resolve(zend_object * promisor, zval * result, int type);
 void   ion_promisor_cancel(zend_object * promisor, const char *message);
 // Notify
 void   ion_promisor_notify(zend_object * promisor, zval * info);

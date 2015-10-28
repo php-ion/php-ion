@@ -9,7 +9,7 @@ pion_cb * _pion_cb_create(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_p
 
     memcpy(cb->fci, fci_ptr, sizeof(zend_fcall_info));
     memcpy(cb->fcc, fcc_ptr, sizeof(zend_fcall_info_cache));
-    zval_addref_p(&cb->fci->function_name);
+    Z_TRY_ADDREF(cb->fci->function_name);
     cb->fci->param_count = 0;
     cb->fci->no_separation = 1;
     cb->fci->retval = NULL;
@@ -30,7 +30,7 @@ pion_cb * _pion_cb_create_from_zval(zval * zcb TSRMLS_DC) {
     *cb->fcc = empty_fcall_info_cache;
     cb->fci->param_count = 0;
     cb->fci->params = NULL;
-    zval_addref_p(zcb);
+    Z_TRY_ADDREF_P(zcb);
 
     if (zend_fcall_info_init(zcb, IS_CALLABLE_CHECK_NO_ACCESS | IS_CALLABLE_CHECK_SILENT, cb->fci, cb->fcc, NULL, &is_callable_error) == SUCCESS) {
         if (is_callable_error) {
@@ -150,54 +150,166 @@ pion_cb * pion_cb_dup(pion_cb * proto) {
 }
 
 
-int _pion_verify_arg_type(pion_cb * cb, zend_uint arg_num, zval * arg TSRMLS_DC) {
+static zend_bool pion_verify_weak_scalar_type_hint(zend_uchar type_hint, zval * arg) {
+    switch (type_hint) {
+        case _IS_BOOL: {
+            zend_bool dest;
 
+            if (!zend_parse_arg_bool_weak(arg, &dest)) {
+                return FAILURE;
+            }
+            zval_ptr_dtor(arg);
+            ZVAL_BOOL(arg, dest);
+            return SUCCESS;
+        }
+        case IS_LONG: {
+            zend_long dest;
+
+            if (!zend_parse_arg_long_weak(arg, &dest)) {
+                return FAILURE;
+            }
+            zval_ptr_dtor(arg);
+            ZVAL_LONG(arg, dest);
+            return SUCCESS;
+        }
+        case IS_DOUBLE: {
+            double dest;
+
+            if (!zend_parse_arg_double_weak(arg, &dest)) {
+                return FAILURE;
+            }
+            zval_ptr_dtor(arg);
+            ZVAL_DOUBLE(arg, dest);
+            return SUCCESS;
+        }
+        case IS_STRING: {
+            zend_string *dest;
+
+            /* on success "arg" is converted to IS_STRING */
+            if (!zend_parse_arg_str_weak(arg, &dest)) {
+                return FAILURE;
+            }
+            return SUCCESS;
+        }
+        default:
+            return FAILURE;
+    }
+}
+
+static zend_bool pion_verify_scalar_type_hint(zend_uchar type_hint, zval *arg, zend_bool strict) {
+    if (UNEXPECTED(strict)) {
+        /* SSTH Exception: IS_LONG may be accepted as IS_DOUBLE (converted) */
+        if (type_hint != IS_DOUBLE || Z_TYPE_P(arg) != IS_LONG) {
+            return SUCCESS;
+        }
+    } else if (UNEXPECTED(Z_TYPE_P(arg) == IS_NULL)) {
+        /* NULL may be accepted only by nullable hints (this is already checked) */
+        return SUCCESS;
+    }
+    return pion_verify_weak_scalar_type_hint(type_hint, arg);
+}
+
+zend_class_entry * zend_fetch_class_ex(const char * class_name, int fetch_type) {
+    zend_string * key;
+    zend_class_entry *ce;
+    ALLOCA_FLAG(use_heap);
+
+    ZSTR_ALLOCA_INIT(key, class_name, strlen(class_name), use_heap);
+    ce = zend_fetch_class(key, fetch_type);
+    ZSTR_ALLOCA_FREE(key, use_heap);
+    return ce;
+}
+
+static zend_always_inline int pion_verify_arg_type_user(pion_cb * cb, zend_uint arg_num, zval * arg)
+{
     zend_arg_info *cur_arg_info;
     zend_class_entry *ce;
+    zend_function *zf = cb->fcc->function_handler;
 
-    if(!cb->fcc->function_handler->common.arg_info) {
-        return FAILURE;
-    }
-
-    if(arg_num <= cb->fcc->function_handler->common.num_args) {
-        cur_arg_info = &cb->fcc->function_handler->common.arg_info[arg_num];
-    } else if(cb->fcc->function_handler->common.fn_flags & ZEND_ACC_VARIADIC) {
-        cur_arg_info = &cb->fcc->function_handler->common.arg_info[cb->fcc->function_handler->common.num_args-1];
+    if (EXPECTED(arg_num <= zf->common.num_args)) {
+        cur_arg_info = &zf->common.arg_info[arg_num];
+    } else if (UNEXPECTED(zf->common.fn_flags & ZEND_ACC_VARIADIC)) {
+        cur_arg_info = &zf->common.arg_info[zf->common.num_args];
     } else {
-        return FAILURE;
-    }
-
-    if(!cur_arg_info->type_hint) {
         return SUCCESS;
     }
 
-    if(cur_arg_info->class_name) {
-        if (Z_TYPE_P(arg) == IS_OBJECT) {
-            ce = zend_fetch_class(cur_arg_info->class_name, (ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD) TSRMLS_CC);
-            if (!ce || !instanceof_function(Z_OBJCE_P(arg), ce TSRMLS_CC)) {
-                return FAILURE;
+    if (cur_arg_info->type_hint) {
+        ZVAL_DEREF(arg);
+        if (EXPECTED(cur_arg_info->type_hint == Z_TYPE_P(arg))) {
+            if (cur_arg_info->class_name) {
+                ce = zend_fetch_class(cur_arg_info->class_name, (ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD));
+                if (!ce || !instanceof_function(Z_OBJCE_P(arg), ce)) {
+                    return FAILURE;
+                }
             }
         } else if (Z_TYPE_P(arg) != IS_NULL || !cur_arg_info->allow_null) {
-            return FAILURE;
-        }
-    } else if(cur_arg_info->type_hint) {
-        switch(cur_arg_info->type_hint) {
-            case IS_ARRAY:
-                if (Z_TYPE_P(arg) != IS_ARRAY && (Z_TYPE_P(arg) != IS_NULL || !(cur_arg_info->allow_null))) {
-                    return FAILURE;
-                }
-                break;
-            case IS_CALLABLE:
-                if (!zend_is_callable(arg, IS_CALLABLE_CHECK_SILENT, NULL TSRMLS_CC) && (Z_TYPE_P(arg) != IS_NULL || !(cur_arg_info->allow_null))) {
-                    return FAILURE;
-                }
-                break;
-            default:
+            if (cur_arg_info->class_name) {
                 return FAILURE;
+            } else if (cur_arg_info->type_hint == IS_CALLABLE) {
+                if (!zend_is_callable(arg, IS_CALLABLE_CHECK_SILENT, NULL)) {
+                    return FAILURE;
+                }
+            } else if (cur_arg_info->type_hint == _IS_BOOL &&
+                       EXPECTED(Z_TYPE_P(arg) == IS_FALSE || Z_TYPE_P(arg) == IS_TRUE)) {
+                /* pass */
+            } else {
+                return pion_verify_scalar_type_hint(cur_arg_info->type_hint, arg, (zend_bool)ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data)));
+            }
         }
     }
     return SUCCESS;
 }
+
+static zend_always_inline int pion_verify_arg_type_internal(pion_cb * cb, zend_uint arg_num, zval * arg) {
+    zend_internal_arg_info *cur_arg_info;
+    zend_class_entry * ce;
+    zend_function *zf = cb->fcc->function_handler;
+
+    if (EXPECTED(arg_num <= zf->internal_function.num_args)) {
+        cur_arg_info = &zf->internal_function.arg_info[arg_num];
+    } else if (zf->internal_function.fn_flags & ZEND_ACC_VARIADIC) {
+        cur_arg_info = &zf->internal_function.arg_info[zf->internal_function.num_args];
+    } else {
+        return SUCCESS;
+    }
+    if (cur_arg_info->type_hint) {
+        ZVAL_DEREF(arg);
+        if (EXPECTED(cur_arg_info->type_hint == Z_TYPE_P(arg))) {
+            if (cur_arg_info->class_name) {
+                ce = zend_fetch_class_ex(cur_arg_info->class_name, (ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD));
+                if (!ce || !instanceof_function(Z_OBJCE_P(arg), ce)) {
+                    return FAILURE;
+                }
+            }
+        } else if (Z_TYPE_P(arg) != IS_NULL || !cur_arg_info->allow_null) {
+            if (cur_arg_info->class_name) {
+                return FAILURE;
+            } else if (cur_arg_info->type_hint == IS_CALLABLE) {
+                if (!zend_is_callable(arg, IS_CALLABLE_CHECK_SILENT, NULL)) {
+                    return FAILURE;
+                }
+            } else if (cur_arg_info->type_hint == _IS_BOOL &&
+                       EXPECTED(Z_TYPE_P(arg) == IS_FALSE || Z_TYPE_P(arg) == IS_TRUE)) {
+                /* pass */
+            } else {
+                return pion_verify_scalar_type_hint(cur_arg_info->type_hint, arg, (zend_bool)ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data)));
+            }
+        }
+    }
+    return SUCCESS;
+}
+
+
+int pion_verify_arg_type(pion_cb * cb, zend_uint arg_num, zval * arg) {
+    if(cb->fcc->function_handler->type == ZEND_USER_FUNCTION) {
+        return pion_verify_arg_type_user(cb, arg_num, arg);
+    } else {
+        ZEND_ASSERT(cb->fcc->function_handler->type == ZEND_INTERNAL_FUNCTION);
+        return pion_verify_arg_type_internal(cb, arg_num, arg);
+    }
+}
+
 
 int _pion_fcall(zval * result, zend_fcall_info * fci_ptr, zend_fcall_info_cache * fcc_ptr, int num, zval * args TSRMLS_DC) {
     if (ZEND_FCI_INITIALIZED(*fci_ptr)) {

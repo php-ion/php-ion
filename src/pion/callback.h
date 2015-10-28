@@ -22,7 +22,7 @@ pion_cb * _pion_cb_create(zend_fcall_info * fci_ptr, zend_fcall_info_cache * fcc
 pion_cb * _pion_cb_create_from_zval(zval * zcb TSRMLS_DC);
 pion_cb * _pion_cb_fetch_method(const char * class_name, const char * method_name TSRMLS_DC);
 void      _pion_cb_free(pion_cb *cb TSRMLS_DC);
-int       _pion_verify_arg_type(pion_cb * cb, zend_uint arg_num, zval * arg TSRMLS_DC);
+int       pion_verify_arg_type(pion_cb * cb, zend_uint arg_num, zval * arg);
 pion_cb * pion_cb_dup(pion_cb * proto);
 
 #define pion_cb_create(fci, fcc) _pion_cb_create(fci, fcc TSRMLS_CC)
@@ -31,7 +31,6 @@ pion_cb * pion_cb_dup(pion_cb * proto);
 #define pion_cb_free(cb) _pion_cb_free(cb TSRMLS_CC)
 #define pion_cb_num_args(cb) cb->fcc->function_handler->common.num_args
 #define pion_cb_required_num_args(cb) cb->fcc->function_handler->common.required_num_args
-#define pion_verify_arg_type(cb, arg_num, arg) _pion_verify_arg_type(cb, arg_num, arg TSRMLS_CC)
 
 int _pion_fcall(zval * result, zend_fcall_info * fci_ptr, zend_fcall_info_cache * fcc_ptr, int num, zval * args TSRMLS_DC);
 int _pion_call_void_fci_with_1_arg(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr, zval * arg1 TSRMLS_DC);

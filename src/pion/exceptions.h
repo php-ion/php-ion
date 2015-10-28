@@ -23,10 +23,13 @@ BEGIN_EXTERN_C()
 #define ion_ce_InvalidArgumentException   spl_ce_InvalidArgumentException
 #define ion_ce_BadMethodCallException     spl_ce_BadMethodCallException
 #define ion_ce_RuntimeException           spl_ce_RuntimeException
+#define ion_ce_LogicException             spl_ce_LogicException
 
 // ION basic exceptions
-#define ion_ce_ION_RuntimeException           spl_ce_RuntimeException
-#define ion_ce_ION_InvalidUsageException      spl_ce_RuntimeException
+extern ZEND_API zend_class_entry * ion_ce_ION_RuntimeException;
+extern ZEND_API zend_class_entry * ion_ce_ION_InvalidUsageException;
+//#define ion_ce_ION_RuntimeException           spl_ce_RuntimeException
+//#define ion_ce_ION_InvalidUsageException      spl_ce_LogicException
 
 zend_object * pion_exception_new(zend_class_entry * exception_ce, const char * message, long code);
 zend_object * pion_exception_new_ex(zend_class_entry * exception_ce, long code, const char * message, ...);

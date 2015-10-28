@@ -34,6 +34,7 @@ void ion_reinit(long flags) {
 CLASS_METHOD(ION, reinit) {
     zend_long flags = 0;
     ZEND_PARSE_PARAMETERS_START(0,1)
+        Z_PARAM_OPTIONAL
         Z_PARAM_LONG(flags)
     ZEND_PARSE_PARAMETERS_END();
 
@@ -53,7 +54,8 @@ CLASS_METHOD(ION, dispatch) {
         return;
     }
 
-    ZEND_PARSE_PARAMETERS_START(0,1)
+    ZEND_PARSE_PARAMETERS_START(0, 1)
+        Z_PARAM_OPTIONAL
         Z_PARAM_LONG(flags)
     ZEND_PARSE_PARAMETERS_END();
 
@@ -83,6 +85,7 @@ CLASS_METHOD(ION, stop) {
     struct timeval time;
 
     ZEND_PARSE_PARAMETERS_START(0,1)
+        Z_PARAM_OPTIONAL
         Z_PARAM_DOUBLE(timeout)
     ZEND_PARSE_PARAMETERS_END();
 

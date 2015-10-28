@@ -7,8 +7,9 @@ zend_class_entry * ion_ce_ION_Promise;
 
 
 zend_object * ion_promise_init(zend_class_entry * ce) {
-    ion_promisor * promise = emalloc(sizeof(ion_promisor));
-    memset(promise, 0, sizeof(ion_promisor));
+    ion_promisor * promise = ecalloc(1, sizeof(ion_promisor));
+//    ion_promisor * promise = ecalloc(1, sizeof(ion_promisor));
+//    memset(promise, 0, sizeof(ion_promisor));
     promise->flags |= ION_PROMISOR_TYPE_PROMISE;
     RETURN_INSTANCE(ION_Promise, promise);
 }
@@ -16,11 +17,11 @@ zend_object * ion_promise_init(zend_class_entry * ce) {
 /** public function ION\Promise::__construct(callable $done = null, callable $fail = null, callable $progress = null) : int */
 /** public function ION\Promise::__construct(callable $done = null, callable $progress = null) : int */
 CLASS_METHOD(ION_Promise, __construct) {
-//    ion_promise * promise = getThisInstance();
     zval * done = NULL;
     zval * fail = NULL;
     zval * progress = NULL;
     ZEND_PARSE_PARAMETERS_START(0, 3)
+        Z_PARAM_OPTIONAL
         Z_PARAM_ZVAL_EX(done, 1, 0)
         Z_PARAM_ZVAL_EX(fail, 1, 0)
         Z_PARAM_ZVAL_EX(progress, 1, 0)
@@ -41,6 +42,7 @@ CLASS_METHOD(ION_Promise, then) {
     zval        * fail = NULL;
     zval        * progress = NULL;
     ZEND_PARSE_PARAMETERS_START(0, 3)
+        Z_PARAM_OPTIONAL
         Z_PARAM_ZVAL_EX(done, 1, 0)
         Z_PARAM_ZVAL_EX(fail, 1, 0)
         Z_PARAM_ZVAL_EX(progress, 1, 0)
@@ -119,8 +121,21 @@ METHOD_ARGS_END();
 
 /** public function ION\Promise::getState() : string */
 CLASS_METHOD(ION_Promise, getState) {
-//    ion_promisor * promise = get_this_instance(ion_promisor);
-//    RETURN_NEW_STR()
+    ion_promisor * promise = get_this_instance(ion_promisor);
+    zend_string * state;
+    if(promise->flags & ION_PROMISOR_DONE) {
+        state = zend_string_init("done", strlen("done"), 0);
+    } else if(promise->flags & ION_PROMISOR_CANCELED) {
+        state = zend_string_init("canceled", strlen("canceled"), 0);
+    } else if(promise->flags & ION_PROMISOR_FAILED) {
+        state = zend_string_init("failed", strlen("failed"), 0);
+    } else if(promise->await || promise->generator) {
+        state = zend_string_init("in_work", strlen("in_work"), 0);
+    } else {
+        state = zend_string_init("pending", strlen("pending"), 0);
+    }
+
+    RETURN_STR(state);
 }
 
 METHOD_WITHOUT_ARGS(ION_Promise, getState)
@@ -135,28 +150,28 @@ METHOD_WITHOUT_ARGS(ION_Promise, getFlags)
 
 /** public function ION\Promise::__destruct() : int */
 CLASS_METHOD(ION_Promise, __destruct) {
-    ion_promisor * promise = get_this_instance(ion_promisor);
+//    ion_promisor * promise = get_this_instance(ion_promisor);
 //    PHPDBG("Clean promise %d", (int)promise->uid);
-    if(promise->done) {
-        pion_cb_free(promise->done);
-        promise->done = NULL;
-    }
-    if(promise->fail) {
-        pion_cb_free(promise->fail);
-        promise->fail = NULL;
-    }
-    if(promise->progress) {
-        pion_cb_free(promise->progress);
-        promise->progress = NULL;
-    }
-    if(promise->handler_count) {
-        for(uint i=0; i<promise->handler_count; i++) {
-            obj_ptr_dtor(promise->handlers[i]);
-        }
-        efree(promise->handlers);
-        promise->handler_count = 0;
-    }
-    zval_ptr_dtor(&promise->result);
+//    if(promise->done) {
+//        pion_cb_free(promise->done);
+//        promise->done = NULL;
+//    }
+//    if(promise->fail) {
+//        pion_cb_free(promise->fail);
+//        promise->fail = NULL;
+//    }
+//    if(promise->progress) {
+//        pion_cb_free(promise->progress);
+//        promise->progress = NULL;
+//    }
+//    if(promise->handler_count) {
+//        for(uint i=0; i<promise->handler_count; i++) {
+//            obj_ptr_dtor(promise->handlers[i]);
+//        }
+//        efree(promise->handlers);
+//        promise->handler_count = 0;
+//    }
+//    zval_ptr_dtor(&promise->result);
 }
 
 METHOD_WITHOUT_ARGS(ION_Promise, __destruct)

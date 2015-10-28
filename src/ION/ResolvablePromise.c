@@ -7,14 +7,21 @@ zend_object_handlers ion_oh_ION_ResolvablePromise;
 /** public function ION\ResolvablePromise::done(mixed $data) : self */
 CLASS_METHOD(ION_ResolvablePromise, done) {
     ion_promisor * promise = get_this_instance(ion_promisor);
-    zval *data = NULL;
+    zval * data = NULL;
     if(promise->flags & ION_PROMISOR_FINISHED) {
-        zend_throw_error(NULL, "Failed to cancel finished defer-event", -1);
+        zend_throw_error(ion_class_entry(ION_InvalidUsageException), "Promisor has been finished");
         return;
     }
     if(promise->flags & ION_PROMISOR_INTERNAL) {
-        zend_throw_error(NULL, "Internal defer-event cannot be finished from user-space", -1);
+        zend_throw_error(ion_class_entry(ION_InvalidUsageException), "Internal promisor could not be finished from userspace");
         return;
+    }
+    if(promise->await || promise->generator) {
+        zend_throw_error(ion_class_entry(ION_InvalidUsageException), "Promisor already in progress");
+        return;
+    }
+    if(promise->scope) {
+        // todo ...
     }
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_ZVAL(data)
@@ -33,12 +40,19 @@ CLASS_METHOD(ION_ResolvablePromise, fail) {
     ion_promisor * promise = get_this_instance(ion_promisor);
     zval * error = NULL;
     if(promise->flags & ION_PROMISOR_FINISHED) {
-        zend_throw_error(NULL, "Failed to cancel finished defer-event", -1);
+        zend_throw_exception(ion_class_entry(ION_InvalidUsageException), "Promisor has been finished", 0);
         return;
     }
     if(promise->flags & ION_PROMISOR_INTERNAL) {
-        zend_throw_error(NULL, "Internal defer-event cannot be finished from user-space", -1);
+        zend_throw_exception(ion_class_entry(ION_InvalidUsageException), "Internal promisor could not be finished from userspace", 0);
         return;
+    }
+    if(promise->await || promise->generator) {
+        zend_throw_exception(ion_class_entry(ION_InvalidUsageException), "Promisor already in progress", 0);
+        return;
+    }
+    if(promise->scope) {
+        // todo ...
     }
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_ZVAL(error)
@@ -54,8 +68,8 @@ METHOD_ARGS_END()
 
 
 CLASS_METHODS_START(ION_ResolvablePromise)
-    METHOD(ION_ResolvablePromise, done,          ZEND_ACC_PUBLIC)
-    METHOD(ION_ResolvablePromise, fail,          ZEND_ACC_PUBLIC)
+    METHOD(ION_ResolvablePromise, done, ZEND_ACC_PUBLIC)
+    METHOD(ION_ResolvablePromise, fail, ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_ResolvablePromise) {

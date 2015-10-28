@@ -89,11 +89,12 @@ PHP_MINIT_FUNCTION(ion) {
     event_set_log_callback(_engine_log);
     event_set_fatal_callback(_engine_fatal);
 
-//    ionBase            = pemalloc(sizeof(ion_base), 1);
-//    memset(ionBase, 0, sizeof(ion_base));
-//    ION(i)             = 1;
-//    ION(base)          = event_base_new();
+    ionBase            = pemalloc(sizeof(ion_base), 1);
+    memset(ionBase, 0, sizeof(ion_base));
+    ION(i)             = 1;
+    ION(base)          = event_base_new();
 
+    STARTUP_MODULE(exceptions);
     STARTUP_MODULE(ION_Debug);
 //    STARTUP_MODULE(ION_Data_LinkedList);
 //    STARTUP_MODULE(ION_Data_SkipList);
@@ -161,8 +162,8 @@ PHP_MSHUTDOWN_FUNCTION(ion) {
     SHUTDOWN_MODULE(promisor);
     SHUTDOWN_MODULE(ION);
 
-//    event_base_free( ION(base) );
-//    pefree(ionBase, 1);
+    event_base_free( ION(base) );
+    pefree(ionBase, 1);
 
 //    UNREGISTER_INI_ENTRIES();
 

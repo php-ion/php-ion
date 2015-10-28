@@ -23,6 +23,7 @@ add_custom_target(
 )
 
 set(ION_SOURCE_FILES
+        src/config.h
         src/php_ion.c
         src/pion/exceptions.c
         src/pion/debug.c
@@ -32,9 +33,7 @@ set(ION_SOURCE_FILES
         src/pion/net.c
         src/pion.c
         src/ION/Debug.c
-        src/ION/Data/LinkedList.c
         src/externals/SkipList/skiplist.c
-        src/ION/Data/SkipList.c
         src/ION/Promise.c
         src/ION/ResolvablePromise.c
         src/ION/Deferred.c
@@ -42,6 +41,8 @@ set(ION_SOURCE_FILES
         src/ION.c src/pion/promisor.c)
 
 #src/ION/Deferred.c
+#src/ION/Data/SkipList.c
+#src/ION/Data/LinkedList.c
 #src/ION/Promise/Result.c
 #src/ION/Promise.c
 #src/ION/ResolvablePromise.c
