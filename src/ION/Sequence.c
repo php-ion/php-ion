@@ -3,7 +3,7 @@
 zend_object_handlers ion_oh_ION_Sequence;
 zend_class_entry * ion_ce_ION_Sequence;
 
-zend_object * ion_promisor_sequence_init(zend_class_entry * ce) {
+zend_object * ion_sequence_init(zend_class_entry * ce) {
     ion_promisor * promise = emalloc(sizeof(ion_promisor));
     memset(promise, 0, sizeof(ion_promisor));
     promise->flags |= ION_PROMISOR_TYPE_PROMISE | ION_PROMISOR_TYPE_SEQUENCE | ION_PROMISOR_PROTOTYPE;
@@ -47,7 +47,7 @@ CLASS_METHODS_START(ION_Sequence)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Sequence) {
-    pion_register_extended_class(ION_Sequence, ion_class_entry(ION_Promise), "ION\\Sequence", ion_promisor_sequence_init, CLASS_METHODS(ION_Sequence));
+    pion_register_extended_class(ION_Sequence, ion_class_entry(ION_Promise), "ION\\Sequence", ion_sequence_init, CLASS_METHODS(ION_Sequence));
     pion_init_std_object_handlers(ION_Sequence);
     pion_set_object_handler(ION_Sequence, free_obj, ion_promisor_free);
     pion_set_object_handler(ION_Sequence, clone_obj, ion_promisor_clone_obj);

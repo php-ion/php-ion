@@ -69,7 +69,7 @@ typedef struct _ion_promisor {
 } ion_promisor;
 
 zend_object * ion_promisor_promise_new(zval * done, zval * fail, zval * progress);
-zend_object * ion_promisor_map_new(zval * init);
+zend_object * ion_promisor_sequence_new(zval * init);
 zend_object * ion_promisor_deferred_new(zval * cancelable);
 zend_object * ion_promisor_deferred_new_ex(promisor_canceler_t cancelable);
 
@@ -92,7 +92,6 @@ void   ion_promisor_notify(zend_object * promisor, zval * info);
 
 // Callbacks
 int ion_promisor_set_callbacks(zend_object * promisor, zval * done, zval * fail, zval * progress);
-void ion_promisor_unset_callbacks(zend_object * promisor);
 zend_object * ion_promisor_push_callbacks(zend_object * promisor, zval * done, zval * fail, zval * progress);
 
 // Instance
@@ -100,7 +99,7 @@ zend_object * ion_promisor_push_callbacks(zend_object * promisor, zval * done, z
 void ion_promisor_free(zend_object * promisor_obj);
 zend_object * ion_promise_init(zend_class_entry * ce);
 zend_object * ion_deferred_init(zend_class_entry * ce);
-zend_object * ion_promisor_sequence_init(zend_class_entry * ce);
+zend_object * ion_sequence_init(zend_class_entry * ce);
 
 // Utils
 #define PION_ARRAY_PUSH(array, counter, elem)                 \

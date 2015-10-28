@@ -4,6 +4,10 @@ namespace ION;
 
 declare(strict_types=1);
 
+/**
+ * @since 1.0
+ * @package ION
+ */
 class Promise {
 
 //    public function __construct(callable $done, callable $progress = null) {}

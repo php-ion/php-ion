@@ -116,6 +116,7 @@ static void _timer_dtor(zend_object * object) {
     event * timer = (event *) deferred->object;
     event_del(timer);
     event_free(timer);
+    obj_ptr_dtor(object);
 //    zval_ptr_dtor(&zdeferred);
 }
 
@@ -124,21 +125,25 @@ CLASS_METHOD(ION, await) {
     zend_object * deferred;
     double timeout = 0.0;
     struct timeval tv = { 0, 0 };
-    PARSE_ARGS("d", &timeout);
+    event * timer;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_DOUBLE(timeout)
+    ZEND_PARSE_PARAMETERS_END();
     if(timeout < 0) {
-        zend_throw_error(ion_class_entry(InvalidArgumentException), "Timeout sould be unsigned");
+        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Timeout sould be unsigned", 0);
         return;
     }
     tv.tv_usec = ((int)(timeout*1000000) % 1000000);
     tv.tv_sec = (int)timeout;
     deferred = ion_promisor_deferred_new_ex(NULL);
 //    zDeferred = ion_deferred_new_ex(NULL);
-    event * timer = event_new(ION(base), -1, EV_TIMEOUT, _timer_done, deferred);
+    timer = event_new(ION(base), -1, EV_TIMEOUT, _timer_done, deferred);
     if(event_add(timer, &tv) == FAILURE) {
         event_del(timer);
         event_free(timer);
         obj_ptr_dtor(deferred);
-        zend_throw_error(ion_class_entry(ION_RuntimeException), "Event failed");
+        zend_throw_exception(ion_class_entry(ION_RuntimeException), "Unable to add event to queue", 0);
         return;
 //        ion_deferred_free(zDeferred);
     } else {
@@ -151,7 +156,7 @@ CLASS_METHOD(ION, await) {
 }
 
 METHOD_ARGS_BEGIN(ION, await, 1)
-                METHOD_ARG(time, 0)
+    METHOD_ARG_FLOAT(time, 0)
 METHOD_ARGS_END()
 
 /** public function ION::startInterval(double $time, string $name = NULL) : ION\Deferred */

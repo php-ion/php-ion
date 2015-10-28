@@ -177,6 +177,7 @@ class PromiseTest extends TestCase {
     }
 
     /**
+     * @group dev
      * @memcheck
      */
     public function testAwaitSuccessDeferred() {

@@ -12,7 +12,7 @@ ION Extension [dev]
 * [![Latest Stable Version](https://poser.pugx.org/phpion/phpion/v/stable)](https://packagist.org/packages/phpion/phpion)
 * [![Latest Unstable Version](https://poser.pugx.org/phpion/phpion/v/unstable)](https://packagist.org/packages/phpion/phpion)
 * [![License](https://poser.pugx.org/phpion/phpion/license)](https://packagist.org/packages/phpion/phpion)
-* **Versioning:** [semver](http://semver.org/)
+* **Versioning:** [semver 2.0](http://semver.org/)
 * **Based:** [libevent2](http://libevent.org/)
 * **Composer:** [phpion/phpion](https://packagist.org/packages/phpion/phpion)
 * **Testing system:** [phpunit](https://phpunit.de/) (+ memory leak detector)
@@ -32,13 +32,13 @@ make install
 
 todo
 
-## Promises
+## Promisor
 
 ```php
 use ION\Promise;
 use ION\ResolvablePromise;
 use ION\Deferred;
-use ION\PromiseMap;
+use ION\Sequence;
 ```
 
 ```php
@@ -64,13 +64,18 @@ App::someEventualAction()
 
 ```
 
+### Results routing
 
+### Generators
+
+### Sequence
 
 ## Timers
 
 ```php
 use ION;
 use ION\Promise;
+use ION\Sequence;
 ```
 
 ```php
@@ -78,7 +83,13 @@ ION::await(0.4)->then() // ...
 ```
 
 ```php
-ION::interval(30)->then() // ...
+ION::startInterval(30)->then() // ...
+```
+
+```php
+ION::startInterval(30, "crawler")->then() // ...
+// ...
+ION::stopInterval("crawler");
 ```
 
 ## Process
@@ -129,13 +140,19 @@ todo
 
 todo
 
-## Data structures
-
-todo
-
 ## Testing
 
-todo
+```
+composer install
+```
+
+```
+vendor/bin/phpunit
+```
+
+```
+php -dextension=/path/to/ion.so vendor/bin/phpunit
+```
 
 ## C API
 

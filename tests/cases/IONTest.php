@@ -31,9 +31,17 @@ class IONTest extends TestCase {
      * @memcheck
      */
     public function testAwait() {
-        ION::await(0.5)->then(function () {
-            ION::stop();
+        $start = microtime(1);
+        ION::await(0.3)->then(function ($result) use ($start) {
+            $this->data["await"] = $result;
+            $this->data["timer"] = round(microtime(1) - $start, 1);
+            $this->stop();
         });
-        ION::dispatch();
+
+        $this->loop();
+        $this->assertEquals([
+            "await" => true,
+            "timer" => 0.3
+        ], $this->data);
     }
 }

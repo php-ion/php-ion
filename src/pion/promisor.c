@@ -78,8 +78,9 @@ static zend_always_inline int ion_promisor_invoke(ion_promisor * promisor, zval 
                 // first argument may has incompatible type hint
                 if(pion_verify_arg_type(promisor->done, 0, &helper) != SUCCESS) {
                     zend_error(E_NOTICE, "First argument has incompatible type hint");
+                } else {
+                    *retval = pion_cb_call_with_2_args(promisor->done, &helper, data);
                 }
-                *retval = pion_cb_call_with_2_args(promisor->done, &helper, data);
             }
         } else {
             result_type = ION_PROMISOR_FAILED;
@@ -89,6 +90,27 @@ static zend_always_inline int ion_promisor_invoke(ion_promisor * promisor, zval 
     return result_type;
 }
 
+static zend_always_inline void ion_promisor_release(zend_object * promisor_obj) {
+    ion_promisor * promisor = get_object_instance(promisor_obj, ion_promisor);
+    if(promisor->dtor) {
+        promisor->dtor(promisor_obj);
+        promisor->dtor = NULL;
+    }
+    if(promisor->done) {
+        pion_cb_free(promisor->done);
+        promisor->done = NULL;
+    }
+    if(promisor->fail) {
+        pion_cb_free(promisor->fail);
+        promisor->fail = NULL;
+    }
+    if(promisor->progress) {
+        pion_cb_free(promisor->progress);
+        promisor->progress = NULL;
+    }
+}
+
+
 void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
     ion_promisor * promise = get_object_instance(promise_obj, ion_promisor);
     zval           zpromise;
@@ -96,15 +118,13 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
     zval           result;
     int            result_type = 0;
     zend_bool      resolved;
-    zend_class_entry * object_ce         = NULL;
-    zend_class_entry * deferred_ce       = NULL;
-    zend_class_entry * promise_ce        = ion_class_entry(ION_Promise);
-    zend_class_entry * generator_ce      = ion_class_entry(Generator);
+    zend_class_entry * object_ce = NULL;
 
     ZVAL_OBJ(&zpromise, promise_obj);
     Z_ADDREF(zpromise);
     ZVAL_UNDEF(&retval);
     if(promise->await) {
+//        ZEND_ASSERT(promise->generator);
         result_type = type & ION_PROMISOR_FINISHED;
         obj_ptr_dtor(promise->await);
         promise->await = NULL;
@@ -122,24 +142,25 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
             ZVAL_COPY(&result, data);
             result_type = type & ION_PROMISOR_FINISHED;
         }
+        resolved = 1;
     } else {
+//        ZEND_ASSERT(Z_TYPE(result));
         result = retval;
-    }
-    ZEND_ASSERT(Z_TYPE(result));
-    if(!Z_ISUNDEF(result)) {
         resolved = 1;
         watch_result:
 
         if(Z_TYPE(result) == IS_OBJECT) {
             object_ce = Z_OBJCE(result);
-            if(object_ce == generator_ce) {
+            if(object_ce == ion_class_entry(Generator)) {
                 if(promise->generator) { // push the generator to stack
                     PION_ARRAY_PUSH(promise->generators_stack, promise->generators_count, promise->generator);
                 }
                 promise->generator = Z_OBJ(result);
                 result = pion_cb_obj_call_without_args(generator_current, promise->generator);
                 goto watch_result;
-            } else if(object_ce == promise_ce || object_ce == deferred_ce || instanceof_function(object_ce, promise_ce)) {
+            } else if(object_ce == ion_class_entry(ION_Promise)
+                      || object_ce == ion_class_entry(ION_Deferred)
+                      || instanceof_function(object_ce, ion_class_entry(ION_Promise))) {
                 ion_promisor * await = get_instance(&result, ion_promisor);
                 if(await->flags & ION_PROMISOR_FINISHED) {
                     ZVAL_COPY(&result, &await->result);
@@ -203,22 +224,21 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
                 goto watch_result;
             }
         }
-
-        if(resolved) {
-            promise->result = result;
-            promise->flags |= result_type;
-            ion_promisor_unset_callbacks(promise_obj);
-            if(promise->handler_count) {
-                for(ushort i = 0; i < promise->handler_count; i++) {
-                    ion_promisor_resolve(promise->handlers[i], &result, result_type);
-                    obj_ptr_dtor(promise->handlers[i]);
-                    promise->handlers[i] = NULL;
-                }
-
-                efree(promise->handlers);
-                promise->handlers = NULL;
-                promise->handler_count = 0;
+    }
+    if(resolved) {
+        promise->result = result;
+        promise->flags |= result_type;
+        ion_promisor_release(promise_obj);
+        if(promise->handler_count) {
+            for(ushort i = 0; i < promise->handler_count; i++) {
+                ion_promisor_resolve(promise->handlers[i], &result, result_type);
+                obj_ptr_dtor(promise->handlers[i]);
+                promise->handlers[i] = NULL;
             }
+
+            efree(promise->handlers);
+            promise->handlers = NULL;
+            promise->handler_count = 0;
         }
     }
     zval_ptr_dtor(&zpromise);
@@ -229,7 +249,7 @@ zend_object * ion_promisor_promise_new(zval * done, zval * fail, zval * progress
 }
 
 
-zend_object * ion_promisor_map_new(zval * init) {
+zend_object * ion_promisor_sequence_new(zval * init) {
     return pion_new_object_arg_1(ion_class_entry(ION_Sequence), init);
 }
 
@@ -260,9 +280,6 @@ int ion_promisor_set_callbacks(zend_object * promise_obj, zval * done, zval * fa
         promise->flags |= ION_PROMISOR_HAS_DONE;
 
         if(pion_cb_num_args(promise->done) > 1) {
-//            if(pion_cb_required_num_args(promise->done) > 1) {
-//                return FAILURE;
-//            }
             promise->flags |= ION_PROMISOR_HAS_DONE_WITH_FAIL;
         }
     }
@@ -275,22 +292,6 @@ int ion_promisor_set_callbacks(zend_object * promise_obj, zval * done, zval * fa
         promise->flags |= ION_PROMISOR_HAS_PROGRESS;
     }
     return SUCCESS;
-}
-
-void ion_promisor_unset_callbacks(zend_object * promise_obj) {
-    ion_promisor * promisor = get_object_instance(promise_obj, ion_promisor);
-    if(promisor->done) {
-        pion_cb_free(promisor->done);
-        promisor->done = NULL;
-    }
-    if(promisor->fail) {
-        pion_cb_free(promisor->fail);
-        promisor->fail = NULL;
-    }
-    if(promisor->progress) {
-        pion_cb_free(promisor->progress);
-        promisor->progress = NULL;
-    }
 }
 
 zend_object * ion_promisor_push_callbacks(zend_object * promise_obj, zval * on_done, zval * on_fail, zval * on_progress) {
@@ -381,27 +382,11 @@ zend_object * ion_promisor_clone_obj(zval * zobject) {
     return ion_promisor_clone(Z_OBJ_P(zobject));
 }
 
-
 void ion_promisor_free(zend_object * promisor_obj) {
     ion_promisor * promisor = get_object_instance(promisor_obj, ion_promisor);
 
     zend_object_std_dtor(promisor_obj);
-    if(promisor->dtor) {
-        promisor->dtor(promisor_obj);
-        promisor->dtor = NULL;
-    }
-    if(promisor->done) {
-        pion_cb_free(promisor->done);
-        promisor->done = NULL;
-    }
-    if(promisor->fail) {
-        pion_cb_free(promisor->fail);
-        promisor->fail = NULL;
-    }
-    if(promisor->progress) {
-        pion_cb_free(promisor->progress);
-        promisor->progress = NULL;
-    }
+    ion_promisor_release(promisor_obj);
     if(promisor->await) {
         obj_ptr_dtor(promisor->await);
         promisor->await = NULL;
@@ -420,9 +405,6 @@ void ion_promisor_free(zend_object * promisor_obj) {
     if(promisor->handler_count) {
 
         for(uint i=0; i<promisor->handler_count; i++) {
-//            zval obj;
-//            ZVAL_OBJ(&obj, promisor->handlers[i]);
-//            zval_ptr_dtor(&obj);
             obj_ptr_dtor(promisor->handlers[i]);
         }
         efree(promisor->handlers);
