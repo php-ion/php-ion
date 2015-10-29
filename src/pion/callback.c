@@ -96,6 +96,10 @@ pion_cb * _pion_cb_fetch_method(const char * class_name, const char * method_nam
 
 void _pion_cb_free(pion_cb *cb) {
     zval_ptr_dtor(&cb->fci->function_name);
+//    if(cb->fci->object) {
+//        OBJ_ADDREF(cb->fci->object);
+//        obj_ptr_dtor(cb->fci->object);
+//    }
     efree(cb->fcc);
     efree(cb->fci);
     efree(cb);
@@ -122,10 +126,12 @@ pion_cb * pion_cb_dup(pion_cb * proto) {
     cb->fci->no_separation = proto->fci->no_separation;
 
     if(proto->fci->object) {
-        zval obj_from, obj_to;
-        ZVAL_OBJ(&obj_from, cb->fci->object);
-        ZVAL_COPY(&obj_to, &obj_from);
-        cb->fci->object = Z_OBJ(obj_to);
+        OBJ_ADDREF(proto->fci->object);
+        cb->fci->object = proto->fci->object;
+//        zval obj_from, obj_to;
+//        ZVAL_OBJ(&obj_from, cb->fci->object);
+//        ZVAL_COPY(&obj_to, &obj_from);
+//        cb->fci->object = Z_OBJ(obj_to);
     }
 
     // fcc
@@ -139,10 +145,12 @@ pion_cb * pion_cb_dup(pion_cb * proto) {
         if(proto->fci->object == proto->fcc->object) {
             cb->fcc->object = cb->fci->object;
         } else {
-            zval obj_from, obj_to;
-            ZVAL_OBJ(&obj_from, cb->fcc->object);
-            ZVAL_COPY(&obj_to, &obj_from);
-            cb->fcc->object = Z_OBJ(obj_to);
+            OBJ_ADDREF(proto->fcc->object);
+            cb->fcc->object = proto->fcc->object;
+//            zval obj_from, obj_to;
+//            ZVAL_OBJ(&obj_from, cb->fcc->object);
+//            ZVAL_COPY(&obj_to, &obj_from);
+//            cb->fcc->object = Z_OBJ(obj_to);
         }
     }
 

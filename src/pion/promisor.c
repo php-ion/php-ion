@@ -134,7 +134,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
     }
 
     if(Z_ISUNDEF(retval)) {
-        if(EG(exception)) {
+        if(EXPECTED(EG(exception))) {
             ZVAL_OBJ(&result, EG(exception));
             EG(exception) = NULL;
             result_type = ION_PROMISOR_FAILED;

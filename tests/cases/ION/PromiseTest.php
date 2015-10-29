@@ -108,6 +108,33 @@ class PromiseTest extends TestCase {
     /**
      * @memcheck
      */
+    public function testProperties() {
+        $promise = new Promise();
+        $promise->a = 1;
+        $promise->b = 2;
+        $this->assertEquals(1, $promise->a);
+        $this->assertEquals(2, $promise->b);
+    }
+
+    /**
+     * @group dev
+     * @memcheck
+     */
+    public function testCloneable() {
+        $promise = new ResolvablePromise(function() {}, function() {}, function() {});
+        $promise->a = 1;
+        $promise->then(function() {})->then(function () {}, function () {});
+        $promise->then(function() {});
+
+        $clone = clone $promise;
+        $this->assertEquals($promise->a, $clone->a);
+        $clone->done(1);
+
+    }
+
+    /**
+     * @memcheck
+     */
     public function testMixedChain() {
         $promise = new Promise(function() {}, function() {}, function() {});
         $promise->then(function() {}, function() {}, function() {});
@@ -387,7 +414,6 @@ class PromiseTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testYieldFailedPromise() {

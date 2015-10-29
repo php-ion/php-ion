@@ -1,15 +1,5 @@
 # +----------------------------------------------------------------------+
-# | PHP Version 5                                                        |
-# +----------------------------------------------------------------------+
-# | Copyrght (C) 1997-2015 The PHP Group                                 |
-# +----------------------------------------------------------------------+
-# | This source file is subject to version 3.01 of the PHP license,      |
-# | that is bundled with this package in the file LICENSE, and is        |
-# | available through the world-wide-web at the following url:           |
-# | http://www.php.net/license/3_01.txt                                  |
-# | If you did not receive a copy of the PHP license and are unable to   |
-# | obtain it through the world-wide-web, please send a note to          |
-# | license@php.net so we can mail you a copy immediately.               |
+# | PHP Version 7                                                        |
 # +----------------------------------------------------------------------+
 # | Author: Ivan Shalganov <ivan@shalganov.me>                           |
 # +----------------------------------------------------------------------+
@@ -29,7 +19,6 @@ PHP_ARG_ENABLE(ion-coverage, whether to enable code coverage for ION,
 # --with-ion
 if test "$PHP_ION" != "no"; then
     AC_DEFINE_UNQUOTED(ION_VERSION, "$VERSION", [Current git version])
-    AC_DEFINE(PHP7, 1, [ php7+ ])
 
     # search libevent headers
     SEARCH_PATH="/usr/local /usr /opt/local"
@@ -109,7 +98,6 @@ if test "$PHP_ION" != "no"; then
     pion/exceptions.c
     pion/callback.c
     pion/engine.c
-    pion/linkedlist.c
     pion/promisor.c
     pion/net.c
     pion.c
@@ -131,7 +119,7 @@ if test "$PHP_ION" != "no"; then
 #        ION/DNS.c
 #        ION/Process.c
 #        ION/Stream.c
-    PHP_NEW_EXTENSION(ion, $ion_src, $ext_shared,, $CFLAGS -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1)
+    PHP_NEW_EXTENSION(ion, $ion_src, $ext_shared,, "$CFLAGS -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1")
 
     PHP_SUBST(ION_SHARED_LIBADD)
 fi

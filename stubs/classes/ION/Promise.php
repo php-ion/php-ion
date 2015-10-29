@@ -10,6 +10,10 @@ declare(strict_types=1);
  */
 class Promise {
 
+    public static function all(...$values) {}
+
+    public static function any(...$values) {}
+
 //    public function __construct(callable $done, callable $progress = null) {}
 //    public function __construct(callable $done = null, callable $fail = null, callable $progress = null) {}
     public function __construct(callable ...$callbacks) {}
