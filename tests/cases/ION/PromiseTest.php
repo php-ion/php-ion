@@ -177,7 +177,6 @@ class PromiseTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testAwaitSuccessDeferred() {
@@ -264,10 +263,7 @@ class PromiseTest extends TestCase {
             })
             ->onFail(function ($error) {
                 /* @var \Exception $error */
-                $this->data["error"] = [
-                    'class' => get_class($error),
-                    'message' => $error->getMessage()
-                ];
+                $this->data["error"] = $this->exception2array($error);
                 $this->stop();
             })
         ;
@@ -278,8 +274,9 @@ class PromiseTest extends TestCase {
             'x1' => 1,
             'await' => true,
             'error' => [
-                'class' => 'RuntimeException',
-                'message' => 'problem description'
+                'exception' => 'RuntimeException',
+                'message' => 'problem description',
+                'code' => 0
             ],
         ], $this->data);
     }
@@ -320,7 +317,7 @@ class PromiseTest extends TestCase {
     /**
      * @memcheck
      */
-    public function _testYieldDeferred() {
+    public function testYieldDeferred() {
         $promise = new ResolvablePromise();
         $promise
             ->then(function ($x) {
@@ -335,10 +332,7 @@ class PromiseTest extends TestCase {
             })
             ->onFail(function ($error) {
                 /* @var \Exception $error */
-                $this->data["error"] = [
-                    'class' => get_class($error),
-                    'message' => $error->getMessage()
-                ];
+                $this->data["error"] = $this->exception2array($error);
                 $this->stop();
             })
         ;
@@ -356,7 +350,7 @@ class PromiseTest extends TestCase {
     /**
      * @memcheck
      */
-    public function _testYieldSuccessPromise() {
+    public function testYieldSuccessPromise() {
         $promise = new ResolvablePromise();
         $promise
             ->then(function ($x) {
@@ -368,7 +362,7 @@ class PromiseTest extends TestCase {
                 $this->data["x1"] = $x;
                 $x = (yield $x + 10);
                 $this->data["x2"] = $x;
-                yield Promise::result($x);
+                return $x;
             })
             ->onDone(function ($result) {
                 $this->data["result"] = $result;
@@ -376,10 +370,7 @@ class PromiseTest extends TestCase {
             })
             ->onFail(function ($error) {
                 /* @var \Exception $error */
-                $this->data["error"] = [
-                    'class' => get_class($error),
-                    'message' => $error->getMessage()
-                ];
+                $this->data["error"] = $this->exception2array($error);
                 $this->stop();
             })
         ;
@@ -396,9 +387,10 @@ class PromiseTest extends TestCase {
     }
 
     /**
+     * @group dev
      * @memcheck
      */
-    public function _testYieldFailedPromise() {
+    public function testYieldFailedPromise() {
         $promise = new ResolvablePromise();
         $promise
             ->then(function ($x) {
@@ -418,12 +410,8 @@ class PromiseTest extends TestCase {
                 $this->data["result"] = $result;
                 $this->stop();
             })
-            ->onFail(function ($error) {
-                /* @var \Exception $error */
-                $this->data["error"] = [
-                    'class' => get_class($error),
-                    'message' => $error->getMessage()
-                ];
+            ->onFail(function (\Throwable $error) {
+                $this->data["error"] = $this->exception2array($error);
                 $this->stop();
             })
         ;
@@ -435,8 +423,9 @@ class PromiseTest extends TestCase {
             "await" => true,
             "failed" => true,
             "error" => [
-                'class' => 'RuntimeException',
-                'message' => "problem description"
+                'exception' => 'RuntimeException',
+                'message' => "problem description",
+                'code' => 0
             ]
         ], $this->data);
     }

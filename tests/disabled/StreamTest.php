@@ -5,7 +5,7 @@ namespace ION;
 use ION;
 use ION\Test\TestCase;
 
-class StreamTest extends TestCase {
+class _StreamTest extends TestCase {
 
     public function setupSendServer($data) {
         return $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) use ($data) {

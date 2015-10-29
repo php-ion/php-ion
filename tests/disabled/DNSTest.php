@@ -6,7 +6,7 @@ namespace cases\ION;
 use ION\DNS;
 use ION\Test\TestCase;
 
-class DNSTest extends TestCase {
+class _DNSTest_ extends TestCase {
 
     public static $example_com = [
         'CNAME' => "example.com",

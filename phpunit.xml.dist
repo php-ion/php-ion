@@ -22,7 +22,7 @@
 
     <testsuites>
         <testsuite>
-            <directory>./tests/</directory>
+            <directory>./tests/cases</directory>
         </testsuite>
     </testsuites>
 

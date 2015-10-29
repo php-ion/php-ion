@@ -123,7 +123,7 @@ class TestCase extends \PHPUnit_Framework_TestCase {
                 $this->fail($this->_error);
             }
         } elseif ($timeout_as_fail) {
-            $this->fail("Loop timed out. " . ($this->shared ? "Data: " . var_export($this->shared, true) : ""));
+            $this->fail("Loop timed out. " . ($this->data ? "Data: " . var_export($this->data, true) : ""));
         }
     }
 

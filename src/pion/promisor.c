@@ -5,7 +5,7 @@ pion_cb * generator_throw   = NULL;
 pion_cb * generator_current = NULL;
 pion_cb * generator_key     = NULL;
 pion_cb * generator_valid   = NULL;
-pion_cb * generator_result  = NULL;
+pion_cb * generator_return  = NULL;
 
 zend_class_entry * ion_ce_ION_Promise_CancelException;
 zend_object_handlers ion_oh_ION_Promise_CancelException;
@@ -28,7 +28,7 @@ PHP_RINIT_FUNCTION(promisor) {
     generator_key     = pion_cb_fetch_method("Generator", "key");
     generator_throw   = pion_cb_fetch_method("Generator", "throw");
     generator_valid   = pion_cb_fetch_method("Generator", "valid");
-    generator_result  = pion_cb_fetch_method("Generator", "getResult");
+    generator_return  = pion_cb_fetch_method("Generator", "getReturn");
     return SUCCESS;
 }
 
@@ -38,7 +38,7 @@ PHP_RSHUTDOWN_FUNCTION(promisor) {
     pion_cb_free(generator_key);
     pion_cb_free(generator_throw);
     pion_cb_free(generator_valid);
-    pion_cb_free(generator_result);
+    pion_cb_free(generator_return);
     return SUCCESS;
 }
 
@@ -124,11 +124,11 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
     Z_ADDREF(zpromise);
     ZVAL_UNDEF(&retval);
     if(promise->await) {
-//        ZEND_ASSERT(promise->generator);
         result_type = type & ION_PROMISOR_FINISHED;
+        ZVAL_COPY(&result, data);
         obj_ptr_dtor(promise->await);
         promise->await = NULL;
-        zval_ptr_dtor(&zpromise);
+        goto watch_result;
     } else {
         result_type = ion_promisor_invoke(promise, &retval, data, type);
     }
@@ -144,10 +144,9 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
         }
         resolved = 1;
     } else {
-//        ZEND_ASSERT(Z_TYPE(result));
         result = retval;
-        resolved = 1;
         watch_result:
+        resolved = 1;
 
         if(Z_TYPE(result) == IS_OBJECT) {
             object_ce = Z_OBJCE(result);
@@ -231,6 +230,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
         ion_promisor_release(promise_obj);
         if(promise->handler_count) {
             for(ushort i = 0; i < promise->handler_count; i++) {
+                ion_promisor * handler = get_object_instance(promise->handlers[i], ion_promisor);
                 ion_promisor_resolve(promise->handlers[i], &result, result_type);
                 obj_ptr_dtor(promise->handlers[i]);
                 promise->handlers[i] = NULL;
