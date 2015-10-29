@@ -7,8 +7,8 @@ addons:
       - libevent-dev
       - gdb
       - make
-      - php7-dbg
-      - php7-dev
+#      - php7-dbg
+#      - php7-dev
       - lcov
 
 php:
