@@ -7,14 +7,12 @@ addons:
       - libevent-dev
       - gdb
       - make
-      - php5-dbg
-      - php5-dev
+      - php7-dbg
+      - php7-dev
       - lcov
 
 php:
   - 7.0
-#  - 5.5
-#  - 5.6
 
 
 os:
