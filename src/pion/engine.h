@@ -82,6 +82,8 @@ typedef struct _class_info {
 #define OBJ_ADDREF(obj) \
     GC_REFCOUNT(obj)++;
 
+#define obj_add_ref(obj) OBJ_ADDREF(obj);
+
 #define OBJ_DELREF(obj) \
     do { \
         zval _z; \
@@ -202,7 +204,7 @@ typedef struct _class_info {
     ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_STRING, NULL, 0)
 
 #define METHOD_ARGS_BEGIN_RETURN_BOOL(class_name, method_name, required_num_args) \
-    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_STRING, NULL, 0)
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, _IS_BOOL, NULL, 0)
 
 #define METHOD_ARGS_BEGIN_RETURN_OBJECT(class_name, method_name, required_num_args, return_class_name, allow_null) \
     ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_OBJECT, return_class_name, allow_null)

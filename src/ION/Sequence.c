@@ -29,14 +29,11 @@ METHOD_ARGS_END()
 /** public function ION\Sequence::__invoke(mixed ...$data) : void */
 CLASS_METHOD(ION_Sequence, __invoke) {
     zval * data = NULL;
-    zend_object * clone = NULL;
     ZEND_PARSE_PARAMETERS_START(0, 1)
         Z_PARAM_OPTIONAL
         Z_PARAM_ZVAL(data)
     ZEND_PARSE_PARAMETERS_END();
-    clone = ion_promisor_clone(Z_OBJ_P(getThis()));
-    ion_promisor_done(clone, data);
-    obj_ptr_dtor(clone);
+    ion_promisor_sequence_invoke(Z_OBJ_P(getThis()), data);
 }
 
 METHOD_ARGS_BEGIN(ION_Sequence, __invoke, 1)

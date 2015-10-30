@@ -137,7 +137,6 @@ CLASS_METHOD(ION, await) {
     tv.tv_usec = ((int)(timeout*1000000) % 1000000);
     tv.tv_sec = (int)timeout;
     deferred = ion_promisor_deferred_new_ex(NULL);
-//    zDeferred = ion_deferred_new_ex(NULL);
     timer = event_new(ION(base), -1, EV_TIMEOUT, _timer_done, deferred);
     if(event_add(timer, &tv) == FAILURE) {
         event_del(timer);
@@ -145,11 +144,9 @@ CLASS_METHOD(ION, await) {
         obj_ptr_dtor(deferred);
         zend_throw_exception(ion_class_entry(ION_RuntimeException), "Unable to add event to queue", 0);
         return;
-//        ion_deferred_free(zDeferred);
     } else {
         ion_promisor_store(deferred, timer);
         ion_promisor_dtor(deferred, _timer_dtor);
-//        ion_deferred_store(zDeferred, timer, _timer_dtor);
         RETURN_OBJ_ADDREF(deferred);
     }
 
@@ -159,32 +156,124 @@ METHOD_ARGS_BEGIN(ION, await, 1)
     METHOD_ARG_FLOAT(time, 0)
 METHOD_ARGS_END()
 
-/** public function ION::startInterval(double $time, string $name = NULL) : ION\Deferred */
-CLASS_METHOD(ION, startInterval) {
 
+
+
+static void _ion_interval_free(ion_interval * interval) {
+    if(interval->timer) {
+        event_del(interval->timer);
+        event_free(interval->timer);
+        interval->timer = NULL;
+    } else {
+        return;
+    }
+    if(interval->name) {
+        int res = zend_symtable_del(ION(timers), interval->name);
+        ZEND_ASSERT(res == SUCCESS);
+        zend_string_free(interval->name);
+    }
+    if(interval->promisor) {
+        obj_ptr_dtor(interval->promisor);
+    }
+    efree(interval);
 }
 
-METHOD_ARGS_BEGIN(ION, startInterval, 1)
+static void _ion_interval_invoke(evutil_socket_t fd, short flags, void * arg) {
+    ion_interval * interval = (ion_interval *) arg;
+    zval data;
+
+    ZVAL_TRUE(&data);
+    ion_promisor_sequence_invoke(interval->promisor, &data);
+    if(event_add(interval->timer, &interval->tv) == FAILURE) {
+        _ion_interval_free(interval);
+        zend_throw_exception(ion_class_entry(ION_RuntimeException), "Unable to add event to queue", 0);
+    }
+    ION_CHECK_LOOP();
+}
+
+static void _ion_interval_dtor(zend_object * sequence) {
+    ion_promisor * promisor = get_object_instance(sequence, ion_promisor);
+    if(promisor->object) {
+        _ion_interval_free((ion_interval *) promisor->object);
+    }
+}
+
+static void _ion_clean_interval(zval * dest) {
+    ion_interval * interval = (ion_interval *) Z_PTR_P(dest);
+    _ion_interval_free(Z_PTR_P(dest));
+}
+
+
+/** public function ION::interval(double $time, string $name = NULL) : ION\Sequence */
+CLASS_METHOD(ION, interval) {
+    double           timeout = 0.0;
+    zend_string    * name = NULL;
+    ion_interval   * interval;
+
+    ZEND_PARSE_PARAMETERS_START(1, 2)
+        Z_PARAM_DOUBLE(timeout)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_STR(name)
+    ZEND_PARSE_PARAMETERS_END();
+
+    interval = ecalloc(1, sizeof(ion_interval));
+    interval->promisor   = ion_promisor_sequence_new(NULL);
+    interval->tv.tv_usec = ((int)(timeout*1000000) % 1000000);
+    interval->tv.tv_sec  = (int)timeout;
+    if(name) {
+        interval->name   = zend_string_copy(name);
+    }
+    interval->timer      = event_new(ION(base), -1, EV_TIMEOUT, _ion_interval_invoke, interval);
+
+    if(interval->name) {
+        zend_hash_add_ptr(ION(timers), interval->name, interval);
+    }
+
+    if(event_add(interval->timer, &interval->tv) == FAILURE) {
+        _ion_interval_free(interval);
+        zend_throw_exception(ion_class_entry(ION_RuntimeException), "Unable to add event to queue", 0);
+        return;
+    } else {
+        ion_promisor_store(interval->promisor, interval);
+        ion_promisor_dtor(interval->promisor, _ion_interval_dtor);
+        RETURN_OBJ_ADDREF(interval->promisor);
+    }
+}
+
+METHOD_ARGS_BEGIN(ION, interval, 1)
     METHOD_ARG_DOUBLE(time, 0)
     METHOD_ARG_STRING(name, 0)
 METHOD_ARGS_END()
 
-/** public function ION::stopInterval(string $name) : bool */
-CLASS_METHOD(ION, stopInterval) {
+/** public function ION::cancelInterval(string $name) : bool */
+CLASS_METHOD(ION, cancelInterval) {
+    ion_interval   * interval;
+    zend_string    * name = NULL;
 
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_STR(name)
+    ZEND_PARSE_PARAMETERS_END();
+
+    interval = zend_hash_find_ptr(ION(timers), name);
+    if(interval) {
+        _ion_interval_free(interval);
+        RETURN_TRUE;
+    } else {
+        RETURN_FALSE;
+    }
 }
 
-METHOD_ARGS_BEGIN_RETURN_BOOL(ION, stopInterval, 1)
+METHOD_ARGS_BEGIN_RETURN_BOOL(ION, cancelInterval, 1)
     METHOD_ARG_STRING(name, 0)
 METHOD_ARGS_END()
 
 CLASS_METHODS_START(ION)
-    METHOD(ION, reinit,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION, dispatch,      ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION, stop,          ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION, await,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION, startInterval, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION, stopInterval,  ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION, reinit,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION, dispatch,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION, stop,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION, await,          ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION, interval,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION, cancelInterval, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION) {
@@ -209,6 +298,15 @@ PHP_MSHUTDOWN_FUNCTION(ION) {
 }
 
 PHP_RINIT_FUNCTION(ION) {
+    ALLOC_HASHTABLE(ION(timers));
+    zend_hash_init(ION(timers), 128, NULL, _ion_clean_interval, 0);
+    return SUCCESS;
+}
 
+
+PHP_RSHUTDOWN_FUNCTION(ION) {
+    zend_hash_clean(ION(timers));
+    zend_hash_destroy(ION(timers));
+    FREE_HASHTABLE(ION(timers));
     return SUCCESS;
 }

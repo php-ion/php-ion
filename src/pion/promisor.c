@@ -244,13 +244,23 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
     zval_ptr_dtor(&zpromise);
 }
 
+void ion_promisor_sequence_invoke(zend_object * promise, zval * args) {
+    zend_object * clone = ion_promisor_clone(promise);
+    ion_promisor_done(clone, args);
+    obj_ptr_dtor(clone);
+}
+
 zend_object * ion_promisor_promise_new(zval * done, zval * fail, zval * progress) {
     return pion_new_object_arg_3(ion_class_entry(ION_Promise), done, fail, progress);
 }
 
 
 zend_object * ion_promisor_sequence_new(zval * init) {
-    return pion_new_object_arg_1(ion_class_entry(ION_Sequence), init);
+    if(init) {
+        return pion_new_object_arg_1(ion_class_entry(ION_Sequence), init);
+    } else {
+        return pion_new_object_arg_0(ion_class_entry(ION_Sequence));
+    }
 }
 
 zend_object * ion_promisor_deferred_new(zval * canceler) {

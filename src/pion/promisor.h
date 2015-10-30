@@ -47,7 +47,7 @@ typedef struct _ion_promisor {
 #ifdef ION_DEBUG
     long                uid; // to distinguish promise-objects
 #endif
-    int                flags;
+    int                 flags;
     pion_cb           * done;
     pion_cb           * fail;
     pion_cb           * progress;
@@ -63,9 +63,6 @@ typedef struct _ion_promisor {
     void              * object;
     promisor_canceler_t canceler;
     promisor_dtor_t     dtor;
-#ifdef ZTS
-    void           *** thread_ctx;
-#endif
 } ion_promisor;
 
 zend_object * ion_promisor_promise_new(zval * done, zval * fail, zval * progress);
@@ -82,10 +79,11 @@ zend_object * ion_promisor_clone_obj(zval * zobject);
 #define ion_promisor_dtor(promisor, dtor_cb) get_object_instance(promisor, ion_promisor)->dtor = dtor_cb
 
 // Resolvers
-void   ion_promisor_resolve(zend_object * promisor, zval * result, int type);
-void   ion_promisor_cancel(zend_object * promisor, const char *message);
+void ion_promisor_resolve(zend_object * promisor, zval * result, int type);
+void ion_promisor_cancel(zend_object * promisor, const char *message);
+void ion_promisor_sequence_invoke(zend_object * promisor, zval * args);
 // Notify
-void   ion_promisor_notify(zend_object * promisor, zval * info);
+void ion_promisor_notify(zend_object * promisor, zval * info);
 
 #define ion_promisor_done(promisor, result)  ion_promisor_resolve(promisor, result, ION_PROMISOR_DONE)
 #define ion_promisor_fail(promisor, error)   ion_promisor_resolve(promisor, error, ION_PROMISOR_FAILED)

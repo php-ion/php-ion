@@ -8,5 +8,12 @@
 #define PRESERVE_FLAGS   3
 #define RECREATE_BASE    4
 
+typedef struct _ion_interval {
+    struct timeval tv;
+    zend_object  * promisor;
+    zend_string  * name;
+    event        * timer;
+} ion_interval;
+
 
 #endif //ION_ION_H

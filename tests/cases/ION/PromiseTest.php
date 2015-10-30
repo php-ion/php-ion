@@ -1,6 +1,6 @@
 <?php
 
-namespace cases\ION;
+namespace ION;
 
 use ION;
 use ION\Promise;
@@ -117,7 +117,6 @@ class PromiseTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testCloneable() {
@@ -129,6 +128,7 @@ class PromiseTest extends TestCase {
         $clone = clone $promise;
         $this->assertEquals($promise->a, $clone->a);
         $clone->done(1);
+        $promise->done(1);
 
     }
 

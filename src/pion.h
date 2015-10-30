@@ -11,7 +11,7 @@
 #include "pion/promisor.h"
 #include "pion/net.h"
 
-#if defined(ZTS) && defined(COMPILE_DL_MYSQLI)
+#if defined(ZTS) && defined(COMPILE_DL_ION)
 ZEND_TSRMLS_CACHE_EXTERN();
 #endif
 

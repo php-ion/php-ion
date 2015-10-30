@@ -88,12 +88,12 @@ class ION {
     public static function dispatch(int $flags = 0) : bool {}
 
     /**
-     * Exit the event dispatcher after the specified time.
+     * Stop the event dispatcher after the specified time.
      * The next dispatcher iteration after the given timer expires will complete normally (handling all queued events)
      * then exit without blocking for events again.
      *
      * @since 1.0
-     * @param float $timeout the amount of time after which the loop should terminate, or NULL to exit after running all currently active events.
+     * @param float $timeout the amount of time after which the dispatch should terminate.
      * @throws RuntimeException if error occurs
      * */
     public static function stop(float $timeout = -1) {}
@@ -102,7 +102,7 @@ class ION {
      * Asynchronous sleep.
      * Resolve promisor after
      *
-     * @see startInterval
+     * @see interval
      * @since 1.0
      * @param float $time time in seconds. Minimal value is 1e-6
      * @return Deferred
@@ -111,20 +111,23 @@ class ION {
 
     /**
      * @see await
+     * @see cancelInterval
      * @since 1.0
-     * @param float $time
-     * @param string $name
+     * @param float $time time in seconds. Minimal value is 1e-6
+     * @param string $name interval name
      * @return Sequence
+     * @throws RuntimeException if error occurs
      */
-    public static function startInterval(float $time, string $name = null) : Sequence {}
+    public static function interval(float $time, string $name = null) : Sequence {}
 
     /**
-     * Stop named timer
+     * Stop named interval
      *
-     * @see startInterval
+     * @see interval
      * @since 1.0
      * @param string $name
+     * @return bool
      */
-    public static function stopInterval(string $name) {}
+    public static function cancelInterval(string $name) {}
 
 }

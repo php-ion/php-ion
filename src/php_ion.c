@@ -1,12 +1,12 @@
+#ifdef ZTS
+#  include "TSRM.h"
+#endif
+
 /*  */
 #include "php.h"
 #include "ext/spl/spl_functions.h"
 #include "ext/standard/php_var.h"
 #include "ext/standard/info.h"
-
-#ifdef ZTS
-#  include "TSRM.h"
-#endif
 
 /* Libevent */
 #include <event.h>
@@ -174,12 +174,14 @@ PHP_MSHUTDOWN_FUNCTION(ion) {
 PHP_RINIT_FUNCTION(ion) {
 //    ACTIVATE_MODULE(ION_DNS);
     ACTIVATE_MODULE(promisor);
+    ACTIVATE_MODULE(ION);
     return SUCCESS;
 }
 
 /* End SAPI request */
 PHP_RSHUTDOWN_FUNCTION(ion) {
 //    DEACTIVATE_MODULE(ION_Promise);
+    DEACTIVATE_MODULE(ION);
     DEACTIVATE_MODULE(promisor);
     return SUCCESS;
 }

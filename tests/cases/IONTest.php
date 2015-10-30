@@ -44,4 +44,26 @@ class IONTest extends TestCase {
             "timer" => 0.3
         ], $this->data);
     }
+
+    /**
+     * @memcheck
+     */
+    public function testInterval() {
+        $this->data["count"] = 0;
+        $start = microtime(1);
+        ION::interval(0.3, "test")->then(function () use ($start) {
+            $this->data["iteration#".$this->data["count"]] = round(microtime(1) - $start, 1);
+            if(++$this->data["count"] > 2) {
+                $this->stop();
+            }
+        });
+        $this->loop();
+        $this->assertTrue(ION::cancelInterval("test"));
+        $this->assertEquals([
+            "count" => 3,
+            "iteration#0" => 0.3,
+            "iteration#1" => 0.6,
+            "iteration#2" => 0.9,
+        ], $this->data);
+    }
 }
