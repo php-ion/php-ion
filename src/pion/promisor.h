@@ -2,6 +2,7 @@
 #define PION_PROMISOR_H
 
 #include <php.h>
+#include "zts.h"
 #include "../config.h"
 #include "callback.h"
 #include "exceptions.h"

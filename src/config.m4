@@ -1,6 +1,7 @@
 # +----------------------------------------------------------------------+
 # | PHP Version 7                                                        |
 # +----------------------------------------------------------------------+
+# +----------------------------------------------------------------------+
 # | Author: Ivan Shalganov <ivan@shalganov.me>                           |
 # +----------------------------------------------------------------------+
 
@@ -99,7 +100,7 @@ if test "$PHP_ION" != "no"; then
     pion/callback.c
     pion/engine.c
     pion/promisor.c
-    pion/net.c
+
     pion.c
     ION/Debug.c
     ION/Promise.c
@@ -109,6 +110,7 @@ if test "$PHP_ION" != "no"; then
     ION.c
     "
 #
+#    pion/net.c
 #ION/Data/LinkedList.c
 #     ION/Data/SkipList.c
 #        ION/Deferred.c

@@ -230,7 +230,6 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
         ion_promisor_release(promise_obj);
         if(promise->handler_count) {
             for(ushort i = 0; i < promise->handler_count; i++) {
-                ion_promisor * handler = get_object_instance(promise->handlers[i], ion_promisor);
                 ion_promisor_resolve(promise->handlers[i], &result, result_type);
                 obj_ptr_dtor(promise->handlers[i]);
                 promise->handlers[i] = NULL;

@@ -4,16 +4,13 @@
 
 #include "config.h"
 #include "php.h"
+#include "pion/zts.h"
 #include "pion/exceptions.h"
 #include "pion/debug.h"
 #include "pion/callback.h"
 #include "pion/engine.h"
 #include "pion/promisor.h"
 #include "pion/net.h"
-
-#if defined(ZTS) && defined(COMPILE_DL_ION)
-ZEND_TSRMLS_CACHE_EXTERN();
-#endif
 
 typedef struct event event;
 

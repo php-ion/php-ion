@@ -18,7 +18,7 @@ extern ion_base *ionBase;
 
 #ifdef COMPILE_DL_ION
 #ifdef ZTS
-    ZEND_TSRMLS_CACHE_DEFINE();
+ZEND_TSRMLS_CACHE_DEFINE();
 #endif
 ZEND_GET_MODULE(ion);
 #endif
@@ -172,6 +172,9 @@ PHP_MSHUTDOWN_FUNCTION(ion) {
 
 /* Start SAPI request */
 PHP_RINIT_FUNCTION(ion) {
+#if defined(COMPILE_DL_ION) && defined(ZTS)
+    ZEND_TSRMLS_CACHE_UPDATE();
+#endif
 //    ACTIVATE_MODULE(ION_DNS);
     ACTIVATE_MODULE(promisor);
     ACTIVATE_MODULE(ION);

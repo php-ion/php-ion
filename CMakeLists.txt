@@ -38,7 +38,7 @@ set(ION_SOURCE_FILES
         src/ION/ResolvablePromise.c
         src/ION/Deferred.c
         src/ION/Sequence.c
-        src/ION.c)
+        src/ION.c src/pion/zts.h)
 
 #src/ION/Deferred.c
 #src/ION/Data/SkipList.c
