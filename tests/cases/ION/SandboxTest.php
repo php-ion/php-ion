@@ -1,6 +1,6 @@
 <?php
 
-namespace cases\ION;
+namespace ION;
 
 
 use ION\Test\TestCase;
