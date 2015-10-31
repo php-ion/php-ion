@@ -132,6 +132,9 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
             if (Z_TYPE(result) == IS_OBJECT) {
                 object_ce = Z_OBJCE(result);
                 if (object_ce == ion_class_entry(Generator)) {
+                    if(callback && !(callback->fcc->function_handler->common.fn_flags & ZEND_ACC_GENERATOR)) {
+                        goto resolve;
+                    }
                     if (promise->generator) { // push the generator to stack
                         PION_ARRAY_PUSH(promise->generators_stack, promise->generators_count, promise->generator);
                     }
@@ -209,6 +212,8 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
             goto watch_result;
         }
     }
+
+    resolve:
 
     if(resolved) {
         promise->result = result;

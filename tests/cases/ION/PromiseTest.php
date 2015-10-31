@@ -454,4 +454,58 @@ class PromiseTest extends TestCase {
         ], $this->data);
     }
 
+    public static function simpleGenerator() {
+        yield 1;
+        yield 2;
+        yield 3;
+        return 4;
+    }
+
+
+    /**
+     * @memcheck
+     */
+    public function testReturnGenerator() {
+        $promise = new ResolvablePromise();
+        $promise
+            ->then(function() {
+                return self::simpleGenerator();
+            })
+            ->onDone(function ($gen) {
+                $this->data["result"] = is_a($gen, 'Generator');
+            })
+            ->onFail(function ($error) {
+                $this->data["error"] = $this->exception2array($error);
+            });
+
+        $promise->done(null);
+        $this->assertEquals([
+            'result' => true
+        ], $this->data);
+    }
+
+    /**
+     * @group dev
+     * @memcheck
+     */
+    public function testYieldGeneratorScalrs() {
+        $promise = new ResolvablePromise();
+        $promise
+            ->then(function() {
+                $x = yield from self::simpleGenerator();
+                return $x + 10;
+            })
+            ->onDone(function ($x) {
+                $this->data["result"] = $x;
+            })
+            ->onFail(function ($error) {
+                $this->data["error"] = $this->exception2array($error);
+            });
+
+        $promise->done(null);
+        $this->assertEquals([
+            'result' => 14
+        ], $this->data);
+    }
+
 }

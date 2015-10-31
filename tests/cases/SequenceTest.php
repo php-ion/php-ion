@@ -15,7 +15,6 @@ class SequenceTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testRushInvoke() {
