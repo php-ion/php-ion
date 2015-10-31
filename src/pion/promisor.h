@@ -13,8 +13,11 @@
 #define ION_PROMISOR_FAILED    1<<1
 #define ION_PROMISOR_FINISHED  (ION_PROMISOR_DONE | ION_PROMISOR_FAILED)
 
+// Info
+#define ION_PROMISOR_PROGRESS  1<<2
+
 // Fail reason
-#define ION_PROMISOR_CANCELED  1<<2
+#define ION_PROMISOR_CANCELED  1<<3
 #define ION_PROMISOR_TIMED_OUT 1<<4
 
 // Types
@@ -27,8 +30,10 @@
 // Callbacks flags
 #define ION_PROMISOR_HAS_DONE      1<<10
 #define ION_PROMISOR_HAS_FAIL      1<<11
-#define ION_PROMISOR_HAS_DONE_WITH_FAIL   1<<12
-#define ION_PROMISOR_HAS_PROGRESS  1<<13
+#define ION_PROMISOR_HAS_PROGRESS  1<<12
+#define ION_PROMISOR_YIELDED       1<<13
+
+#define ION_PROMISOR_RESOLVED      1<<14
 
 extern ZEND_API zend_class_entry * ion_ce_ION_Promise;
 extern ZEND_API zend_class_entry * ion_ce_ION_ResolvablePromise;
@@ -48,7 +53,7 @@ typedef struct _ion_promisor {
 #ifdef ION_DEBUG
     long                uid; // to distinguish promise-objects
 #endif
-    int                 flags;
+    uint                 flags;
     pion_cb           * done;
     pion_cb           * fail;
     pion_cb           * progress;

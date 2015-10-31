@@ -165,9 +165,8 @@ class PromiseTest extends TestCase {
                 $this->data["x1"] = $x;
                 return $x + 10;
             })
-            ->then(function ($x2, \Exception $error = null) {
+            ->then(function ($x2) {
                 $this->data["x2"] = $x2;
-                $this->data["x2.error"] = $error;
                 return $x2 + 100;
             })
             ->onDone(function ($x) {
@@ -182,7 +181,6 @@ class PromiseTest extends TestCase {
         $this->assertEquals([
             'x0' => 1,
             'x2' => 2,
-            'x2.error' => null,
             'result' => 102
         ], $this->data);
     }

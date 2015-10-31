@@ -49,7 +49,7 @@ CLASS_METHOD(ION_Promise, then) {
     ZEND_PARSE_PARAMETERS_END();
     promise = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), done, fail, progress);
     if(promise == NULL) {
-        zend_throw_error(ion_class_entry(InvalidArgumentException), "Can't promise");
+        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
         return;
     }
 
@@ -71,7 +71,7 @@ CLASS_METHOD(ION_Promise, onDone) {
     ZEND_PARSE_PARAMETERS_END();
     promise = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), callback, NULL, NULL);
     if(promise == NULL) {
-        zend_throw_error(ion_class_entry(InvalidArgumentException), "Can't promise");
+        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
         return;
     }
     RETURN_OBJ_ADDREF(promise);
@@ -90,7 +90,7 @@ CLASS_METHOD(ION_Promise, onFail) {
     ZEND_PARSE_PARAMETERS_END();
     promise = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), NULL, callback, NULL);
     if(promise == NULL) {
-        zend_throw_error(ion_class_entry(InvalidArgumentException), "Can't promise");
+        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
         return;
     }
     RETURN_OBJ_ADDREF(promise);
@@ -109,7 +109,7 @@ CLASS_METHOD(ION_Promise, onProgress) {
     ZEND_PARSE_PARAMETERS_END();
     promise = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), NULL, NULL, callback);
     if(promise == NULL) {
-        zend_throw_error(ion_class_entry(InvalidArgumentException), "Can't promise");
+        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
         return;
     }
     RETURN_OBJ_ADDREF(promise);

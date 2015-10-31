@@ -12,14 +12,14 @@ class DeferredTest extends TestCase {
         $defer = new Deferred(function () {
             $this->data["cancel"] = true;
         });
-        $defer->then(function ($data, $error = null) {
+        $defer->then(function ($data) {
             $this->data["result"] = $data;
-            $this->data["error"]  = $error;
+        }, function ($error) {
+            $this->data["error"]  = $this->exception2array($error);
         });
         $defer->done("some result");
         $this->assertEquals([
             "result" => "some result",
-            "error" => null
         ], $this->data);
     }
 
@@ -30,15 +30,15 @@ class DeferredTest extends TestCase {
         $defer = new Deferred(function () {
             $this->data["cancel"] = true;
         });
-        $defer->then(function ($data, $error = null) {
+        $defer->then(function ($data) {
             $this->data["result"] = $data;
-            $this->data["error"] = $error;
             throw new \RuntimeException("Test exception in then()");
+        }, function ($error) {
+            $this->data["error"] = $error;
         });
         $defer->done("some result");
         $this->assertEquals([
             "result" => "some result",
-            "error" => null
         ], $this->data);
     }
 
@@ -50,8 +50,9 @@ class DeferredTest extends TestCase {
         $defer = new Deferred(function ($reason) {
             $this->data["cancel"] = $this->exception2array($reason);
         });
-        $defer->then(function ($data, $error) {
+        $defer->then(function ($data) {
             $this->data["result"] = $data;
+        }, function ($error) {
             $this->data["error"]  = $this->exception2array($error);
         });
         $defer->cancel("just reject");
@@ -62,7 +63,6 @@ class DeferredTest extends TestCase {
                 "message" => "just reject",
                 "code" => 0
             ],
-            "error" => null
         ], $this->data);
     }
 
@@ -74,8 +74,9 @@ class DeferredTest extends TestCase {
             $this->data["cancel"] = $this->exception2array($reason);
             throw new \RuntimeException("Test exception in cancel()");
         });
-        $defer->then(function ($data, $error) {
+        $defer->then(function ($data) {
             $this->data["result"] = $data;
+        }, function ($error) {
             $this->data["error"]  = $this->exception2array($error);
         });
         $defer->cancel("just reject");
@@ -85,7 +86,6 @@ class DeferredTest extends TestCase {
                 "message" => "just reject",
                 "code" => 0
             ],
-            "result" => null,
             "error" => [
                 "exception" => 'RuntimeException',
                 "message" => "Test exception in cancel()",
@@ -102,13 +102,13 @@ class DeferredTest extends TestCase {
         $defer = new Deferred(function ($reason) {
             $this->data["cancel"] = $this->exception2array($reason);
         });
-        $defer->then(function ($data, $error) {
+        $defer->then(function ($data) {
             $this->data["result"] = $data;
+        }, function ($error) {
             $this->data["error"]  = $this->exception2array($error);
         });
         $defer->fail(new \RuntimeException("this is fail"));
         $this->assertEquals([
-            "result" => null,
             "error" => [
                 "exception" => 'RuntimeException',
                 "message" => "this is fail",
@@ -123,10 +123,8 @@ class DeferredTest extends TestCase {
      * @memcheck
      */
     public function testRejectAfterDone() {
-        $defer = new Deferred(function ($reason) {
-        });
-        $defer->then(function ($data, $error) {
-        });
+        $defer = new Deferred(function ($reason) {});
+        $defer->then(function ($data) {});
         $defer->done("some result");
         $defer->cancel("bad reason");
     }
