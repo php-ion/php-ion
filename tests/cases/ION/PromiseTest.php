@@ -1,4 +1,5 @@
 <?php
+//declare(strict_types=1);
 
 namespace ION;
 
@@ -148,6 +149,7 @@ class PromiseTest extends TestCase {
     }
 
     /**
+     *
      * @memcheck
      */
     public function testSimpleChain() {
@@ -461,51 +463,165 @@ class PromiseTest extends TestCase {
         return 4;
     }
 
+    /**
+     * @param callable $action
+     * @return \ION\ResolvablePromise
+     */
+    public function promise(callable $action) {
+        $promise = new ResolvablePromise();
+        $promise
+            ->then($action)
+            ->onDone(function ($result) {
+                $this->data["result"] = $this->describe($result);
+            })
+            ->onFail(function ($error) {
+                $this->data["error"] = $this->describe($error);
+            });
+
+        return $promise;
+    }
+
+    public function providerPromiseActions() {
+        return array(
+            /* Generator vs generator */
+            [
+                function () {
+                    return self::simpleGenerator();
+                },
+                [
+                    'result' => [
+                        'object' => 'Generator'
+                    ]
+                ]
+            ], [
+                function () {
+                    $x = yield from self::simpleGenerator();
+                    return $x;
+                },
+                [
+                    'result' => 4
+                ]
+            ], [
+                function () {
+                    return yield from self::simpleGenerator();
+                },
+                [
+                    'result' => 4
+                ]
+            ], [
+                function () {
+                    $x = yield self::simpleGenerator();
+                    return $x;
+                },
+                [
+                    'result' => [
+                        'object' => 'Generator'
+                    ]
+                ]
+            ], [
+                function () {
+                    return yield self::simpleGenerator();
+                },
+                [
+                    'result' => [
+                        'object' => 'Generator'
+                    ]
+                ]
+            ],
+        );
+    }
 
     /**
      * @memcheck
+     * @dataProvider providerPromiseActions
+     * @param callable $action
+     * @param array $result
+     * @param mixed $arg
      */
-    public function testReturnGenerator() {
-        $promise = new ResolvablePromise();
-        $promise
-            ->then(function() {
-                return self::simpleGenerator();
-            })
-            ->onDone(function ($gen) {
-                $this->data["result"] = is_a($gen, 'Generator');
-            })
-            ->onFail(function ($error) {
-                $this->data["error"] = $this->exception2array($error);
-            });
+    public function testPromiseAction(callable $action, array $result, $arg = null) {
+        $this->promise($action)->done($arg);
+        $this->assertEquals($result, $this->data);
+    }
 
-        $promise->done(null);
-        $this->assertEquals([
-            'result' => true
-        ], $this->data);
+
+    public function providerTypeHintInAction() {
+        return array(
+            // objects
+            // true
+            [true, new \SplDoublyLinkedList(), function ($elem) { return true; } ],
+            [true, new \SplDoublyLinkedList(), function (\SplDoublyLinkedList $elem) { return true; }  ],
+            [true, new \SplQueue(), function (\SplDoublyLinkedList $elem) { return true; }  ],
+            [true, new \SplQueue(), function (\ArrayAccess $elem) { return true; }  ],
+            // false
+            [false, new \SplDoublyLinkedList(), function (\SplQueue $elem) { return true; }  ],
+            [false, new \SplPriorityQueue(), function (\SplQueue $elem) { return true; }  ],
+            [false, new \ArrayObject(), function (\SplQueue $elem) { return true; }  ],
+            // arrays
+            // true
+            [true, [], function ($elem) { return true; }  ],
+            [true, [], function (array $elem) { return true; }  ],
+            // false
+            [false, [], function (\ArrayObject $elem) { return true; }  ],
+            [false, new \ArrayObject(), function (array $elem) { return true; }  ],
+            // callables
+            // true
+            [true, function () {}, function ($elem) { return true; }  ],
+            [true, function () {}, $cb = function (callable $elem) { return true; }  ],
+            [true, __CLASS__ . "::simpleGenerator", $cb  ],
+            [true, [__CLASS__, "simpleGenerator"], $cb ],
+            [true, [$this, __METHOD__], $cb  ],
+            [true, "intval", $cb  ],
+            // false
+            [false, "null", $cb  ],
+            [false, ["zz", "zz"], $cb  ],
+            [false, "zz:zz", $cb ],
+            [false, [$this, "zz"], $cb  ],
+            // integers
+            // true
+            [true, 5, function ($elem) { return true; }  ],
+            [true, 5, $cb = function (int $elem) { return true; }  ],
+            [true, "5", $cb  ],
+            [true, "5.5", $cb  ],
+            [true, 5.0, $cb  ],
+            [true, 5.5, $cb  ],
+            [true, "5.z", $cb  ],
+            [true, true, $cb  ],
+            [true, false, $cb ],
+            // false
+            [false, "z", $cb  ],
+            [false, [], $cb  ],
+            [false, new \StdClass, $cb  ],
+            [false, STDIN, $cb  ],
+            // floats
+            // true
+            // false
+            // strings
+            // true
+            // false
+        );
     }
 
     /**
      * @group dev
      * @memcheck
+     * @dataProvider providerTypeHintInAction
+     * @param bool $ok
+     * @param callable $action
+     * @param mixed $arg
      */
-    public function testYieldGeneratorScalrs() {
-        $promise = new ResolvablePromise();
-        $promise
-            ->then(function() {
-                $x = yield from self::simpleGenerator();
-                return $x + 10;
-            })
-            ->onDone(function ($x) {
-                $this->data["result"] = $x;
-            })
-            ->onFail(function ($error) {
-                $this->data["error"] = $this->exception2array($error);
-            });
+    public function testTypeHintInAction($ok, $arg, callable $action) {
+        @$this->promise($action)->done($arg); // notices generate memory-leak in the phpunit
+        if($ok) {
+//            var_dump($this->data);
 
-        $promise->done(null);
-        $this->assertEquals([
-            'result' => 14
-        ], $this->data);
+            $this->assertEquals([
+                "result" => true
+            ], $this->data);
+        } else {
+            $this->assertEquals([
+                "result" => $this->describe($arg)
+            ], $this->data);
+        }
     }
 
 }

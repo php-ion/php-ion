@@ -11,6 +11,8 @@ zend_object_handlers ion_oh_ION_Promise_CancelException;
 zend_class_entry * ion_ce_ION_Promise_TimeoutException;
 zend_object_handlers ion_oh_ION_Promise_TimeoutException;
 
+#define Z_ISGENERATOR(zv) (Z_TYPE(zv) == IS_OBJECT && Z_OBJCE(result) == ion_class_entry(Generator))
+
 PHP_MINIT_FUNCTION(promisor) {
     PION_REGISTER_VOID_EXTENDED_CLASS(ION_Promise_CancelException, zend_exception_get_default(), "ION\\Promise\\CancelException");
     PION_REGISTER_VOID_EXTENDED_CLASS(ION_Promise_TimeoutException, ion_class_entry(ION_Promise_CancelException), "ION\\Promise\\TimeoutException");
@@ -67,6 +69,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
     zval           result;
     int            result_type = 0;
     zend_bool      resolved;
+    zend_bool      skip_generator = 0;
     zend_class_entry * object_ce = NULL;
     pion_cb      * callback = NULL;
 
@@ -100,7 +103,8 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
         if(callback) {
             if(pion_cb_required_num_args(callback) > 1) {
                 callback = NULL;
-            } else if(pion_cb_num_args(callback) && pion_verify_arg_type(callback, 0, data) == FAILURE) {
+            }
+            else if(pion_cb_num_args(callback) && pion_verify_arg_type(callback, 0, data) == false) {
                 callback = NULL;
             }
         }
@@ -109,11 +113,15 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
             if(EG(exception)) {
                 ZEND_ASSERT(Z_ISUNDEF(retval));
                 ZVAL_OBJ(&result, EG(exception));
-                EG(exception) = NULL;
+                zval_add_ref(&result);
+                zend_clear_exception();
                 result_type = ION_PROMISOR_FAILED;
                 resolved = 1;
             } else {
                 result = retval;
+                if(Z_ISGENERATOR(result) && !pion_cb_is_generator(callback)) { // generator returned
+                    skip_generator = 1;
+                }
                 result_type = ION_PROMISOR_DONE;
                 resolved = 0;
             }
@@ -132,15 +140,13 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
             if (Z_TYPE(result) == IS_OBJECT) {
                 object_ce = Z_OBJCE(result);
                 if (object_ce == ion_class_entry(Generator)) {
-                    if(callback && !(callback->fcc->function_handler->common.fn_flags & ZEND_ACC_GENERATOR)) {
-                        goto resolve;
+                    if(skip_generator || promise->generator) {
+                        resolved = 1;
+                    } else {
+                        promise->generator = Z_OBJ(result);
+                        result = pion_cb_obj_call_without_args(generator_current, promise->generator);
+                        goto watch_result;
                     }
-                    if (promise->generator) { // push the generator to stack
-                        PION_ARRAY_PUSH(promise->generators_stack, promise->generators_count, promise->generator);
-                    }
-                    promise->generator = Z_OBJ(result);
-                    result = pion_cb_obj_call_without_args(generator_current, promise->generator);
-                    goto watch_result;
                 } else if (object_ce == ion_class_entry(ION_Promise)
                            || object_ce == ion_class_entry(ION_Deferred)
                            || instanceof_function(object_ce, ion_class_entry(ION_Promise))) {
@@ -177,12 +183,13 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
             }
             zval_ptr_dtor(&result);
             if(EG(exception)) {
+                ZEND_ASSERT(Z_ISUNDEF(next));
                 ZVAL_OBJ(&result, EG(exception));
-                EG(exception) = NULL;
+                zval_add_ref(&result);
+                zend_clear_exception();
                 result_type = ION_PROMISOR_FAILED;
                 is_valid_generator = 0;
             } else {
-
                 result = next;
                 is_valid = pion_cb_obj_call_without_args(generator_valid, promise->generator);
                 if(Z_ISFALSE(is_valid)) {
@@ -195,25 +202,23 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
                     } else {
                         ZVAL_COPY(&result, &generator->retval);
                     }
+                    skip_generator = 1;
                 } else {
                     is_valid_generator = 1;
+                    if(Z_ISGENERATOR(result)) {
+                        goto resume_generator;
+                    }
                 }
             }
 
             if(!is_valid_generator) {
                 obj_ptr_dtor(promise->generator);
-                PION_ARRAY_POP(promise->generators_stack, promise->generators_count, promise->generator);
-                if(promise->generator) {
-                    goto resume_generator;
-                } else {
-                    promise->flags |= ION_PROMISOR_RESOLVED;
-                }
+                promise->generator = NULL;
+                promise->flags |= ION_PROMISOR_RESOLVED;
             }
             goto watch_result;
         }
     }
-
-    resolve:
 
     if(resolved) {
         promise->result = result;

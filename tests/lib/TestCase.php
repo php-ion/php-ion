@@ -56,6 +56,38 @@ class TestCase extends \PHPUnit_Framework_TestCase {
         return new Server($host);
     }
 
+    /**
+     * Describe object or something else
+     * @param mixed $data
+     * @return mixed
+     */
+    public function describe($data) {
+        if(is_object($data)) {
+            if ($data instanceof \Throwable) {
+                return [
+                    'exception' => get_class($data),
+                    'message' => $data->getMessage(),
+                    'code' => $data->getCode()
+                ];
+            } else {
+                $result = [
+                    'object' => get_class($data),
+                ];
+
+                if (method_exists($data, "__toString")) {
+                    $result['name'] = strval($data);
+                }
+                return $result;
+            }
+        } elseif(is_resource($data)) {
+            return [
+                "resource" => intval(STDIN)
+            ];
+        } else {
+            return $data;
+        }
+    }
+
     public function exception2array($exception) {
         if($exception instanceof \Throwable) {
             return [

@@ -188,6 +188,7 @@ METHOD_ARGS_END();
 
 
 CLASS_METHOD(ION_Debug, sandbox) {
+    zend_error(E_NOTICE, "A non well formed numeric value encountered");
 //    char * tmp = emalloc(sizeof(char)*7);
 //    memcpy(tmp, "alloc1", sizeof("alloc1")+1);
 //    efree(tmp);
