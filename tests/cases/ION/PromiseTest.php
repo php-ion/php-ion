@@ -638,15 +638,14 @@ class PromiseTest extends TestCase {
             [true, true,    $cb  ],
             [true, false,   $cb  ],
             // false
-            [false, new \SplDoublyLinkedList(),   $cb  ],
-            [false, STDIN,   $cb  ],
-            [false, [],      $cb  ],
+            [false, new \SplDoublyLinkedList(), $cb  ],
+            [false, STDIN,  $cb  ],
+            [false, [],     $cb  ],
 
         );
     }
 
     /**
-     * @group dev
      * @memcheck
      * @dataProvider providerTypeHintInAction
      * @param bool $ok
@@ -656,8 +655,6 @@ class PromiseTest extends TestCase {
     public function testTypeHintInAction($ok, $arg, callable $action) {
         @$this->promise($action)->done($arg); // notices generate memory-leak in the phpunit
         if($ok) {
-//            var_dump($this->data);
-
             $this->assertEquals([
                 "result" => true
             ], $this->data);

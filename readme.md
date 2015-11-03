@@ -30,7 +30,12 @@ make install
 
 # Features
 
-todo
+* Built-in Promise/Deferred/Sequence
+* Any eventual action return Promise/Deferred/Sequence
+* Any Promise/Deferred/Sequence supports generators
+* Promise/Deferred/Sequence generators make asynchronous programming easy
+* Promise/Deferred/Sequence supports type hinting in callbacks
+* todo
 
 ## Promisor
 
