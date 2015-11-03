@@ -146,11 +146,11 @@ ION::await(0.4)->then() // ...
 ```
 
 ```php
-ION::startInterval(30)->then() // ...
+ION::startInterval(30)->then() // ... build sequence
 ```
 
 ```php
-ION::startInterval(30, "crawler")->then() // ...
+ION::startInterval(30, "crawler")->then() // ... build sequence
 // ...
 ION::stopInterval("crawler");
 ```
@@ -164,13 +164,27 @@ use ION\Stream;
 ```
 
 ```php
-
 $stream = Stream::resource(STDIN);
 list($stream1, $stream2) = Stream::pair();
-$stream = Stream::connect("tcp://google.com");
+$stream = Stream::connect("google.com:80");
 $stream = Stream::connect("/var/run/redis.sock");
-$stream = Stream::connect("ssl://google.com");
+$stream = Stream::connect("google.com:80", $ssl);
+```
 
+```php
+$data = $stream->get(1024);
+$data = $stream->getLine("\r\n\r\n", 64 * KiB);
+$data = $stream->getAll();
+
+$data = yield $stream->await(1024);
+$data = yield $stream->awaitLine("\r\n\r\n", 64 * KiB);
+$data = yield $stream->awaitAll();
+
+$stream = yield $stream->awaitConnection();
+$stream = yield $stream->awaitShutdown();
+$stream = yield $stream->flush();
+
+$stream->onData()->then()->then() // ... build sequence
 ```
 
 ### Listeners
@@ -181,8 +195,7 @@ use ION\Listener;
 ```
 
 ```php
-
-$listener = new Listener("tcp://0.0.0.0:8080");
+$listener = new Listener("0.0.0.0:8080");
 $listener->onConnect(function (Stream $connect) {
     // ...
 })->then()->then(); // ...
@@ -213,7 +226,8 @@ use ION\Stream\Server;
 
 ```php
 $server  = new Server();
-$server->listen("tcp://0.0.0.0:8080");
+$server->listen("0.0.0.0:8080");
+$server->listen("0.0.0.0:8443", $ssl);
 $group->setRateLimit(/* ... */);
 $listener->onConnect(function (Stream $connect) {
     // ...
