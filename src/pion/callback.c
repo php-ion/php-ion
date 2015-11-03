@@ -218,24 +218,23 @@ static zend_bool pion_parse_arg_long_weak(zval *arg) {
 
 static zend_bool pion_verify_weak_scalar_type_hint(zend_uchar type_hint, zval * arg) {
     switch (type_hint) {
-        case _IS_BOOL: {
-            zend_bool dest;
-
-            if (!zend_parse_arg_bool_weak(arg, &dest)) {
+        case _IS_BOOL:
+            if (EXPECTED(Z_TYPE_P(arg) <= IS_STRING)) {
+                return true;
+            } else {
                 return false;
             }
-            return true;
-        }
         case IS_LONG:
             return pion_parse_arg_long_weak(arg);
         case IS_DOUBLE: {
             return pion_parse_arg_double_weak(arg);
         }
         case IS_STRING: {
-            zend_string *dest;
-
-            /* on success "arg" is converted to IS_STRING */
-            if (!zend_parse_arg_str_weak(arg, &dest)) {
+            if(EXPECTED(Z_TYPE_P(arg) == IS_OBJECT)) {
+                if(EXPECTED(zend_hash_str_exists(&Z_OBJCE_P(arg)->function_table, "__tostring", sizeof("__tostring")-1) == false)) {
+                    return false;
+                }
+            } else if(EXPECTED(Z_TYPE_P(arg) >= IS_ARRAY)) {
                 return false;
             }
             return true;

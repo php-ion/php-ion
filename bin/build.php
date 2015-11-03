@@ -18,6 +18,12 @@ class BuildRunner {
 		"lcov"     => 'lcov',
 	];
 
+    public $shorts = [
+        'system' => 'I',
+        'diagnostic' => ''
+
+    ];
+
 	public $opts = [];
 
     public function __construct() {
@@ -113,7 +119,7 @@ class BuildRunner {
 				$this->exec($this->getBin('phpize').' --clean', "src/");
 			}
 			$this->exec($this->getBin('phpize'), "src/");
-            if($this->hasOption('coverage')) {
+            if($this->hasOption('coverage', 'o')) {
                 $this->exec('./configure --with-ion --enable-ion-debug --enable-ion-coverage', "src/");
             } else {
                 $this->exec('./configure --with-ion --enable-ion-debug', "src/");
@@ -145,7 +151,7 @@ class BuildRunner {
 			}
 			$phpunit = $this->getBin('php')." -e -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --colors=never $group ".$this->getOption('test', 't', '');
 			$this->exec($phpunit, false, $use_gdb);
-            if($this->hasOption('coverage')) {
+            if($this->hasOption('coverage', 'o')) {
                 $this->exec($this->getBin('lcov')." --directory . --capture --output-file coverage.info");
                 $this->exec($this->getBin('lcov')." --remove coverage.info 'src/externals/*' '/usr/*' '/opt/*' '*/Zend/*' --output-file coverage.info");
                 $this->exec($this->getBin('lcov')." --list coverage.info");

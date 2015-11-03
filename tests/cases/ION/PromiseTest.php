@@ -545,6 +545,7 @@ class PromiseTest extends TestCase {
 
 
     public function providerTypeHintInAction() {
+        $std = new \StdClass;
         return array(
             // objects
             // true
@@ -556,6 +557,7 @@ class PromiseTest extends TestCase {
             [false, new \SplDoublyLinkedList(), function (\SplQueue $elem) { return true; }  ],
             [false, new \SplPriorityQueue(), function (\SplQueue $elem) { return true; }  ],
             [false, new \ArrayObject(), function (\SplQueue $elem) { return true; }  ],
+
             // arrays
             // true
             [true, [], function ($elem) { return true; }  ],
@@ -563,6 +565,7 @@ class PromiseTest extends TestCase {
             // false
             [false, [], function (\ArrayObject $elem) { return true; }  ],
             [false, new \ArrayObject(), function (array $elem) { return true; }  ],
+
             // callables
             // true
             [true, function () {}, function ($elem) { return true; }  ],
@@ -576,6 +579,7 @@ class PromiseTest extends TestCase {
             [false, ["zz", "zz"], $cb  ],
             [false, "zz:zz", $cb ],
             [false, [$this, "zz"], $cb  ],
+
             // integers
             // true
             [true, 5, function ($elem) { return true; }  ],
@@ -588,16 +592,56 @@ class PromiseTest extends TestCase {
             [true, true, $cb  ],
             [true, false, $cb ],
             // false
-            [false, "z", $cb  ],
-            [false, [], $cb  ],
-            [false, new \StdClass, $cb  ],
+            [false, null,  $cb ],
+            [false, "z",   $cb  ],
+            [false, [],    $cb  ],
+            [false, $std,  $cb  ],
             [false, STDIN, $cb  ],
+
             // floats
             // true
+            [true, 5.5,   function ($elem) { return true; }  ],
+            [true, 5.5,   $cb = function (float $elem) { return true; }  ],
+            [true, 5,     $cb  ],
+            [true, 5.0,   $cb  ],
+            [true, "5",   $cb  ],
+            [true, "5.5", $cb  ],
+            [true, true,  $cb  ],
+            [true, false, $cb  ],
             // false
+            [false, null,  $cb  ],
+            [false, "5.z", $cb  ],
+            [false, "z.z", $cb  ],
+            [false, [],    $cb  ],
+            [false, $std,  $cb  ],
+            [false, STDIN, $cb  ],
+
             // strings
             // true
+            [true, "str",   function ($elem) { return true; }  ],
+            [true, "str",   $cb = function (string $elem) { return true; }  ],
+            [true, 5,       $cb  ],
+            [true, 5.5,     $cb  ],
+            [true, true,    $cb  ],
+            [true, false,   $cb  ],
+            [true, new \Exception(),   $cb  ],
             // false
+            [false, new \SplDoublyLinkedList(),   $cb  ],
+            [false, STDIN,   $cb  ],
+            [false, [],      $cb  ],
+
+            // booleans
+            [true, "str",   function ($elem) { return true; }  ],
+            [true, "str",   $cb = function (bool $elem) { return true; }  ],
+            [true, 5,       $cb  ],
+            [true, 5.5,     $cb  ],
+            [true, true,    $cb  ],
+            [true, false,   $cb  ],
+            // false
+            [false, new \SplDoublyLinkedList(),   $cb  ],
+            [false, STDIN,   $cb  ],
+            [false, [],      $cb  ],
+
         );
     }
 
