@@ -82,6 +82,17 @@ App::someEventualAction()
 
 ### Generators
 
+```php
+App::someEventualAction()->then(function ($data) {
+    // ...
+    $result[] = yield App::eventualAction1();
+    // ...
+    $result[] = yield App::eventualAction2();
+    // ...
+    $result[] = yield App::eventualAction3();
+    // ...
+});
+```
 
 ```php
 App::someEventualAction()->then(function ($data) {
@@ -108,7 +119,9 @@ App::someEventualAction()->then(function ($data) {
 ### Sequence
 
 ```php
-$sequence = new Sequence(function ($dat) {});
+$sequence = new Sequence(function ($data) {
+    // ...
+});
 $sequence->then()->then()->then(); // ...
 
 $sequence("one"); // run sequence
@@ -137,41 +150,84 @@ ION::startInterval(30, "crawler")->then() // ...
 ION::stopInterval("crawler");
 ```
 
-## Process
 
-todo
-
-### Signals
-
-todo
-
-### Execute process
-
-todo
 
 ## Streams
 
-todo
+```
+use ION\Stream;
+```
+
+```php
+
+$stream = Stream::resource(STDIN);
+list($stream1, $stream2) = Stream::pair();
+$stream = Stream::connect("tcp://google.com");
+$stream = Stream::connect("/var/run/redis.sock");
+$stream = Stream::connect("ssl://google.com");
+
+```
 
 ### Listeners
 
-todo
+```
+use ION\Stream;
+use ION\Listener;
+```
+
+```php
+
+$listener = new Listener("tcp://0.0.0.0:8080");
+$listener->onConnect(function (Stream $connect) {
+    // ...
+})->then()->then(); // ...
+```
 
 ### Groups
 
-todo
+```php
+use ION\Stream;
+use ION\Listener;
+use ION\Stream\Group;
+```
+
+```php
+$group = new Group();
+$group->setRateLimit(/* ... */);
+// ...
+$stream->setGroup($group);
+```
 
 ### Connection pool
 
-todo
+```php
+use ION\Stream;
+use ION\Listener;
+use ION\Stream\Server;
+```
 
-### SSL
+```php
+$server  = new Server();
+$server->listen("tcp://0.0.0.0:8080");
+$group->setRateLimit(/* ... */);
+$listener->onConnect(function (Stream $connect) {
+    // ...
+})->then()->then(); // ...
 
-todo
+// ...
+
+$stream = $server->getConnection("127.0.0.1:43762");
+```
 
 ## DNS
 
-todo
+```php
+use ION\DNS;
+```
+
+```php
+$info = yield DNS::resolve("google.com");
+```
 
 ### DNS responder
 
@@ -182,6 +238,18 @@ todo
 todo
 
 ### FS events
+
+todo
+
+## Process
+
+todo
+
+### Signals
+
+todo
+
+### Execute process
 
 todo
 
