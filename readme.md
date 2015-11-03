@@ -64,6 +64,28 @@ App::someEventualAction()
 
 ```
 
+```php
+App::someEventualAction()->then(function ($data) {
+    // ...
+    $items = yield App::anotherEventualAction($data, true);
+    // ...
+    if(yield App::awaitAction()) {
+        // ...
+    }
+    // ...
+    try {
+        $info = yield App::asyncLoadInfo($data);
+    } catch(ION\Promise\CancelException $cancel) {
+        return false;
+    } catch (Trowable $error) {
+        yield App::rejectEventualAction($data);
+        throw $error;
+    }
+    // ...
+    return $info;
+})
+```
+
 ### Results routing
 
 ### Generators

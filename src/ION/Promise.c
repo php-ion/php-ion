@@ -148,34 +148,6 @@ CLASS_METHOD(ION_Promise, getFlags) {
 
 METHOD_WITHOUT_ARGS_RETURN_INT(ION_Promise, getFlags)
 
-/** public function ION\Promise::__destruct() : int */
-CLASS_METHOD(ION_Promise, __destruct) {
-//    ion_promisor * promise = get_this_instance(ion_promisor);
-//    PHPDBG("Clean promise %d", (int)promise->uid);
-//    if(promise->done) {
-//        pion_cb_free(promise->done);
-//        promise->done = NULL;
-//    }
-//    if(promise->fail) {
-//        pion_cb_free(promise->fail);
-//        promise->fail = NULL;
-//    }
-//    if(promise->progress) {
-//        pion_cb_free(promise->progress);
-//        promise->progress = NULL;
-//    }
-//    if(promise->handler_count) {
-//        for(uint i=0; i<promise->handler_count; i++) {
-//            obj_ptr_dtor(promise->handlers[i]);
-//        }
-//        efree(promise->handlers);
-//        promise->handler_count = 0;
-//    }
-//    zval_ptr_dtor(&promise->result);
-}
-
-METHOD_WITHOUT_ARGS(ION_Promise, __destruct)
-
 #ifdef ION_DEBUG
 
 /** public function ION\Promise::setUID(int $uid) : self */
@@ -196,7 +168,7 @@ METHOD_ARGS_END()
 
 CLASS_METHODS_START(ION_Promise)
     METHOD(ION_Promise, __construct,   ZEND_ACC_PUBLIC)
-    METHOD(ION_Promise, __destruct,    ZEND_ACC_PUBLIC)
+//    METHOD(ION_Promise, __destruct,    ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, then,          ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, onDone,        ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, onFail,        ZEND_ACC_PUBLIC)
@@ -220,17 +192,5 @@ PHP_MINIT_FUNCTION(ION_Promise) {
     PION_CLASS_CONST_LONG(ION_Promise, "INTERNAL",  ION_PROMISOR_INTERNAL);
     PION_CLASS_CONST_LONG(ION_Promise, "TIMED_OUT", ION_PROMISOR_TIMED_OUT);
     PION_CLASS_CONST_LONG(ION_Promise, "CANCELED",  ION_PROMISOR_CANCELED);
-    return SUCCESS;
-}
-
-PHP_RINIT_FUNCTION(ION_Promise) {
-    return SUCCESS;
-}
-
-PHP_RSHUTDOWN_FUNCTION(ION_Promise) {
-    return SUCCESS;
-}
-
-PHP_MSHUTDOWN_FUNCTION(ION_Promise) {
     return SUCCESS;
 }

@@ -79,15 +79,3 @@ PHP_MINIT_FUNCTION(ION_ResolvablePromise) {
     pion_set_object_handler(ION_ResolvablePromise, clone_obj, ion_promisor_clone_obj);
     return SUCCESS;
 }
-
-PHP_RINIT_FUNCTION(ION_ResolvablePromise) {
-    return SUCCESS;
-}
-
-PHP_RSHUTDOWN_FUNCTION(ION_ResolvablePromise) {
-    return SUCCESS;
-}
-
-PHP_MSHUTDOWN_FUNCTION(ION_ResolvablePromise) {
-    return SUCCESS;
-}
