@@ -64,6 +64,25 @@ App::someEventualAction()
 
 ```
 
+
+### Results routing
+
+```php
+App::someEventualAction()
+    ->then(function () {
+        return [1,2,3];
+    })
+    ->then(function (int $id) {
+        // skip
+    })
+    ->then(function (array $ids) {
+        // invoke
+    })
+```
+
+### Generators
+
+
 ```php
 App::someEventualAction()->then(function ($data) {
     // ...
@@ -86,11 +105,15 @@ App::someEventualAction()->then(function ($data) {
 })
 ```
 
-### Results routing
-
-### Generators
-
 ### Sequence
+
+```php
+$sequence = new Sequence(function ($dat) {});
+$sequence->then()->then()->then(); // ...
+
+$sequence("one"); // run sequence
+$sequence("two"); // run new sequence again
+```
 
 ## Timers
 
