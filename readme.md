@@ -159,8 +159,10 @@ ION::stopInterval("crawler");
 
 ## Streams
 
-```
+```php
 use ION\Stream;
+use ION\Promise;
+use ION\Sequence;
 ```
 
 ```php
@@ -189,9 +191,10 @@ $stream->onData()->then()->then() // ... build sequence
 
 ### Listeners
 
-```
+```php
 use ION\Stream;
 use ION\Listener;
+use ION\Sequence;
 ```
 
 ```php
@@ -242,6 +245,7 @@ $stream = $server->getConnection("127.0.0.1:43762");
 
 ```php
 use ION\DNS;
+use ION\Promise;
 ```
 
 ```php
@@ -262,13 +266,50 @@ todo
 
 ## Process
 
-todo
+```php
+use ION\Process;
+```
+
+```php
+Process::setUser("www-data");
+Process::setPriority(10);
+```
 
 ### Signals
 
-todo
+```php
+use ION\Process;
+use ION\Process\Signals;
+```
+
+```php
+Process::signal(Signals::TERM, $pid); // send SIGTERM
+```
 
 ### Execute process
+
+```php
+use ION\Process;
+```
+
+```php
+$result = yield Process::exec("venor/bin/phpunit --tap");
+```
+
+```php
+$result = yield Process::exec("venor/bin/phpunit --tap", [
+    "env" => [
+        "PHPUNIT_DB_NAME" => "test",
+        "PHPUNIT_DB_PASS" => "s4kfme3"
+    ],
+    "user" => "nobody",
+    "group" => "nobody",
+    "priority" => 20,
+    "pid" => &$pid  // get the PID by reference
+]);
+```
+
+### MPM
 
 todo
 
