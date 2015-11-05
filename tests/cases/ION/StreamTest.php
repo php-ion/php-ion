@@ -5,7 +5,7 @@ namespace ION;
 use ION;
 use ION\Test\TestCase;
 
-class _StreamTest extends TestCase {
+class StreamTest extends TestCase {
 
     public function setupSendServer($data) {
         return $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) use ($data) {
@@ -64,20 +64,22 @@ class _StreamTest extends TestCase {
     /**
      * @memcheck
      */
-    public function _testSocket() {
-        $pid = $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) {
+    public function testSocket() {
+//        $pid = $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) {
 //			$this->out("Accept connection");
-        })->start();
-
-        $stream = Stream::socket(ION_TEST_SERVER_HOST);
+//        })->start();
+//        Stream::socket("tcp://google.com:443");
+//        $stream = Stream::socket(ION_TEST_SERVER_HOST);
+        $stream = Stream::socket("tcp://example.com:80");
         $this->assertInstanceOf('ION\Stream', $stream);
-        $this->assertWaitPID($pid);
+//        sleep(300);
+//        $this->assertWaitPID($pid);
     }
 
     /**
      * @memcheck
      */
-    public function testEnableDisable() {
+    public function _testEnableDisable() {
         list($a, $b) = Stream::pair();
         /* @var Stream $a */
         /* @var Stream $b */
@@ -88,7 +90,7 @@ class _StreamTest extends TestCase {
     /**
      * @memcheck
      */
-    public function testAppendToInput() {
+    public function _testAppendToInput() {
         list($a, $b) = Stream::pair();
         /* @var Stream $a */
         /* @var Stream $b */
@@ -101,7 +103,7 @@ class _StreamTest extends TestCase {
      *
      * @memcheck
      */
-    public function testWrite() {
+    public function _testWrite() {
         list($a, $b) = Stream::pair();
         /* @var Stream $a */
         /* @var Stream $b */
@@ -138,7 +140,7 @@ class _StreamTest extends TestCase {
      * @param int $offset
      * @param int $limit
      */
-    public function testSearch($string, $token, $position, $offset = 0, $limit = 0) {
+    public function _testSearch($string, $token, $position, $offset = 0, $limit = 0) {
 
         list($socket, $socket2) = Stream::pair();
         /* @var Stream $socket */
@@ -197,7 +199,7 @@ class _StreamTest extends TestCase {
      * @param string $tail
      * @group testGets
      */
-    public function testGets($string, $method, $args, $result, $tail) {
+    public function _testGets($string, $method, $args, $result, $tail) {
         list($socket, $socket2) = Stream::pair();
         /* @var Stream $socket */
         /* @var Stream $socket2 */
@@ -231,7 +233,7 @@ class _StreamTest extends TestCase {
         $this->assertWaitPID($pid);
     }
 
-    public function providerAwaits() {
+    public function _providerAwaits() {
         $chunks = ["0123", "456", "789"];
         $string = implode("", $chunks);
         return array(
@@ -283,7 +285,7 @@ class _StreamTest extends TestCase {
      * @param string $result
      * @param string $tail
      */
-    public function testAwaits($chunks, $method, $args, $result, $tail) {
+    public function _testAwaits($chunks, $method, $args, $result, $tail) {
         $pid = $this->setupSendServer($chunks);
 
         $this->data = [];
@@ -317,7 +319,7 @@ class _StreamTest extends TestCase {
      * Check memory leaks in the __debugInfo()
      * @memcheck
      */
-    public function testDebugInfo() {
+    public function _testDebugInfo() {
         $pid = $this->setupSendServer(["01234","56789"]);
         $socket = Stream::socket(ION_TEST_SERVER_HOST);
         usleep(1e4); // time to ack
@@ -336,7 +338,7 @@ class _StreamTest extends TestCase {
     /**
      * @memcheck
      */
-    public function testDestructWhileReading() {
+    public function _testDestructWhileReading() {
         $pid = $this->setupSendServer(false);
         $socket = Stream::socket(ION_TEST_SERVER_HOST);
         $socket->await(2)->then(function() {
@@ -350,7 +352,7 @@ class _StreamTest extends TestCase {
     /**
      * @memcheck
      */
-    public function testGetLocalName() {
+    public function _testGetLocalName() {
         $pid = $this->setupSendServer(false);
         $socket = Stream::socket(ION_TEST_SERVER_HOST);
         $hostname = strstr(ION_TEST_SERVER_HOST, ":", true);
@@ -362,7 +364,7 @@ class _StreamTest extends TestCase {
      *
      * @memcheck
      */
-    public function testGetPeerName() {
+    public function _testGetPeerName() {
         $pid = $this->setupSendServer(false);
         $socket = Stream::socket(ION_TEST_SERVER_HOST);
         usleep(1e4); // time to ack
@@ -373,7 +375,7 @@ class _StreamTest extends TestCase {
     /**
      * @memcheck
      */
-    public function testToString() {
+    public function _testToString() {
         $pid = $this->setupSendServer(["01234","56789"]);
         $hostname = strstr(ION_TEST_SERVER_HOST, ":", true);
         $host = ION_TEST_SERVER_HOST;

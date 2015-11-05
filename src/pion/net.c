@@ -1,9 +1,11 @@
 #include "net.h"
+#include "init.h"
 #include <php_network.h>
 #include <arpa/inet.h>
 #include <sys/un.h>
 
-int _pion_net_sock_name(evutil_socket_t sock, short flags, char ** address TSRMLS_DC) {
+int pion_net_sock_name(evutil_socket_t sock, short flags, zend_string ** address) {
+    char                    * name = NULL;
     socklen_t                 addr_len = sizeof(php_sockaddr_storage);
     php_sockaddr_storage      addr;
     struct sockaddr_in      * sin;
@@ -33,8 +35,7 @@ int _pion_net_sock_name(evutil_socket_t sock, short flags, char ** address TSRML
         case AF_INET:
             sin = (struct sockaddr_in *) &addr;
             evutil_inet_ntop(AF_INET, &sin->sin_addr, addr4, INET_ADDRSTRLEN);
-//            inet_ntop(AF_INET, &sin->sin_addr, addr4, INET_ADDRSTRLEN);
-            *address = estrdup(addr4);
+            name = estrdup(addr4);
 
             port    = htons(sin->sin_port);
             type = PION_NET_NAME_IPV4;
@@ -43,33 +44,35 @@ int _pion_net_sock_name(evutil_socket_t sock, short flags, char ** address TSRML
         case AF_INET6:
             sin6 = (struct sockaddr_in6 *) &addr;
             evutil_inet_ntop(AF_INET6, &sin6->sin6_addr, addr6, INET6_ADDRSTRLEN);
-//            inet_ntop(AF_INET6, &sin6->sin6_addr, addr6, INET6_ADDRSTRLEN);
-            *address = estrdup(addr6);
+            name = estrdup(addr6);
             port    = htons(sin6->sin6_port);
             type = PION_NET_NAME_IPV6;
             break;
 #endif
         case AF_UNIX:
             s_un = (struct sockaddr_un *) &addr;
-            *address = estrdup(s_un->sun_path);
+            name = estrdup(s_un->sun_path);
             port = 0;
             type = PION_NET_NAME_UNIX;
             break;
         default:
-            *address = estrdup("unknown");
+            name = estrdup("unknown");
 
             type =  PION_NET_NAME_UNKNOWN;
             break;
     }
     if(port > 0) {
         if(type == PION_NET_NAME_IPV6) {
-            spprintf(&addr_combined, 1000, "[%s]:%d", *address, port);
+            spprintf(&addr_combined, 1000, "[%s]:%d", name, port);
         } else {
-            spprintf(&addr_combined, 1000, "%s:%d", *address, port);
+            spprintf(&addr_combined, 1000, "%s:%d", name, port);
         }
-        efree(*address);
-        *address = estrdup(addr_combined);
+        efree(name);
+        *address = zend_string_init(addr_combined, strlen(addr_combined), 0);
         efree(addr_combined);
+    } else {
+        *address = zend_string_init(name, strlen(name), 0);
+        efree(name);
     }
     return type;
 }

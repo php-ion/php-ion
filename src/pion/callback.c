@@ -542,43 +542,35 @@ zval _pion_cb_obj_call_with_4_args(pion_cb *cb, zend_object * obj, zval *arg1, z
     return pion_cb_obj_call(cb, obj, 4, args);
 }
 
-/**
- * Invoke class constructor
- * @param zend_class_entry* cls class entry
- * @param zval* this_ptr $this
- * @param int args_num
- * @param zval*** args
- * @return
- */
-int _pion_call_constructor(zend_class_entry *cls, zval *this_ptr, int args_num, zval *args TSRMLS_DC) {
+
+int pion_call_constructor(zend_class_entry * ce, zend_object * this_ptr, int args_num, zval *args TSRMLS_DC) {
     zval retval_ptr;
     zend_fcall_info fci;
     zend_fcall_info_cache fcc;
 
-    if (!(cls->constructor->common.fn_flags & ZEND_ACC_PUBLIC)) {
-        zend_throw_exception_ex(spl_ce_RuntimeException, 1, "Invocation of %s's constructor failed",  cls->name);
+    if (!(ce->constructor->common.fn_flags & ZEND_ACC_PUBLIC)) {
+        zend_throw_exception_ex(spl_ce_RuntimeException, 1, "Invocation of %s's constructor failed",  ce->name);
         return FAILURE;
     }
     fci.size = sizeof(fci);
     fci.function_table = EG(function_table);
     ZVAL_UNDEF(&fci.function_name);
-//    fci.function_name = NULL;
     fci.symbol_table = NULL;
-    fci.object = Z_OBJ_P(this_ptr);
+    fci.object = this_ptr;
     fci.retval = &retval_ptr;
     fci.param_count = (zend_uint)args_num;
     fci.params = args;
     fci.no_separation = 1;
 
     fcc.initialized = 1;
-    fcc.function_handler = cls->constructor;
+    fcc.function_handler = ce->constructor;
     fcc.calling_scope = EG(scope);
-    fcc.called_scope = Z_OBJCE_P(this_ptr);
-    fcc.object = Z_OBJ_P(this_ptr);
+    fcc.called_scope = this_ptr->ce;
+    fcc.object = this_ptr;
 
     if (zend_call_function(&fci, &fcc TSRMLS_CC) == FAILURE) {
         if(!EG(exception)) {
-            zend_throw_exception_ex(spl_ce_RuntimeException, 1, "Invocation of %s's constructor failed",  cls->name);
+            zend_throw_exception_ex(spl_ce_RuntimeException, 1, "Invocation of %s's constructor failed",  ce->name);
         }
         return FAILURE;
     }
@@ -592,7 +584,7 @@ zend_object * _pion_new_object(zend_class_entry *ce, int args_num, zval *args TS
 
     object_init_ex(&object, ce);
     if(ce->constructor) {
-        if(pion_call_constructor(ce, &object, args_num, args TSRMLS_CC) == FAILURE) {
+        if(pion_call_constructor(ce, Z_OBJ(object), args_num, args TSRMLS_CC) == FAILURE) {
             zval_ptr_dtor(&object);
             return NULL;
         }

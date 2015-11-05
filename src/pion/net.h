@@ -13,8 +13,8 @@
 #define PION_NET_NAME_REMOTE     0
 #define PION_NET_NAME_LOCAL      1
 
-#define pion_net_sock_name(sock_fd, flags, addr_p) _pion_net_sock_name(sock_fd, flags, addr_p TSRMLS_CC)
+//#define pion_net_sock_name(sock_fd, flags, addr_p) _pion_net_sock_name(sock_fd, flags, addr_p TSRMLS_CC)
 
-int _pion_net_sock_name(evutil_socket_t sock, short flags, char ** addr TSRMLS_DC);
+int pion_net_sock_name(evutil_socket_t sock, short flags, zend_string ** addr);
 
 #endif //PION_NET_H

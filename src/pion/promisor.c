@@ -79,7 +79,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
     if(promise->await) {
         result_type = type & ION_PROMISOR_FINISHED;
         ZVAL_COPY(&result, data);
-        obj_ptr_dtor(promise->await);
+        zend_object_release(promise->await);
         promise->await = NULL;
         if(promise->generator) {
             resolved = 0;
@@ -109,7 +109,9 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
             }
         }
         if(callback) {
+            zval_add_ref(data);
             retval = pion_cb_call_with_1_arg(callback, data);
+            zval_ptr_dtor(data);
             if(EG(exception)) {
                 ZEND_ASSERT(Z_ISUNDEF(retval));
                 ZVAL_OBJ(&result, EG(exception));
@@ -212,7 +214,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
             }
 
             if(!is_valid_generator) {
-                obj_ptr_dtor(promise->generator);
+                zend_object_release(promise->generator);
                 promise->generator = NULL;
                 promise->flags |= ION_PROMISOR_RESOLVED;
             }
@@ -227,7 +229,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
         if(promise->handler_count) {
             for(ushort i = 0; i < promise->handler_count; i++) {
                 ion_promisor_resolve(promise->handlers[i], &result, result_type);
-                obj_ptr_dtor(promise->handlers[i]);
+                zend_object_release(promise->handlers[i]);
                 promise->handlers[i] = NULL;
             }
 
@@ -242,7 +244,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
 void ion_promisor_sequence_invoke(zend_object * promise, zval * args) {
     zend_object * clone = ion_promisor_clone(promise);
     ion_promisor_done(clone, args);
-    obj_ptr_dtor(clone);
+    zend_object_release(clone);
 }
 
 zend_object * ion_promisor_promise_new(zval * done, zval * fail, zval * progress) {

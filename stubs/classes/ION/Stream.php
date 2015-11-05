@@ -30,7 +30,7 @@ class Stream {
     const OUTPUT = 4;
     const BOTH = 6;
 
-	/**
+    /**
 	 * Create streams from resource of PHP stream.
 	 *
 	 * @param resource $resource
@@ -38,17 +38,17 @@ class Stream {
 	 */
 	public static function resource($resource) {}
 
-	/**
-	 * Recognized resource formats are schema://hostname:port or path to unix socket:
-	 * ssl://www.example.com:80, tcp://1.2.3.4:567, tls://[::1]:8080, /var/run/service.sock
-	 * @param string $resource
-	 *
-	 * @return self
-	 */
-	public static function connect($resource) {}
-	public static function socket($host) {}
+    /**
+     * Recognized resource formats are schema://hostname:port or path to unix socket:
+     * ssl://www.example.com:80, tcp://1.2.3.4:567, tls://[::1]:8080, /var/run/service.sock
+     * @param string $resource
+     *
+     * @return self
+     */
+//	public static function connect($resource) {}
+    public static function socket($host) {}
 
-	/**
+    /**
 	 * Create a pair of linked streams.
 	 * The streams behave as would two sockets connected to opposite ends of each other.
 	 *

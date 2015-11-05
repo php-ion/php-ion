@@ -199,7 +199,6 @@ static void _ion_interval_dtor(zend_object * sequence) {
 }
 
 static void _ion_clean_interval(zval * dest) {
-    ion_interval * interval = (ion_interval *) Z_PTR_P(dest);
     _ion_interval_free(Z_PTR_P(dest));
 }
 

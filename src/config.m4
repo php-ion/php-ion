@@ -100,17 +100,20 @@ if test "$PHP_ION" != "no"; then
     pion/callback.c
     pion/engine.c
     pion/promisor.c
-
+    pion/net.c
     pion.c
+
     ION/Debug.c
     ION/Promise.c
     ION/ResolvablePromise.c
     ION/Deferred.c
     ION/Sequence.c
     ION.c
+    ION/Listener.c
+    ION/Stream.c
     "
 #
-#    pion/net.c
+#
 #ION/Data/LinkedList.c
 #     ION/Data/SkipList.c
 #        ION/Deferred.c

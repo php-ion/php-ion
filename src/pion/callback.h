@@ -115,10 +115,8 @@ int _pion_cb_void_with_4_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3, z
 #define pion_cb_void_with_3_args(cb, arg1, arg2, arg3)       _pion_cb_void_with_3_args(cb, arg1, arg2, arg3 TSRMLS_CC)
 #define pion_cb_void_with_4_args(cb, arg1, arg2, arg3, arg4) _pion_cb_void_with_4_args(cb, arg1, arg2, arg3, arg4 TSRMLS_CC)
 
-int   _pion_call_constructor(zend_class_entry *class_name, zval *object, int num_args, zval *args TSRMLS_DC);
-#define pion_call_constructor(cls, object, num_args, args)  _pion_call_constructor(cls, object, num_args, args TSRMLS_CC)
-#define pion_call_constructor_without_args(cls, object)  _pion_call_constructor(cls, object, 0, NULL TSRMLS_CC)
-#define pion_call_constructor_with_1_arg(cls, object, arg1)  _pion_call_constructor(cls, object, 1, arg1 TSRMLS_CC)
+int     pion_call_constructor(zend_class_entry * ce, zend_object * object, int num_args, zval * args);
+#define pion_call_constructor_without_args(cls, object)  pion_call_constructor(cls, object, 0, NULL)
 
 /* Create an object */
 

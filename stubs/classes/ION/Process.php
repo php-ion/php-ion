@@ -20,7 +20,7 @@ class Process {
     /**
      * @todo
      * @param callable $callback
-     * @return Map
+     * @return Sequence
      */
     public static function onMessage(callable $callback) {}
 
@@ -35,7 +35,7 @@ class Process {
      * Set signal handler
      * @param int|string $signo signal number or text name
      * @param callable $callback
-     * @return Map
+     * @return Sequence
      */
 	public static function onSignal($signo, callable $callback) {}
 

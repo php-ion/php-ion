@@ -5,21 +5,27 @@ namespace ION;
 
 class Listener {
 
-	public function __construct($socket) {}
+	public function __construct($listen) {}
 
-	public function onConnect(callable $callback, $arg = null) {}
+    /**
+     * @param callable $action
+     * @return Sequence
+     */
+	public function onConnect(callable $action) {}
 
-	public function awaitConnect() {}
-
+    /**
+     * @return self
+     */
 	public function enable() {}
 
+    /**
+     * @return self
+     */
 	public function disable() {}
 
-	/**
-	 *
-	 */
-	public function accept() {}
-
+    /**
+     * @return self
+     */
 	public function shutdown() {}
 
 	/**

@@ -178,9 +178,9 @@ $data = $stream->get(1024);
 $data = $stream->getLine("\r\n\r\n", 64 * KiB);
 $data = $stream->getAll();
 
-$data = yield $stream->await(1024);
-$data = yield $stream->awaitLine("\r\n\r\n", 64 * KiB);
-$data = yield $stream->awaitAll();
+$data = yield $stream->read(1024);
+$data = yield $stream->readLine("\r\n\r\n", 64 * KiB);
+$data = yield $stream->readAll();
 
 $stream = yield $stream->awaitConnection();
 $stream = yield $stream->awaitShutdown();

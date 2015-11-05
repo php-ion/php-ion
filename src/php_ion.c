@@ -104,9 +104,10 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_Deferred);
     STARTUP_MODULE(ION_Sequence);
     STARTUP_MODULE(ION);
+    STARTUP_MODULE(ION_Listener);
+    STARTUP_MODULE(ION_Stream);
 //    STARTUP_MODULE(ION_DNS);
 //    STARTUP_MODULE(ION_Process);
-//    STARTUP_MODULE(ION_Stream);
 
 #ifdef ION_DEBUG
     event_set_mem_functions(_php_emalloc, _php_realloc, _php_efree);

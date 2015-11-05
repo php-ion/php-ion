@@ -21,7 +21,7 @@ typedef struct _class_info {
     zend_object_handlers * handlers;
 } class_info;
 
-#define ion_get_class(class_name) _ion_get_class_ ## class_name()
+#define ion_get_class(class_name) ion_ce_ ## class_name
 
 #define CE2(class) class ## _info.ce
 #define CE(class) c ## class
@@ -221,8 +221,8 @@ typedef struct _class_info {
     ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_ARRAY, NULL, 0)
 
 #define METHOD_ARG(name, pass_by_ref)             ZEND_ARG_INFO(pass_by_ref, name)
-#define METHOD_ARG_LONG(name, pass_by_ref)        METHOD_ARG(name, pass_by_ref)
-#define METHOD_ARG_STRING(name, pass_by_ref)      METHOD_ARG(name, pass_by_ref)
+#define METHOD_ARG_LONG(name, pass_by_ref)        ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_LONG, 0)
+#define METHOD_ARG_STRING(name, pass_by_ref)      ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_STRING, 0)
 #define METHOD_ARG_DOUBLE(name, pass_by_ref)      METHOD_ARG(name, pass_by_ref)
 #define METHOD_ARG_FLOAT(name, pass_by_ref)       METHOD_ARG_DOUBLE(name, pass_by_ref)
 #define METHOD_ARG_BOOL(name, pass_by_ref)        METHOD_ARG(name, pass_by_ref)
