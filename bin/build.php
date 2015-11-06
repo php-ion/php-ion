@@ -26,6 +26,8 @@ class BuildRunner {
 
 	public $opts = [];
 
+    public $zend_alloc = 1;
+
     public function __construct() {
 	    foreach($this->binaries as $name => $path) {
 			if(getenv(strtoupper("ion_{$name}_exec"))) {
@@ -38,35 +40,43 @@ class BuildRunner {
         });
     }
 
-	public function getBin($name) {
+	public function getBin(string $name, array $env = []) {
+        if($env) {
+            foreach($env as $var => &$value) {
+                $value = $var."=".$value;
+            }
+            $env = implode(" ", $env)." ";
+        } else {
+            $env = "";
+        }
 		if(isset($this->binaries[$name])) {
-			return $this->binaries[$name];
+			return $env.$this->binaries[$name];
 		} else {
-			return $name;
+			return $env.$name;
 		}
 	}
 
 
-	public function write($msg) {
+	public function write(string $msg) {
 		fwrite(STDERR, $msg);
 		return $this;
 	}
 
-	public function line($msg) {
+	public function line(string $msg) {
 		return $this->write($msg."\n");
 	}
 
-	public function hasOption($long, $short = "") {
+	public function hasOption(string $long, string $short = "") {
 		$options = getopt($short, [$long]);
 		return isset($this->opts[ $long ]) || isset($options[ $long ]) || isset($options[ $short ]);
 	}
 
-	public function setOption($long, $value = "") {
+	public function setOption(string $long, string $value = "") {
 		$this->opts[$long] = $value;
 		return $this;
 	}
 
-	public function getOption($long, $short = "", $default = null) {
+	public function getOption(string $long, string $short = "", $default = null) {
 		if(isset($this->opts[$long])) {
 			return $this->opts[$long];
 		}
@@ -135,7 +145,7 @@ class BuildRunner {
 		}
 
 		if($this->hasOption('info', 'i')) {
-			$this->exec($this->getBin('php') . ' -e -dextension=./src/modules/ion.so '.__FILE__." --diagnostic", false, $use_gdb);
+			$this->exec($this->getBin('php'/*, ['USE_ZEND_ALLOC' => $this->zend_alloc]*/) . ' -e -dextension=./src/modules/ion.so '.__FILE__." --diagnostic", false, $use_gdb);
 		}
 
 		if($this->hasOption("dev")) {
@@ -149,7 +159,7 @@ class BuildRunner {
 			} else {
 				$group = "";
 			}
-			$phpunit = $this->getBin('php')." -e -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --colors=never $group ".$this->getOption('test', 't', '');
+			$phpunit = $this->getBin('php'/*, ['USE_ZEND_ALLOC' => $this->zend_alloc]*/)." -e -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --colors=never $group ".$this->getOption('test', 't', '');
 			$this->exec($phpunit, false, $use_gdb);
             if($this->hasOption('coverage', 'o')) {
                 $this->exec($this->getBin('lcov')." --directory . --capture --output-file coverage.info");

@@ -150,7 +150,6 @@ PHP_MINIT_FUNCTION(ion) {
 }
 
 PHP_MSHUTDOWN_FUNCTION(ion) {
-    SHUTDOWN_MODULE(ION_Debug);
 //    SHUTDOWN_MODULE(ION_Data_LinkedList);
 //    SHUTDOWN_MODULE(ION_Data_SkipList);
 //    SHUTDOWN_MODULE(ION_Process);

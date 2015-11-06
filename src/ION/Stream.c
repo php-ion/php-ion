@@ -22,17 +22,14 @@ zend_object * ion_stream_init(zend_class_entry * ce) {
     RETURN_INSTANCE(ION_Stream, istream);
 }
 
-
 void ion_stream_free(zend_object * stream) {
     ion_stream * istream = get_object_instance(stream, ion_stream);
     if(istream->flush) {
-//        ion_promisor_free(istream->flush);
-//        zval_ptr_dtor(&stream->flush);
+        zend_object_release(istream->flush);
         istream->flush = NULL;
     }
     if(istream->read) {
-//        ion_deferred_free(stream->read);
-//        zval_ptr_dtor(&stream->read);
+        zend_object_release(istream->read);
         if(istream->token) {
             if(istream->token->token) {
                 zend_string_release(istream->token->token);
@@ -43,8 +40,7 @@ void ion_stream_free(zend_object * stream) {
         istream->read = NULL;
     }
     if(istream->connect) {
-//        ion_deferred_free(stream->connect);
-//        zval_ptr_dtor(&stream->connect);
+        zend_object_release(istream->connect);
         istream->connect = NULL;
     }
     if(istream->buffer) {

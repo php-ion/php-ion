@@ -13,7 +13,7 @@ use ION\Test\TestCase;
 class SandboxTest extends TestCase {
 
     /**
-     * @group d_ev
+     * @group d ev
      * @_memcheck
      */
     public function testSandbox() {

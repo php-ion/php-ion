@@ -6,6 +6,17 @@
 zend_object_handlers ion_oh_ION_Listener;
 zend_class_entry * ion_ce_ION_Listener;
 
+void ion_listener_release(zend_object * object) {
+    ion_listener * listener = get_object_instance(object, ion_listener);
+    if(listener->listener) {
+        evconnlistener_disable(listener->listener);
+        evconnlistener_free(listener->listener);
+        listener->listener = NULL;
+    }
+    listener->flags &= ~ION_STREAM_STATE_ENABLED;
+}
+
+
 zend_object * ion_listener_init(zend_class_entry * ce) {
     ion_promisor * listener = ecalloc(1, sizeof(ion_listener));
     RETURN_INSTANCE(ION_Listener, listener);
@@ -14,10 +25,7 @@ zend_object * ion_listener_init(zend_class_entry * ce) {
 void ion_listener_free(zend_object * object) {
     ion_listener * listener = get_object_instance(object, ion_listener);
     zend_object_std_dtor(object);
-    if(listener->listener) {
-        evconnlistener_disable(listener->listener);
-        evconnlistener_free(listener->listener);
-    }
+    ion_listener_release(object);
     if(listener->name) {
         zend_string_release(listener->name);
     }
@@ -29,9 +37,10 @@ void ion_listener_free(zend_object * object) {
     }
 }
 
-static void _ion_listener_accept(ev_listener * l, evutil_socket_t fd, struct sockaddr * addr, int addr_len, void * ctx) {
+static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct sockaddr * addr, int addr_len, void * ctx) {
     ion_listener * listener = get_object_instance(ctx, ion_listener);
     zend_object  * stream = NULL;
+    ion_stream   * istream = NULL;
     zval           zstream;
 
     if(listener->on_connect) {
@@ -40,6 +49,12 @@ static void _ion_listener_accept(ev_listener * l, evutil_socket_t fd, struct soc
                                         | ION_STREAM_STATE_SOCKET
                                         | ION_STREAM_STATE_CONNECTED
                                         | ION_STREAM_DIRECT_INCOMING);
+        istream = get_object_instance(stream, ion_stream);
+        if(listener->name) {
+            istream->name_self = zend_string_copy(listener->name);
+        }
+        int type  = pion_net_addr_to_name(addr, (socklen_t)addr_len, &istream->name_remote);
+        istream->state |= (type & ION_STREAM_NAME_MASK);
         ZVAL_OBJ(&zstream, stream);
         ion_promisor_sequence_invoke(listener->on_connect, &zstream);
         zend_object_release(stream);
@@ -49,12 +64,15 @@ static void _ion_listener_accept(ev_listener * l, evutil_socket_t fd, struct soc
     ION_CHECK_LOOP();
 }
 
-static void _ion_listener_error(ev_listener * listener, void * ctx) {
-//    struct event_base *base = evconnlistener_get_base(listener);
+static void _ion_listener_error(ion_evlistener * l, void * ctx) {
+    ion_listener * listener = get_object_instance(ctx, ion_listener);
     int err = EVUTIL_SOCKET_ERROR();
-    zend_throw_error(NULL, "Got an error %d (%s) on the listener. "
-            "Shutting down.\n", err, evutil_socket_error_to_string(err));
-//
+    zend_error(E_WARNING, "Got an error %d (%s) on the listener %s. Shutting down listener.",
+               err, evutil_socket_error_to_string(err), listener->name);
+    evconnlistener_disable(listener->listener);
+    evconnlistener_free(listener->listener);
+    listener->listener = NULL;
+    listener->flags &= ~ION_STREAM_STATE_ENABLED;
     ION_CHECK_LOOP();
 }
 
@@ -103,8 +121,19 @@ CLASS_METHOD(ION_Listener, __construct) {
                                        LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_EXEC, -1,
                                        &sock, sock_len);
     if(listener->listener) {
+        int type = pion_net_sock_name(evconnlistener_get_fd(listener->listener), PION_NET_NAME_LOCAL, &listener->name);
+        if(type == PION_NET_NAME_IPV6) {
+            listener->flags |= ION_STREAM_NAME_IPV6;
+        } else if(type == PION_NET_NAME_UNIX) {
+            listener->flags |= ION_STREAM_NAME_UNIX;
+        } else if(type == PION_NET_NAME_UNKNOWN || type == FAILURE) {
+            /* skip */
+        } else {
+            listener->flags |= ION_STREAM_NAME_IPV4;
+        }
         evconnlistener_enable(listener->listener);
         evconnlistener_set_error_cb(listener->listener, _ion_listener_error);
+        listener->flags |= ION_STREAM_STATE_ENABLED;
     } else {
         zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, "Failed to listen on %s: %s", listen->val, evutil_socket_error_to_string(errno));
         return;
@@ -143,9 +172,11 @@ METHOD_ARGS_END();
 /** public function ION\Listener::enable() : self */
 CLASS_METHOD(ION_Listener, enable) {
     ion_listener * listener = get_this_instance(ion_listener);
-    if(listener->listener) {
+    if(listener->listener && !(listener->flags & ION_STREAM_STATE_ENABLED)) {
         evconnlistener_enable(listener->listener);
+        listener->flags &= ~ION_STREAM_STATE_ENABLED;
     }
+    RETURN_THIS();
 }
 
 METHOD_WITHOUT_ARGS(ION_Listener, enable);
@@ -153,19 +184,29 @@ METHOD_WITHOUT_ARGS(ION_Listener, enable);
 /** public function ION\Listener::disable() : self */
 CLASS_METHOD(ION_Listener, disable) {
     ion_listener * listener = get_this_instance(ion_listener);
-    if(listener->listener) {
+    if(listener->listener && (listener->flags & ION_STREAM_STATE_ENABLED)) {
         evconnlistener_disable(listener->listener);
+        listener->flags |= ION_STREAM_STATE_ENABLED;
     }
+    RETURN_THIS();
 }
 
 METHOD_WITHOUT_ARGS(ION_Listener, disable);
 
 /** public function ION\Listener::shutdown() : self */
 CLASS_METHOD(ION_Listener, shutdown) {
-
+    ion_listener_release(Z_OBJ_P(getThis()));
 }
 
 METHOD_WITHOUT_ARGS(ION_Listener, shutdown);
+
+/** public function ION\Listener::__toString() : string */
+CLASS_METHOD(ION_Listener, __toString) {
+    ion_listener * listener = get_this_instance(ion_listener);
+    RETURN_STR(zend_string_copy(listener->name));
+}
+
+METHOD_WITHOUT_ARGS(ION_Listener, __toString);
 
 
 CLASS_METHODS_START(ION_Listener)
@@ -174,6 +215,7 @@ CLASS_METHODS_START(ION_Listener)
     METHOD(ION_Listener, enable,        ZEND_ACC_PUBLIC)
     METHOD(ION_Listener, disable,       ZEND_ACC_PUBLIC)
     METHOD(ION_Listener, shutdown,      ZEND_ACC_PUBLIC)
+    METHOD(ION_Listener, __toString,    ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 
 

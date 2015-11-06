@@ -5,9 +5,25 @@
 #include <sys/un.h>
 
 int pion_net_sock_name(evutil_socket_t sock, short flags, zend_string ** address) {
+    socklen_t                 addr_len = sizeof(struct sockaddr);
+    struct sockaddr           addr;
+
+    if(flags == PION_NET_NAME_LOCAL) {
+        if (getsockname(sock, &addr, &addr_len) == FAILURE) {
+            zend_error(E_NOTICE, "unable to retrieve socket name: %s", strerror(errno));
+            return FAILURE;
+        }
+    } else {
+        if (getpeername(sock, &addr, &addr_len) == FAILURE) {
+            zend_error(E_NOTICE, "unable to retrieve peer name: %s", strerror(errno));
+            return FAILURE;
+        }
+    }
+    return pion_net_addr_to_name(&addr, addr_len, address);
+}
+
+int pion_net_addr_to_name(struct sockaddr * addr, socklen_t addr_len, zend_string ** address) {
     char                    * name = NULL;
-    socklen_t                 addr_len = sizeof(php_sockaddr_storage);
-    php_sockaddr_storage      addr;
     struct sockaddr_in      * sin;
     char	                  addr4[INET_ADDRSTRLEN+1];
 #if HAVE_IPV6
@@ -18,22 +34,9 @@ int pion_net_sock_name(evutil_socket_t sock, short flags, zend_string ** address
     char                    * addr_combined;
     int                       type;
     int                       port = 0;
-
-    if(flags == PION_NET_NAME_LOCAL) {
-        if (getsockname(sock, (struct sockaddr*)&addr, &addr_len) == FAILURE) {
-            zend_error(E_NOTICE, "unable to retrieve socket name: %s", strerror(errno));
-            return FAILURE;
-        }
-    } else {
-        if (getpeername(sock, (struct sockaddr*)&addr, &addr_len) == FAILURE) {
-            zend_error(E_NOTICE, "unable to retrieve peer name: %s", strerror(errno));
-            return FAILURE;
-        }
-    }
-
-    switch (addr.ss_family) {
+    switch (addr->sa_family) {
         case AF_INET:
-            sin = (struct sockaddr_in *) &addr;
+            sin = (struct sockaddr_in *) addr;
             evutil_inet_ntop(AF_INET, &sin->sin_addr, addr4, INET_ADDRSTRLEN);
             name = estrdup(addr4);
 
@@ -42,7 +45,7 @@ int pion_net_sock_name(evutil_socket_t sock, short flags, zend_string ** address
             break;
 #if HAVE_IPV6
         case AF_INET6:
-            sin6 = (struct sockaddr_in6 *) &addr;
+            sin6 = (struct sockaddr_in6 *) addr;
             evutil_inet_ntop(AF_INET6, &sin6->sin6_addr, addr6, INET6_ADDRSTRLEN);
             name = estrdup(addr6);
             port    = htons(sin6->sin6_port);

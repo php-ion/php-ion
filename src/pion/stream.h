@@ -49,7 +49,7 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Stream;
 
 typedef struct bufferevent bevent;
 typedef struct bufferevent_rate_limit_group buffer_group;
-typedef struct evconnlistener ev_listener;
+typedef struct evconnlistener ion_evlistener;
 
 typedef struct _ion_listener {
     zend_object   std;
@@ -57,7 +57,7 @@ typedef struct _ion_listener {
     zend_object * on_connect;
     zend_object * ssl;
     zend_string * name;
-    ev_listener * listener;
+    ion_evlistener * listener;
 } ion_listener;
 
 typedef struct _ion_stream_token {

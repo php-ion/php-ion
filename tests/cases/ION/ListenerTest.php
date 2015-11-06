@@ -16,10 +16,11 @@ class ListenerTest extends TestCase {
     }
 
     /**
-     * @group dev
+     *
      * @memcheck
      */
     public function testAccept() {
+
         $listener = new Listener("tcp://".ION_TEST_SERVER_HOST);
         $listener->onConnect(function (Stream $connect) {
             $this->data["connect"] = $this->describe($connect);
@@ -40,5 +41,29 @@ class ListenerTest extends TestCase {
         $this->assertArrayNotHasKey("error", $this->data);
         $this->assertEquals(ION_TEST_SERVER_HOST, $this->data["local"]);
         $this->assertStringMatchesFormat(parse_url(ION_TEST_SERVER_HOST, PHP_URL_HOST).":%i", $this->data["remote"]);
+    }
+
+    /**
+     * @memcheck
+     */
+    public function testEnableDisable() {
+        $listener = new Listener("tcp://".ION_TEST_SERVER_HOST);
+        $listener->disable()->enable();
+    }
+
+    /**
+     * @memcheck
+     */
+    public function testShutDown() {
+        $listener = new Listener("tcp://".ION_TEST_SERVER_HOST);
+        $listener->shutdown();
+    }
+
+    /**
+     * @memcheck
+     */
+    public function testToString() {
+        $listener = new Listener("tcp://".ION_TEST_SERVER_HOST);
+       $this->assertEquals(ION_TEST_SERVER_HOST, strval($listener));
     }
 }

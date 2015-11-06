@@ -218,15 +218,3 @@ PHP_MINIT_FUNCTION(ION_Debug) {
     PION_REGISTER_STATIC_CLASS(ION_Debug, "ION\\Debug");
     return SUCCESS;
 }
-
-PHP_RINIT_FUNCTION(ION_Debug) {
-    return SUCCESS;
-}
-
-PHP_RSHUTDOWN_FUNCTION(ION_Debug) {
-    return SUCCESS;
-}
-
-PHP_MSHUTDOWN_FUNCTION(ION_Debug) {
-    return SUCCESS;
-}
