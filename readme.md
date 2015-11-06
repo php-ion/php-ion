@@ -168,9 +168,9 @@ use ION\Sequence;
 ```php
 $stream = Stream::resource(STDIN);
 list($stream1, $stream2) = Stream::pair();
-$stream = Stream::connect("google.com:80");
-$stream = Stream::connect("/var/run/redis.sock");
-$stream = Stream::connect("google.com:80", $ssl);
+$stream = Stream::connect("tcp://example.com:80");
+$stream = Stream::connect("/var/run/server.sock");
+$stream = Stream::connect("ssl://example.com:443");
 ```
 
 ```php
@@ -198,7 +198,7 @@ use ION\Sequence;
 ```
 
 ```php
-$listener = new Listener("0.0.0.0:8080");
+$listener = new Listener("tcp://0.0.0.0:8080");
 $listener->onConnect(function (Stream $connect) {
     // ...
 })->then()->then(); // ...
