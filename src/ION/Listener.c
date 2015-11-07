@@ -63,8 +63,6 @@ static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct 
         ZVAL_OBJ(&zstream, stream);
         ion_promisor_sequence_invoke(listener->on_connect, &zstream);
         zend_object_release(stream);
-//        evconnlistener_free(listener->listener);
-//        listener->listener = NULL;
     } else {
         evutil_closesocket(fd);
     }
