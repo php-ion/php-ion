@@ -527,22 +527,22 @@ METHOD_ARGS_END()
 //
 //METHOD_WITHOUT_ARGS(ION_Stream, _notify)
 //
-///** public function ION\Stream::enable() : self */
-//CLASS_METHOD(ION_Stream, enable) {
-//    ion_stream * stream = getThisInstance();
-//
-//    CHECK_STREAM(stream);
-//    if(bufferevent_enable(stream->buffer, EV_READ | EV_WRITE)) {
-//        ThrowRuntime("Failed to enable stream", 1);
-//        return;
-//    }
-//    stream->state |= ION_STREAM_STATE_ENABLED;
-//    RETURN_THIS();
-//}
-//
-//METHOD_WITHOUT_ARGS(ION_Stream, enable)
-//
-///** public function ION\Stream::disable() : self */
+/** public function ION\Stream::enable() : self */
+CLASS_METHOD(ION_Stream, enable) {
+    ion_stream * stream = get_this_instance(ion_stream);
+
+    CHECK_STREAM_BUFFER(stream);
+    if(bufferevent_enable(stream->buffer, EV_READ | EV_WRITE)) {
+        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to enable stream", 0);
+        return;
+    }
+    stream->state |= ION_STREAM_STATE_ENABLED;
+    RETURN_THIS();
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, enable)
+
+/** public function ION\Stream::disable() : self */
 //CLASS_METHOD(ION_Stream, disable) {
 //    ion_stream * stream = getThisInstance();
 //

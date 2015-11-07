@@ -12,7 +12,8 @@ class ListenerTest extends TestCase {
      * @memcheck
      */
     public function testCreate() {
-        $listener = new Listener("tcp://".ION_TEST_SERVER_HOST);
+        $listener = new Listener("tcp://".ION_TEST_SERVER_IPV4);
+        $listener = new Listener("tcp://".ION_TEST_SERVER_IPV6);
     }
 
     public function providerHosts() {
@@ -26,14 +27,14 @@ class ListenerTest extends TestCase {
     /**
      * @group dev
      * @dataProvider providerHosts
-     * @mem check
+     * @memcheck
      * @param string $address
      * @param string $stream_address
      */
     public function testAccept($address, $name, $stream_address = null) {
 
         $listener = new Listener($address);
-        $listener->onConnect(function (Stream $connect) use ($listener){
+        $listener->onConnect(function (Stream $connect) {
             $this->data["connect"] = $this->describe($connect);
 //            $this->data["remote"] = $connect->getRemotePeer();
 //            $this->data["local"] = $connect->getLocalName();
@@ -57,21 +58,6 @@ class ListenerTest extends TestCase {
     }
 
     /**
-     */
-    public function testAcceptUnix() {
-        $listener = new Listener(ION_TEST_SERVER_UNIX_SOCK);
-        $listener->onConnect(function (Stream $connect) {
-            $this->data["connect"] = $this->describe($connect);
-            $this->data["remote"] = $connect->getRemotePeer();
-            $this->data["local"] = $connect->getLocalName();
-            $this->stop();
-        })->onFail(function (\Throwable $error) {
-            $this->data["error"] = $this->describe($error);
-            $this->stop();
-        });
-    }
-
-        /**
      * @memcheck
      */
     public function testEnableDisable() {

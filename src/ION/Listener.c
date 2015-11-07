@@ -120,7 +120,9 @@ CLASS_METHOD(ION_Listener, __construct) {
         listener->listener = evconnlistener_new_bind(ION(base), _ion_listener_accept, listener,
                                                      LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_EXEC, -1,
                                                      (struct sockaddr *)&sock, sock_len);
-        pion_net_sock_name(evconnlistener_get_fd(listener->listener), PION_NET_NAME_LOCAL, &listener->name);
+        if(listener->listener) {
+            pion_net_sock_name(evconnlistener_get_fd(listener->listener), PION_NET_NAME_LOCAL, &listener->name);
+        }
     } else if(resource->path) { // unix socket
         evutil_socket_t fd;
         struct sockaddr_un local;

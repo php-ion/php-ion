@@ -128,7 +128,7 @@ int    ion_stream_close_fd(ion_stream * stream TSRMLS_DC);
 
 #define CHECK_STREAM_BUFFER(stream)                          \
     if(stream->buffer == NULL) {                             \
-        ThrowRuntime("Stream buffer is not initialized", 1); \
+        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Stream buffer is not initialized", 0); \
         return;                                              \
     }
 
