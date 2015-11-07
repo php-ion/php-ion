@@ -1,6 +1,7 @@
 #include "../pion.h"
 #include <ext/standard/url.h>
 #include <event2/listener.h>
+#include <sys/un.h>
 
 
 zend_object_handlers ion_oh_ION_Listener;
@@ -53,11 +54,17 @@ static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct 
         if(listener->name) {
             istream->name_self = zend_string_copy(listener->name);
         }
-        int type  = pion_net_addr_to_name(addr, (socklen_t)addr_len, &istream->name_remote);
-        istream->state |= (type & ION_STREAM_NAME_MASK);
+        if(listener->flags & ION_STREAM_NAME_UNIX) {
+            istream->name_remote = zend_string_init("pipe", sizeof("pipe"), 0);
+        } else {
+            pion_net_addr_to_name(addr, (socklen_t)addr_len, &istream->name_remote);
+        }
+        istream->state |= (listener->flags & ION_STREAM_NAME_MASK);
         ZVAL_OBJ(&zstream, stream);
         ion_promisor_sequence_invoke(listener->on_connect, &zstream);
         zend_object_release(stream);
+//        evconnlistener_free(listener->listener);
+//        listener->listener = NULL;
     } else {
         evutil_closesocket(fd);
     }
@@ -82,8 +89,7 @@ CLASS_METHOD(ION_Listener, __construct) {
     zend_long back_log = -1;
     ion_listener * listener = get_this_instance(ion_listener);
     php_url * resource;
-    struct sockaddr sock;
-    int sock_len = sizeof(struct sockaddr);
+
 
     ZEND_PARSE_PARAMETERS_START(1, 2)
         Z_PARAM_STR(listen)
@@ -93,46 +99,56 @@ CLASS_METHOD(ION_Listener, __construct) {
 
     resource = php_url_parse_ex(listen->val, listen->len);
     if(resource->host) { // ipv4, ipv6, hostname
-        int result = evutil_parse_sockaddr_port(resource->host, &sock, &sock_len);
+        struct sockaddr_storage sock;
+        socklen_t sock_len = sizeof(struct sockaddr_storage);
+        int result = evutil_parse_sockaddr_port(resource->host, (struct sockaddr *)&sock, (int *)&sock_len);
         if(result == SUCCESS) {
-            if(sock.sa_family == AF_INET) {
+            if(sock.ss_family == AF_INET) {
+                listener->flags |= ION_STREAM_NAME_IPV4;
                 struct sockaddr_in * sin = (struct sockaddr_in *) &sock;
                 sin->sin_port = ntohs(resource->port);
-            } else if(sock.sa_family == AF_INET6) {
+            } else if(sock.ss_family == AF_INET6) {
+                listener->flags |= ION_STREAM_NAME_IPV6;
                 struct sockaddr_in6 * sin6 = (struct sockaddr_in6 *) &sock;
                 sin6->sin6_port = ntohs(resource->port);
             } else {
-                zend_throw_exception_ex(ion_class_entry(ION_InvalidUsageException), 0, "Address family %d not supported by protocol family", sock.sa_family);
+                zend_throw_exception_ex(ion_class_entry(ION_InvalidUsageException), 0, "Address family %d not supported by protocol family", sock.ss_family);
+                return;
             }
         } else {
-            // TODO: try to resolve domain
+            zend_throw_exception(ion_class_entry(InvalidArgumentException), "Address is not well-formed", 0);
+            return;
         }
+        listener->listener = evconnlistener_new_bind(ION(base), _ion_listener_accept, listener,
+                                                     LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_EXEC, -1,
+                                                     (struct sockaddr *)&sock, sock_len);
+        pion_net_sock_name(evconnlistener_get_fd(listener->listener), PION_NET_NAME_LOCAL, &listener->name);
     } else if(resource->path) { // unix socket
-//        struct sockaddr_un * unix = (struct sockaddr_un *) &sock;
-//        unix->sun_family = AF_UNIX;
-//        strcpy(unix->sun_path, resource->path);
-//        sock_len = (int)sizeof(struct sockaddr_un);
+        evutil_socket_t fd;
+        struct sockaddr_un local;
+        socklen_t sock_len = sizeof(struct sockaddr_un);
+
+        listener->flags |= ION_STREAM_NAME_UNIX;
+        fd = socket(AF_UNIX, SOCK_STREAM, 0);
+        local.sun_family = AF_UNIX;
+        strncpy(local.sun_path, resource->path, 100);
+        unlink(local.sun_path);
+        if(bind(fd, (struct sockaddr *)&local, sock_len) == FAILURE) {
+            zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, "Failed to listen on %s: %s", listen->val, evutil_socket_error_to_string(errno));
+            return;
+        }
+        listener->listener = evconnlistener_new(ION(base), _ion_listener_accept, listener,
+                                                LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_EXEC, -1, fd);
+        listener->name = zend_string_init(resource->path, strlen(resource->path) + 1, 0);
     } else {
         zend_throw_exception(ion_class_entry(ION_InvalidUsageException), "Invalid socket name", 0);
         return;
     }
     php_url_free(resource);
-    listener->listener = evconnlistener_new_bind(ION(base), _ion_listener_accept, listener,
-                                       LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_EXEC, -1,
-                                       &sock, sock_len);
+
     if(listener->listener) {
-        int type = pion_net_sock_name(evconnlistener_get_fd(listener->listener), PION_NET_NAME_LOCAL, &listener->name);
-        if(type == PION_NET_NAME_IPV6) {
-            listener->flags |= ION_STREAM_NAME_IPV6;
-        } else if(type == PION_NET_NAME_UNIX) {
-            listener->flags |= ION_STREAM_NAME_UNIX;
-        } else if(type == PION_NET_NAME_UNKNOWN || type == FAILURE) {
-            /* skip */
-        } else {
-            listener->flags |= ION_STREAM_NAME_IPV4;
-        }
-        evconnlistener_enable(listener->listener);
         evconnlistener_set_error_cb(listener->listener, _ion_listener_error);
+        evconnlistener_enable(listener->listener);
         listener->flags |= ION_STREAM_STATE_ENABLED;
     } else {
         zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, "Failed to listen on %s: %s", listen->val, evutil_socket_error_to_string(errno));

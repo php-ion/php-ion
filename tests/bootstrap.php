@@ -9,6 +9,15 @@ ini_set('date.timezone', 'Europe/Moscow');
 if (!defined('ION_TEST_SERVER_HOST')) {
     define('ION_TEST_SERVER_HOST', "127.0.0.1:8976");
 }
+if (!defined('ION_TEST_SERVER_IPV4')) {
+    define('ION_TEST_SERVER_IPV4', "127.0.0.1:8976");
+}
+if (!defined('ION_TEST_SERVER_IPV6')) {
+    define('ION_TEST_SERVER_IPV6', "[::1]:8976");
+}
+if (!defined('ION_TEST_SERVER_UNIX')) {
+    define('ION_TEST_SERVER_UNIX', "/tmp/test.sock");
+}
 
 function drop() {
     call_user_func_array("var_dump", func_get_args());

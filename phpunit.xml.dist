@@ -17,7 +17,9 @@
         <ini name="memory_limit" value="-1"/>
         <ini name="display_errors" value="1"/>
         <ini name="error_reporting" value="-1"/>
-        <const name="ION_TEST_SERVER_HOST" value="127.0.0.1:8976" />
+        <const name="ION_TEST_SERVER_IPV4" value="127.0.0.1:8976" />
+        <const name="ION_TEST_SERVER_IPV6" value="[::1]:8976" />
+        <const name="ION_TEST_SERVER_UNIX" value="/tmp/test.sock" />
     </php>
 
     <testsuites>

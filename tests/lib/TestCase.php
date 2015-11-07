@@ -165,7 +165,7 @@ class TestCase extends \PHPUnit_Framework_TestCase {
             ION::stop((double)$error);
         } else {
             $this->_error = $error;
-            ION::stop(0.1);
+            ION::stop();
         }
 
     }

@@ -1,5 +1,6 @@
 #include <php.h>
 #include <event.h>
+#include <signal.h>
 
 #include "ION.h"
 

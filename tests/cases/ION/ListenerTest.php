@@ -15,13 +15,58 @@ class ListenerTest extends TestCase {
         $listener = new Listener("tcp://".ION_TEST_SERVER_HOST);
     }
 
-    /**
-     *
-     * @memcheck
-     */
-    public function testAccept() {
+    public function providerHosts() {
+        return [
+            ["tcp://".ION_TEST_SERVER_IPV4, ION_TEST_SERVER_IPV4],
+            ["tcp://".ION_TEST_SERVER_IPV6, ION_TEST_SERVER_IPV6],
+            [ION_TEST_SERVER_UNIX, ION_TEST_SERVER_UNIX, "unix://".ION_TEST_SERVER_UNIX],
+        ];
+    }
 
-        $listener = new Listener("tcp://".ION_TEST_SERVER_HOST);
+    /**
+     * @group dev
+     * @dataProvider providerHosts
+     * @mem check
+     * @param string $address
+     * @param string $stream_address
+     */
+    public function testAccept($address, $name, $stream_address = null) {
+
+        $listener = new Listener($address);
+        $listener->onConnect(function (Stream $connect) use ($listener){
+//            $this->out("connect1");
+            $this->data["connect"] = $this->describe($connect);
+//            $this->data["remote"] = $connect->getRemotePeer();
+//            $this->data["local"] = $connect->getLocalName();
+
+            $this->stop();
+
+//            $listener->disable();
+//            $this->out("connect2");
+        })->onFail(function (\Throwable $error) {
+//            $this->out("error $error");
+
+            $this->data["error"] = $this->describe($error);
+            $this->stop();
+        });
+        $client = stream_socket_client($stream_address?:$address, $errno, $error, 10, STREAM_CLIENT_ASYNC_CONNECT);
+        stream_set_blocking($client, 0);
+//        $this->out("loop");
+
+        $this->loop();
+
+        $this->assertEquals([
+            'object' => 'ION\Stream'
+        ], $this->data['connect']);
+        $this->assertArrayNotHasKey("error", $this->data);
+//        $this->assertEquals($name, $this->data["local"]);
+//        $this->assertStringMatchesFormat(parse_url($name, PHP_URL_HOST).":%i", $this->data["remote"]);
+    }
+
+    /**
+     */
+    public function testAcceptUnix() {
+        $listener = new Listener(ION_TEST_SERVER_UNIX_SOCK);
         $listener->onConnect(function (Stream $connect) {
             $this->data["connect"] = $this->describe($connect);
             $this->data["remote"] = $connect->getRemotePeer();
@@ -31,19 +76,9 @@ class ListenerTest extends TestCase {
             $this->data["error"] = $this->describe($error);
             $this->stop();
         });
-        $client = stream_socket_client("tcp://".ION_TEST_SERVER_HOST, $errno, $error, 10, STREAM_CLIENT_ASYNC_CONNECT);
-        stream_set_blocking($client, 0);
-        $this->loop();
-
-        $this->assertEquals([
-            'object' => 'ION\Stream'
-        ], $this->data['connect']);
-        $this->assertArrayNotHasKey("error", $this->data);
-        $this->assertEquals(ION_TEST_SERVER_HOST, $this->data["local"]);
-        $this->assertStringMatchesFormat(parse_url(ION_TEST_SERVER_HOST, PHP_URL_HOST).":%i", $this->data["remote"]);
     }
 
-    /**
+        /**
      * @memcheck
      */
     public function testEnableDisable() {

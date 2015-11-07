@@ -57,6 +57,7 @@ typedef struct _ion_listener {
     zend_object * on_connect;
     zend_object * ssl;
     zend_string * name;
+    int           backlog;
     ion_evlistener * listener;
 } ion_listener;
 
