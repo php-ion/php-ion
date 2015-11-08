@@ -94,8 +94,9 @@ App::someEventualAction()->then(function ($data) {
     // ...
     $result[] = yield App::eventualAction2();
     // ...
-    $result[] = yield App::eventualAction3();
+    $result[] = yield from App::eventualGenerator();
     // ...
+    return $result;
 });
 ```
 
@@ -120,6 +121,7 @@ App::someEventualAction()->then(function ($data) {
     return $info;
 })
 ```
+
 
 ### Sequence
 
