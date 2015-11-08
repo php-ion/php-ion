@@ -220,13 +220,15 @@ typedef struct _class_info {
 #define METHOD_ARGS_BEGIN_RETURN_ARRAY(class_name, method_name, required_num_args) \
     ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_ARRAY, NULL, 0)
 
+#define PION_ZPP_THROW return;
+
 #define METHOD_ARG(name, pass_by_ref)             ZEND_ARG_INFO(pass_by_ref, name)
 #define METHOD_ARG_LONG(name, pass_by_ref)        ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_LONG, 0)
 #define METHOD_ARG_STRING(name, pass_by_ref)      ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_STRING, 0)
-#define METHOD_ARG_DOUBLE(name, pass_by_ref)      METHOD_ARG(name, pass_by_ref)
+#define METHOD_ARG_DOUBLE(name, pass_by_ref)      ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_DOUBLE, 0)
 #define METHOD_ARG_FLOAT(name, pass_by_ref)       METHOD_ARG_DOUBLE(name, pass_by_ref)
-#define METHOD_ARG_BOOL(name, pass_by_ref)        METHOD_ARG(name, pass_by_ref)
-#define METHOD_ARG_RESOURCE(name, pass_by_ref)    METHOD_ARG(name, pass_by_ref)
+#define METHOD_ARG_BOOL(name, pass_by_ref)        ZEND_ARG_TYPE_INFO(pass_by_ref, name, _IS_BOOL, 0)
+#define METHOD_ARG_RESOURCE(name, pass_by_ref)    ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_RESOURCE, 0)
 #define METHOD_ARG_ARRAY(name, pass_by_ref)       ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_ARRAY, allow_null)
 #define METHOD_ARG_CALLBACK(name, pass_by_ref, allow_null)            ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_CALLABLE, allow_null)
 #define METHOD_ARG_TYPE(name, type_hint, allow_null, pass_by_ref)     ZEND_ARG_TYPE_INFO(pass_by_ref, name, type_hint, allow_null)

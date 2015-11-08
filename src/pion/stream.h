@@ -50,6 +50,8 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Stream;
 typedef struct bufferevent bevent;
 typedef struct bufferevent_rate_limit_group buffer_group;
 typedef struct evconnlistener ion_evlistener;
+typedef struct evbuffer ion_evbuffer;
+typedef struct bufferevent ion_buffer;
 
 typedef struct _ion_listener {
     zend_object   std;
@@ -63,10 +65,10 @@ typedef struct _ion_listener {
 
 typedef struct _ion_stream_token {
     zend_string    * token;
-    long             length;
-    long             offset;
-    short            flags;
-    long             position;
+    zend_long        length;
+    zend_long        offset;
+    zend_long        flags;
+    zend_long        position;
 } ion_stream_token;
 
 typedef struct _ion_stream {
@@ -135,11 +137,11 @@ int    ion_stream_close_fd(ion_stream * stream TSRMLS_DC);
 #define CHECK_STREAM_STATE(stream)                              \
     if(stream->state & ION_STREAM_STATE_CLOSED) {               \
         if(stream->state & ION_STREAM_STATE_EOF) {              \
-            ThrowRuntime("EOF", 1);                             \
+            zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Stream has been terminated by EOF", 0); \
         } else if(stream->state & ION_STREAM_STATE_ERROR) {     \
-            ThrowRuntime("Stream is corrupted", 1);             \
+            zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Stream is corrupted", 0); \
         } else if(stream->state & ION_STREAM_STATE_SHUTDOWN) {  \
-            ThrowRuntime("Stream shutdown", 1);                 \
+            zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Stream has been shut down", 0); \
         }                                                       \
         return;                                                 \
     }

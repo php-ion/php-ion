@@ -199,7 +199,10 @@ CLASS_METHOD(ION_Debug, sandbox) {
 //    memcpy(tmp2, "all3", sizeof("all3")+1);
 }
 
-
+//METHOD_ARGS_BEGIN(ION_Debug, sandbox, 1)
+//    ZEND_ARG_TYPE_INFO(0, res, IS_RESOURCE, 0)
+//METHOD_ARGS_END();
+//
 METHOD_WITHOUT_ARGS(ION_Debug, sandbox)
 
 CLASS_METHODS_START(ION_Debug)

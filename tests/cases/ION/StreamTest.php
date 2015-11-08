@@ -65,21 +65,15 @@ class StreamTest extends TestCase {
      * @memcheck
      */
     public function testSocket() {
-//        $pid = $this->listen(ION_TEST_SERVER_HOST)->inWorker()->onConnect(function ($connect) {
-//			$this->out("Accept connection");
-//        })->start();
-//        Stream::socket("tcp://google.com:443");
-//        $stream = Stream::socket(ION_TEST_SERVER_HOST);
-        $stream = Stream::socket("tcp://example.com:80");
+        $listener = new Listener(ION_TEST_SERVER_IPV4);
+        $stream = Stream::socket("tcp://".ION_TEST_SERVER_IPV4);
         $this->assertInstanceOf('ION\Stream', $stream);
-//        sleep(300);
-//        $this->assertWaitPID($pid);
     }
 
     /**
      * @memcheck
      */
-    public function _testEnableDisable() {
+    public function testEnableDisable() {
         list($a, $b) = Stream::pair();
         /* @var Stream $a */
         /* @var Stream $b */
@@ -88,9 +82,10 @@ class StreamTest extends TestCase {
     }
 
     /**
+     *
      * @memcheck
      */
-    public function _testAppendToInput() {
+    public function testAppendToInput() {
         list($a, $b) = Stream::pair();
         /* @var Stream $a */
         /* @var Stream $b */
@@ -100,10 +95,9 @@ class StreamTest extends TestCase {
     }
 
     /**
-     *
      * @memcheck
      */
-    public function _testWrite() {
+    public function testWrite() {
         list($a, $b) = Stream::pair();
         /* @var Stream $a */
         /* @var Stream $b */
@@ -140,7 +134,7 @@ class StreamTest extends TestCase {
      * @param int $offset
      * @param int $limit
      */
-    public function _testSearch($string, $token, $position, $offset = 0, $limit = 0) {
+    public function testSearch($string, $token, $position, $offset = 0, $limit = 0) {
 
         list($socket, $socket2) = Stream::pair();
         /* @var Stream $socket */
@@ -153,11 +147,11 @@ class StreamTest extends TestCase {
         $string = "0123456789";
         return array(
             //     send     method      arguments for method                   read      tail
-            0 => [$string, "get", [5], "01234", "56789"],
-            1 => [$string, "get", [10], "0123456789", ""],
-            2 => [$string, "get", [16], "0123456789", ""],
+            0 => [$string, "get",     [5],                                 "01234", "56789"],
+            1 => [$string, "get",     [10],                                "0123456789", ""],
+            2 => [$string, "get",     [16],                                "0123456789", ""],
 
-            3 => [$string, "getAll", [], $string, ""],
+            3 => [$string, "getAll",  [],                                  $string, ""],
 
             4 => [$string, "getLine", ["3", Stream::MODE_TRIM_TOKEN, 8], "012", "456789"],
             5 => [$string, "getLine", ["3", Stream::MODE_WITH_TOKEN, 8], "0123", "456789"],
@@ -190,6 +184,7 @@ class StreamTest extends TestCase {
     }
 
     /**
+     * @group dev
      * @memcheck
      * @dataProvider providerGets
      * @param string $string
@@ -199,7 +194,7 @@ class StreamTest extends TestCase {
      * @param string $tail
      * @group testGets
      */
-    public function _testGets($string, $method, $args, $result, $tail) {
+    public function testGets($string, $method, $args, $result, $tail) {
         list($socket, $socket2) = Stream::pair();
         /* @var Stream $socket */
         /* @var Stream $socket2 */
