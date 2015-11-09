@@ -219,7 +219,9 @@ $group->setRateLimit(/* ... */);
 $stream->setGroup($group);
 ```
 
-### Connection pool
+### Streams storages
+
+#### Server
 
 ```php
 use ION\Stream;
@@ -231,11 +233,35 @@ use ION\Stream\Server;
 $server  = new Server();
 $server->listen("0.0.0.0:8080");
 $server->listen("0.0.0.0:8443", $ssl);
-$group->setRateLimit(/* ... */);
-$listener->onConnect(function (Stream $connect) {
+$client->setIdleTimeout(30);
+$client->setMaxConnections(1000);
+$server->onRequest(function (Stream $connect) {
     // ...
 })->then()->then(); // ...
 
+// ...
+
+$stream = $server->getConnection("127.0.0.1:43762");
+```
+
+#### Client
+
+```php
+use ION\Stream;
+use ION\Listener;
+use ION\Stream\Server;
+```
+
+```php
+$client  = new Client();
+$client->socket("tcp://127.0.0.1:3306");
+$client->socket("ssl://10.0.22.133:3312");
+$client->setIdleTimeout(30);
+$client->setMaxConnections(1000);
+$client->onHandshake()->then()->then(); // build sequence
+$client->onShutdown()->then()->then(); // build sequence
+
+$stream = yield $client->getStream();
 // ...
 
 $stream = $server->getConnection("127.0.0.1:43762");
