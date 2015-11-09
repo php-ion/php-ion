@@ -126,13 +126,11 @@ App::someEventualAction()->then(function ($data) {
 ### Sequence
 
 ```php
-$sequence = new Sequence(function ($data) {
-    // ...
-});
+$sequence = new Sequence(function ($data) {/* ... */});
 $sequence->then()->then()->then(); // ...
 
 $sequence("one"); // run sequence
-$sequence("two"); // run new sequence again
+$sequence("two"); // run sequence again
 ```
 
 ## Timers
@@ -148,13 +146,13 @@ ION::await(0.4)->then() // ...
 ```
 
 ```php
-ION::startInterval(30)->then() // ... build sequence
+ION::interval(30)->then() // ... build sequence
 ```
 
 ```php
-ION::startInterval(30, "crawler")->then() // ... build sequence
+ION::interval(30, "crawler")->then() // ... build sequence
 // ...
-ION::stopInterval("crawler");
+ION::cancelInterval("crawler");
 ```
 
 
