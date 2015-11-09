@@ -233,8 +233,8 @@ use ION\Stream\Server;
 $server  = new Server();
 $server->listen("0.0.0.0:8080");
 $server->listen("0.0.0.0:8443", $ssl);
-$client->setIdleTimeout(30);
-$client->setMaxConnections(1000);
+$server->setIdleTimeout(30);
+$server->setMaxConnections(1000);
 $server->onRequest(function (Stream $connect) {
     // ...
 })->then()->then(); // ...
