@@ -284,7 +284,9 @@ todo
 
 ## FS
 
-todo
+```php
+$data = yield FS::readFile($filename = "/path/to/file", $offset = 0, $limit = 1000);
+```
 
 ### FS events
 
