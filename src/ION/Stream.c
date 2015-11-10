@@ -1,9 +1,6 @@
 
 #include "../pion.h"
-#include <php_network.h>
-#include <fcntl.h>
 #include <ext/standard/url.h>
-//#include "Stream.h"
 
 #ifndef O_NOATIME
 # define O_NOATIME 0
@@ -229,11 +226,12 @@ void _ion_stream_notify(bevent * bev, short what, void * ctx) {
         stream->state |= ION_STREAM_STATE_EOF;
         if(stream->read) {
             if(stream->token || stream->length) {
-                ion_promisor_exception(
-                        stream->read,
-                        ion_get_class(ION_Stream_ConnectionException),
-                        "Connection was closed: received EOF", 0
-                );
+                ion_promisor_done_false(stream->read);
+//                ion_promisor_exception(
+//                        stream->read,
+//                        ion_get_class(ION_Stream_ConnectionException),
+//                        "Connection was closed: received EOF", 0
+//                );
             } else { // readAll
                 zend_string * data = ion_stream_read(stream, ion_stream_input_length(stream));
                 if(!data) {
@@ -257,21 +255,21 @@ void _ion_stream_notify(bevent * bev, short what, void * ctx) {
             ion_promisor_exception(
                     stream->connect,
                     ion_get_class(ION_Stream_ConnectionException),
-                    evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()), EVUTIL_SOCKET_ERROR()
+                    evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()), 0
             );
         }
         if(stream->read) {
             ion_promisor_exception(
                     stream->read,
                     ion_get_class(ION_Stream_ConnectionException),
-                    evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()), EVUTIL_SOCKET_ERROR()
+                    evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()), 0
             );
         }
         if(stream->flush) {
             ion_promisor_exception(
                     stream->flush,
                     ion_get_class(ION_Stream_ConnectionException),
-                    evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()), EVUTIL_SOCKET_ERROR()
+                    evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()), 0
             );
         }
         if(stream->shutdown) {

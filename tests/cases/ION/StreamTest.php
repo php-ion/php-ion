@@ -286,7 +286,7 @@ class StreamTest extends TestCase {
             "error" => [
                 'exception' => 'ION\Stream\ConnectionException',
                 'message'   => 'Connection refused',
-                'code'      => 61
+                'code'      => 0
             ],
             "pre_connect" => false,
         ], $this->data);
@@ -359,7 +359,7 @@ class StreamTest extends TestCase {
             //     send     method      arguments for method                     read      tail
             0 => [$chunks, "read", [5], "01234", "56789"],
             1 => [$chunks, "read", [10], $string, ""],
-            2 => [$chunks, "read", [16], new ConnectionException('Connection was closed: received EOF', 0)],
+            2 => [$chunks, "read", [16], false, $string],
 
             3 => [$chunks, "readAll", [], $string, ""],
 
@@ -407,25 +407,25 @@ class StreamTest extends TestCase {
         $listener = $this->listener(ION_TEST_SERVER_IPV4, $this->chunkSender($chunks));
         $this->promise(function () use ($method, $args) {
             $sock = Stream::socket("tcp://".ION_TEST_SERVER_IPV4);
-            $this->data["read"] = yield call_user_func_array([$sock, $method], $args);
-//            $this->data["read"] = yield $sock->{$method}(...$args);
-//            yield $sock->awaitShutdown();
-//            $this->data["tail"] = $sock->getAll();
+//            $this->data["read"] = yield call_user_func_array([$sock, $method], $args);
+            $this->data["read"] = yield $sock->{$method}(...$args);
+            yield $sock->awaitShutdown();
+            $this->data["tail"] = $sock->getAll();
             yield ION::await(0.1);
         });
 
         $this->loop();
 
-//        if($result instanceof \Exception) {
-//            $this->assertEquals([
-//                "error" => $this->describe($result)
-//            ], $this->data);
-//        } else {
-//            $this->assertEquals([
-//                "read" => $result,
-//                "tail" => $tail,
-//            ], $this->data);
-//        }
+        if($result instanceof \Exception) {
+            $this->assertEquals([
+                "error" => $this->describe($result)
+            ], $this->data);
+        } else {
+            $this->assertEquals([
+                "read" => $result,
+                "tail" => $tail,
+            ], $this->data);
+        }
     }
 
     /**

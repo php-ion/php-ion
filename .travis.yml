@@ -14,14 +14,17 @@ addons:
 php:
   - 7.0
 
+notifications:
+    email:
+       on_failure: change
 
 os:
   - linux
-#  - osx
-#
-#matrix:
-#  allow_failures:
-#    - os: osx
+
+env:
+    matrix:
+      - USE_ZEND_ALLOC=0
+      - USE_ZEND_ALLOC=1
 
 
 before_script:

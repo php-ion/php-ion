@@ -105,13 +105,13 @@ class BuildRunner {
 			return;
 		}
 
-		if($this->hasOption("build")) {
+		if($this->hasOption("build", "b")) {
 			$this->setOption("phpize");
 			$this->setOption("make");
 			$this->setOption("clean");
 		}
 
-		if($this->hasOption("setup")) {
+		if($this->hasOption("setup", "B")) {
 			$this->setOption("phpize");
 			$this->setOption("make");
 			$this->setOption("clean");
@@ -274,6 +274,7 @@ class BuildRunner {
 		$this->li("phpunit", `which phpunit`);
 		$this->li("composer", `which composer`);
 		$this->li("core size", `ulimit -c`);
+		$this->li("max fds", `ulimit -n`);
     }
 
 	public function isLinux() {
@@ -314,7 +315,7 @@ Build:
   --help,    -h   — show help
   --clean,   -c   — make clean
   --make,    -m   — make
-  --coverage      - generate code coverage information
+  --coverage -o   - generate code coverage information
   --install, -l   — install module
   --phpize,  -p   — phpize and configure project
   --build,   -b   — alias: --phpize --clean --make
