@@ -92,14 +92,9 @@ typedef struct _class_info {
 
 #define obj_add_ref(obj) OBJ_ADDREF(obj);
 
-#define OBJ_DELREF(obj) \
-    do { \
-        zval _z; \
-        ZVAL_OBJ(&_z, obj); \
-        zval_ptr_dtor(&_z); \
-    } while(0)
+#define OBJ_DELREF(obj) GC_REFCOUNT(obj)--;
 
-#define obj_ptr_dtor(obj) OBJ_DELREF(obj)
+#define obj_ptr_dtor(obj) zend_object_release(obj)
 
 #define RETURN_OBJ_ADDREF(obj) \
     OBJ_ADDREF(obj); \

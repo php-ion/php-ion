@@ -81,8 +81,8 @@ zend_object * ion_promisor_clone_obj(zval * zobject);
 
 // Stores and destructors
 #define ion_promisor_store(promisor, pobject) get_object_instance(promisor, ion_promisor)->object = (void *) pobject
-#define ion_promisor_store_get(promisor, object) get_object_instance(promisor, ion_promisor)->object
-#define ion_promisor_dtor(promisor, dtor_cb) get_object_instance(promisor, ion_promisor)->dtor = dtor_cb
+#define ion_promisor_store_get(promisor)      get_object_instance(promisor, ion_promisor)->object
+#define ion_promisor_dtor(promisor, dtor_cb)  get_object_instance(promisor, ion_promisor)->dtor = dtor_cb
 
 // Resolvers
 void ion_promisor_resolve(zend_object * promisor, zval * result, int type);
@@ -149,6 +149,20 @@ static zend_always_inline void ion_promisor_done_false(zend_object * promisor) {
     ion_promisor_done(promisor, &value);
 }
 
+static zend_always_inline void ion_promisor_done_null(zend_object * promisor) {
+    zval value;
+    ZVAL_NULL(&value);
+    ion_promisor_done(promisor, &value);
+}
+
+static zend_always_inline void ion_promisor_done_object(zend_object * promisor, zend_object * object) {
+    zval value;
+    ZVAL_OBJ(&value, object);
+    zval_add_ref(&value);
+    ion_promisor_done(promisor, &value);
+    zval_ptr_dtor(&value);
+}
+
 static zend_always_inline void ion_promisor_done_string(zend_object * promisor, zend_string * string, int dup) {
     zval value;
     if(dup) {
@@ -200,14 +214,16 @@ static zend_always_inline void ion_promisor_exception_eg(zend_object * promisor,
 }
 
 
-//static zend_always_inline void ion_promisor_exception_ex(zval * zdeferred, zend_class_entry * ce, long code, const char * message, ...) {
-//    va_list args;
-//    zval * zexception = NULL;
-//    va_start(args, message);
-//    zexception = pion_exception_new_ex(ce, code, message, args);
-//    va_end(args);
-//    ion_deferred_fail(zdeferred, zexception);
-//    zval_ptr_dtor(&zexception);
-//}
+static zend_always_inline void ion_promisor_exception_ex(zend_object * promisor, zend_class_entry * ce, long code, const char * message, ...) {
+    va_list args;
+    zval value;
+    zend_object * exception = NULL;
+    va_start(args, message);
+    exception = pion_exception_new_ex(ce, code, message, args);
+    va_end(args);
+    ZVAL_OBJ(&value, exception);
+    ion_promisor_fail(promisor, &value);
+    zval_ptr_dtor(&value);
+}
 
 #endif //PION_PROMISOR_H

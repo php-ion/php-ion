@@ -190,6 +190,20 @@ class PromiseTest extends TestCase {
     /**
      * @memcheck
      */
+    public function testWhenResolved() {
+        $promise  = new ResolvablePromise();
+        $promise->done("already done");
+        $promise->then(function ($result) {
+            $this->data["result"] = $this->describe($result);
+        });
+        $this->assertEquals([
+            'result' => "already done"
+        ], $this->data);
+    }
+
+    /**
+     * @memcheck
+     */
     public function testEmptyHeadChain() {
         $promise  = new ResolvablePromise();
         $promise->onDone(function ($result) {

@@ -263,8 +263,6 @@ $client->onShutdown()->then()->then(); // build sequence
 
 $stream = yield $client->getStream();
 // ...
-
-$stream = $server->getConnection("127.0.0.1:43762");
 ```
 
 ## DNS
@@ -275,7 +273,12 @@ use ION\Promise;
 ```
 
 ```php
-$info = yield DNS::resolve("google.com");
+$info = yield DNS::resolve("exmple.com");
+// [
+//     'CNAME' => "example.com",
+//     'A'     => ["93.184.216.34"],
+//     'AAAA'  => ["2606:2800:220:1:248:1893:25c8:1946"]
+// ];
 ```
 
 ### DNS responder

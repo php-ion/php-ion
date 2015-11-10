@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use ION\Sequence;
 use ION\Deferred;
+use ION\Promise;
 use ION\RuntimeException;
 
 /**
@@ -129,5 +130,12 @@ class ION {
      * @return bool
      */
     public static function cancelInterval(string $name) {}
+
+    /**
+     * To promise anything
+     * @param mixed $resolver
+     * @return Promise
+     */
+    public static function promise($resolver) {}
 
 }

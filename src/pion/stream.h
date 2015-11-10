@@ -85,24 +85,13 @@ typedef struct _ion_stream {
     zend_object      * on_data;
     zend_string      * name_self;
     zend_string      * name_remote;
-
-//    zval             * self;
-//    zval             * read;    // read deferred object
-//    zval             * flush;   // state deferred object
-//    zval             * connect; // connection deferred object
-//    zval             * closing; // closing deferred object
-//    pion_cb * on_data;
-//    char             * name_self;    // cache of getsockname
-//    char             * name_remote;  // cache of getpeername
-#ifdef ZTS
-    void           *** thread_ctx;
-#endif
 } ion_stream;
 
 //#ifdef ZTS
 //#define STREAM_BUFFER_DEFAULT_FLAGS BEV_OPT_DEFER_CALLBACKS | BEV_OPT_THREADSAFE
 //#else
-#define STREAM_BUFFER_DEFAULT_FLAGS BEV_OPT_DEFER_CALLBACKS
+#define STREAM_BUFFER_DEFAULT_FLAGS 0
+//#define STREAM_BUFFER_DEFAULT_FLAGS BEV_OPT_DEFER_CALLBACKS
 //#endif
 
 #define ion_stream_new(buffer, state)                  ion_stream_new_ex(buffer, state, NULL TSRMLS_CC)

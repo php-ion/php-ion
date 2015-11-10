@@ -79,11 +79,11 @@ class DebugTest extends TestCase {
 
 
     /**
-     * @group testCbCreate
      * @memcheck
      */
     public function testCbCreate() {
-        Debug::globalCbCreate(function ($a) {
+        $arr = new \ArrayObject();
+        Debug::globalCbCreate(function ($a) use ($arr) {
             $this->data['testCbCreate'] = $a;
             return "retval";
         });

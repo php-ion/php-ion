@@ -6,7 +6,8 @@ use ION\Test\TestCase\Server;
 
 class TestCase extends \PHPUnit_Framework_TestCase {
 
-    const SERVER_CHUNK_INTERVAL = 5e4;
+    const SERVER_CHUNK_INTERVAL = 0.03;
+    const SERVER_AWAIT_AFTER_ALL = 0.03;
     const LOOP_TIMEOUT = 0.5;
     const WORKER_DELAY = -0.03;
 

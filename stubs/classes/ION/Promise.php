@@ -2,7 +2,6 @@
 
 namespace ION;
 
-declare(strict_types=1);
 
 /**
  * @since 1.0
@@ -12,9 +11,17 @@ class Promise {
 
     public static function all(...$values) {}
 
+    /**
+     * @param ...$values
+     */
     public static function any(...$values) {}
 
-//    public function __construct(callable $done, callable $progress = null) {}
+    /**
+     * @param callable $callable
+     * @param ...$args
+     */
+    public static function call(callable $callable, ...$args) {}
+
 //    public function __construct(callable $done = null, callable $fail = null, callable $progress = null) {}
     public function __construct(callable ...$callbacks) {}
 
@@ -66,5 +73,10 @@ class Promise {
      * @return Promise
      */
     public function timeout(float $sec) : Promise {}
+
+    /**
+     * @return mixed
+     */
+    public function getResult() {}
 
 }

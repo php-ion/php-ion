@@ -267,6 +267,35 @@ METHOD_ARGS_BEGIN_RETURN_BOOL(ION, cancelInterval, 1)
     METHOD_ARG_STRING(name, 0)
 METHOD_ARGS_END()
 
+/** public function ION::promise(mixed $resolver) : ION\Promise */
+CLASS_METHOD(ION, promise) {
+    zval        * resolver = NULL;
+    zend_object * promise = NULL;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_ZVAL(resolver)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    if (Z_TYPE_P(resolver) == IS_OBJECT) {
+        // todo: for sequence
+        if(instanceof_function(Z_OBJCE_P(resolver), ion_class_entry(ION_Promise))) {
+            RETURN_ZVAL(resolver, 1, 0);
+        }
+    }
+    if (zend_is_callable(resolver, IS_CALLABLE_CHECK_SILENT, NULL)) {
+        promise = ion_promisor_promise_new(resolver, NULL, NULL);
+        ion_promisor_done_null(promise);
+    } else {
+        promise = ion_promisor_promise_new(NULL, NULL, NULL);
+        ion_promisor_done(promise, resolver);
+    }
+    RETURN_OBJ(promise);
+}
+
+METHOD_ARGS_BEGIN(ION, promise, 1)
+    METHOD_ARG(resolver, 0)
+METHOD_ARGS_END()
+
 CLASS_METHODS_START(ION)
     METHOD(ION, reinit,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION, dispatch,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
@@ -274,6 +303,7 @@ CLASS_METHODS_START(ION)
     METHOD(ION, await,          ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION, interval,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION, cancelInterval, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION, promise,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION) {

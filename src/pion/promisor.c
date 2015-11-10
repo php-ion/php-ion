@@ -248,7 +248,15 @@ void ion_promisor_sequence_invoke(zend_object * promise, zval * args) {
 }
 
 zend_object * ion_promisor_promise_new(zval * done, zval * fail, zval * progress) {
-    return pion_new_object_arg_3(ion_class_entry(ION_Promise), done, fail, progress);
+    zval object;
+    ion_promisor * promise;
+
+    object_init_ex(&object, ion_class_entry(ION_Promise));
+    promise = get_instance(&object, ion_promisor);
+    promise->flags |= ION_PROMISOR_INTERNAL;
+    ion_promisor_set_callbacks(&promise->std, done, fail, progress);
+    return &promise->std;
+//    return pion_new_object_arg_3(ion_class_entry(ION_Promise), done, fail, progress);
 }
 
 
@@ -325,6 +333,7 @@ zend_object * ion_promisor_push_callbacks(zend_object * promise_obj, zval * on_d
             return NULL;
         }
         PION_ARRAY_PUSH(promisor->handlers, promisor->handler_count, handler);
+        obj_add_ref(handler);
     }
     return handler;
 }
@@ -346,7 +355,7 @@ void ion_promisor_cancel(zend_object * promisor_obj, const char *message) {
     ZVAL_OBJ(&value, error);
     ion_promisor_resolve(promisor_obj, &value, ION_PROMISOR_FAILED | ION_PROMISOR_CANCELED);
     zval_ptr_dtor(&value);
-    OBJ_DELREF(promisor_obj);
+    zend_object_release(promisor_obj);
 }
 
 
@@ -406,16 +415,16 @@ void ion_promisor_free(zend_object * promisor_obj) {
     zend_object_std_dtor(promisor_obj);
     ion_promisor_release(promisor_obj);
     if(promisor->await) {
-        obj_ptr_dtor(promisor->await);
+        zend_object_release(promisor->await);
         promisor->await = NULL;
     }
     if(promisor->generator) {
-        obj_ptr_dtor(promisor->generator);
+        zend_object_release(promisor->generator);
         promisor->generator = NULL;
     }
     if(promisor->generators_count) {
         for(uint i=0; i<promisor->generators_count; i++) {
-            obj_ptr_dtor(promisor->generators_stack[i]);
+            zend_object_release(promisor->generators_stack[i]);
         }
         efree(promisor->generators_stack);
         promisor->generators_count = 0;
@@ -423,7 +432,7 @@ void ion_promisor_free(zend_object * promisor_obj) {
     if(promisor->handler_count) {
 
         for(uint i=0; i<promisor->handler_count; i++) {
-            obj_ptr_dtor(promisor->handlers[i]);
+            zend_object_release(promisor->handlers[i]);
         }
         efree(promisor->handlers);
         promisor->handler_count = 0;

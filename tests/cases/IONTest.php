@@ -48,6 +48,22 @@ class IONTest extends TestCase {
     /**
      * @memcheck
      */
+    public function testAwaitAwait() {
+        $start = microtime(1);
+        ION::await(0.1)->then(function () use ($start) {
+            yield ION::await(0.1);
+            $this->data["timer"] = round(microtime(1) - $start, 1);
+            $this->stop();
+        });
+        $this->loop();
+        $this->assertEquals([
+            "timer" => 0.2
+        ], $this->data);
+    }
+
+    /**
+     * @memcheck
+     */
     public function testInterval() {
         $this->data["count"] = 0;
         $start = microtime(1);
@@ -64,6 +80,57 @@ class IONTest extends TestCase {
             "iteration#0" => 0.3,
             "iteration#1" => 0.6,
             "iteration#2" => 0.9,
+        ], $this->data);
+    }
+
+    public function providerPromise() {
+        $promise = new \ION\ResolvablePromise();
+        $promise->done("promise_result");
+        return array(
+            ["result", "result"],
+            [$promise, "promise_result"],
+            [
+                function () {
+                    return "cb_result";
+                },
+                "cb_result"
+            ],
+            [
+                function () {
+                    yield ION::await(0.1);
+                    return "yield_result";
+                },
+                "yield_result"
+            ],
+            [
+                function () {
+                    return ION::await(0.1);
+                },
+                true
+            ]
+        );
+    }
+
+    /**
+     * @memcheck
+     * @dataProvider providerPromise
+     * @param mixed $resolver
+     * @param mixed $result
+     */
+    public function testPromise($resolver, $result) {
+        $promise = ION::promise($resolver);
+        $this->assertInstanceOf('ION\Promise', $promise);
+        $promise->then(function ($data) {
+            $this->data["result"] = $this->describe($data);
+            $this->stop();
+        }, function ($error) {
+            $this->data["error"] = $this->describe($error);
+            $this->stop();
+
+        });
+        $this->loop(0.3, false);
+        $this->assertEquals([
+            "result" => $result
         ], $this->data);
     }
 }

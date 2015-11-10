@@ -13,6 +13,8 @@ zend_class_entry     * ion_ce_ION_Stream;
 zend_object_handlers   ion_oh_ION_Stream;
 zend_class_entry     * ion_ce_ION_Stream_RuntimeException;
 zend_object_handlers   ion_oh_ION_Stream_RuntimeException;
+zend_class_entry     * ion_ce_ION_Stream_ConnectionException;
+zend_object_handlers   ion_oh_ION_Stream_ConnectionException;
 
 const ion_stream_token empty_stream_token = { NULL, 0, 0, ION_STREAM_MODE_TRIM_TOKEN, -1 };
 
@@ -24,10 +26,6 @@ zend_object * ion_stream_init(zend_class_entry * ce) {
 
 void ion_stream_free(zend_object * stream) {
     ion_stream * istream = get_object_instance(stream, ion_stream);
-    if(istream->flush) {
-        zend_object_release(istream->flush);
-        istream->flush = NULL;
-    }
     if(istream->read) {
         zend_object_release(istream->read);
         if(istream->token) {
@@ -42,6 +40,14 @@ void ion_stream_free(zend_object * stream) {
     if(istream->connect) {
         zend_object_release(istream->connect);
         istream->connect = NULL;
+    }
+    if(istream->shutdown) {
+        zend_object_release(istream->shutdown);
+        istream->shutdown = NULL;
+    }
+    if(istream->flush) {
+        zend_object_release(istream->flush);
+        istream->flush = NULL;
     }
     if(istream->buffer) {
         if(istream->state & ION_STREAM_STATE_ENABLED) {
@@ -99,7 +105,7 @@ zend_string * ion_stream_get_name_remote(zend_object * stream_obj) {
     return zend_string_copy(stream->name_remote);
 }
 
-long ion_stream_search_token(struct evbuffer * buffer, ion_stream_token * token TSRMLS_DC) {
+long ion_stream_search_token(struct evbuffer * buffer, ion_stream_token * token) {
     struct evbuffer_ptr ptr_end;
     struct evbuffer_ptr ptr_start;
     struct evbuffer_ptr ptr_result;
@@ -142,13 +148,22 @@ void _ion_stream_input(bevent * bev, void * ctx) {
     ion_stream      * stream = get_object_instance(ctx, ion_stream);
     struct evbuffer * input;
     zend_string     * data = NULL;
-//    size_t            read = 0;
-//    IONF("new data available");
+
     if(stream->read) {
         input = bufferevent_get_input(stream->buffer);
-        if(stream->token) { // awaitLine
+        if(stream->token) { // readLine()
             if(ion_stream_search_token(bufferevent_get_input(stream->buffer), stream->token) == FAILURE) {
-//                ion_deferred_exception(stream->read, ION_Stream_RuntimeException(), "Failed to get internal buffer pointer for token_length/offset", -1);
+                data = ion_stream_read_token(stream, stream->token);
+                if(!data) {
+                    ion_promisor_exception_eg(
+                            stream->read,
+                            ion_class_entry(ION_Stream_RuntimeException),
+                            "Stream corrupted: failed to read token from buffer", 0
+                    );
+                } else {
+                    ion_promisor_done_string(stream->read, data, 0);
+                    zend_string_release(data);
+                }
             } else if(stream->token->position != -1) { // found
                 data = ion_stream_read_token(stream, stream->token);
                 if(!data) {
@@ -158,19 +173,21 @@ void _ion_stream_input(bevent * bev, void * ctx) {
                             "Stream corrupted: failed to read token from buffer", 0
                     );
                 } else {
-//                    ion_deferred_done_stringl(stream->read, data, read, 0);
+                    ion_promisor_done_string(stream->read, data, 0);
+                    zend_string_release(data);
                 }
             } else if(stream->token->flags & ION_STREAM_TOKEN_LIMIT) {
-//                ion_deferred_done_false(stream->read);
+                ion_promisor_done_false(stream->read);
             }
-        } else if(stream->length) { // await()
+        } else if(stream->length) { // read()
 
             if(evbuffer_get_length(input) >= stream->length) {
                 data = ion_stream_read(stream, stream->length);
                 bufferevent_setwatermark(stream->buffer, EV_READ, 0, stream->input_size);
                 ion_promisor_done_string(stream->read, data, 0);
+                zend_string_release(data);
             }
-        } // else awaitAll
+        } // else readAll()
 
         if(evbuffer_get_length(input)) {
             stream->state |= ION_STREAM_STATE_HAS_DATA;
@@ -182,7 +199,9 @@ void _ion_stream_input(bevent * bev, void * ctx) {
     }
 
     if(stream->read == NULL && stream->on_data != NULL && (stream->state & ION_STREAM_STATE_HAS_DATA)) {
-//        pionCbVoidWith1Arg(stream->on_data, zstream);
+        zval zstream;
+        ZVAL_OBJ(&zstream, &stream->std);
+        ion_promisor_sequence_invoke(stream->on_data, &zstream);
     }
 
     ION_CHECK_LOOP();
@@ -191,9 +210,8 @@ void _ion_stream_input(bevent * bev, void * ctx) {
 void _ion_stream_output(bevent * bev, void *ctx) {
     ion_stream *stream = get_object_instance(ctx, ion_stream);
 
-    IONF("all data sent");
     if(stream->flush) {
-//        ion_deferred_done_true(stream->flush);
+        ion_promisor_done_true(stream->flush);
         stream->flush = NULL;
     }
     stream->state |= ION_STREAM_STATE_FLUSHED;
@@ -204,41 +222,83 @@ void _ion_stream_output(bevent * bev, void *ctx) {
     ION_CHECK_LOOP();
 }
 
-void _ion_stream_notify(bevent * bev, short what, void *ctx) {
-    ion_stream *stream = (ion_stream *)ctx;
-    zend_string * data = NULL;
-    size_t read = 0;
-
-    TSRMLS_FETCH_FROM_CTX(stream->thread_ctx);
-    IONF("stream note");
+void _ion_stream_notify(bevent * bev, short what, void * ctx) {
+    ion_stream * stream = get_object_instance(ctx, ion_stream);
 
     if(what & BEV_EVENT_EOF) {
         stream->state |= ION_STREAM_STATE_EOF;
         if(stream->read) {
-            if(stream->token) {
-//                ion_deferred_done_false(stream->read);
-            } else {
-                read = ion_stream_input_length(stream);
-                data = ion_stream_read(stream, read);
-//                ion_deferred_done_stringl(stream->read, data, read, 0);
+            if(stream->token || stream->length) {
+                ion_promisor_exception(
+                        stream->read,
+                        ion_get_class(ION_Stream_ConnectionException),
+                        "Connection was closed: received EOF", 0
+                );
+            } else { // readAll
+                zend_string * data = ion_stream_read(stream, ion_stream_input_length(stream));
+                if(!data) {
+                    ion_promisor_exception_eg(
+                            stream->read,
+                            ion_class_entry(ION_Stream_RuntimeException),
+                            "Stream corrupted: failed to read data from buffer", 0
+                    );
+                } else {
+                    ion_promisor_done_string(stream->read, data, 0);
+                    zend_string_release(data);
+                }
             }
         }
         if(stream->shutdown) {
-//            ion_deferred_done(stream->closing, stream->self);
+            ion_promisor_done_long(stream->shutdown, stream->state & ION_STREAM_STATE_CLOSED);
         }
     } else if(what & BEV_EVENT_ERROR) {
         stream->state |= ION_STREAM_STATE_ERROR;
+        if(stream->connect) {
+            ion_promisor_exception(
+                    stream->connect,
+                    ion_get_class(ION_Stream_ConnectionException),
+                    evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()), EVUTIL_SOCKET_ERROR()
+            );
+        }
+        if(stream->read) {
+            ion_promisor_exception(
+                    stream->read,
+                    ion_get_class(ION_Stream_ConnectionException),
+                    evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()), EVUTIL_SOCKET_ERROR()
+            );
+        }
+        if(stream->flush) {
+            ion_promisor_exception(
+                    stream->flush,
+                    ion_get_class(ION_Stream_ConnectionException),
+                    evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()), EVUTIL_SOCKET_ERROR()
+            );
+        }
+        if(stream->shutdown) {
+            ion_promisor_done_object(stream->shutdown, &stream->std);
+        }
     } else if(what & BEV_EVENT_TIMEOUT) {
         if(what & BEV_EVENT_READING) {
-            // todo reject read-deferred
+            if(stream->read) {
+                ion_promisor_exception(
+                        stream->read,
+                        ion_get_class(ION_Stream_ConnectionException),
+                        "Timed out", 0
+                );
+            }
         } else {
-            // todo reject flush-deferred
+            if(stream->flush) {
+                ion_promisor_exception(
+                        stream->flush,
+                        ion_get_class(ION_Stream_ConnectionException),
+                        "Timed out", 0
+                );
+            }
         }
     } else if(what & BEV_EVENT_CONNECTED) {
-//        PHPDBG("connected");
         stream->state |= ION_STREAM_STATE_CONNECTED;
         if(stream->connect) {
-//            ion_deferred_done(stream->connect, stream->self);
+            ion_promisor_done_object(stream->connect, &stream->std);
         }
     } else {
         zend_error(E_WARNING, "Unknown type notification: %d", what);
@@ -270,6 +330,14 @@ zend_object * ion_stream_new_ex(bevent * buffer, int flags, zend_class_entry * c
         }
     }
     bufferevent_setcb(buffer, _ion_stream_input, _ion_stream_output, _ion_stream_notify, (void *) stream);
+    if((flags & ION_STREAM_STATE_ENABLED)) {
+        if(bufferevent_enable(buffer, EV_READ | EV_WRITE) == FAILURE) {
+            bufferevent_free(buffer);
+            zval_ptr_dtor(&zstream);
+            zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to enable stream", 0);
+            return NULL;
+        }
+    }
     if (cls->constructor) {
         if(pion_call_constructor_without_args(cls, Z_OBJ(zstream)) == FAILURE) {
             zval_ptr_dtor(&zstream);
@@ -313,7 +381,7 @@ zend_string * ion_stream_read_token(ion_stream * stream, ion_stream_token * toke
         if(token->flags & ION_STREAM_MODE_WITH_TOKEN) {
             return zend_string_dup(token->token, 0);
         } else {
-            return NULL;
+            return ZSTR_EMPTY_ALLOC();
         }
     } else {
         zend_string * data;
@@ -369,7 +437,7 @@ CLASS_METHOD(ION_Stream, resource) {
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_ZVAL(zfd)
-    ZEND_PARSE_PARAMETERS_END();
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 //    PARSE_ARGS("r", &zfd);
 
     php_stream * stream_resource;
@@ -394,11 +462,6 @@ CLASS_METHOD(ION_Stream, resource) {
         zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to create Stream: buffer corrupted", 0);
         return;
     }
-    if(bufferevent_enable(buffer, EV_READ | EV_WRITE)) {
-        bufferevent_free(buffer);
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to enable stream", 0);
-        return;
-    }
     stream = ion_stream_new_ex(buffer, state | ION_STREAM_STATE_ENABLED, zend_get_called_scope(execute_data));
     if(!stream) {
         // todo check EG(exception)
@@ -416,7 +479,7 @@ CLASS_METHOD(ION_Stream, pair) {
     int flags = STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE;
     int state = ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_PAIR | ION_STREAM_STATE_ENABLED | ION_STREAM_STATE_CONNECTED;
 
-    bevent * pair[2];
+    ion_buffer  * pair[2];
     zend_object * one;
     zend_object * two;
     zval          zstream_one;
@@ -448,6 +511,7 @@ CLASS_METHOD(ION_Stream, pair) {
         return;
     }
 
+
     ZVAL_OBJ(&zstream_one, one);
     ZVAL_OBJ(&zstream_two, two);
 
@@ -472,7 +536,7 @@ CLASS_METHOD(ION_Stream, socket) {
 //    char * hostname;
     ZEND_PARSE_PARAMETERS_START(1,1)
         Z_PARAM_STR(host)
-    ZEND_PARSE_PARAMETERS_END();
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 //    PARSE_ARGS("s", &host, &host_len);
     resource = php_url_parse_ex(host->val, host->len);
     if (resource == NULL) {
@@ -503,35 +567,6 @@ CLASS_METHOD(ION_Stream, socket) {
         return;
     }
     php_url_free(resource);
-
-    // split host to hostname and port
-//    long hostname_len = host_len;
-//    for(; hostname_len > 0; --hostname_len) {
-//        if(host[ hostname_len ] == ':') {
-//            break;
-//        }
-//    }
-//    hostname = emalloc((size_t)hostname_len + 1);
-//    strncpy(hostname, host, hostname_len);
-//    hostname[hostname_len] = '\0';
-//    port_digits = emalloc((size_t)host_len - hostname_len + 2);
-//    strncpy(port_digits, host + hostname_len + 1, host_len - hostname_len + 1);
-//    port_digits[host_len - hostname_len + 1] = '\0';
-//    port = strtol(port_digits, NULL, 10);
-//    efree(port_digits);
-//
-//    if(bufferevent_socket_connect_hostname(buffer, /*ION(dns)->evdns*/ NULL, AF_UNSPEC, hostname, (int)port) == FAILURE) {
-//        efree(hostname);
-//        ThrowRuntime("Failed to connect ", 1);
-//        return;
-//    }
-//    efree(hostname);
-    if(bufferevent_enable(buffer, EV_READ | EV_WRITE)) {
-        bufferevent_free(buffer);
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to enable stream", 0);
-        return;
-    }
-
     stream = ion_stream_new_ex(buffer, ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_ENABLED, zend_get_called_scope(execute_data));
     if(!stream) {
         // todo check EG(exception)
@@ -593,31 +628,34 @@ CLASS_METHOD(ION_Stream, disable) {
 
 METHOD_WITHOUT_ARGS(ION_Stream, disable)
 
-//void _deferred_stream_connect_dtor(void * object, zval * zdeferred TSRMLS_DC) {
-//    ion_stream * stream = (ion_stream *) object;
-//    if(stream->connect) {
-//        zval_ptr_dtor(&stream->connect);
-//        stream->connect = NULL;
-//    }
-//}
-//
-///** public function ION\Stream::awaitConnection() : Deferred */
-//CLASS_METHOD(ION_Stream, awaitConnection) {
-//    ion_stream * stream = getThisInstance();
-//    zval * zdeferred;
-//    CHECK_STREAM_BUFFER(stream);
-//    zdeferred = ion_deferred_new_ex(NULL);
-//    if(stream->state & ION_STREAM_STATE_CONNECTED) {
-//        ion_deferred_done(zdeferred, getThis());
-//    } else {
-//        ion_deferred_store(zdeferred, stream, _deferred_stream_connect_dtor);
-//        stream->connect = zdeferred;
-//    }
-//    RETURN_ZVAL(zdeferred, 1, 0);
-//}
-//
-//METHOD_WITHOUT_ARGS(ION_Stream, awaitConnection)
-//
+void _ion_stream_connect_dtor(zend_object * deferred) {
+    ion_stream * stream = ion_promisor_store_get(deferred);
+    if(stream->connect) {
+        zend_object_release(stream->connect);
+        stream->connect = NULL;
+    }
+}
+
+/** public function ION\Stream::awaitConnection() : Deferred|true */
+CLASS_METHOD(ION_Stream, awaitConnection) {
+    ion_stream * stream = get_this_instance(ion_stream);
+
+    CHECK_STREAM_BUFFER(stream);
+
+    if(stream->state & ION_STREAM_STATE_CONNECTED) {
+        RETURN_TRUE;
+    } else {
+        zend_object * deferred = ion_promisor_deferred_new_ex(NULL);
+        ion_promisor_store(deferred, stream);
+        ion_promisor_dtor(deferred, _ion_stream_connect_dtor);
+        stream->connect = deferred;
+        obj_add_ref(deferred);
+        RETURN_OBJ(deferred);
+    }
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, awaitConnection)
+
 ///** public function ION\Stream::setTimeouts(double $read_timeout, double $write_timeout) : self */
 //CLASS_METHOD(ION_Stream, setTimeouts) {
 //    ion_stream * stream = getThisInstance();
@@ -752,37 +790,40 @@ METHOD_ARGS_END()
 //    METHOD_ARG_LONG(offset, 0)
 //    METHOD_ARG_LONG(limit, 0)
 //METHOD_ARGS_END()
-//
-//void _deferred_stream_flush_dtor(void * object, zval * zdeferred TSRMLS_DC) {
-//    ion_stream * stream = (ion_stream *) object;
-//    if(stream->flush) {
-//        zval_ptr_dtor(&stream->flush);
-//        stream->flush = NULL;
-//    }
-//}
-//
-///** public function ION\Stream::state() : ION\Deferred */
-//CLASS_METHOD(ION_Stream, flush) {
-//    ion_stream * stream = getThisInstance();
-//    zval * zdeferred = NULL;
-//
+
+void _ion_stream_flush_dtor(zend_object * object) {
+    ion_stream * stream = ion_promisor_store_get(object);
+    if(stream->flush) {
+        zend_object_release(stream->flush);
+        stream->flush = NULL;
+    }
+}
+
+/** public function ION\Stream::flush() : ION\Deferred|true */
+CLASS_METHOD(ION_Stream, flush) {
+    ion_stream  * stream = get_this_instance(ion_stream);
+
 //    CHECK_STREAM(stream);
-//    if(stream->flush) {
-//        RETURN_ZVAL(stream->flush, 1, 0);
-//    }
-//
-//    CHECK_STREAM_BUFFER(stream);
-//    zdeferred = ion_deferred_new_ex(NULL);
-//    if(stream->state & ION_STREAM_STATE_FLUSHED) {
-//        ion_deferred_done_true(zdeferred);
-//    } else {
-//        ion_deferred_store(zdeferred, stream, _deferred_stream_flush_dtor);
-//        stream->flush = zdeferred;
-//    }
-//    RETURN_ZVAL(zdeferred, 1, 0);
-//}
-//
-//METHOD_WITHOUT_ARGS(ION_Stream, flush)
+    if(stream->flush) {
+        obj_add_ref(stream->flush);
+        RETURN_OBJ(stream->flush);
+    }
+
+    CHECK_STREAM_BUFFER(stream);
+
+    if(stream->state & ION_STREAM_STATE_FLUSHED) {
+        RETURN_TRUE;
+    } else {
+        zend_object * deferred = ion_promisor_deferred_new_ex(NULL);
+        ion_promisor_store(deferred, stream);
+        ion_promisor_dtor(deferred, _ion_stream_flush_dtor);
+        stream->flush = deferred;
+        obj_add_ref(deferred);
+        RETURN_OBJ(deferred);
+    }
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, flush)
 
 /** public function ION\Stream::search(string $token, int $offset = 0, int $length = 0) : int|bool */
 CLASS_METHOD(ION_Stream, search) {
@@ -883,7 +924,7 @@ CLASS_METHOD(ION_Stream, getAll) {
     CHECK_STREAM_BUFFER(stream);
     data = ion_stream_read(stream, ion_stream_input_length(stream));
     if(data == NULL) {
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Stream's buffer is unreachable", 0);
+        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Stream buffer is unreachable", 0);
         return;
     }
     RETURN_STR(data);
@@ -932,158 +973,192 @@ METHOD_ARGS_BEGIN(ION_Stream, getLine, 1)
     METHOD_ARG_LONG(mode, 0)
     METHOD_ARG_LONG(max_length, 0)
 METHOD_ARGS_END()
-//
-//void _deferred_stream_await_dtor(void *object, zval *zdeferred TSRMLS_DC) {
-//    ion_stream * stream = (ion_stream *) object;
+
+void _ion_stream_read_dtor(zend_object * object) {
+    ion_stream * stream = ion_promisor_store_get(object);
 //    bufferevent_setwatermark(stream->buffer, EV_READ, 0, stream->input_size);
-//    if(stream->read) {
-//        if(stream->token) {
-//            efree(stream->token->token);
-//            efree(stream->token);
-//            stream->token = NULL;
-//        }
-//        zval_ptr_dtor(&stream->read);
-//        stream->read = NULL;
-//    }
-//}
-//
-///** public function ION\Stream::await(int $bytes) : ION\Deferred */
-//CLASS_METHOD(ION_Stream, await) {
-//    ion_stream * stream = getThisInstance();
-//    size_t length = 0;
-//    size_t current = 0;
-//    char * data = NULL;
-//    zval * zdeferred = NULL;
-//
-//    CHECK_STREAM_BUFFER(stream);
-//    PARSE_ARGS("l", &length);
-//    if(stream->read) {
-//        ThrowLogic("Stream already reading", -1);
-//        return;
-//    }
-//
-//    current = ion_stream_input_length(stream);
-//    zdeferred = ion_deferred_new_ex(NULL);
-//    if(current >= length) {
-//        data = ion_stream_read(stream, &length);
-//        if(data == NULL) {
-//            ThrowRuntime("Stream is unreachable", -1);
-//            return;
-//        }
-//        ion_deferred_done_stringl(zdeferred, data, length, 0);
-//    } else {
-//        ion_deferred_store(zdeferred, stream, _deferred_stream_await_dtor);
-//        stream->read = zdeferred;
-//        stream->length = length;
-//        bufferevent_setwatermark(stream->buffer, EV_READ, length, (stream->input_size >= length) ? stream->input_size : length);
-//    }
-//    RETURN_ZVAL(zdeferred, 1, 0);
-//}
-//
-//METHOD_ARGS_BEGIN(ION_Stream, await, 1)
-//    METHOD_ARG_LONG(bytes, 0)
-//METHOD_ARGS_END()
-//
-///** public function ION\Stream::awaitLine(string $token, $mode = self::MODE_TRIM_TOKEN, $max_length = 0) : ION\Deferred */
-//CLASS_METHOD(ION_Stream, awaitLine) {
-//    ion_stream * stream = getThisInstance();
-//    ion_stream_token token = empty_stream_token;
-//    zval * zdeferred = NULL;
-//    char * data;
-//    long size;
-//
-//    CHECK_STREAM_BUFFER(stream);
-//    PARSE_ARGS("s|ll", &token.token, &token.token_length, &token.flags, &token.length);
-//    token.flags &= ION_STREAM_TOKEN_MODE_MASK;
-//    if(token.token_length == 0) {
-//        pion_throw(ion_get_class(ION_InvalidArgumentException), "empty token", -1);
-//        return;
-//    }
-//
-//    if(ion_stream_search_token(bufferevent_get_input(stream->buffer), &token) == FAILURE) {
-//        ThrowRuntime("Failed to get internal buffer pointer for token_length/offset", -1);
-//        return;
-//    }
-//
-//    zdeferred = ion_deferred_new_ex(NULL);
-//
-//    if(token.position == -1) { // not found
-//        if(token.flags & ION_STREAM_TOKEN_LIMIT) {
-//            ion_deferred_done_false(zdeferred);
-//        } else {
-//            ion_deferred_store(zdeferred, stream, _deferred_stream_await_dtor);
-//            stream->read = zdeferred;
-//            stream->token = emalloc(sizeof(ion_stream_token));
-//            memcpy(stream->token, &token, sizeof(ion_stream_token));
-//            stream->token->token = estrndup(token.token, (unsigned)token.token_length);
-//        }
-//    } else { // found
-//        size = ion_stream_read_token(stream, &data, &token);
-//        if(size == -1) {
-//            if(EG(exception)) {
-//                ion_deferred_exception_eg(stream->read);
-//            } else {
-//                ion_deferred_exception(stream->read, ION_Stream_RuntimeException(), "Stream corrupted: failed to read token from buffer", -1);
-//            }
-//        } else if(size == 0) {
-//            ion_deferred_done_empty_string(zdeferred);
-//        } else {
-//            ion_deferred_done_stringl(zdeferred, data, size, 0);
-//        }
-//    }
-//    RETURN_ZVAL(zdeferred, 1, 0);
-//}
-//
-//METHOD_ARGS_BEGIN(ION_Stream, awaitLine, 1)
-//    METHOD_ARG_STRING(token, 0)
-//    METHOD_ARG_LONG(mode, 0)
-//    METHOD_ARG_LONG(max_length, 0)
-//METHOD_ARGS_END()
-//
-///** public function ION\Stream::awaitAll() : ION\Deferred */
-//CLASS_METHOD(ION_Stream, awaitAll) {
-//    ion_stream * stream = getThisInstance();
-//    zval * zdeferred = NULL;
-//    CHECK_STREAM_BUFFER(stream);
-//    if(stream->read) {
-//        ThrowLogic("Stream already reading", -1);
-//        return;
-//    }
-//    zdeferred = ion_deferred_new_ex(NULL);
-//    if(stream->state & ION_STREAM_STATE_EOF) {
-//        ion_deferred_done_empty_string(zdeferred);
-//    } else {
-//        ion_deferred_store(zdeferred, stream, _deferred_stream_await_dtor);
-//        stream->read = zdeferred;
-//        stream->length = 0;
-//    }
-//    RETURN_ZVAL(zdeferred, 1, 0);
-//}
-//
-//METHOD_WITHOUT_ARGS(ION_Stream, awaitAll)
-//
-///** public function ION\Stream::close(bool $force = false) : self */
-//CLASS_METHOD(ION_Stream, close) {
-//    ion_stream * stream = getThisInstance();
-//    zend_bool force = 0;
-//
-//    CHECK_STREAM_BUFFER(stream);
-//    PARSE_ARGS("|b", &force);
-//    if(stream->state & ION_STREAM_STATE_CLOSED) {
-//        RETURN_THIS();
-//    }
-//    if((stream->state & ION_STREAM_STATE_FLUSHED) || force) {
-//        ion_stream_close_fd(stream);
-//    } else {
-//        bufferevent_disable(stream->buffer, EV_READ);
-//        stream->state |= ION_STREAM_STATE_CLOSE_ON_FLUSH;
-//        RETURN_THIS();
-//    }
-//}
-//
-//METHOD_ARGS_BEGIN(ION_Stream, close, 0)
-//    METHOD_ARG_BOOL(force, 0)
-//METHOD_ARGS_END()
+    if(stream->read) {
+        if(stream->token) {
+            zend_string_release(stream->token->token);
+            efree(stream->token);
+            stream->token = NULL;
+        }
+        zend_object_release(stream->read);
+        stream->read = NULL;
+    }
+}
+
+/** public function ION\Stream::read(int $bytes) : ION\Deferred|string */
+CLASS_METHOD(ION_Stream, read) {
+    ion_stream  * stream = get_this_instance(ion_stream);
+    zend_long     length = 0;
+    size_t current = 0;
+    zend_string * data = NULL;
+
+    CHECK_STREAM_BUFFER(stream);
+    ZEND_PARSE_PARAMETERS_START(0,1)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_LONG(length)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    if(stream->read) {
+        if(stream->length == length && !stream->token) { // read same count bytes
+            obj_add_ref(stream->read);
+            RETURN_OBJ(stream->read);
+        } else {
+            zend_throw_exception(ion_class_entry(LogicException), "Stream already read", 0);
+            return;
+        }
+    }
+
+    current = ion_stream_input_length(stream);
+    if(current >= length) {
+        data = ion_stream_read(stream, (size_t)length);
+        if(data == NULL) {
+            zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Stream is unreachable", 0);
+            return;
+        }
+        RETURN_STR(data);
+    } else {
+        zend_object * deferred = ion_promisor_deferred_new_ex(NULL);
+        ion_promisor_store(deferred, stream);
+        ion_promisor_dtor(deferred, _ion_stream_read_dtor);
+        stream->read = deferred;
+        stream->length = (size_t)length;
+        bufferevent_setwatermark(stream->buffer, EV_READ, (size_t)length, (stream->input_size >= length) ? stream->input_size : (size_t)length);
+        obj_add_ref(deferred);
+        RETURN_OBJ(deferred);
+    }
+}
+
+METHOD_ARGS_BEGIN(ION_Stream, read, 1)
+    METHOD_ARG_LONG(bytes, 0)
+METHOD_ARGS_END()
+
+/** public function ION\Stream::readLine(string $token, $mode = self::MODE_TRIM_TOKEN, $max_length = 0) : ION\Deferred */
+CLASS_METHOD(ION_Stream, readLine) {
+    ion_stream       * stream = get_this_instance(ion_stream);
+    ion_stream_token   token = empty_stream_token;
+    zend_string      * data;
+
+    CHECK_STREAM_BUFFER(stream);
+    ZEND_PARSE_PARAMETERS_START(1,3)
+        Z_PARAM_STR(token.token)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_LONG(token.flags)
+        Z_PARAM_LONG(token.length)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    token.flags &= ION_STREAM_TOKEN_MODE_MASK;
+    if(ZSTR_LEN(token.token) == 0) {
+        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to get internal buffer pointer for token_length/offset", 0);
+        return;
+    }
+
+    if(ion_stream_search_token(bufferevent_get_input(stream->buffer), &token) == FAILURE) {
+        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to get internal buffer pointer for token_length/offset", 0);
+        return;
+    }
+
+    if(token.position == -1) {
+        if(token.flags & ION_STREAM_TOKEN_LIMIT) {
+            RETURN_FALSE;
+        } else {
+            zend_object * deferred = ion_promisor_deferred_new_ex(NULL);
+            ion_promisor_store(deferred, stream);
+            ion_promisor_dtor(deferred, _ion_stream_read_dtor);
+            stream->read = deferred;
+            stream->token = emalloc(sizeof(ion_stream_token));
+            memcpy(stream->token, &token, sizeof(ion_stream_token));
+            stream->token->token = zend_string_copy(token.token);
+            obj_add_ref(deferred);
+            RETURN_OBJ(deferred);
+        }
+    } else {
+        data = ion_stream_read_token(stream, &token);
+        if(data == NULL) {
+            RETURN_FALSE;
+        } else {
+            RETURN_STR(data);
+        }
+    }
+
+}
+
+METHOD_ARGS_BEGIN(ION_Stream, readLine, 1)
+    METHOD_ARG_STRING(token, 0)
+    METHOD_ARG_LONG(mode, 0)
+    METHOD_ARG_LONG(max_length, 0)
+METHOD_ARGS_END()
+
+/** public function ION\Stream::readAll() : ION\Deferred|string */
+CLASS_METHOD(ION_Stream, readAll) {
+    ion_stream  * stream = get_this_instance(ion_stream);
+    size_t        current = 0;
+    zend_string * data = NULL;
+
+    CHECK_STREAM_BUFFER(stream);
+    if(stream->read) {
+        if(!stream->token && !stream->length) {
+            obj_add_ref(stream->read);
+            RETURN_OBJ(stream->read);
+        } else {
+            zend_throw_exception(ion_class_entry(LogicException), "Stream already read", 0);
+            return;
+        }
+    }
+    if(stream->state & ION_STREAM_STATE_EOF) {
+        current = ion_stream_input_length(stream);
+        if(current) {
+            data = ion_stream_read(stream, current);
+            if(data) {
+                RETURN_STR(data);
+            } else {
+                zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Stream buffer is unreachable", 0);
+                return;
+            }
+        } else {
+            RETURN_EMPTY_STRING();
+        }
+    } else {
+        zend_object * deferred = ion_promisor_deferred_new_ex(NULL);
+        ion_promisor_store(deferred, stream);
+        ion_promisor_dtor(deferred, _ion_stream_read_dtor);
+        stream->read = deferred;
+        stream->length = 0;
+        obj_add_ref(deferred);
+        RETURN_OBJ(deferred);
+    }
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, readAll)
+
+/** public function ION\Stream::close(bool $force = false) : self */
+CLASS_METHOD(ION_Stream, close) {
+    ion_stream * stream = get_this_instance(ion_stream);
+    zend_bool force = 0;
+
+    CHECK_STREAM_BUFFER(stream);
+    ZEND_PARSE_PARAMETERS_START(0,1)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_BOOL(force)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    if(stream->state & ION_STREAM_STATE_CLOSED) {
+        RETURN_THIS();
+    }
+    if((stream->state & ION_STREAM_STATE_FLUSHED) || force) {
+        ion_stream_close_fd(stream);
+    } else {
+        bufferevent_disable(stream->buffer, EV_READ);
+        stream->state |= ION_STREAM_STATE_CLOSE_ON_FLUSH;
+        RETURN_THIS();
+    }
+}
+
+METHOD_ARGS_BEGIN(ION_Stream, close, 0)
+    METHOD_ARG_BOOL(force, 0)
+METHOD_ARGS_END()
 //
 ///** public function ION\Stream::onData(callable $callback) : self */
 //CLASS_METHOD(ION_Stream, onData) {
@@ -1095,31 +1170,34 @@ METHOD_ARGS_END()
 //METHOD_ARGS_END()
 //
 //
-//void _deferred_stream_shutdown_dtor(void * object, zval * zdeferred TSRMLS_DC) {
-//    ion_stream * stream = (ion_stream *) object;
-//    if(stream->closing) {
+void _deferred_stream_shutdown_dtor(zend_object * deferred) {
+    ion_stream * stream = ion_promisor_store_get(deferred);
+    if(stream->shutdown) {
+        zend_object_release(stream->shutdown);
 //        zval_ptr_dtor(&stream->closing);
-//        stream->closing = NULL;
-//    }
-//}
-//
-///** public function ION\Stream::awaitClosing() : ION\Deferred */
-//CLASS_METHOD(ION_Stream, awaitShutdown) {
-//    ion_stream * stream = getThisInstance();
-//    zval * zdeferred = NULL;
-//    CHECK_STREAM_BUFFER(stream);
-//    zdeferred = ion_deferred_new_ex(NULL);
-//    if(stream->state & ION_STREAM_STATE_CLOSED) {
-//        ion_deferred_done(zdeferred, getThis());
-//    } else {
-//        ion_deferred_store(zdeferred, stream, _deferred_stream_shutdown_dtor);
-//        stream->closing = zdeferred;
-//    }
-//    RETURN_ZVAL(zdeferred, 1, 0);
-//}
-//
-//METHOD_WITHOUT_ARGS(ION_Stream, awaitShutdown)
-//
+        stream->shutdown = NULL;
+    }
+}
+
+/** public function ION\Stream::awaitShutdown() : ION\Deferred|int */
+CLASS_METHOD(ION_Stream, awaitShutdown) {
+    ion_stream * stream = get_this_instance(ion_stream);
+
+    CHECK_STREAM_BUFFER(stream);
+    if(stream->state & ION_STREAM_STATE_CLOSED) {
+        RETURN_LONG(stream->state & ION_STREAM_STATE_CLOSED);
+    } else {
+        zend_object * deferred = ion_promisor_deferred_new_ex(NULL);
+        ion_promisor_dtor(deferred, _deferred_stream_shutdown_dtor);
+        ion_promisor_store(deferred, stream);
+        stream->shutdown = deferred;
+        obj_add_ref(deferred);
+        RETURN_OBJ(deferred);
+    }
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, awaitShutdown)
+
 ///** public function ION\Stream::ensureSSL(ION\SSL $ssl) : self */
 //CLASS_METHOD(ION_Stream, ensureSSL) {
 //
@@ -1128,40 +1206,52 @@ METHOD_ARGS_END()
 //METHOD_ARGS_BEGIN(ION_Stream, ensureSSL, 1)
 //    METHOD_ARG(ssl, 0)
 //METHOD_ARGS_END()
-//
-///** public function ION\Stream::isClosed() : int */
-//CLASS_METHOD(ION_Stream, isClosed) {
-//    ion_stream * stream = getThisInstance();
-//    RETURN_LONG(stream->state & ION_STREAM_STATE_CLOSED);
-//}
-//
-//METHOD_WITHOUT_ARGS(ION_Stream, isClosed)
-//
-///** public function ION\Stream::isEnabled() : bool */
-//CLASS_METHOD(ION_Stream, isEnabled) {
-//    ion_stream * stream = getThisInstance();
-//    RETURN_LONG(stream->state & ION_STREAM_STATE_ENABLED);
-//}
-//
-//METHOD_WITHOUT_ARGS(ION_Stream, isEnabled)
-//
-///** public function ION\Stream::isConnected() : bool */
-//CLASS_METHOD(ION_Stream, isConnected) {
-//    ion_stream * stream = getThisInstance();
-//    RETURN_LONG(stream->state & ION_STREAM_STATE_CONNECTED);
-//}
-//
-//METHOD_WITHOUT_ARGS(ION_Stream, isConnected)
-//
-///** public function ION\Stream::getState() : int */
-//CLASS_METHOD(ION_Stream, getState) {
-//    ion_stream * stream = getThisInstance();
-//    RETURN_LONG(stream->state);
-//}
-//
-//METHOD_WITHOUT_ARGS(ION_Stream, getState)
-//
-//
+
+/** public function ION\Stream::isClosed() : int */
+CLASS_METHOD(ION_Stream, isClosed) {
+    ion_stream * stream = get_this_instance(ion_stream);
+    if(stream->state & ION_STREAM_STATE_CLOSED) {
+        RETURN_TRUE;
+    } else {
+        RETURN_FALSE;
+    }
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, isClosed)
+
+/** public function ION\Stream::isEnabled() : bool */
+CLASS_METHOD(ION_Stream, isEnabled) {
+    ion_stream * stream = get_this_instance(ion_stream);
+    if(stream->state & ION_STREAM_STATE_ENABLED) {
+        RETURN_TRUE;
+    } else {
+        RETURN_FALSE;
+    }
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, isEnabled)
+
+/** public function ION\Stream::isConnected() : bool */
+CLASS_METHOD(ION_Stream, isConnected) {
+    ion_stream * stream = get_this_instance(ion_stream);
+    if(stream->state & ION_STREAM_STATE_CONNECTED) {
+        RETURN_TRUE;
+    } else {
+        RETURN_FALSE;
+    }
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, isConnected)
+
+/** public function ION\Stream::getState() : int */
+CLASS_METHOD(ION_Stream, getState) {
+    ion_stream * stream = get_this_instance(ion_stream);
+    RETURN_LONG(stream->state);
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, getState)
+
+
 ///** public function ION\Stream::__debugInfo() : void */
 //CLASS_METHOD(ION_Stream, __debugInfo) {
 //    ion_stream * stream = getThisInstance();
@@ -1409,31 +1499,31 @@ CLASS_METHODS_START(ION_Stream)
 #endif
     METHOD(ION_Stream, enable,          ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, disable,         ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, awaitConnection, ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, awaitConnection, ZEND_ACC_PUBLIC)
 //    METHOD(ION_Stream, setTimeouts,     ZEND_ACC_PUBLIC)
 //    METHOD(ION_Stream, setPriority,     ZEND_ACC_PUBLIC)
 //    METHOD(ION_Stream, setInputSize,    ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, write,           ZEND_ACC_PUBLIC)
 //    METHOD(ION_Stream, sendFile,        ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, flush,           ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, flush,           ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, search,          ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, getSize,         ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, get,             ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, getAll,          ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, getLine,         ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, await,           ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, awaitAll,        ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, awaitLine,       ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, close,           ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, read,            ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, readAll,         ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, readLine,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, close,           ZEND_ACC_PUBLIC)
 //    METHOD(ION_Stream, onData,          ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, awaitShutdown,   ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, ensureSSL,       ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, awaitShutdown,   ZEND_ACC_PUBLIC)
+//    METHOD(ION_Stream, enableSSL,       ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, getRemotePeer,   ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, getLocalName,    ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, isClosed,        ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, isEnabled,       ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, isConnected,     ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, getState,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, isClosed,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, isEnabled,       ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, isConnected,     ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getState,        ZEND_ACC_PUBLIC)
 //    METHOD(ION_Stream, __destruct,      ZEND_ACC_PUBLIC)
 //    METHOD(ION_Stream, __toString,      ZEND_ACC_PUBLIC)
 //    METHOD(ION_Stream, __debugInfo,     ZEND_ACC_PUBLIC)
@@ -1471,5 +1561,8 @@ PHP_MINIT_FUNCTION(ION_Stream) {
     PION_CLASS_CONST_LONG(ION_Stream, "INPUT",  EV_READ);
     PION_CLASS_CONST_LONG(ION_Stream, "OUTPUT", EV_WRITE);
     PION_CLASS_CONST_LONG(ION_Stream, "BOTH",   EV_WRITE | EV_READ);
+
+    PION_REGISTER_VOID_EXTENDED_CLASS(ION_Stream_RuntimeException, ion_class_entry(ION_RuntimeException), "ION\\Stream\\RuntimeException");
+    PION_REGISTER_VOID_EXTENDED_CLASS(ION_Stream_ConnectionException, ion_class_entry(ION_Stream_RuntimeException), "ION\\Stream\\ConnectionException");
     return SUCCESS;
 }

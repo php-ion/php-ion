@@ -46,14 +46,13 @@ CLASS_METHOD(ION_Promise, then) {
         Z_PARAM_ZVAL_EX(done, 1, 0)
         Z_PARAM_ZVAL_EX(fail, 1, 0)
         Z_PARAM_ZVAL_EX(progress, 1, 0)
-    ZEND_PARSE_PARAMETERS_END();
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
     promise = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), done, fail, progress);
     if(promise == NULL) {
         zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
         return;
     }
-
-    RETURN_OBJ_ADDREF(promise);
+    RETURN_OBJ(promise);
 }
 
 METHOD_ARGS_BEGIN(ION_Promise, then, 0)
@@ -74,7 +73,7 @@ CLASS_METHOD(ION_Promise, onDone) {
         zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
         return;
     }
-    RETURN_OBJ_ADDREF(promise);
+    RETURN_OBJ(promise);
 }
 
 METHOD_ARGS_BEGIN(ION_Promise, onDone, 1)
@@ -93,7 +92,7 @@ CLASS_METHOD(ION_Promise, onFail) {
         zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
         return;
     }
-    RETURN_OBJ_ADDREF(promise);
+    RETURN_OBJ(promise);
 }
 
 METHOD_ARGS_BEGIN(ION_Promise, onFail, 1)
@@ -112,7 +111,7 @@ CLASS_METHOD(ION_Promise, onProgress) {
         zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
         return;
     }
-    RETURN_OBJ_ADDREF(promise);
+    RETURN_OBJ(promise);
 }
 
 METHOD_ARGS_BEGIN(ION_Promise, onProgress, 1)
