@@ -1,7 +1,7 @@
 ION Extension [dev]
 ===================
 
-**ION** (preg `/^(I)nput(?:, |-)(O)utput,? (N)otifications$/i`) - PHP extension for asynchronous IO and other notifications (such as POSIX signals, timers, inotify).
+**ION** (preg `/^(I)nput(?:, |-)(O)utput,? (N)otifications$/i`) - PHP extension for asynchronous programming.
 
 * **Subject:** PHP extension
 * **Language:** C
@@ -35,6 +35,8 @@ make install
 * Any Promise/Deferred/Sequence supports generators
 * Promise/Deferred/Sequence generators make asynchronous programming easy
 * Promise/Deferred/Sequence supports type hinting in callbacks
+* Asynchronous sockets and listeners
+* Sendfile supports
 * todo
 
 ## Promisor
@@ -182,9 +184,9 @@ $data = yield $stream->read(1024);
 $data = yield $stream->readLine("\r\n\r\n", 64 * KiB);
 $data = yield $stream->readAll();
 
-$stream = yield $stream->awaitConnection();
-$stream = yield $stream->awaitShutdown();
-$stream = yield $stream->flush();
+yield $stream->awaitConnection();
+yield $stream->awaitShutdown();
+yield $stream->flush();
 
 $stream->onData()->then()->then() // ... build sequence
 ```
