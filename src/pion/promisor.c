@@ -254,18 +254,25 @@ zend_object * ion_promisor_promise_new(zval * done, zval * fail, zval * progress
     object_init_ex(&object, ion_class_entry(ION_Promise));
     promise = get_instance(&object, ion_promisor);
     promise->flags |= ION_PROMISOR_INTERNAL;
-    ion_promisor_set_callbacks(&promise->std, done, fail, progress);
+    if(ion_promisor_set_callbacks(&promise->std, done, fail, progress) == FAILURE) {
+        zend_throw_exception(ion_class_entry(ION_RuntimeException), "Promise expects a valid callbacks", 0);
+        return NULL;
+    }
     return &promise->std;
-//    return pion_new_object_arg_3(ion_class_entry(ION_Promise), done, fail, progress);
 }
 
 
 zend_object * ion_promisor_sequence_new(zval * init) {
-    if(init) {
-        return pion_new_object_arg_1(ion_class_entry(ION_Sequence), init);
-    } else {
-        return pion_new_object_arg_0(ion_class_entry(ION_Sequence));
+    zval object;
+    ion_promisor * sequence;
+
+    object_init_ex(&object, ion_class_entry(ION_Sequence));
+    sequence = get_instance(&object, ion_promisor);
+    if(ion_promisor_set_callbacks(&sequence->std, init, NULL, NULL) == FAILURE) {
+        zend_throw_exception(ion_class_entry(ION_RuntimeException), "Sequence expects a valid callbacks", 0);
+
     }
+    return &sequence->std;
 }
 
 zend_object * ion_promisor_deferred_new(zval * canceler) {

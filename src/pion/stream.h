@@ -8,37 +8,41 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Stream;
 
 // ** state flags begin **
 // stream types
-#define ION_STREAM_STATE_SOCKET    1<<0
-#define ION_STREAM_STATE_PAIR      1<<1 // use with ION_STREAM_STATE_SOCKET
-#define ION_STREAM_STATE_PIPE      1<<2
-#define ION_STREAM_STATE_FILE      1<<3 // reserved
+#define ION_STREAM_STATE_SOCKET    (1<<0)
+#define ION_STREAM_STATE_PAIR      (1<<1) // use with ION_STREAM_STATE_SOCKET
+#define ION_STREAM_STATE_PIPE      (1<<2)
+#define ION_STREAM_STATE_FILE      (1<<3) // reserved
 
 // reading and writing states
-#define ION_STREAM_STATE_READING   1<<4
-#define ION_STREAM_STATE_FLUSHED   1<<5
-#define ION_STREAM_STATE_HAS_DATA  1<<6
+#define ION_STREAM_STATE_FLUSHED   (1<<4)
+#define ION_STREAM_STATE_HAS_DATA  (1<<5)
+
+// connect direction
+// Important: ION_STREAM_FROM_PEER == PION_NET_FROM_PEER and ION_STREAM_FROM_ME == PION_NET_FROM_ME
+#define ION_STREAM_FROM_PEER       (1<<6)
+#define ION_STREAM_FROM_ME         (1<<7)
+#define ION_STREAM_DIRECTION_MASK  (ION_STREAM_FROM_PEER | ION_STREAM_FROM_ME)
 
 // behavior flags
 #define ION_STREAM_STATE_CLOSE_ON_FLUSH   1<<8
 
 // runtime stream states
-#define ION_STREAM_STATE_ENABLED   1<<9
-#define ION_STREAM_STATE_CONNECTED 1<<10
-#define ION_STREAM_STATE_EOF       1<<11
-#define ION_STREAM_STATE_ERROR     1<<12
-#define ION_STREAM_STATE_SHUTDOWN  1<<13
+#define ION_STREAM_STATE_ENABLED   (1<<9)
+#define ION_STREAM_STATE_CONNECTED (1<<10)
+#define ION_STREAM_STATE_EOF       (1<<11)
+#define ION_STREAM_STATE_ERROR     (1<<12)
+#define ION_STREAM_STATE_SHUTDOWN  (1<<13)
 #define ION_STREAM_STATE_CLOSED    (ION_STREAM_STATE_EOF | ION_STREAM_STATE_ERROR | ION_STREAM_STATE_SHUTDOWN)
 
-#define ION_STREAM_NAME_IPV4       1<<14
-#define ION_STREAM_NAME_IPV6       1<<15
-#define ION_STREAM_NAME_UNIX       1<<16
+#define ION_STREAM_NAME_IPV4       (1<<14)
+#define ION_STREAM_NAME_IPV6       (1<<15)
+#define ION_STREAM_NAME_UNIX       (1<<16)
 #define ION_STREAM_NAME_MASK       (ION_STREAM_NAME_IPV4 | ION_STREAM_NAME_IPV6 | ION_STREAM_NAME_UNIX)
 
-#define ION_STREAM_DIRECT_INCOMING 1<<17
 
 // ** state flags end **
 
-// mode for line reading (getLine() and awaitLine())
+// mode for line reading (getLine() and readLine())
 #define ION_STREAM_MODE_TRIM_TOKEN    1
 #define ION_STREAM_MODE_WITH_TOKEN    2
 #define ION_STREAM_MODE_WITHOUT_TOKEN 4

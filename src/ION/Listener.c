@@ -49,7 +49,7 @@ static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct 
         stream = ion_stream_new(buffer, ION_STREAM_STATE_ENABLED
                                         | ION_STREAM_STATE_SOCKET
                                         | ION_STREAM_STATE_CONNECTED
-                                        | ION_STREAM_DIRECT_INCOMING);
+                                        | ION_STREAM_FROM_PEER);
         istream = get_object_instance(stream, ion_stream);
         if(listener->name) {
             istream->name_self = zend_string_copy(listener->name);

@@ -8,14 +8,14 @@ int pion_net_sock_name(evutil_socket_t sock, short flags, zend_string ** address
     socklen_t                 addr_len = sizeof(struct sockaddr);
     struct sockaddr           addr;
 
-    if(flags == PION_NET_NAME_LOCAL) {
+    if(flags & PION_NET_NAME_LOCAL) {
         if (getsockname(sock, &addr, &addr_len) == FAILURE) {
-            zend_error(E_NOTICE, "unable to retrieve socket name: %s", strerror(errno));
+//            zend_error(E_NOTICE, "unable to retrieve socket name: %s", strerror(errno));
             return FAILURE;
         }
     } else {
         if (getpeername(sock, &addr, &addr_len) == FAILURE) {
-            zend_error(E_NOTICE, "unable to retrieve peer name: %s", strerror(errno));
+//            zend_error(E_NOTICE, "unable to retrieve peer name: %s", strerror(errno));
             return FAILURE;
         }
     }

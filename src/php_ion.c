@@ -88,6 +88,7 @@ zend_module_entry ion_module_entry = {
 PHP_MINIT_FUNCTION(ion) {
     event_set_log_callback(_engine_log);
     event_set_fatal_callback(_engine_fatal);
+    event_set_mem_functions(_php_emalloc, _php_realloc, _php_efree);
 
     ionBase            = pemalloc(sizeof(ion_base), 1);
     memset(ionBase, 0, sizeof(ion_base));
@@ -108,10 +109,6 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_Stream);
 //    STARTUP_MODULE(ION_DNS);
 //    STARTUP_MODULE(ION_Process);
-
-#ifdef ION_DEBUG
-    event_set_mem_functions(_php_emalloc, _php_realloc, _php_efree);
-#endif
 
     long KB = 1000;
     long MB = 1000 * KB;

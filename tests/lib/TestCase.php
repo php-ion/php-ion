@@ -71,14 +71,9 @@ class TestCase extends \PHPUnit_Framework_TestCase {
                     'code' => $data->getCode()
                 ];
             } else {
-                $result = [
+                return $result = [
                     'object' => get_class($data),
                 ];
-
-                if (method_exists($data, "__toString")) {
-                    $result['name'] = strval($data);
-                }
-                return $result;
             }
         } elseif(is_resource($data)) {
             return [
