@@ -1326,7 +1326,7 @@ CLASS_METHOD(ION_Stream, __debugInfo) {
     if(stream->read) {
         array_init(&read);
         if(stream->token) {
-            add_assoc_str(&read, "token", stream->token->token);
+            add_assoc_str(&read, "token", zend_string_copy(stream->token->token));
             add_assoc_long(&read, "max_bytes", stream->token->length);
             add_assoc_long(&read, "scanned_bytes", stream->token->offset);
             if(stream->token->flags & ION_STREAM_MODE_TRIM_TOKEN) {
