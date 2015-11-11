@@ -34,6 +34,30 @@ class StreamTest extends TestCase {
         $this->assertInstanceOf('ION\Stream', $stream);
     }
 
+    public function providerSocketFailures() {
+        return [
+            ["tcp:///127.0.0.1", "Invalid socket name"],
+//            ["tcp://unexist.example.com:80", "Failed to connect to %s: %s"],
+            ["?query", "Invalid socket name"],
+        ];
+    }
+
+    /**
+     * @group dev
+     * @dataProvider providerSocketFailures
+     * @param string $url
+     * @param string $message
+     * @param int $code
+     */
+    public function testSocketFailures($url, $message, $code = 0) {
+        try  {
+            $stream = Stream::socket($url);
+            $this->fail("Should be exception");
+        } catch(\Exception $e) {
+            $this->assertException($e, $message, $code);
+        }
+    }
+
     /**
      * @memcheck
      */
