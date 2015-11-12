@@ -38,11 +38,11 @@ make install
 * Async sockets and pipes
 * Async socket listeners
 * Sendfile supports
+* Asynchronous DNS requests
 * todo
 
 # Planned
 
-* Asynchronous DNS requests
 * SSL support
 * DNS server
 * Async execution an external program

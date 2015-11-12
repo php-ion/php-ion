@@ -84,7 +84,6 @@ METHOD_ARGS_END()
 CLASS_METHOD(ION, stop) {
     double timeout = -1.0;
     struct timeval time;
-    int r;
 
     ZEND_PARSE_PARAMETERS_START(0,1)
         Z_PARAM_OPTIONAL

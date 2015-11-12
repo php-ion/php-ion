@@ -227,7 +227,6 @@ void _ion_stream_output(bevent * bev, void *ctx) {
 }
 
 void _ion_stream_notify(bevent * bev, short what, void * ctx) {
-    short events = bufferevent_get_enabled(bev);
     ion_stream * stream = get_object_instance(ctx, ion_stream);
 
     obj_add_ref(&stream->std);
@@ -236,11 +235,6 @@ void _ion_stream_notify(bevent * bev, short what, void * ctx) {
         if(stream->read) {
             if(stream->token || stream->length) {
                 ion_promisor_done_false(stream->read);
-//                ion_promisor_exception(
-//                        stream->read,
-//                        ion_get_class(ION_Stream_ConnectionException),
-//                        "Connection was closed: received EOF", 0
-//                );
             } else { // readAll
                 zend_string * data = ion_stream_read(stream, ion_stream_input_length(stream));
                 if(!data) {
@@ -538,10 +532,6 @@ CLASS_METHOD(ION_Stream, socket) {
     bevent * buffer   = NULL;
     zend_object * stream = NULL;
 
-//    int host_len     = 0;
-//    long port         = 0;
-//    char * port_digits;
-//    char * hostname;
     ZEND_PARSE_PARAMETERS_START(1,1)
         Z_PARAM_STR(host)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
@@ -560,7 +550,7 @@ CLASS_METHOD(ION_Stream, socket) {
     }
 
     if(resource->host) { // ip:port, [ipv6]:port, hostname:port
-        if(bufferevent_socket_connect_hostname(buffer, /*ION(dns)->evdns*/ NULL, AF_UNSPEC, resource->host, resource->port ? (int)resource->port : 0) == FAILURE) {
+        if(bufferevent_socket_connect_hostname(buffer, ION(dns)->evdns, AF_UNSPEC, resource->host, resource->port ? (int)resource->port : 0) == FAILURE) {
             php_url_free(resource);
             bufferevent_free(buffer);
             zend_throw_exception_ex(ion_class_entry(ION_Stream_RuntimeException), 0, "Failed to connect to %s: %s", host->val, strerror(errno));
