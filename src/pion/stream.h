@@ -99,17 +99,9 @@ typedef struct _ion_stream {
 //#endif
 
 #define ion_stream_new(buffer, state)                  ion_stream_new_ex(buffer, state, NULL TSRMLS_CC)
-//#define ion_stream_new_ex(buffer, state, class_entry)  _on_stream_new(buffer, state, class_entry TSRMLS_CC)
-//#define ion_stream_zval(zstream, buffer, state, class_entry)    _ion_stream_zval(zstream, buffer, state, NULL TSRMLS_CC)
-#define ion_stream_zval_ex(zstream, buffer, state, class_entry) ion_stream_zval(zstream, buffer, state, class_entry TSRMLS_CC)
 
 #define ion_stream_input_length(stream) evbuffer_get_length( bufferevent_get_input(stream->buffer) )
 #define ion_stream_output_length(stream) evbuffer_get_length( bufferevent_get_output(stream->buffer) )
-//#define ion_stream_read(stream, size_p) _ion_stream_read(stream, size_p TSRMLS_CC);
-//#define ion_stream_read_token(stream, data, token) \
-//    _ion_stream_read_token(stream, data, token TSRMLS_CC)
-//#define ion_stream_search_token(buffer_p, token_p)  _ion_stream_search_token(buffer_p, token_p TSRMLS_CC)
-//#define ion_stream_close_fd(stream) _ion_stream_close_fd(stream TSRMLS_CC)
 
 #define ion_stream_is_valid_fd(stream) (bufferevent_getfd(stream->buffer) == -1)
 

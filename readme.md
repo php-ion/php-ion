@@ -17,16 +17,7 @@ ION Extension [dev]
 * **Composer:** [phpion/phpion](https://packagist.org/packages/phpion/phpion)
 * **Testing system:** [phpunit](https://phpunit.de/) (+ memory leak detector)
 
-# Install
-
-```
-git clone https://github.com/php-ion/php-ion.git
-cd php-ion
-phpize
-./configure --with-ion
-make
-make install
-```
+### [Install](./docs/install.md) | [Develop](./docs/develop.md) | [Testing](./docs/testing.md) | [Segfault](./docs/segfault.md)
 
 # Features
 
@@ -155,9 +146,14 @@ $sequence("two"); // run sequence again
 
 ### Working with promisors
 
+```php
 ION::promise(function () {
+
     // do eventual actions
-})->then(/* ... */);
+
+})->then(/* ... */)
+  ->then(/* ... */);
+```
 
 ## Timers
 

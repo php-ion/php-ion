@@ -7,7 +7,6 @@ zend_object_handlers ion_oh_ION_DNS;
 void _ion_dns_getaddrinfo_callback(int errcode, struct evutil_addrinfo * addr, void * arg) {
     zval result, A, AAAA;
     ion_dns_addr_request * req = (ion_dns_addr_request *) arg;
-    TSRMLS_FETCH_FROM_CTX(req->thread_ctx);
     if (!errcode) {
         array_init(&result);
         array_init(&A);
@@ -87,18 +86,11 @@ CLASS_METHOD(ION_DNS, resolve) {
         Z_PARAM_OPTIONAL
         Z_PARAM_LONG(flags)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
-//    PARSE_ARGS("s|l", &domain, &domain_len, &flags);
-//    if (zend_symtable_exists(ION(dns)->requests, domain, domain_len + 1)) {
-//        RETURN_TRUE;
-//    }
     deferred = zend_hash_find_ptr(ION(dns)->requests, domain);
     if(deferred) {
         obj_add_ref(deferred);
         RETURN_OBJ(deferred);
     }
-//    if(zend_hash_find(ION(dns)->requests, domain, domain_len + 1, (void **)&found) == SUCCESS) {
-//        RETURN_ZVAL((*found)->deferred, 1, 0);
-//    }
 
     memset(&hints, 0, sizeof(hints));
     if((flags & ION_DNS_RECORDS_A_AAAA) == ION_DNS_RECORDS_A_AAAA || (flags & ION_DNS_RECORDS_A_AAAA) == 0) {
@@ -116,19 +108,13 @@ CLASS_METHOD(ION_DNS, resolve) {
     hints.ai_protocol = IPPROTO_TCP;
     req = emalloc(sizeof(ion_dns_addr_request));
     memset(req, 0, sizeof(ion_dns_addr_request));
-    TSRMLS_SET_CTX(req->thread_ctx);
     req->domain = zend_string_copy(domain);
     req->deferred = ion_promisor_deferred_new_ex(_ion_dns_getaddrinfo_cancel);
     if(!zend_hash_add_ptr(ION(dns)->requests, domain, (void *)req)) {
         zend_throw_exception(ion_class_entry(ION_RuntimeException), "Failed to store request", 0);
         return;
     }
-//    if(zend_hash_add(ION(dns)->requests, domain, domain_len + 1, &req, sizeof(ion_dns_addr_request *), NULL) == FAILURE) {
-//        ThrowRuntime("Failed to store request", -1);
-//        return;
-//    }
     ion_promisor_store(req->deferred, req);
-//    ion_deferred_store(req->deferred, req, NULL);
     req->request = evdns_getaddrinfo(ION(dns)->evdns, domain->val, NULL, &hints, _ion_dns_getaddrinfo_callback, req);
     obj_add_ref(req->deferred)
     RETURN_OBJ(req->deferred);
