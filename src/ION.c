@@ -84,6 +84,7 @@ METHOD_ARGS_END()
 CLASS_METHOD(ION, stop) {
     double timeout = -1.0;
     struct timeval time;
+    int r;
 
     ZEND_PARSE_PARAMETERS_START(0,1)
         Z_PARAM_OPTIONAL
@@ -96,6 +97,7 @@ CLASS_METHOD(ION, stop) {
         event_base_loopexit(ION(base), &time);
     } else {
         event_base_loopbreak(ION(base));
+//        event_base_loopexit(ION(base), NULL);
     }
 }
 

@@ -17,17 +17,9 @@ BEGIN_EXTERN_C();
 
 typedef struct _ion_dns_addr_request {
     struct evdns_getaddrinfo_request * request;
-    char * domain;
-    uint   domain_len;
-    zval * deferred;
-#ifdef ZTS
-    void ***thread_ctx;
-#endif
+    zend_string * domain;
+    zend_object * deferred;
 } ion_dns_addr_request;
-
-ZEND_BEGIN_MODULE_GLOBALS(ION_DNS)
-    char          * resolv_conf;
-ZEND_END_MODULE_GLOBALS(ION_DNS)
 
 END_EXTERN_C();
 

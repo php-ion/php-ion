@@ -35,8 +35,6 @@ class ListenerTest extends TestCase {
         $listener = new Listener($address);
         $listener->onConnect(function (Stream $connect) {
             $this->data["connect"] = $this->describe($connect);
-//            $this->data["remote"] = $connect->getRemotePeer();
-//            $this->data["local"] = $connect->getLocalName();
 
             $this->stop();
         })->onFail(function (\Throwable $error) {
@@ -52,8 +50,6 @@ class ListenerTest extends TestCase {
             'object' => 'ION\Stream'
         ], $this->data['connect']);
         $this->assertArrayNotHasKey("error", $this->data);
-//        $this->assertEquals($name, $this->data["local"]);
-//        $this->assertStringMatchesFormat(parse_url($name, PHP_URL_HOST).":%i", $this->data["remote"]);
     }
 
     /**

@@ -49,12 +49,21 @@ class TestCase extends \PHPUnit_Framework_TestCase {
         }
     }
 
-    /**
-     * @param string $host
-     * @return Server
-     */
-    public function listen($host) {
-        return new Server($host);
+    public function promise(callable $action, $stop = true) {
+        ION::promise($action)
+            ->then(function ($result) use ($stop) {
+                if($result !== null) {
+                    $this->data["result"] = $this->describe($result);
+                }
+                if($stop) {
+                    $this->stop();
+                }
+            }, function ($error) use ($stop) {
+                $this->data["error"] = $this->describe($error);
+                if($stop) {
+                    $this->stop();
+                }
+            });
     }
 
     /**
@@ -161,32 +170,9 @@ class TestCase extends \PHPUnit_Framework_TestCase {
             ION::stop((double)$error);
         } else {
             $this->_error = $error;
-            ION::stop();
+            ION::stop(0.01);
         }
 
-    }
-
-    public function startWorker(callable $callback, $wait = self::WORKER_DELAY) {
-        $pid = pcntl_fork();
-        if ($pid == -1) {
-            $this->fail("Fork failed");
-        } elseif ($pid) {
-            if ($wait < 0) {
-                usleep(abs($wait) * 1e6);
-            }
-            return $pid;
-        } else {
-            if ($wait > 0) {
-                usleep($wait * 1e6);
-            }
-            try {
-                call_user_func($callback);
-            } catch (\Exception $e) {
-                error_log(strval($e));
-                exit(127);
-            }
-            exit(0);
-        }
     }
 
     public function out($message) {

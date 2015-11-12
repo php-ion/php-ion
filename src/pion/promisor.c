@@ -400,11 +400,23 @@ zend_object * ion_promisor_clone(zend_object * proto_obj) {
     }
 
     if(proto->handler_count) {
+//        ion_promisor * handler;
+//        ushort         plain_handlers = 0;
         clone->handlers = emalloc(sizeof(zend_object) * proto->handler_count);
         for(uint i=0; i<proto->handler_count; i++) {
-            clone->handlers[i] = ion_promisor_clone(proto->handlers[i]);
+//            handler = get_object_instance(proto->handlers[i], ion_promisor);
+//            if(handler->flags & ION_PROMISOR_PROTOTYPE) {
+                clone->handlers[i] = ion_promisor_clone(proto->handlers[i]);
+//            } else {
+//                clone->handlers[i] = proto->handlers[i];
+//                proto->handlers[i] = NULL;
+//                plain_handlers++;
+//            }
         }
         clone->handler_count = proto->handler_count;
+//        if(plain_handlers) { // we should repack proto->handlers
+//
+//        }
     }
     if(!Z_ISUNDEF(proto->result)) {
         ZVAL_COPY(&clone->result, &proto->result);

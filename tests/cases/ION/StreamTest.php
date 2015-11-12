@@ -43,7 +43,6 @@ class StreamTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @dataProvider providerSocketFailures
      * @param string $url
      * @param string $message
@@ -211,23 +210,6 @@ class StreamTest extends TestCase {
         return $listener;
     }
 
-    public function promise(callable $action, $stop = true) {
-        ION::promise($action)
-        ->then(function ($result) use ($stop) {
-            if($result !== null) {
-                $this->data["result"] = $this->describe($result);
-            }
-            if($stop) {
-                $this->stop();
-            }
-        }, function ($error) use ($stop) {
-            $this->data["error"] = $this->describe($error);
-            if($stop) {
-                $this->stop();
-            }
-        });
-    }
-
     /**
      * @memcheck
      */
@@ -258,6 +240,7 @@ class StreamTest extends TestCase {
     }
 
     /**
+     * @group dev
      * @memcheck
      */
     public function testAwaitConnectionFail() {

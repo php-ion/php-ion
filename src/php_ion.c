@@ -93,7 +93,6 @@ PHP_MINIT_FUNCTION(ion) {
     memset(ionBase, 0, sizeof(ion_base));
     ION(i)             = 1;
     ION(base)          = event_base_new();
-    event_set_mem_functions(_php_emalloc, _php_realloc, _php_efree);
 
 
     STARTUP_MODULE(exceptions);
@@ -106,10 +105,11 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_Deferred);
     STARTUP_MODULE(ION_Sequence);
     STARTUP_MODULE(ION);
+    STARTUP_MODULE(ION_DNS);
     STARTUP_MODULE(ION_Listener);
     STARTUP_MODULE(ION_Stream);
-//    STARTUP_MODULE(ION_DNS);
 //    STARTUP_MODULE(ION_Process);
+    event_set_mem_functions(_php_emalloc, _php_realloc, _php_efree);
 
     long KB = 1000;
     long MB = 1000 * KB;
@@ -152,7 +152,7 @@ PHP_MSHUTDOWN_FUNCTION(ion) {
 //    SHUTDOWN_MODULE(ION_Data_SkipList);
 //    SHUTDOWN_MODULE(ION_Process);
 //    SHUTDOWN_MODULE(ION_Stream);
-//    SHUTDOWN_MODULE(ION_DNS);
+    SHUTDOWN_MODULE(ION_DNS);
     SHUTDOWN_MODULE(ION_Sequence);
     SHUTDOWN_MODULE(ION_Deferred);
     SHUTDOWN_MODULE(ION_ResolvablePromise);
@@ -173,15 +173,16 @@ PHP_RINIT_FUNCTION(ion) {
 #if defined(COMPILE_DL_ION) && defined(ZTS)
     ZEND_TSRMLS_CACHE_UPDATE();
 #endif
-//    ACTIVATE_MODULE(ION_DNS);
     ACTIVATE_MODULE(promisor);
     ACTIVATE_MODULE(ION);
+    ACTIVATE_MODULE(ION_DNS);
     return SUCCESS;
 }
 
 /* End SAPI request */
 PHP_RSHUTDOWN_FUNCTION(ion) {
 //    DEACTIVATE_MODULE(ION_Promise);
+    DEACTIVATE_MODULE(ION_DNS);
     DEACTIVATE_MODULE(ION);
     DEACTIVATE_MODULE(promisor);
     return SUCCESS;

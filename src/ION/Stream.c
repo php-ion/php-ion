@@ -150,6 +150,7 @@ void _ion_stream_input(bevent * bev, void * ctx) {
     struct evbuffer * input;
     zend_string     * data = NULL;
 
+    obj_add_ref(&stream->std);
     if(stream->read) {
         input = bufferevent_get_input(stream->buffer);
         if(stream->token) { // readLine()
@@ -205,12 +206,14 @@ void _ion_stream_input(bevent * bev, void * ctx) {
         ion_promisor_sequence_invoke(stream->on_data, &zstream);
     }
 
+    zend_object_release(&stream->std);
     ION_CHECK_LOOP();
 }
 
 void _ion_stream_output(bevent * bev, void *ctx) {
     ion_stream *stream = get_object_instance(ctx, ion_stream);
 
+    obj_add_ref(&stream->std);
     if(stream->flush) {
         ion_promisor_done_true(stream->flush);
         stream->flush = NULL;
@@ -219,13 +222,15 @@ void _ion_stream_output(bevent * bev, void *ctx) {
     if(stream->state & ION_STREAM_STATE_CLOSE_ON_FLUSH) {
         ion_stream_close_fd(stream);
     }
-
+    zend_object_release(&stream->std);
     ION_CHECK_LOOP();
 }
 
 void _ion_stream_notify(bevent * bev, short what, void * ctx) {
+    short events = bufferevent_get_enabled(bev);
     ion_stream * stream = get_object_instance(ctx, ion_stream);
 
+    obj_add_ref(&stream->std);
     if(what & BEV_EVENT_EOF) {
         stream->state |= ION_STREAM_STATE_EOF;
         if(stream->read) {
@@ -305,6 +310,7 @@ void _ion_stream_notify(bevent * bev, short what, void * ctx) {
     } else {
         zend_error(E_WARNING, "Unknown type notification: %d", what);
     }
+    zend_object_release(&stream->std);
 
     ION_CHECK_LOOP();
 }

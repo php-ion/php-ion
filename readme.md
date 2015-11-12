@@ -35,11 +35,29 @@ make install
 * Any Promise/Deferred/Sequence supports generators
 * Promise/Deferred/Sequence generators make asynchronous programming easy
 * Promise/Deferred/Sequence supports type hinting in callbacks
-* Asynchronous sockets and listeners
+* Async sockets and pipes
+* Async socket listeners
 * Sendfile supports
 * todo
 
-## Promisor
+# Planned
+
+* Asynchronous DNS requests
+* SSL support
+* DNS server
+* Async execution an external program
+* Useful utilities for processes
+* Sending and listening POSIX signals
+* Server socket pool
+* Client socket pool
+* HTTP server
+* HTTP client
+* Async reading files from FS
+* Listening FS events
+* IPC
+
+
+## Promisors
 
 ```php
 use ION\Promise;
@@ -135,6 +153,12 @@ $sequence("one"); // run sequence
 $sequence("two"); // run sequence again
 ```
 
+### Working with promisors
+
+ION::promise(function () {
+    // do eventual actions
+})->then(/* ... */);
+
 ## Timers
 
 ```php
@@ -201,9 +225,9 @@ use ION\Sequence;
 
 ```php
 $listener = new Listener("tcp://0.0.0.0:8080");
-$listener->onConnect(function (Stream $connect) {
-    // ...
-})->then()->then(); // ...
+$listener->connect()->then(function (Stream $connect) {
+   // ...
+}); // build sequence
 ```
 
 ### Groups

@@ -7,6 +7,7 @@ class IONTest extends TestCase {
     /**
      * Always should be fine
      * @memcheck
+     *
      */
     public function testMemcheck() {
 
