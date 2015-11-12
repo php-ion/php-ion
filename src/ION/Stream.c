@@ -25,30 +25,18 @@ void ion_stream_free(zend_object * stream) {
     ion_stream * istream = get_object_instance(stream, ion_stream);
     if(istream->read) {
         zend_object_release(istream->read);
-        if(istream->token) {
-            if(istream->token->token) {
-                zend_string_release(istream->token->token);
-            }
-            efree(istream->token);
-            istream->token = NULL;
-        }
-        istream->read = NULL;
     }
     if(istream->connect) {
         zend_object_release(istream->connect);
-        istream->connect = NULL;
     }
     if(istream->shutdown) {
         zend_object_release(istream->shutdown);
-        istream->shutdown = NULL;
     }
     if(istream->flush) {
         zend_object_release(istream->flush);
-        istream->flush = NULL;
     }
     if(istream->on_data) {
         zend_object_release(istream->on_data);
-        istream->on_data = NULL;
     }
     if(istream->buffer) {
         if(istream->state & ION_STREAM_STATE_ENABLED) {
