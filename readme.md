@@ -368,23 +368,9 @@ $result = yield Process::exec("venor/bin/phpunit --tap", [
 ]);
 ```
 
-### MPM
+### IPC
 
 todo
-
-## Testing
-
-```
-composer install
-```
-
-```
-vendor/bin/phpunit
-```
-
-```
-php -dextension=/path/to/ion.so vendor/bin/phpunit
-```
 
 ## C API
 
