@@ -38,8 +38,8 @@ class TestCase extends \PHPUnit_Framework_TestCase {
                 unset($this->data);
                 ION::dispatch(ION::LOOP_NONBLOCK); // ammm, i think libevent free unpinned data-chunks in the loop (todo: analyze it)
                 $r[$i] = memory_get_usage(0) - $memory;
-                if ($r[$i] < 0) { // free memory o_O
-                    $r[$i] = $zero; // this hack works - no one 8-bytes-memory-leak
+                if ($r[$i] < 0) { // free memory possible
+                    $r[$i] = $zero; // this hack remove 8-bytes-memory-leak
                 }
             }
 
@@ -49,8 +49,8 @@ class TestCase extends \PHPUnit_Framework_TestCase {
         }
     }
 
-    public function promise(callable $action, $stop = true) {
-        ION::promise($action)
+    public function promise(callable $action, $stop = true, $id = 0) {
+        ION::promise($action)->setUID($id)
             ->then(function ($result) use ($stop) {
                 if($result !== null) {
                     $this->data["result"] = $this->describe($result);
@@ -63,7 +63,7 @@ class TestCase extends \PHPUnit_Framework_TestCase {
                 if($stop) {
                     $this->stop();
                 }
-            });
+            })->setUID($id*10);
     }
 
     /**
@@ -183,6 +183,10 @@ class TestCase extends \PHPUnit_Framework_TestCase {
         }
         ob_flush();
     }
+
+	public function trace() {
+		$this->out((new \Exception())->getTraceAsString());
+	}
 
     public function dummy() {
 

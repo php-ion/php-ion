@@ -477,11 +477,12 @@ class PromiseTest extends TestCase {
         return 4;
     }
 
-    /**
-     * @param callable $action
-     * @return \ION\ResolvablePromise
-     */
-    public function promise(callable $action) {
+	/**
+	 * @param callable $action
+	 * @param bool $stop
+	 * @return \ION\ResolvablePromise
+	 */
+    public function mkpromise(callable $action) {
         $promise = new ResolvablePromise();
         $promise
             ->then($action)
@@ -553,7 +554,7 @@ class PromiseTest extends TestCase {
      * @param mixed $arg
      */
     public function testPromiseAction(callable $action, array $result, $arg = null) {
-        $this->promise($action)->done($arg);
+        $this->mkpromise($action)->done($arg);
         $this->assertEquals($result, $this->data);
     }
 
@@ -667,7 +668,7 @@ class PromiseTest extends TestCase {
      * @param mixed $arg
      */
     public function testTypeHintInAction($ok, $arg, callable $action) {
-        @$this->promise($action)->done($arg); // notices generate memory-leak in the phpunit
+        @$this->mkpromise($action)->done($arg); // notices generate memory-leak in the phpunit
         if($ok) {
             $this->assertEquals([
                 "result" => true
@@ -678,5 +679,80 @@ class PromiseTest extends TestCase {
             ], $this->data);
         }
     }
+
+	/**
+	 *
+	 * @memcheck
+	 */
+	public function testPromiseResolved() {
+		$prom = new ResolvablePromise();
+		$this->promise(function () use ($prom) {
+			$prom->done(1);
+			$this->data["promise"] = yield $prom;
+			return $prom;
+		}, false);
+
+		$this->assertSame([
+			"promise" => 1,
+			"result" => 1
+		], $this->data);
+	}
+
+	/**
+	 * @memcheck
+	 */
+	public function testPromiseResolvedClone() {
+		$prom = new ResolvablePromise();
+		$this->promise(function () use ($prom) {
+			$prom->done(1);
+			$p = clone $prom;
+			$this->data["promise"] = yield $p;
+			return $prom;
+		}, false);
+
+		$this->assertSame([
+			"promise" => 1,
+			"result" => 1
+		], $this->data);
+	}
+
+	/**
+	 * @memcheck
+	 */
+	public function testPromiseYield() {
+		$prom = new ResolvablePromise(function ($x) {
+			return $x + 10;
+		});
+		$this->promise(function () use ($prom) {
+			$this->data["promise"] = yield $prom;
+		}, false);
+
+		$prom->done(1);
+
+		$this->assertSame([
+			"promise" => 11
+		], $this->data);
+	}
+
+	/**
+	 * @memcheck
+	 */
+	public function testPromiseYieldClone() {
+		$prom = new ResolvablePromise(function ($x) {
+			return $x + 10;
+		});
+		$this->promise(function () use ($prom) {
+			$this->data["promise"] = yield $prom;
+		}, false);
+
+		$p = clone $prom;
+		$p->done(2);
+		$prom->done(1);
+
+		$this->assertSame([
+			"promise" => 11
+		], $this->data);
+	}
+
 
 }

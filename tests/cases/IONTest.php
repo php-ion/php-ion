@@ -86,7 +86,7 @@ class IONTest extends TestCase {
 
     public function providerPromise() {
         $promise = new \ION\ResolvablePromise();
-        $promise->done("promise_result");
+        $promise->setUID(666)->done("promise_result");
         return array(
             ["result", "result"],
             [$promise, "promise_result"],

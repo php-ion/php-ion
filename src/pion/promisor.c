@@ -1,4 +1,5 @@
 #include "promisor.h"
+#include "debug.h"
 
 pion_cb * generator_send    = NULL;
 pion_cb * generator_throw   = NULL;
@@ -156,7 +157,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
                     if (await->flags & ION_PROMISOR_FINISHED) {
                         ZVAL_COPY(&result, &await->result);
                         result_type = await->flags & ION_PROMISOR_FINISHED;
-                        //                    obj_ptr_dtor(await);
+                        zend_object_release(&await->std);
                         goto watch_result;
                     } else {
                         promise->await = Z_OBJ(result);
@@ -342,6 +343,7 @@ zend_object * ion_promisor_push_callbacks(zend_object * promise_obj, zval * on_d
         PION_ARRAY_PUSH(promisor->handlers, promisor->handler_count, handler);
         obj_add_ref(handler);
     }
+    ion_promisor_add_flags(handler, promisor->flags & ION_PROMISOR_NESTED_FLAGS);
     return handler;
 }
 
@@ -379,11 +381,11 @@ zend_object * ion_promisor_clone(zend_object * proto_obj) {
     zend_objects_clone_members(clone_obj, proto_obj);
 
     if(proto->flags & ION_PROMISOR_INTERNAL) {
-        zend_throw_error(NULL, "Trying to clone an internal promisor", 0);
+        zend_throw_exception(ion_class_entry(ION_InvalidUsageException), "Trying to clone an internal promisor", 0);
         return clone_obj;
     }
     if(proto->await || proto->generator || proto->generators_count) {
-        zend_throw_error(NULL, "Promisor in progress", 0);
+        zend_throw_exception(ion_class_entry(ION_InvalidUsageException), "Promisor in progress", 0);
         return clone_obj;
     }
     if(proto->dtor) {
@@ -398,25 +400,51 @@ zend_object * ion_promisor_clone(zend_object * proto_obj) {
     if(proto->progress) {
         clone->progress = pion_cb_dup(proto->progress);
     }
-
+    clone->uid = proto->uid * 1000;
     if(proto->handler_count) {
-//        ion_promisor * handler;
-//        ushort         plain_handlers = 0;
-        clone->handlers = emalloc(sizeof(zend_object) * proto->handler_count);
-        for(uint i=0; i<proto->handler_count; i++) {
-//            handler = get_object_instance(proto->handlers[i], ion_promisor);
-//            if(handler->flags & ION_PROMISOR_PROTOTYPE) {
-                clone->handlers[i] = ion_promisor_clone(proto->handlers[i]);
-//            } else {
-//                clone->handlers[i] = proto->handlers[i];
-//                proto->handlers[i] = NULL;
-//                plain_handlers++;
-//            }
+        ion_promisor * handler;
+        ushort         extern_handlers = 0;
+        clone->handler_count = 0;
+        clone->handlers = emalloc(sizeof(zend_object *) * proto->handler_count);
+        for(ushort i = 0; i<proto->handler_count; i++) {
+            handler = get_object_instance(proto->handlers[i], ion_promisor);
+            if((proto->flags & ION_PROMISOR_PROTOTYPE) && !(handler->flags & ION_PROMISOR_PROTOTYPE)) { // has external promisor
+                clone->handlers[ clone->handler_count++ ] = proto->handlers[i];
+                if(handler->await == proto_obj) {
+                    handler->await = clone_obj;
+                    obj_add_ref(clone_obj);
+                    zend_object_release(proto_obj);
+                }
+                proto->handlers[i] = NULL;
+                extern_handlers++;
+            } else {
+                if(handler->await != proto_obj) {
+                    clone->handlers[ clone->handler_count++ ] = ion_promisor_clone(proto->handlers[i]);
+                }
+            }
         }
-        clone->handler_count = proto->handler_count;
-//        if(plain_handlers) { // we should repack proto->handlers
-//
-//        }
+        if(clone->handler_count) {
+            if(clone->handler_count != proto->handler_count) {
+                clone->handlers = erealloc(clone->handlers, sizeof(zend_object *) * clone->handler_count);
+//                clone->handlers = emalloc(sizeof(zend_object *) * clone->handler_count);
+//                memcpy(clone->handlers, &clone_handlers, clone->handler_count);
+            }
+        } else {
+            efree(clone->handlers);
+            clone->handlers = NULL;
+        }
+//        clone->handler_count = proto->handler_count;
+        if(extern_handlers) { // we has external promises and should realloc proto->handlers, remove NULL elements
+            zend_object ** handlers = proto->handlers;
+            proto->handlers = emalloc(sizeof(zend_object *) * (proto->handler_count - extern_handlers));
+            for(ushort i = 0, j = 0; i<proto->handler_count; i++) {
+                if(handlers[i]) {
+                    proto->handlers[j++] = handlers[i];
+                }
+            }
+            proto->handler_count = proto->handler_count - extern_handlers;
+            efree(handlers);
+        }
     }
     if(!Z_ISUNDEF(proto->result)) {
         ZVAL_COPY(&clone->result, &proto->result);
@@ -430,6 +458,8 @@ zend_object * ion_promisor_clone_obj(zval * zobject) {
 
 void ion_promisor_free(zend_object * promisor_obj) {
     ion_promisor * promisor = get_object_instance(promisor_obj, ion_promisor);
+
+//    PHPDBG("promisor %d free", (int)promisor->uid);
 
     zend_object_std_dtor(promisor_obj);
     ion_promisor_release(promisor_obj);

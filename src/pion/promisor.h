@@ -9,31 +9,33 @@
 #include <Zend/zend_generators.h>
 
 // Result states
-#define ION_PROMISOR_DONE      1<<0
-#define ION_PROMISOR_FAILED    1<<1
+#define ION_PROMISOR_DONE      (1<<0)
+#define ION_PROMISOR_FAILED    (1<<1)
 #define ION_PROMISOR_FINISHED  (ION_PROMISOR_DONE | ION_PROMISOR_FAILED)
 
 // Info
-#define ION_PROMISOR_PROGRESS  1<<2
+#define ION_PROMISOR_PROGRESS  (1<<2)
 
 // Fail reason
-#define ION_PROMISOR_CANCELED  1<<3
-#define ION_PROMISOR_TIMED_OUT 1<<4
+#define ION_PROMISOR_CANCELED  (1<<3)
+#define ION_PROMISOR_TIMED_OUT (1<<4)
 
 // Types
-#define ION_PROMISOR_TYPE_PROMISE  1<<5
-#define ION_PROMISOR_TYPE_SEQUENCE 1<<6
-#define ION_PROMISOR_TYPE_DEFERRED 1<<7
-#define ION_PROMISOR_INTERNAL      1<<8
-#define ION_PROMISOR_PROTOTYPE     1<<9
+#define ION_PROMISOR_TYPE_PROMISE  (1<<5)
+#define ION_PROMISOR_TYPE_SEQUENCE (1<<6)
+#define ION_PROMISOR_TYPE_DEFERRED (1<<7)
+#define ION_PROMISOR_INTERNAL      (1<<8)
+#define ION_PROMISOR_PROTOTYPE     (1<<9)
 
 // Callbacks flags
-#define ION_PROMISOR_HAS_DONE      1<<10
-#define ION_PROMISOR_HAS_FAIL      1<<11
-#define ION_PROMISOR_HAS_PROGRESS  1<<12
-#define ION_PROMISOR_YIELDED       1<<13
+#define ION_PROMISOR_HAS_DONE      (1<<10)
+#define ION_PROMISOR_HAS_FAIL      (1<<11)
+#define ION_PROMISOR_HAS_PROGRESS  (1<<12)
+#define ION_PROMISOR_YIELDED       (1<<13)
 
-#define ION_PROMISOR_RESOLVED      1<<14
+#define ION_PROMISOR_RESOLVED      (1<<14)
+
+#define ION_PROMISOR_NESTED_FLAGS  ION_PROMISOR_PROTOTYPE
 
 extern ZEND_API zend_class_entry * ion_ce_ION_Promise;
 extern ZEND_API zend_class_entry * ion_ce_ION_ResolvablePromise;
@@ -53,7 +55,7 @@ typedef struct _ion_promisor {
 #ifdef ION_DEBUG
     long                uid; // to distinguish promise-objects
 #endif
-    uint                 flags;
+    uint                flags;
     pion_cb           * done;
     pion_cb           * fail;
     pion_cb           * progress;
@@ -80,9 +82,11 @@ zend_object * ion_promisor_clone(zend_object * proto_obj);
 zend_object * ion_promisor_clone_obj(zval * zobject);
 
 // Stores and destructors
-#define ion_promisor_store(promisor, pobject) get_object_instance(promisor, ion_promisor)->object = (void *) pobject
-#define ion_promisor_store_get(promisor)      get_object_instance(promisor, ion_promisor)->object
-#define ion_promisor_dtor(promisor, dtor_cb)  get_object_instance(promisor, ion_promisor)->dtor = dtor_cb
+#define ion_promisor_store(promisor, pobject)  get_object_instance(promisor, ion_promisor)->object = (void *) pobject
+#define ion_promisor_store_get(promisor)       get_object_instance(promisor, ion_promisor)->object
+#define ion_promisor_get_flags(promisor)       get_object_instance(promisor, ion_promisor)->flags
+#define ion_promisor_add_flags(promisor, bits) get_object_instance(promisor, ion_promisor)->flags |= (bits)
+#define ion_promisor_dtor(promisor, dtor_cb)   get_object_instance(promisor, ion_promisor)->dtor = dtor_cb
 
 // Resolvers
 void ion_promisor_resolve(zend_object * promisor, zval * result, int type);
