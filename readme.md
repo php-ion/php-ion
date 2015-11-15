@@ -28,6 +28,8 @@ ION Extension [dev]
 * Async socket listeners
 * Sendfile supports
 * Asynchronous DNS requests
+* Useful utilities for processes
+* Sending and listening POSIX signals
 * todo
 
 # Planned
@@ -35,8 +37,6 @@ ION Extension [dev]
 * SSL support
 * DNS server
 * Async execution an external program
-* Useful utilities for processes
-* Sending and listening POSIX signals
 * Server socket pool
 * Client socket pool
 * HTTP server
@@ -342,7 +342,9 @@ use ION\Process\Signals;
 ```
 
 ```php
-Process::signal(Signals::TERM, $pid); // send SIGTERM
+Process::kill(Signals::TERM, $pid); // send SIGTERM
+
+Process::signal(Signals::TERM)->then(/* ... */); // sequence for signal SIGTERM
 ```
 
 ### Execute process

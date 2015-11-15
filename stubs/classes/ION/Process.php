@@ -33,25 +33,23 @@ class Process {
 
     /**
      * Set signal handler
-     * @param int|string $signo signal number or text name
-     * @param callable $callback
+     * @param int $signo signal number or text name
      * @return Sequence
      */
-	public static function onSignal($signo, callable $callback) {}
+	public static function signal(int $signo) {}
 
 	/**
-	 * Set signal handler
-	 * @param int|string $signo signal number or text name
-	 * @return Deferred
-	 * */
-	public static function awaitSignal($signo) {}
+	 * Remove signal(s) handlers
+	 * @param int $signo if -1 remove all handlers all signals
+	 */
+	public static function clearSignal(int $signo = -1) {}
 
 	/**
 	 * Send a signal to a process
 	 * @param int $signo signal number
 	 * @param int $pid process ID
 	 * */
-	public static function signal($signo, $pid) {}
+	public static function kill($signo, $pid) {}
 
 	/**
 	 * Execute an external program

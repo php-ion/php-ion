@@ -1,24 +1,27 @@
 #include "Process.h"
 #include <sys/resource.h>
-#ifdef HAVE_KILL
 #include <signal.h>
-#endif
 #include <event.h>
 
-DEFINE_CLASS(ION_Process);
+
+zend_class_entry * ion_ce_ION_Process;
+zend_object_handlers ion_oh_ION_Process;
 
 /** public function ION\Process::fork(int $flags = 0, Stream &$ipc = null) : int */
 CLASS_METHOD(ION_Process, fork) {
-#ifdef HAVE_FORK
     int pid = 0;
-    long flags = 0;
-    zval *ipc = NULL;
+    zend_long flags = 0;
 
-    PARSE_ARGS("|lz", &flags, &ipc);
+    ZEND_PARSE_PARAMETERS_START(0,1)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_LONG(flags)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
     errno = 0;
     pid = fork();
     if(pid == -1) {
-        ThrowRuntimeEx(errno, "Fork failed: %s", strerror(errno));
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to spawn process: %s", strerror(errno));
+        return;
     } else if(pid) { // parent
         RETURN_LONG(pid);
     } else { // child
@@ -27,38 +30,124 @@ CLASS_METHOD(ION_Process, fork) {
         }
         RETURN_LONG(0);
     }
-#else
-    ThrowUnsupported("The platform does not supported process' forks");
-#endif
 }
 
 METHOD_ARGS_BEGIN(ION_Process, fork, 0)
-    METHOD_ARG(flags, 0)
-    METHOD_ARG(ipc, 1)
+    METHOD_ARG_LONG(flags, 0)
 METHOD_ARGS_END()
 
 
-/** public function ION\Process::signal($signo, $pid, $to_group = false) : bool */
-CLASS_METHOD(ION_Process, signal) {
-#ifdef HAVE_KILL
-    long signal, pid;
+/** public function ION\Process::kill(int $signo, int $pid, bool $to_group = false) : bool */
+CLASS_METHOD(ION_Process, kill) {
+    zend_long signal = 0;
+    zend_long pid = 0;
     zend_bool to_group = 0;
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+        Z_PARAM_LONG(signal)
+        Z_PARAM_LONG(pid)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_BOOL(to_group)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    PARSE_ARGS("ll|b", &signal, &pid, &to_group);
     if(to_group) {
-        RETURN_LONG(killpg((pid_t)pid, (int)signal) < 0);
+        RETURN_BOOL(killpg((pid_t)pid, (int)signal) < 0);
     } else {
-        RETURN_LONG(kill((pid_t)pid, (int)signal) < 0);
+        RETURN_BOOL(kill((pid_t)pid, (int)signal) < 0);
     }
-#else
-    ThrowUnsupported("ION\\Process::signal() not supported by platform");
-#endif
 }
 
-METHOD_ARGS_BEGIN(ION_Process, signal, 2)
-    METHOD_ARG(signo, 0)
-    METHOD_ARG(pid, 0)
-    METHOD_ARG(to_group, 0)
+METHOD_ARGS_BEGIN(ION_Process, kill, 2)
+    METHOD_ARG_LONG(signo, 0)
+    METHOD_ARG_LONG(pid, 0)
+    METHOD_ARG_BOOL(to_group, 0)
+METHOD_ARGS_END()
+
+void ion_process_signal_dtor(zend_object * sequence) {
+    ion_promisor * promisor = get_object_instance(sequence, ion_promisor);
+    if(promisor->object) {
+        ion_event * event = promisor->object;
+        event_del(event);
+        event_free(event);
+        promisor->object = NULL;
+    }
+}
+
+
+void ion_process_clean_signal(zval * zs) {
+    zend_object  * sequence = Z_PTR_P(zs);
+    ion_process_signal_dtor(sequence);
+    zend_object_release(sequence);
+}
+
+
+void ion_process_signal(int signo, short flags, void * ctx) {
+    ION_LOOP_CB_BEGIN();
+    zend_object * sequence = (zend_object *) ctx;
+    zval          signal;
+
+    ZVAL_LONG(&signal, signo);
+    ion_promisor_sequence_invoke(sequence, &signal);
+
+    ION_LOOP_CB_END();
+}
+
+/** public function ION\Process::signal(int $signo) : Sequence */
+CLASS_METHOD(ION_Process, signal) {
+    zend_long signo = 0;
+    zend_object * sequence = NULL;
+    ion_event * event;
+
+    ZEND_PARSE_PARAMETERS_START(1,1)
+        Z_PARAM_LONG(signo)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    sequence = zend_hash_index_find_ptr(ION(signals), (zend_ulong)signo);
+    if(sequence) {
+        obj_add_ref(sequence);
+        RETURN_OBJ(sequence);
+    }
+    sequence = ion_promisor_sequence_new(NULL);
+    event = evsignal_new(ION(base), (int)signo, ion_process_signal, sequence);
+    if(evsignal_add(event, NULL) == FAILURE) {
+        zend_object_release(sequence);
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to listening signal %d", signo);
+        return;
+    }
+    ion_promisor_store(sequence, event);
+    ion_promisor_dtor(sequence, ion_process_signal_dtor);
+    zval * pz;
+    pz = zend_hash_index_add_ptr(ION(signals), (zend_ulong)signo, (void *)sequence);
+    if(!pz) {
+        zend_object_release(sequence);
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to store signal (%d) handler", signo);
+        return;
+    }
+
+    obj_add_ref(sequence);
+    RETURN_OBJ(sequence);
+}
+
+METHOD_ARGS_BEGIN(ION_Process, signal, 1)
+    METHOD_ARG_LONG(signo, 0)
+METHOD_ARGS_END()
+
+/** public function ION\Process::clearSignal(int $signo = -1) : void */
+CLASS_METHOD(ION_Process, clearSignal) {
+    zend_long signo = -1;
+
+    ZEND_PARSE_PARAMETERS_START(1,1)
+        Z_PARAM_LONG(signo)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    if(signo >= 0) {
+        zend_hash_index_del(ION(signals), (zend_ulong)signo);
+    } else {
+        zend_hash_clean(ION(signals));
+    }
+}
+
+METHOD_ARGS_BEGIN(ION_Process, clearSignal, 0)
+    METHOD_ARG_LONG(signo, 0)
 METHOD_ARGS_END()
 
 /** public function ION\Process::getPid() : int */
@@ -77,7 +166,7 @@ METHOD_WITHOUT_ARGS(ION_Process, getParentPid);
 
 
 
-struct passwd * get_pw_by_zval(zval * zuser TSRMLS_DC) {
+struct passwd * get_pw_by_zval(zval * zuser) {
     struct passwd * pw;
     errno = 0;
     if(Z_TYPE_P(zuser) == IS_STRING) {
@@ -85,15 +174,15 @@ struct passwd * get_pw_by_zval(zval * zuser TSRMLS_DC) {
     } else if(Z_TYPE_P(zuser) == IS_LONG) {
         pw = getpwuid((uid_t)Z_LVAL_P(zuser));
     } else {
-        ThrowInvalidArgument("Invalid user identifier");
+        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Invalid user identifier", 0);
         return NULL;
     }
     if (NULL == pw) {
         if(errno) {
             if(Z_TYPE_P(zuser) == IS_STRING) {
-                ThrowRuntimeEx(errno, "Failed to get info by user name %s: %s", Z_STRVAL_P(zuser), strerror(errno));
+                zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to get info by user name %s: %s", Z_STRVAL_P(zuser), strerror(errno));
             } else {
-                ThrowRuntimeEx(errno, "Failed to get info by UID %d: %s", Z_LVAL_P(zuser), strerror(errno));
+                zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to get info by UID %d: %s", Z_LVAL_P(zuser), strerror(errno));
             }
         }
         return NULL;
@@ -104,32 +193,29 @@ struct passwd * get_pw_by_zval(zval * zuser TSRMLS_DC) {
 /** public function ION\Process::getUser($user = null) : array|bool */
 CLASS_METHOD(ION_Process, getUser) {
     struct passwd * pw;
-    zval * zuser = NULL;
-    zend_bool me = 0;
+    zval   * user = NULL;
+    zval     me;
 
-    PARSE_ARGS("|z", &zuser);
+    ZEND_PARSE_PARAMETERS_START(0, 1)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_ZVAL_EX(user, 1 , 0)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    if(zuser == NULL || Z_TYPE_P(zuser) == IS_NULL) {
-        if(!zuser) {
-            ALLOC_INIT_ZVAL(zuser);
-        }
-        ZVAL_LONG(zuser, getuid());
-        me = 1;
+    if(user == NULL) {
+        ZVAL_LONG(&me, getuid());
+        user = &me;
     }
 
-    pw = get_pw_by_zval(zuser TSRMLS_CC);
-    if(me) {
-        zval_ptr_dtor(&zuser);
-    }
+    pw = get_pw_by_zval(user);
 
     array_init(return_value);
 
     add_assoc_long  (return_value, "uid",    pw->pw_uid);
-    add_assoc_string(return_value, "name",   pw->pw_name,  1);
-    add_assoc_string(return_value, "gecos",  pw->pw_gecos, 1);
+    add_assoc_string(return_value, "name",   pw->pw_name);
+    add_assoc_string(return_value, "gecos",  pw->pw_gecos);
     add_assoc_long  (return_value, "gid",	 pw->pw_gid);
-    add_assoc_string(return_value, "home",   pw->pw_dir,   1);
-    add_assoc_string(return_value, "shell",  pw->pw_shell, 1);
+    add_assoc_string(return_value, "dir",    pw->pw_dir);
+    add_assoc_string(return_value, "shell",  pw->pw_shell);
 }
 
 METHOD_ARGS_BEGIN(ION_Process, getUser, 0)
@@ -137,53 +223,60 @@ METHOD_ARGS_BEGIN(ION_Process, getUser, 0)
 METHOD_ARGS_END()
 
 
-/** public function ION\Process::setUser($user, $set_group = true) : array */
+/** public function ION\Process::setUser(string|int $user, bool $set_group = true) : array */
 CLASS_METHOD(ION_Process, setUser) {
     struct passwd * pw;
-    zval * zuser = NULL;
+    zval * user = NULL;
     zend_bool set_group = 1;
 
-    PARSE_ARGS("z|b", &zuser, &set_group);
+    ZEND_PARSE_PARAMETERS_START(1,2)
+        Z_PARAM_ZVAL(user)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_BOOL(set_group)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    pw = get_pw_by_zval(zuser TSRMLS_CC);
+    pw = get_pw_by_zval(user);
 
     array_init(return_value);
 
     add_assoc_long  (return_value, "uid",    pw->pw_uid);
-    add_assoc_string(return_value, "name",   pw->pw_name,  1);
-    add_assoc_string(return_value, "gecos",  pw->pw_gecos, 1);
+    add_assoc_string(return_value, "name",   pw->pw_name);
+    add_assoc_string(return_value, "gecos",  pw->pw_gecos);
     add_assoc_long  (return_value, "gid",	 pw->pw_gid);
-    add_assoc_string(return_value, "home",   pw->pw_dir,   1);
-    add_assoc_string(return_value, "shell",  pw->pw_shell, 1);
+    add_assoc_string(return_value, "dir",    pw->pw_dir);
+    add_assoc_string(return_value, "shell",  pw->pw_shell);
 
     if(set_group && setgid(pw->pw_gid)) {
-        ThrowRuntimeEx(errno, "Failed to set GID %d: %s", (int)pw->pw_gid, strerror(errno));
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to set GID %d: %s", (int)pw->pw_gid, strerror(errno));
         return;
     }
 
     if(setuid(pw->pw_uid)) {
-        ThrowRuntimeEx(errno, "Failed to set UID %d: %s", (int)pw->pw_uid, strerror(errno));
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to set UID %d: %s", (int)pw->pw_gid, strerror(errno));
         return;
     }
 }
 
 METHOD_ARGS_BEGIN(ION_Process, setUser, 1)
     METHOD_ARG(user, 0)
-    METHOD_ARG(set_group, 0)
+    METHOD_ARG_BOOL(set_group, 0)
 METHOD_ARGS_END()
 
 /** public function ION\Process::getPriority($pid = null) : int */
 CLASS_METHOD(ION_Process, getPriority) {
-    long pid = getpid();
+    zend_long pid = getpid();
 
-    PARSE_ARGS("|l", &pid);
+    ZEND_PARSE_PARAMETERS_START(0,1)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_LONG(pid)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     errno = 0;
 
     int pri = getpriority(PRIO_PROCESS, (id_t)pid);
 
     if (errno) {
-        ThrowRuntimeEx(errno, "Failed to get process %d priority: %s", pid, strerror(errno));
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to get process %d priority: %s", pid, strerror(errno));
         return;
     }
 
@@ -191,26 +284,30 @@ CLASS_METHOD(ION_Process, getPriority) {
 }
 
 METHOD_ARGS_BEGIN(ION_Process, getPriority, 0)
-    METHOD_ARG(pid, 0)
+    METHOD_ARG_LONG(pid, 0)
 METHOD_ARGS_END()
 
 /** public function ION\Process::setPriority($priority, $pid = null) : int */
 CLASS_METHOD(ION_Process, setPriority) {
-    long pid = getpid();
-    long priority = 0;
+    zend_long pid = getpid();
+    zend_long priority = 0;
 
-    PARSE_ARGS("l|l", &priority, &pid);
+    ZEND_PARSE_PARAMETERS_START(1,2)
+        Z_PARAM_LONG(priority)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_LONG(pid)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     int prev_priority = getpriority(PRIO_PROCESS, (id_t)pid);
 
     if(priority < -20 || priority > 20) {
-        ThrowInvalidArgument("Invalid priority value");
+        zend_throw_exception(ion_class_entry(InvalidArgumentException), "InvInvalid priority value", 0);
         return;
     }
 
     errno = 0;
     if (setpriority(PRIO_PROCESS, (id_t)pid, (int)priority)) {
-        ThrowRuntimeEx(errno, "Failed to set process %d priority %d: %s", (int)pid, (int)priority, strerror(errno));
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to set process %d priority %d: %s", (int)pid, (int)priority, strerror(errno));
         return;
     }
 
@@ -218,21 +315,9 @@ CLASS_METHOD(ION_Process, setPriority) {
 }
 
 METHOD_ARGS_BEGIN(ION_Process, setPriority, 1)
-    METHOD_ARG(priority, 0)
-    METHOD_ARG(pid, 0)
+    METHOD_ARG_LONG(priority, 0)
+    METHOD_ARG_LONG(pid, 0)
 METHOD_ARGS_END()
-
-typedef struct bufferevent bevent;
-
-typedef struct _ion_exec {
-    int      pid;
-    zval     *defer;
-    bevent   *out;
-    bevent   *err;
-#ifdef ZTS
-    void ***thread_ctx;
-#endif
-} IONExec;
 
 //inline void _ion_exec_callback(bevent *bev, short what, void *arg) {
 //    char *output;
@@ -394,27 +479,34 @@ typedef struct _ion_exec {
 
 
 CLASS_METHODS_START(ION_Process)
-    METHOD(ION_Process, fork,   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, signal, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, getPid, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, fork,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, kill,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, signal,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, clearSignal,  ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, getPid,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, getParentPid, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, getUser, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, setUser, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, getPriority, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, setPriority, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, getUser,      ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, setUser,      ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, getPriority,  ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, setPriority,  ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 //    METHOD(ION_Process, exec, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Process) {
-    PION_REGISTER_PLAIN_CLASS(ION_Process, "ION\\Process");
+    PION_REGISTER_STATIC_CLASS(ION_Process, "ION\\Process");
     return SUCCESS;
 }
 
 PHP_RINIT_FUNCTION(ION_Process) {
+    ALLOC_HASHTABLE(ION(signals));
+    zend_hash_init(ION(signals), 128, NULL, ion_process_clean_signal, 0);
     return SUCCESS;
 }
 
 PHP_RSHUTDOWN_FUNCTION(ION_Process) {
+    zend_hash_clean(ION(signals));
+    zend_hash_destroy(ION(signals));
+    FREE_HASHTABLE(ION(signals));
     return SUCCESS;
 }
 

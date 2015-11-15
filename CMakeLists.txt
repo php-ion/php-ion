@@ -45,7 +45,8 @@ set(ION_SOURCE_FILES
         src/ION.c
         src/ION/DNS.c
         src/ION/Listener.c
-        src/ION/Stream.c)
+        src/ION/Stream.c
+        src/ION/Process.c)
 
 #src/ION/Deferred.c
 #src/ION/Data/SkipList.c
@@ -54,7 +55,7 @@ set(ION_SOURCE_FILES
 #src/ION/Promise.c
 #src/ION/ResolvablePromise.c
 #src/ION.c
-#src/ION/Process.c
+#
 #src/ION/Stream.c
 #src/ION/Promise/Map.c src/ION/Promise/Map.h
 

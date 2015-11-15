@@ -19,6 +19,26 @@ class ProcessTest extends TestCase {
         $this->assertSame(posix_getppid(), Process::getParentPid());
     }
 
+	/**
+	 * @memcheck
+	 */
+	public function testSignals() {
+		Process::signal(SIGUSR1)->then(function ($signo) {
+			$this->data["signal"] = $signo;
+		});
+		$this->promise(function () {
+			yield \ION::await(0.01);
+			Process::kill(SIGUSR1, getmypid());
+			yield \ION::await(0.01);
+		});
+		$this->loop();
+		Process::clearSignal(SIGUSR1);
+
+		$this->assertEquals([
+			"signal" => SIGUSR1
+		], $this->data);
+	}
+
     /**
      * @mem-check
      * @todo
@@ -51,7 +71,6 @@ class ProcessTest extends TestCase {
     }
 
     /**
-     * @group testGetUser
      * @memcheck
      */
     public function testGetUser() {
@@ -60,11 +79,12 @@ class ProcessTest extends TestCase {
         $this->assertSame($expected['name'], $actual['name']);
         $this->assertSame($expected['uid'], $actual['uid']);
         $this->assertSame($expected['gid'], $actual['gid']);
-        $this->assertSame($expected['dir'], $actual['home']);
+        $this->assertSame($expected['dir'], $actual['dir']);
         $this->assertSame($expected['shell'], $actual['shell']);
     }
 
     /**
+     *
      * @group testGetAnotherUser
      * @memcheck
      */
@@ -75,7 +95,7 @@ class ProcessTest extends TestCase {
         $this->assertEquals($expected['gecos'], $actual['gecos']);
         $this->assertSame($expected['uid'], $actual['uid']);
         $this->assertSame($expected['gid'], $actual['gid']);
-        $this->assertSame($expected['dir'], $actual['home']);
+        $this->assertSame($expected['dir'], $actual['dir']);
         $this->assertSame($expected['shell'], $actual['shell']);
     }
 
@@ -89,7 +109,7 @@ class ProcessTest extends TestCase {
         $this->assertSame($expected['name'], $actual['name']);
         $this->assertSame($expected['uid'], $actual['uid']);
         $this->assertSame($expected['gid'], $actual['gid']);
-        $this->assertSame($expected['dir'], $actual['home']);
+        $this->assertSame($expected['dir'], $actual['dir']);
         $this->assertSame($expected['shell'], $actual['shell']);
     }
 
@@ -109,6 +129,7 @@ class ProcessTest extends TestCase {
     }
 
     /**
+     *
      * @memcheck
      */
     public function testGetPriority() {
@@ -118,13 +139,11 @@ class ProcessTest extends TestCase {
 
 
     /**
-     * @group testSetPriority
      * @memcheck
      */
     public function testSetPriority() {
         $prio = Process::getPriority();
-        $pid = Process::fork();
-
+        $pid = pcntl_fork();
         if ($pid) {
             usleep(10000);
             $this->assertSame($prio + 10, Process::getPriority($pid));

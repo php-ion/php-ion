@@ -108,7 +108,7 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_DNS);
     STARTUP_MODULE(ION_Listener);
     STARTUP_MODULE(ION_Stream);
-//    STARTUP_MODULE(ION_Process);
+    STARTUP_MODULE(ION_Process);
     event_set_mem_functions(_php_emalloc, _php_realloc, _php_efree);
 
     long KB = 1000;
@@ -150,8 +150,7 @@ PHP_MINIT_FUNCTION(ion) {
 PHP_MSHUTDOWN_FUNCTION(ion) {
 //    SHUTDOWN_MODULE(ION_Data_LinkedList);
 //    SHUTDOWN_MODULE(ION_Data_SkipList);
-//    SHUTDOWN_MODULE(ION_Process);
-//    SHUTDOWN_MODULE(ION_Stream);
+    SHUTDOWN_MODULE(ION_Process);
     SHUTDOWN_MODULE(ION_DNS);
     SHUTDOWN_MODULE(ION_Sequence);
     SHUTDOWN_MODULE(ION_Deferred);
@@ -176,12 +175,13 @@ PHP_RINIT_FUNCTION(ion) {
     ACTIVATE_MODULE(promisor);
     ACTIVATE_MODULE(ION);
     ACTIVATE_MODULE(ION_DNS);
+    ACTIVATE_MODULE(ION_Process);
     return SUCCESS;
 }
 
 /* End SAPI request */
 PHP_RSHUTDOWN_FUNCTION(ion) {
-//    DEACTIVATE_MODULE(ION_Promise);
+    DEACTIVATE_MODULE(ION_Process);
     DEACTIVATE_MODULE(ION_DNS);
     DEACTIVATE_MODULE(ION);
     DEACTIVATE_MODULE(promisor);

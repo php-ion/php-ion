@@ -53,7 +53,6 @@ class SequenceTest extends TestCase {
     }
 
 	/**
-	 * @group dev
 	 * @memc heck
 	 */
 	public function testSequenceAsPromise() {

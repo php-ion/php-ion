@@ -112,17 +112,9 @@ if test "$PHP_ION" != "no"; then
     ION/DNS.c
     ION/Listener.c
     ION/Stream.c
+    ION/Process.c
     "
-#
-#
-#ION/Data/LinkedList.c
-#     ION/Data/SkipList.c
-#        ION/Deferred.c
-#        ION/Promise/Result.c
-#        ION/Promise.c
-#        ION/ResolvablePromise.c
-#
-#        ION/Process.c
+
     PHP_NEW_EXTENSION(ion, $ion_src, $ext_shared,, "$CFLAGS -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1")
 
     PHP_SUBST(ION_SHARED_LIBADD)

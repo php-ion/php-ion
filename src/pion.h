@@ -29,13 +29,14 @@ typedef struct _ion_proc {
 
 /** main structure */
 typedef struct _ion_base {
-    struct event_base   * base;   // event base
-    struct event_config * config; // event config
+    struct event_base   * base;    // event base
+    struct event_config * config;  // event config
     uint                  flags;
-    ion_dns             * dns;    // event DNS base
+    ion_dns             * dns;     // event DNS base
     ion_proc            * proc;
-    long  i;                      // internal counter of timers
-    HashTable           * timers; // array of timers
+    long  i;                       // internal counter of timers
+    HashTable           * timers;  // array of timers
+    HashTable           * signals; // array of timers
 //    struct event *sigsegv;
 #ifdef ZTS
     void ***thread_ctx;

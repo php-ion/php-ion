@@ -50,13 +50,6 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Stream;
 #define ION_STREAM_TOKEN_MODE_MASK    (ION_STREAM_MODE_TRIM_TOKEN | ION_STREAM_MODE_WITH_TOKEN | ION_STREAM_MODE_WITHOUT_TOKEN)
 #define ION_STREAM_TOKEN_LIMIT        8
 
-
-typedef struct bufferevent bevent;
-typedef struct bufferevent_rate_limit_group buffer_group;
-typedef struct evconnlistener ion_evlistener;
-typedef struct evbuffer ion_evbuffer;
-typedef struct bufferevent ion_buffer;
-
 typedef struct _ion_listener {
     zend_object   std;
     zend_uint     flags;
