@@ -7,8 +7,8 @@ ION Extension [dev]
 * **Language:** C
 * **OS:** linux, osx
 * **PHP version:** 7.0
-* [![Build Status](https://travis-ci.org/php-ion/php-ion.png?branch=master)](https://travis-ci.org/php-ion/php-ion) [![Coverage Status](https://coveralls.io/repos/php-ion/php-ion/badge.svg?branch=master&service=github)](https://coveralls.io/github/php-ion/php-ion?branch=master)
-* [![Latest Stable Version](https://poser.pugx.org/phpion/phpion/v/stable)](https://packagist.org/packages/phpion/phpion) [![Latest Unstable Version](https://poser.pugx.org/phpion/phpion/v/unstable)](https://packagist.org/packages/phpion/phpion)
+* **State:** [![Build Status](https://travis-ci.org/php-ion/php-ion.png?branch=master)](https://travis-ci.org/php-ion/php-ion) [![Coverage Status](https://coveralls.io/repos/php-ion/php-ion/badge.svg?branch=master&service=github)](https://coveralls.io/github/php-ion/php-ion?branch=master)
+* **Version:** [![Latest Stable Version](https://poser.pugx.org/phpion/phpion/v/stable)](https://packagist.org/packages/phpion/phpion) [![Latest Unstable Version](https://poser.pugx.org/phpion/phpion/v/unstable)](https://packagist.org/packages/phpion/phpion)
 * **Versioning:** [semver2](http://semver.org/)
 * **Based:** [libevent2](http://libevent.org/)
 * **Packagist:** [phpion/phpion](https://packagist.org/packages/phpion/phpion)
@@ -145,7 +145,7 @@ $sequence("two"); // run sequence again
 ```php
 App::eventualAction()->then(function () {
     // ...
-    $result = yield App::someSequence(); // use ION\Sequence as ION\Promise
+    $result = yield App::someSequence(); // allow use sequence as promise
     // ...
 });
 ```
@@ -370,23 +370,9 @@ $result = yield Process::exec("venor/bin/phpunit --tap", [
 ]);
 ```
 
-### MPM
+### IPC
 
 todo
-
-## Testing
-
-```
-composer install
-```
-
-```
-vendor/bin/phpunit
-```
-
-```
-php -dextension=/path/to/ion.so vendor/bin/phpunit
-```
 
 ## C API
 
