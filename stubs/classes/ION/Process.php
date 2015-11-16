@@ -4,6 +4,7 @@ namespace ION;
 
 
 use ION\Deferred\Map;
+use ION\Process\ExecResult;
 use ION\Process\Message;
 
 class Process {
@@ -66,7 +67,7 @@ class Process {
 	 *   'pid'   => &$pid
 	 * ]
 	 * </pre>
-	 * @return Deferred
+	 * @return Deferred|ExecResult
 	 * */
 	public static function exec($command,  array $options = array()) {}
 

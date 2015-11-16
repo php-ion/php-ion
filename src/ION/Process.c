@@ -321,65 +321,6 @@ METHOD_ARGS_BEGIN(ION_Process, setPriority, 1)
     METHOD_ARG_LONG(pid, 0)
 METHOD_ARGS_END()
 
-//inline void _ion_exec_callback(bevent *bev, short what, void *arg) {
-//    char *output;
-//    int status = 0, pid = 0;
-//    long size = 0;
-//    IONExec *exec = (IONExec *)arg;
-//
-//    if(what & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
-//
-//        pid = waitpid(exec->pid, &status, WNOHANG);
-//        if(exec->pid == pid) {
-//            zval *result = NULL;
-//            ALLOC_INIT_ZVAL(result);
-//            array_init(result);
-//            add_assoc_long(result, "pid", pid);
-//            add_assoc_long(result, "stauts", status);
-//            if(status < 256) {
-//                add_assoc_long(result, "killed", status);
-//            } else {
-//                add_assoc_long(result, "killed", 0);
-//            }
-//            size = evbuffer_get_length(bufferevent_get_input(exec->out));
-//            if(size) {
-//                output = emalloc(size);
-//                bufferevent_read(exec->out, (void *)output, size);
-//                add_assoc_stringl(result, "stdout", output, size, 0);
-//            } else {
-//                add_assoc_stringl(result, "stdout", "", 0, 1);
-//            }
-//            size = evbuffer_get_length(bufferevent_get_input(exec->err));
-//            if(size) {
-//                output = emalloc(size);
-//                bufferevent_read(exec->err, (void *)output, size);
-//                add_assoc_stringl(result, "stderr", output, size, 0);
-//            } else {
-//                add_assoc_stringl(result, "stderr", "", 0, 1);
-//            }
-//            ion_deferred_done(exec->defer, result);
-//            zval_ptr_dtor(&result);
-//        } else {
-//            // @todo call ion_defer_fail()
-//            php_error(E_WARNING, "Exec corrupt (pid %d)", exec->pid);
-//        }
-//        bufferevent_disable(exec->out, EV_READ | EV_WRITE);
-//        bufferevent_free(exec->out);
-//        bufferevent_disable(exec->err, EV_READ | EV_WRITE);
-//        bufferevent_free(exec->err);
-//        efree(exec);
-//    }
-//}
-
-//inline void _ion_exec_cancel(zval *error, void * deferred TSRMLS_DC) {
-//    IONExec *exec = (IONExec *)arg;
-//    bufferevent_disable(exec->out, EV_READ | EV_WRITE);
-//    bufferevent_free(exec->out);
-//    bufferevent_disable(exec->err, EV_READ | EV_WRITE);
-//    bufferevent_free(exec->err);
-//    efree(exec);
-//}
-
 zend_string * ion_buffer_read_all(ion_buffer * buffer) {
     size_t incoming_length = evbuffer_get_length(bufferevent_get_input(buffer));
     zend_string * data;
@@ -410,7 +351,7 @@ void ion_exec_callback(bevent * bev, short what, void * arg) {
     if(what & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
         pid = waitpid(exec->pid, &status, WNOHANG);
         if(exec->pid != pid) {
-            // to do something. who get my pid?
+            // what we gonna do?
         }
         object_init_ex(&result, ion_class_entry(ION_Process_ExecResult));
         pion_update_property_long(ION_Process_ExecResult, &result, "pid", exec->pid);
@@ -425,6 +366,10 @@ void ion_exec_callback(bevent * bev, short what, void * arg) {
             pion_update_property_str(ION_Process_ExecResult, &result, "stderr", err);
         }
         ion_promisor_done(exec->deferred, &result);
+        zval_ptr_dtor(&result);
+        zend_string_release(exec->command);
+        zend_string_release(out);
+        zend_string_release(err);
         zend_object_release(exec->deferred);
         bufferevent_disable(exec->out, EV_READ | EV_WRITE);
         bufferevent_free(exec->out);
@@ -434,6 +379,10 @@ void ion_exec_callback(bevent * bev, short what, void * arg) {
         close(exec->stderr_fd);
         efree(exec);
     }
+}
+
+void ion_exec_cancel(zend_object * deferred) {
+
 }
 
 /** public function ION\Process::exec($priority, $pid = null) : int */
@@ -469,11 +418,12 @@ CLASS_METHOD(ION_Process, exec) {
         close( out_pipes[1] );
         close( err_pipes[1] );
         exec = ecalloc(1, sizeof(ion_exec));
+        exec->pid       = pid;
         exec->command   = zend_string_copy(command);
         exec->stdout_fd = out_pipes[0];
         exec->stderr_fd = err_pipes[0];
-        exec->err    = bufferevent_new(exec->stderr_fd, NULL, NULL, NULL, (void *)exec);
-        exec->out    = bufferevent_new(exec->stdout_fd, NULL, NULL, ion_exec_callback, (void *)exec);
+        exec->err       = bufferevent_new(exec->stderr_fd, NULL, NULL, NULL, (void *)exec);
+        exec->out       = bufferevent_new(exec->stdout_fd, NULL, NULL, ion_exec_callback, (void *)exec);
         if(bufferevent_base_set(ION(base), exec->err) == FAILURE) {
             bufferevent_free(exec->err);
             close(exec->stdout_fd);
@@ -491,7 +441,9 @@ CLASS_METHOD(ION_Process, exec) {
             zend_throw_exception(ion_class_entry(ION_RuntimeException),"Failed to initializate spawned process", 0);
             return;
         }
-        exec->deferred = ion_promisor_deferred_new_ex(NULL);
+        bufferevent_enable(exec->out, EV_READ);
+        bufferevent_enable(exec->err, EV_READ);
+        exec->deferred = ion_promisor_deferred_new_ex(ion_exec_cancel);
         ion_promisor_store(exec->deferred, exec);
         obj_add_ref(exec->deferred);
         RETURN_OBJ(exec->deferred);
@@ -516,105 +468,6 @@ METHOD_ARGS_BEGIN(ION_Process, exec, 1)
     METHOD_ARG(command, 0)
     METHOD_ARG_ARRAY(options, 0, 0)
 METHOD_ARGS_END()
-
-//CLASS_METHOD(ION_Process, exec) {
-//#ifdef HAVE_FORK
-//    int out_pipes[2], err_pipes[2];
-//    char *command;
-//    int pid = 0;
-//    long command_len = 0;
-//    IONExec *exec;
-//    HashTable *options;
-//
-//    PARSE_ARGS("s|h", &command, &command_len, &options);
-//
-//    errno = 0;
-//    if(pipe( out_pipes )) {
-//        ThrowRuntimeEx(errno, "Execute command failed (stdout pipe): %s", strerror(errno));
-//        return;
-//    }
-//
-//    if(pipe( err_pipes )) {
-//        ThrowRuntimeEx(errno, "Execute command failed (stdout pipe): %s", strerror(errno));
-//        return;
-//    }
-//
-//    pid = fork();
-//    if(pid == -1) {
-//        ThrowRuntimeEx(errno, "Execute command failed (fork): %s", strerror(errno));
-//        return;
-//    } else if(pid) { // parent
-//        if(close( out_pipes[1] )) {
-//            kill(pid, SIGKILL);
-//            ThrowRuntimeEx(errno, "Execute command failed (close stdout pipe#1): %s", strerror(errno));
-//            return;
-//        }
-//        if(close( err_pipes[1] )) {
-//            kill(pid, SIGKILL);
-//            ThrowRuntimeEx(errno, "Execute command failed (close stderr pipe#1): %s", strerror(errno));
-//            return;
-//        }
-//        exec = emalloc(sizeof(IONExec));
-//        memset(exec, 0, sizeof(IONExec));
-//        exec->pid = pid;
-//
-//        // create stdout pipe
-//        exec->out = bufferevent_new(out_pipes[0], NULL, NULL, (bufferevent_event_cb)_ion_exec_callback, (void *)exec);
-//        if(bufferevent_base_set(ION(base), exec->out)) {
-//            bufferevent_free(exec->out);
-//            efree(exec);
-//            ThrowRuntimeEx(1, "Execute command failed: stdout buffer event set failed");
-//        }
-//        if(bufferevent_enable(exec->out, EV_READ)) {
-//            bufferevent_free(exec->out);
-//            efree(exec);
-//            ThrowRuntimeEx(1, "Execute command failed: stdout buffer event enable failed");
-//        }
-//        bufferevent_setwatermark(exec->out, EV_READ, 0x1000000, 0x1000000);
-//
-//        // create stderr pipe
-//        exec->err = bufferevent_new(err_pipes[0], NULL, NULL, (bufferevent_event_cb)_ion_exec_callback, (void *)exec);
-//        if(bufferevent_base_set(ION(base), exec->err)) {
-//            bufferevent_free(exec->out);
-//            bufferevent_free(exec->err);
-//            efree(exec);
-//            ThrowRuntimeEx(1, "Execute command failed: stderr buffer event set failed");
-//        }
-//        if(bufferevent_enable(exec->err, EV_READ)) {
-//            bufferevent_free(exec->out);
-//            bufferevent_free(exec->err);
-//            efree(exec);
-//            ThrowRuntimeEx(1, "Execute command failed: stderr buffer event enable failed");
-//        }
-//        bufferevent_setwatermark(exec->err, EV_READ, 0x1000000, 0x1000000);
-//        exec->defer = deferredNewInternal(_ion_exec_cancel, 1);
-//        ion_deferred_store(exec->defer, exec, NULL);
-//        zval_add_ref(&exec->defer);
-//        RETURN_ZVAL(exec->defer, 1, 0);
-//    } else { // child
-//        if (dup2( out_pipes[1], 1 ) < 0 ) {
-//            perror(strerror(errno));
-//            _exit(127);
-//        }
-//        if (dup2( err_pipes[1], 2 ) < 0 ) {
-//            perror(strerror(errno));
-//            _exit(127);
-//        }
-//        if(execl("/bin/sh", "sh", "-c", command, NULL)) {
-//            perror(strerror(errno));
-//        }
-//        _exit(127);
-//    }
-//#else
-//    ThrowUnsupported("ION\\Process::exec() not supported by this platform. Reason: no fork function");
-//#endif
-//}
-//
-//METHOD_ARGS_BEGIN(ION_Process, exec, 1)
-//    METHOD_ARG(command, 0)
-//    METHOD_ARG(options, 0)
-//METHOD_ARGS_END()
-
 
 CLASS_METHODS_START(ION_Process)
     METHOD(ION_Process, fork,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)

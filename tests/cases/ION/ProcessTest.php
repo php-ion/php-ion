@@ -96,7 +96,6 @@ class ProcessTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testGetPriority() {
@@ -132,24 +131,26 @@ class ProcessTest extends TestCase {
         Process::setUser($_SERVER['USER'], 'staff');
     }
 
-    /**
-     * @group testOnSignal
-     */
-    public function _testOnSignal() {
-        $this->out("test " . getmypid());
-        $this->separate([$this, 'procOnSignal']);
-        Process::onSignal(Sig::USR1, function ($signal, $arg) {
-            $this->assertSame(SIGUSR1, $signal);
-            $this->assertSame('zx', $arg);
-            $this->point('signal');
-            \ION::stop();
-        }, 'zx');
-        \ION::dispatch();
-    }
+	/**
+	 * @group dev
+	 * @memcheck
+	 */
+	public function testExecSimple() {
+		$cmd = "sleep 0.1; echo 'stderr'>&2; echo 'stdout'";
+		$this->promise(function () use ($cmd) {
+			$res = yield Process::exec($cmd);
+			$this->data['instance'] = get_class($res);
+			return (array)$res;
+		});
+		$this->loop();
+		$this->assertEquals('ION\Process\ExecResult', $this->data['instance']);
+		$this->assertEquals($cmd, $this->data['result']['command']);
+		$this->assertTrue(is_integer($this->data['result']['pid']));
+		$this->assertEquals('stdout', trim($this->data['result']['stdout']));
+		$this->assertEquals('stderr', trim($this->data['result']['stderr']));
+		$this->assertEquals(0, trim($this->data['result']['status']));
+		$this->assertFalse($this->data['result']['signaled']);
+		$this->assertEquals(0, trim($this->data['result']['signal']));
 
-    public function procOnSignal() {
-        $this->out("child " . getmypid());
-        posix_kill(posix_getppid(), SIGUSR1);
-    }
-
+	}
 }
