@@ -21,24 +21,24 @@ class ProcessTest extends TestCase {
     }
 
 	/**
+	 * @group dev
 	 * @memcheck
 	 */
 	public function testSignals() {
-		Process::signal(SIGUSR1)->then(function ($signo) {
+		Process::signal(SIGHUP)->then(function ($signo) {
 			$this->data["signal"] = $signo;
 		});
 		$this->promise(function () {
 			yield \ION::await(0.01);
-			Process::kill(SIGUSR1, getmypid());
+			Process::kill(SIGHUP, getmypid());
 			yield \ION::await(0.01);
 		});
 		$this->loop();
-		Process::clearSignal(SIGUSR1);
+		Process::clearSignal(SIGHUP);
 
 		$this->assertEquals([
-			"signal" => SIGUSR1
+			"signal" => SIGHUP
 		], $this->data);
-		\ION::reinit();
 	}
 
     /**
