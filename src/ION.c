@@ -7,43 +7,20 @@
 zend_class_entry * ion_ce_ION;
 zend_object_handlers ion_oh_ION;
 ion_base *ionBase;
-void ion_reinit(long flags) {
-    IONF("Reinit event loop: %d. Cleanup exec events...", (int)flags);
-    //zend_hash_clean(ION(execs));
 
-
-
-    if(!(flags & PRESERVE_TIMERS)) {
-        IONF("Cleanup timer events...");
-//        zend_hash_clean(ION(timers));
-    }
-
-    if(!(flags & PRESERVE_SIGNALS)) {
-        IONF("Cleanup signal events...");
-//        zend_hash_clean(ION(signals));
-    }
-
-    if(flags & RECREATE_BASE) {
-        event_base_free(ION(base));
-        ION(base) = event_base_new();
-    } else if(event_reinit(ION(base)) == FAILURE) {
-        php_error(E_NOTICE, "Some events could not be re-added");
-    }
-}
-
-/** public function ION::reinit(int $flags = 0) : self */
+/** public function ION::reinit() : bool */
 CLASS_METHOD(ION, reinit) {
-    zend_long flags = 0;
-    ZEND_PARSE_PARAMETERS_START(0,1)
-        Z_PARAM_OPTIONAL
-        Z_PARAM_LONG(flags)
-    ZEND_PARSE_PARAMETERS_END();
-
-    ion_reinit(flags);
+    if(ion_reinit()) {
+        RETURN_TRUE;
+    } else {
+        RETURN_FALSE;
+    }
 }
-METHOD_ARGS_BEGIN(ION, reinit, 1)
-    METHOD_ARG(flags, 0)
-METHOD_ARGS_END()
+
+METHOD_WITHOUT_ARGS(ION, reinit);
+//METHOD_ARGS_BEGIN(ION, reinit, 1)
+//    METHOD_ARG(flags, 0)
+//METHOD_ARGS_END()
 
 /** public function ION::dispatch(int $flags = 0) : bool */
 CLASS_METHOD(ION, dispatch) {

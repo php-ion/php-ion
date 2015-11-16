@@ -55,25 +55,17 @@ class ION {
 	 */
 	const EV_PERSIST = 0x10;
 //	const EV_ET = 0x20;
-    
-    /**
-     * Reinit timer events
-     */
-//    const REINIT_TIMERS = 1;
-    /**
-     * Reinit signal events
-     */
-//    const REINIT_SIGNALS = 2;
 
-    /**
-     * Reinitialize the event dispatcher after a fork.
-     * Some event mechanisms do not survive across fork. The event base needs to be reinitialized with this method.
-     * 
-     * @since 1.0
-     * @param int $flags 
-     * @throws \RuntimeException if error occurs
-     * */
-    public static function reinit($flags = 0) {}
+	/**
+	 * Reinitialize the event dispatcher after a fork.
+	 * Some event mechanisms do not survive across fork. The event base needs to be reinitialized with this method.
+	 *
+	 * @since 1.0
+	 * @param int $flags
+	 * @return bool
+	 * @throws \RuntimeException if error occurs
+	 * */
+    public static function reinit($flags = 0) : bool {}
 
     /**
      * Run event dispatcher.

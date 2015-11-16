@@ -23,27 +23,11 @@ ZEND_TSRMLS_CACHE_DEFINE();
 ZEND_GET_MODULE(ion);
 #endif
 
+
 static const zend_module_dep ion_depends[] = {
     ZEND_MOD_REQUIRED("SPL")
     {NULL, NULL, NULL}
 };
-
-
-#ifdef ION_DEBUG
-
-ZEND_API void * _php_emalloc(size_t size) {
-    return emalloc(size);
-}
-
-ZEND_API void * _php_realloc(void * nmemb, size_t size) {
-    return erealloc(nmemb, size);
-}
-
-ZEND_API void _php_efree(void * ptr) {
-    efree(ptr);
-}
-
-#endif
 
 static void _engine_log(int severity, const char *msg) {
     switch (severity) {
@@ -109,7 +93,8 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_Listener);
     STARTUP_MODULE(ION_Stream);
     STARTUP_MODULE(ION_Process);
-    event_set_mem_functions(_php_emalloc, _php_realloc, _php_efree);
+
+    event_set_mem_functions(php_emalloc_wrapper, php_realloc_wrapper, php_efree_wrapper);
 
     long KB = 1000;
     long MB = 1000 * KB;
@@ -191,6 +176,7 @@ PHP_RSHUTDOWN_FUNCTION(ion) {
 
 PHP_MINFO_FUNCTION(ion) {
     struct event_base *base = event_base_new();
+    event_set_mem_functions(php_emalloc_wrapper, php_realloc_wrapper, php_efree_wrapper);
     int features = event_base_get_features(base);
 
     php_info_print_table_start();

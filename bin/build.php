@@ -211,8 +211,18 @@ class BuildRunner {
             foreach($class->getConstants() as $constant => $value) {
                 $info[] = "  const {$class->name}::{$constant} = ".var_export($value, true);
             }
+	        foreach($class->getProperties() as $prop_name => $prop) {
+		        /** @var ReflectionProperty $prop */
+		        $mods = implode(' ', Reflection::getModifierNames($prop->getModifiers()));
+		        if($prop->class !== $class->name) {
+			        $info[] = "  prop $mods {$prop->class}::\${$prop->name}";
+		        } else {
+			        $info[] = "  prop $mods \${$prop->name}";
+		        }
+
+	        }
             foreach($class->getMethods() as $method) {
-                $info[] = $this->_scanFunction($method);
+                $info[] = $this->_scanFunction($method, $class->name);
             }
 
             $info[] = "}";
@@ -224,7 +234,7 @@ class BuildRunner {
      * @param ReflectionFunctionAbstract $function
      * @return string
      */
-    private function _scanFunction(ReflectionFunctionAbstract $function) {
+    private function _scanFunction(ReflectionFunctionAbstract $function, $class_name = "") {
         $params = [];
         foreach($function->getParameters() as $param) {
             /* @var ReflectionParameter $param */
@@ -260,7 +270,13 @@ class BuildRunner {
         if($function instanceof ReflectionFunction) {
             $declare = "function {$function->name}";
         } elseif ($function instanceof ReflectionMethod) {
-            $declare = "  method ".implode(' ', Reflection::getModifierNames($function->getModifiers()))." {$function->class}::{$function->name}";
+	        $mods =  implode(' ', Reflection::getModifierNames($function->getModifiers()));
+	        if($function->class !== $class_name) {
+		        $declare = "  method {$mods} {$function->class}::{$function->name}";
+	        } else {
+		        $declare = "  method {$mods} {$function->name}";
+	        }
+
         }
         return "{$declare}(".implode(", ", $params).")$return";
     }

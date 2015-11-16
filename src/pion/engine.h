@@ -145,7 +145,9 @@ typedef struct _class_info {
     pion_init_std_object_handlers(class); \
     pion_set_object_handler(class, free_obj, _ ## class ## _free);
 
-#define PION_REGISTER_STATIC_CLASS(class, class_name)                                       \
+#define PION_REGISTER_STATIC_CLASS(class, class_name)  PION_REGISTER_DEFAULT_CLASS(class, class_name)
+
+#define PION_REGISTER_DEFAULT_CLASS(class, class_name)                                       \
     pion_register_std_class(&ion_ce_ ## class, class_name, NULL, methods_  ## class);       \
     memcpy(&ion_oh_ ## class, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 
@@ -169,10 +171,35 @@ typedef struct _class_info {
 
 
 #define PION_CLASS_CONST_LONG(class, const_name, value) \
-    zend_declare_class_constant_long(ion_ce_ ## class, const_name, sizeof(const_name)-1, (long)value TSRMLS_CC);
+    zend_declare_class_constant_long(ion_ce_ ## class, const_name, sizeof(const_name)-1, (long)value);
 
 #define PION_CLASS_CONST_STRING(class, const_name, value) \
-    zend_declare_class_constant_string(ion_ce_ ## class, const_name, sizeof(const_name)-1, value TSRMLS_CC);
+    zend_declare_class_constant_string(ion_ce_ ## class, const_name, sizeof(const_name)-1, value);
+
+#define PION_CLASS_PROP_LONG(class, prop_name, value, access) \
+    zend_declare_property_long(ion_ce_ ## class, prop_name, sizeof(prop_name)-1, (long)value, access);
+
+#define PION_CLASS_PROP_STRING(class, prop_name, value, access) \
+    zend_declare_property_string(ion_ce_ ## class, prop_name, sizeof(prop_name)-1, value, access);
+
+#define PION_CLASS_PROP_BOOL(class, prop_name, value, access) \
+    zend_declare_property_bool(ion_ce_ ## class, prop_name, sizeof(prop_name)-1, value, access);
+
+#define pion_update_property_long(class, object_ptr, prop_name, value) \
+    zend_update_property_long(ion_ce_ ## class, object_ptr, prop_name, sizeof(prop_name) - 1, value);
+
+#define pion_update_property_str(class, object_ptr, prop_name, value) \
+    zend_update_property_str(ion_ce_ ## class, object_ptr, prop_name, sizeof(prop_name) - 1, value);
+
+#define pion_update_property_string(class, object_ptr, prop_name, value) \
+    zend_update_property_string(ion_ce_ ## class, object_ptr, prop_name, sizeof(prop_name) - 1, value);
+
+#define pion_update_property_double(class, object_ptr, prop_name, value) \
+    zend_update_property_double(ion_ce_ ## class, object_ptr, prop_name, sizeof(prop_name) - 1, value);
+
+#define pion_update_property_bool(class, object_ptr, prop_name, value) \
+    zend_update_property_bool(ion_ce_ ## class, object_ptr, prop_name, sizeof(prop_name) - 1, value);
+
 
 #define CLASS_METHOD(class, method) \
     PHP_METHOD(class, method)
@@ -224,7 +251,7 @@ typedef struct _class_info {
 #define METHOD_ARG_FLOAT(name, pass_by_ref)       METHOD_ARG_DOUBLE(name, pass_by_ref)
 #define METHOD_ARG_BOOL(name, pass_by_ref)        ZEND_ARG_TYPE_INFO(pass_by_ref, name, _IS_BOOL, 0)
 #define METHOD_ARG_RESOURCE(name, pass_by_ref)    ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_RESOURCE, 0)
-#define METHOD_ARG_ARRAY(name, pass_by_ref)       ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_ARRAY, allow_null)
+#define METHOD_ARG_ARRAY(name, pass_by_ref, allow_null)       ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_ARRAY, allow_null)
 #define METHOD_ARG_CALLBACK(name, pass_by_ref, allow_null)            ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_CALLABLE, allow_null)
 #define METHOD_ARG_TYPE(name, type_hint, allow_null, pass_by_ref)     ZEND_ARG_TYPE_INFO(pass_by_ref, name, type_hint, allow_null)
 #define METHOD_ARG_OBJECT(name, classname, allow_null, pass_by_ref)   ZEND_ARG_OBJ_INFO(pass_by_ref, name, classname, allow_null)

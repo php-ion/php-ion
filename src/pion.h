@@ -43,6 +43,11 @@ typedef struct _ion_base {
 #endif
 } ion_base;
 
+ZEND_API zend_bool ion_reinit();
+ZEND_API void * php_emalloc_wrapper(size_t size);
+ZEND_API void * php_realloc_wrapper(void * nmemb, size_t size);
+ZEND_API void   php_efree_wrapper(void * ptr);
+
 extern ion_base *ionBase;
 
 #endif //ION_FRAMEWORK_H

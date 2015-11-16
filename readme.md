@@ -263,9 +263,9 @@ $server->listen("0.0.0.0:8080");
 $server->listen("0.0.0.0:8443", $ssl);
 $server->setIdleTimeout(30);
 $server->setMaxConnections(1000);
-$server->onRequest(function (Stream $connect) {
+$server->connect()->then(function (Stream $connect) {
     // ...
-})->then()->then(); // ...
+}) // ...
 
 // ...
 
@@ -286,8 +286,8 @@ $client->socket("tcp://127.0.0.1:3306");
 $client->socket("ssl://10.0.22.133:3312");
 $client->setIdleTimeout(30);
 $client->setMaxConnections(1000);
-$client->onHandshake()->then()->then(); // build sequence
-$client->onShutdown()->then()->then(); // build sequence
+$client->onHandshake()->then($hanler1)->then($hanler2); // build sequence
+$client->onShutdown()->then($hanler3)->then($hanler4); // build sequence
 
 $stream = yield $client->getStream();
 // ...
@@ -297,7 +297,7 @@ $stream = yield $client->getStream();
 
 ```php
 use ION\DNS;
-use ION\Promise;
+use ION\Deferred;
 ```
 
 ```php
@@ -321,7 +321,9 @@ $data = yield FS::readFile($filename = "/path/to/file", $offset = 0, $limit = 10
 
 ### FS events
 
-todo
+```php
+FS::notify($path = "/path/to/file", $flags = FS::NOTIFY_CHANGE | FS::NOTIFY_RECURSIVE)->then($handler);
+```
 
 ## Process
 
@@ -344,7 +346,7 @@ use ION\Process\Signals;
 ```php
 Process::kill(Signals::TERM, $pid); // send SIGTERM
 
-Process::signal(Signals::TERM)->then(/* ... */); // sequence for signal SIGTERM
+Process::signal(Signals::TERM)->then($hanler); // sequence for signal SIGTERM
 ```
 
 ### Execute process

@@ -134,4 +134,11 @@ class IONTest extends TestCase {
             "result" => $result
         ], $this->data);
     }
+
+	/**
+	 * @memcheck
+	 */
+	public function testReinit() {
+		$this->assertTrue(ION::reinit());
+	}
 }

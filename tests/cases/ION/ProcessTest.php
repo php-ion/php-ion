@@ -12,6 +12,7 @@ use ION\Test\TestCase;
 class ProcessTest extends TestCase {
 
     /**
+     *
      * @memcheck
      */
     public function testPids() {
@@ -37,38 +38,8 @@ class ProcessTest extends TestCase {
 		$this->assertEquals([
 			"signal" => SIGUSR1
 		], $this->data);
+		\ION::reinit();
 	}
-
-    /**
-     * @mem-check
-     * @todo
-     * @group testExecEmpty
-     */
-    public function _testExecEmpty() {
-        Process::exec("sleep 0.2; echo 'done'");
-        \ION::stop(.03);
-        \ION::dispatch();
-    }
-
-    /**
-     * @point done
-     * @mem-check
-     * @todo
-     * @group testExec
-     */
-    public function _testExec() {
-        $defer = Process::exec("sleep 0.2; echo 'done'");
-        $this->assertInstanceOf('Defer', $defer);
-        $defer->onResult(function ($data, $error, $arg) {
-            $this->point('done', 0.2);
-            $this->assertSame("done\n", $data['stdout']);
-            $this->assertSame("", $data['stderr']);
-            $this->assertSame(0, $data['status']);
-            $this->assertSame(0, $data['killed']);
-//            \ION::stop();
-        });
-        \ION::dispatch();
-    }
 
     /**
      * @memcheck
@@ -84,8 +55,6 @@ class ProcessTest extends TestCase {
     }
 
     /**
-     *
-     * @group testGetAnotherUser
      * @memcheck
      */
     public function testGetAnotherUser() {
@@ -100,7 +69,6 @@ class ProcessTest extends TestCase {
     }
 
     /**
-     * @group testGetAnotherUserUID
      * @memcheck
      */
     public function testGetAnotherUserUID() {
@@ -114,7 +82,6 @@ class ProcessTest extends TestCase {
     }
 
     /**
-     * @group testFork
      * @memcheck
      */
     public function _testFork() {
@@ -129,7 +96,7 @@ class ProcessTest extends TestCase {
     }
 
     /**
-     *
+     * @group dev
      * @memcheck
      */
     public function testGetPriority() {
