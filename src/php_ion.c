@@ -70,6 +70,7 @@ zend_module_entry ion_module_entry = {
 
 /* Init module callback */
 PHP_MINIT_FUNCTION(ion) {
+    event_set_mem_functions(php_emalloc_wrapper, php_realloc_wrapper, php_efree_wrapper);
     event_set_log_callback(_engine_log);
     event_set_fatal_callback(_engine_fatal);
 
@@ -94,7 +95,6 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_Stream);
     STARTUP_MODULE(ION_Process);
 
-    event_set_mem_functions(php_emalloc_wrapper, php_realloc_wrapper, php_efree_wrapper);
 
     long KB = 1000;
     long MB = 1000 * KB;

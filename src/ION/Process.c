@@ -168,7 +168,7 @@ METHOD_WITHOUT_ARGS(ION_Process, getParentPid);
 
 
 
-struct passwd * get_pw_by_zval(zval * zuser) {
+struct passwd * ion_get_pw_by_zval(zval * zuser) {
     struct passwd * pw;
     errno = 0;
     if(Z_TYPE_P(zuser) == IS_STRING) {
@@ -208,7 +208,7 @@ CLASS_METHOD(ION_Process, getUser) {
         user = &me;
     }
 
-    pw = get_pw_by_zval(user);
+    pw = ion_get_pw_by_zval(user);
 
     array_init(return_value);
 
@@ -237,7 +237,7 @@ CLASS_METHOD(ION_Process, setUser) {
         Z_PARAM_BOOL(set_group)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    pw = get_pw_by_zval(user);
+    pw = ion_get_pw_by_zval(user);
 
     array_init(return_value);
 
@@ -387,13 +387,19 @@ void ion_exec_cancel(zend_object * deferred) {
 
 /** public function ION\Process::exec($priority, $pid = null) : int */
 CLASS_METHOD(ION_Process, exec) {
-    zend_string * command = NULL;
-    zval        * options = NULL;
-    int           pid;
-    int           out_pipes[2];
-    int           err_pipes[2];
-    ion_exec    * exec;
-//    char       ** env;
+    zend_string   * command = NULL;
+    zval          * options = NULL;
+    int             pid;
+    int             out_pipes[2];
+    int             err_pipes[2];
+    ion_exec      * exec;
+    char          * env[2];
+    struct passwd * pw = NULL;
+    char          * line;
+    zend_bool       set_group = 0;
+    zval          * zuser = NULL;
+    zval          * zgroup = NULL;
+    zval          * zpid = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1,2)
         Z_PARAM_STR(command)
@@ -401,11 +407,30 @@ CLASS_METHOD(ION_Process, exec) {
         Z_PARAM_ARRAY_EX(options, 1, 0)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    if(pipe( out_pipes )) {
+    spprintf(&line, 255, "_ION_EXEC_LINE=%s:%d", zend_get_executed_filename(), zend_get_executed_lineno());
+    env[0] = line;
+    env[1] = NULL;
+    if(options) {
+        zuser = zend_hash_str_find(Z_ARRVAL_P(options), "user", sizeof("user")-1);
+        if(zuser) {
+            pw = ion_get_pw_by_zval(zuser);
+            zgroup = zend_hash_str_find(Z_ARRVAL_P(options), "set_group", sizeof("set_group")-1);
+            if(zend_hash_str_exists(Z_ARRVAL_P(options), "set_group", sizeof("set_group")-1)) {
+                zval zgroup_bool;
+                ZVAL_COPY_VALUE(&zgroup_bool, zgroup);
+                convert_to_boolean_ex(&zgroup_bool);
+                if(Z_ISTRUE(zgroup_bool)) {
+                    set_group = true;
+                }
+            }
+        }
+    }
+
+    if(pipe(out_pipes)) {
         zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to initializate stdout stream: %s", strerror(errno));
         return;
     }
-    if(pipe( err_pipes )) {
+    if(pipe(err_pipes)) {
         zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to initializate stdin stream: %s", strerror(errno));
         return;
     }
@@ -415,8 +440,17 @@ CLASS_METHOD(ION_Process, exec) {
         zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to spawn process for command: %s", strerror(errno));
         return;
     } else if(pid) { // parent
-        close( out_pipes[1] );
-        close( err_pipes[1] );
+        efree(line);
+        if(options) {
+            zpid = zend_hash_str_find(Z_ARRVAL_P(options), "pid", sizeof("pid")-1);
+            if(zpid && Z_ISREF_P(zpid)) {
+                ZVAL_DEREF(zpid);
+                zval_ptr_dtor(zpid);
+                ZVAL_LONG(zpid, pid);
+            }
+        }
+        close(out_pipes[1]);
+        close(err_pipes[1]);
         exec = ecalloc(1, sizeof(ion_exec));
         exec->pid       = pid;
         exec->command   = zend_string_copy(command);
@@ -456,7 +490,16 @@ CLASS_METHOD(ION_Process, exec) {
             perror(strerror(errno));
             _exit(127);
         }
-        if(execl("/bin/sh", "sh", "-c", command->val, NULL)) {
+        if(pw) {
+            if(set_group && setgid(pw->pw_gid)) {
+                fprintf(stderr, "Failed to set GID %d: %s\n", (int)pw->pw_gid, strerror(errno));
+            }
+
+            if(setuid(pw->pw_uid)) {
+                fprintf(stderr, "Failed to set UID %d: %s\n", (int)pw->pw_uid, strerror(errno));
+            }
+        }
+        if(execle("/bin/sh", "sh", "-c", command->val, NULL, env)) {
             perror(strerror(errno));
         }
         _exit(127);

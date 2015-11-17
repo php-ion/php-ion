@@ -21,7 +21,6 @@ class ProcessTest extends TestCase {
     }
 
 	/**
-	 * @group dev
 	 * @memcheck
 	 */
 	public function testSignals() {
@@ -84,7 +83,7 @@ class ProcessTest extends TestCase {
     /**
      * @memcheck
      */
-    public function _testFork() {
+    public function testFork() {
         $pid = Process::fork();
         if ($pid) {
             $this->assertSame($pid, pcntl_waitpid($pid, $status));
@@ -122,17 +121,16 @@ class ProcessTest extends TestCase {
     }
 
     /**
-     * @group testSetUser
      * @mem check
      */
     public function _testSetUser() {
-        Process::setUser('_www', '_www');
+        Process::setUser('www', true);
         var_dump(Process::getUser());
-        Process::setUser($_SERVER['USER'], 'staff');
+//        Process::setUser($_SERVER['USER'], 'staff');
     }
 
 	/**
-	 * @group dev
+	 *
 	 * @memcheck
 	 */
 	public function testExecSimple() {
@@ -152,5 +150,30 @@ class ProcessTest extends TestCase {
 		$this->assertFalse($this->data['result']['signaled']);
 		$this->assertEquals(0, trim($this->data['result']['signal']));
 
+	}
+
+	/**
+	 * @group dev
+	 * @memcheck
+	 */
+	public function testExecExtended() {
+		$cmd = "sleep 0.1; echo \$_ION_EXEC_LINE;";
+		$this->promise(function () use ($cmd) {
+			$deferred = Process::exec($cmd, [
+				'user' => 'www',
+				'set_group' => true,
+				'pid' => &$this->data['pid']
+			]);
+			$res = yield $deferred;
+			$this->data['instance'] = get_class($res);
+			return (array)$res;
+		});
+		$this->loop();
+		$this->assertEquals('ION\Process\ExecResult', $this->data['instance']);
+		$this->assertEquals($cmd, $this->data['result']['command']);
+		$this->assertTrue(is_integer($this->data['result']['pid']));
+		$this->assertTrue(is_integer($this->data['pid']));
+		$this->assertEquals($this->data['result']['pid'], $this->data['pid']);
+		$this->assertStringMatchesFormat(__FILE__.":%i", trim($this->data['result']['stdout']));
 	}
 }

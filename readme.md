@@ -361,15 +361,13 @@ $result = yield Process::exec("venor/bin/phpunit --tap");
 
 ```php
 $result = yield Process::exec("venor/bin/phpunit --tap", [
-    "env" => [
-        "PHPUNIT_DB_NAME" => "test",
-        "PHPUNIT_DB_PASS" => "s4kfme3"
-    ],
     "user" => "nobody",
     "group" => "nobody",
-    "priority" => 20,
     "pid" => &$pid  // get the PID by reference
 ]);
+
+var_dump($result->stdout);
+var_dump($result->stderr);
 ```
 
 ### IPC
