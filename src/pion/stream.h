@@ -98,6 +98,7 @@ typedef struct _ion_stream {
 
 #define ion_stream_is_valid_fd(stream) (bufferevent_getfd(stream->buffer) == -1)
 
+int ion_stream_pair(zend_object ** stream_one, zend_object ** stream_two, zend_class_entry * ce);
 zend_object * ion_stream_new_ex(bevent * buffer, int flags, zend_class_entry * cls);
 zend_string * ion_stream_get_name_self(zend_object * stream);
 zend_string * ion_stream_get_name_remote(zend_object * stream);

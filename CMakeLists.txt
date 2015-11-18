@@ -46,7 +46,8 @@ set(ION_SOURCE_FILES
         src/ION/DNS.c
         src/ION/Listener.c
         src/ION/Stream.c
-        src/ION/Process.c)
+        src/ION/Process.c
+        src/ION/FS.c)
 
 #src/ION/Deferred.c
 #src/ION/Data/SkipList.c
@@ -61,5 +62,8 @@ set(ION_SOURCE_FILES
 
 add_library(ion ${ION_SOURCE_FILES})
 add_dependencies(ion external_ion)
-include_directories("/opt/local/include" "/opt/local/include/php70/php" "/opt/local/include/php70/php/main" "/opt/local/include/php70/php/Zend" "/opt/local/include/php70/php/TSRM" "/opt/local/var/macports/build/_opt_local_var_macports_sources_rsync.macports.org_release_tarballs_ports_devel_libevent/libevent/work/libevent-2.0.22-stable/")
-#include_directories("/opt/local/include" "/usr/local/Cellar/php70/7.0.0-rc.5/include/php" "/usr/local/Cellar/php70/7.0.0-rc.5/include/php/main" "/usr/local/Cellar/php70/7.0.0-rc.5/include/php/Zend" "/usr/local/Cellar/php70/7.0.0-rc.5/include/php/TSRM" "/opt/local/var/macports/build/_opt_local_var_macports_sources_rsync.macports.org_release_tarballs_ports_devel_libevent/libevent/work/libevent-2.0.22-stable/")
+include_directories("/opt/local/include/php70/php" "/opt/local/include/php70/php/main" "/opt/local/include/php70/php/Zend" "/opt/local/include/php70/php/TSRM"  )
+include_directories("/opt/local/var/macports/build/_opt_local_var_macports_sources_rsync.macports.org_release_tarballs_ports_devel_libevent/libevent/work/libevent-2.0.22-stable/")
+#include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Libevent")
+include_directories("/opt/local/include")
+

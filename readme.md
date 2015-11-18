@@ -320,7 +320,7 @@ $data = yield FS::readFile($filename = "/path/to/file", $offset = 0, $limit = 10
 ### FS events
 
 ```php
-FS::notify($path = "/path/to/file", $flags = FS::NOTIFY_CHANGE | FS::NOTIFY_RECURSIVE)->then($handler);
+FS::watch($path = "/path/to/file", $flags = FS::NOTIFY_CHANGE | FS::NOTIFY_RECURSIVE)->then($handler);
 ```
 
 ## Process

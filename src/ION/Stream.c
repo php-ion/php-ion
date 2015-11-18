@@ -297,6 +297,44 @@ void _ion_stream_notify(bevent * bev, short what, void * ctx) {
     ION_CHECK_LOOP();
 }
 
+int ion_stream_pair(zend_object ** stream_one, zend_object ** stream_two, zend_class_entry * ce) {
+    int flags = STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE;
+    int state = ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_PAIR | ION_STREAM_STATE_ENABLED | ION_STREAM_STATE_CONNECTED;
+
+    ion_buffer  * pair[2];
+    zend_object * one;
+    zend_object * two;
+
+    if(bufferevent_pair_new(ION(base), flags, pair) == FAILURE) {
+        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to create pair", 0);
+        return FAILURE;
+    }
+    if(bufferevent_enable(pair[0], EV_READ | EV_WRITE) == FAILURE ||
+       bufferevent_enable(pair[1], EV_READ | EV_WRITE) == FAILURE) {
+        bufferevent_free(pair[0]);
+        bufferevent_free(pair[1]);
+        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to enable stream", 0);
+        return FAILURE;
+    }
+
+    one = ion_stream_new_ex(pair[0], state, ce);
+    two = ion_stream_new_ex(pair[1], state, ce);
+    if(!one || !two) { // constructor failed
+        if(one) {
+            zend_object_release(one);
+        }
+        if(two) {
+            zend_object_release(two);
+        }
+        // todo check EG(exception)
+        return FAILURE;
+    }
+
+    *stream_one = one;
+    *stream_two = two;
+
+    return SUCCESS;
+}
 
 zend_object * ion_stream_new_ex(bevent * buffer, int flags, zend_class_entry * cls) {
     ion_stream * stream;
@@ -466,41 +504,13 @@ METHOD_ARGS_END()
 
 /** public static function ION\Stream::pair() : self[] */
 CLASS_METHOD(ION_Stream, pair) {
-    int flags = STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE;
-    int state = ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_PAIR | ION_STREAM_STATE_ENABLED | ION_STREAM_STATE_CONNECTED;
-
-    ion_buffer  * pair[2];
+    zend_get_called_scope(execute_data);
     zend_object * one;
     zend_object * two;
     zval          zstream_one;
     zval          zstream_two;
-    zend_class_entry * ce = zend_get_called_scope(execute_data);
 
-    if(bufferevent_pair_new(ION(base), flags, pair) == FAILURE) {
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to create pair", 0);
-        return;
-    }
-    if(bufferevent_enable(pair[0], EV_READ | EV_WRITE) == FAILURE ||
-       bufferevent_enable(pair[1], EV_READ | EV_WRITE) == FAILURE) {
-        bufferevent_free(pair[0]);
-        bufferevent_free(pair[1]);
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to enable stream", 0);
-        return;
-    }
-
-    one = ion_stream_new_ex(pair[0], state, ce);
-    two = ion_stream_new_ex(pair[1], state, ce);
-    if(!one || !two) { // constructor failed
-        if(one) {
-            zend_object_release(one);
-        }
-        if(two) {
-            zend_object_release(two);
-        }
-        // todo check EG(exception)
-        return;
-    }
-
+    ion_stream_pair(&one, &two, zend_get_called_scope(execute_data));
 
     ZVAL_OBJ(&zstream_one, one);
     ZVAL_OBJ(&zstream_two, two);

@@ -153,7 +153,6 @@ class ProcessTest extends TestCase {
 	}
 
 	/**
-	 * @group dev
 	 * @memcheck
 	 */
 	public function testExecExtended() {

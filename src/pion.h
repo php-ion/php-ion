@@ -36,11 +36,8 @@ typedef struct _ion_base {
     ion_proc            * proc;
     long  i;                       // internal counter of timers
     HashTable           * timers;  // array of timers
-    HashTable           * signals; // array of timers
-//    struct event *sigsegv;
-#ifdef ZTS
-    void ***thread_ctx;
-#endif
+    HashTable           * signals;
+    HashTable           * watchers;
 } ion_base;
 
 ZEND_API zend_bool ion_reinit();

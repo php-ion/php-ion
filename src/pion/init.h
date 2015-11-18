@@ -18,6 +18,7 @@ typedef struct bufferevent bevent;
 typedef struct bufferevent_rate_limit_group buffer_group;
 typedef struct evconnlistener ion_evlistener;
 typedef struct evbuffer ion_evbuffer;
+typedef struct evbuffer_cb_entry ion_evbuffer_cb;
 typedef struct bufferevent ion_buffer;
 
 #define ION(prop) \

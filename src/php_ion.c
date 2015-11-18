@@ -32,17 +32,17 @@ static const zend_module_dep ion_depends[] = {
 static void _engine_log(int severity, const char *msg) {
     switch (severity) {
         case _EVENT_LOG_ERR:
-            zend_error(E_ERROR, "Libevent: %s", msg);
+            zend_error(E_ERROR, "Libevent error: %s", msg);
             break;
         case _EVENT_LOG_MSG:
-            zend_error(E_NOTICE, "Libevent: %s", msg);
+            zend_error(E_NOTICE, "Libevent notice: %s", msg);
             break;
         case _EVENT_LOG_DEBUG:
-            zend_error(E_NOTICE, "Libevent: %s", msg);
+            zend_error(E_NOTICE, "Libevent debug: %s", msg);
             break;
         case _EVENT_LOG_WARN:
         default:
-            zend_error(E_WARNING, "Libevent: %s", msg);
+            zend_error(E_WARNING, "Libevent warning: %s", msg);
             break;
     }
 }
@@ -91,6 +91,7 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_Sequence);
     STARTUP_MODULE(ION);
     STARTUP_MODULE(ION_DNS);
+    STARTUP_MODULE(ION_FS);
     STARTUP_MODULE(ION_Listener);
     STARTUP_MODULE(ION_Stream);
     STARTUP_MODULE(ION_Process);
@@ -136,6 +137,7 @@ PHP_MSHUTDOWN_FUNCTION(ion) {
 //    SHUTDOWN_MODULE(ION_Data_LinkedList);
 //    SHUTDOWN_MODULE(ION_Data_SkipList);
     SHUTDOWN_MODULE(ION_Process);
+    SHUTDOWN_MODULE(ION_FS);
     SHUTDOWN_MODULE(ION_DNS);
     SHUTDOWN_MODULE(ION_Sequence);
     SHUTDOWN_MODULE(ION_Deferred);
@@ -160,6 +162,7 @@ PHP_RINIT_FUNCTION(ion) {
     ACTIVATE_MODULE(promisor);
     ACTIVATE_MODULE(ION);
     ACTIVATE_MODULE(ION_DNS);
+    ACTIVATE_MODULE(ION_FS);
     ACTIVATE_MODULE(ION_Process);
     return SUCCESS;
 }
@@ -167,6 +170,7 @@ PHP_RINIT_FUNCTION(ion) {
 /* End SAPI request */
 PHP_RSHUTDOWN_FUNCTION(ion) {
     DEACTIVATE_MODULE(ION_Process);
+    DEACTIVATE_MODULE(ION_FS);
     DEACTIVATE_MODULE(ION_DNS);
     DEACTIVATE_MODULE(ION);
     DEACTIVATE_MODULE(promisor);

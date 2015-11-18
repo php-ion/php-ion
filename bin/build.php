@@ -1,6 +1,8 @@
 #!/usr/bin/env php
 <?php
 
+ini_set('memory_limit', -1);
+
 $builder = new BuildRunner();
 
 $builder->run();
@@ -132,6 +134,7 @@ class BuildRunner {
             if($this->hasOption('coverage', 'o')) {
                 $this->exec('./configure --with-ion --enable-ion-debug --enable-ion-coverage', "src/");
             } else {
+//                $this->exec('./configure --with-ion='.__DIR__.'/../Libevent --enable-ion-debug', "src/");
                 $this->exec('./configure --with-ion --enable-ion-debug', "src/");
             }
 		}
