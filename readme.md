@@ -1,11 +1,11 @@
 ION Extension [dev]
 ===================
 
-**ION** (preg `/^(I)nput(?:, |-)(O)utput,? (N)otifications$/i`) - PHP extension for asynchronous programming.
+**ION** (regex `/^(I)nput(?:, |-)(O)utput,? (N)otifications$/i`) - PHP extension for asynchronous programming.
 
 * **Subject:** PHP extension
 * **Language:** C
-* **OS:** linux, osx
+* **OS:** linux, osx, freebsd
 * **PHP version:** 7.0
 * **State:** [![Build Status](https://travis-ci.org/php-ion/php-ion.png?branch=master)](https://travis-ci.org/php-ion/php-ion) [![Coverage Status](https://coveralls.io/repos/php-ion/php-ion/badge.svg?branch=master&service=github)](https://coveralls.io/github/php-ion/php-ion?branch=master)
 * **Version:** [![Latest Stable Version](https://poser.pugx.org/phpion/phpion/v/stable)](https://packagist.org/packages/phpion/phpion) [![Latest Unstable Version](https://poser.pugx.org/phpion/phpion/v/unstable)](https://packagist.org/packages/phpion/phpion)
@@ -301,17 +301,13 @@ use ION\Deferred;
 ```
 
 ```php
-$info = yield DNS::resolve("exmple.com");
+$info = yield DNS::resolve("example.com");
 // [
 //     'CNAME' => "example.com",
 //     'A'     => ["93.184.216.34"],
 //     'AAAA'  => ["2606:2800:220:1:248:1893:25c8:1946"]
 // ];
 ```
-
-### DNS responder
-
-todo
 
 ## FS
 
