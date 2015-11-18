@@ -24,25 +24,27 @@ ION Extension [dev]
 * Any Promise/Deferred/Sequence supports generators
 * Promise/Deferred/Sequence generators make asynchronous programming easy
 * Promise/Deferred/Sequence supports type hinting in callbacks
-* Async sockets and pipes
+* Async sockets and stream pipes
 * Async socket listeners
 * Sendfile supports
 * Asynchronous DNS requests
 * Useful utilities for processes
 * Sending and listening POSIX signals
-* todo
+* Async execution an external program
+* Async reading files from FS
+
+# Indev
+
+* Listening FS events
 
 # Planned
 
 * SSL support
 * DNS server
-* Async execution an external program
 * Server socket pool
 * Client socket pool
 * HTTP server
 * HTTP client
-* Async reading files from FS
-* Listening FS events
 * IPC
 
 
