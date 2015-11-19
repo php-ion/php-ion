@@ -3,6 +3,9 @@ ION Extension [dev]
 
 **ION** (regex `/^(I)nput(?:, |-)(O)utput,? (N)otifications$/i`) - PHP extension for asynchronous programming.
 
+>! Spoiler text
+>! Spoiler text
+
 * **Subject:** PHP extension
 * **Language:** C
 * **OS:** linux, osx, freebsd
