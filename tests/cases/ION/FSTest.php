@@ -22,10 +22,11 @@ class FSTest extends TestCase {
 	 * @group dev
 	 * @memcheck
 	 */
-	public function testNotify() {
+	public function testWatch() {
 		$file = "/tmp/iddqd";
 		@unlink($file);
 		file_put_contents($file, "a1");
+		$expected = realpath($file);
 		FS::watch($file, FS::WATCH_MODIFY)->then(function($filename) {
 			$this->data["changed"] = $filename;
 		});
@@ -39,7 +40,7 @@ class FSTest extends TestCase {
 		$this->loop();
 		FS::unwatchAll();
 		$this->assertEquals([
-			"changed" => $file
+			"changed" => $expected
 		], $this->data);
 	}
 }

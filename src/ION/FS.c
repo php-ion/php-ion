@@ -117,24 +117,6 @@ METHOD_ARGS_BEGIN(ION_FS, readFile, 1)
 METHOD_ARGS_END()
 
 
-/* A simple routine to return a string for a set of flags. */
-char *flagstring(int flags)
-{
-    static char ret[512];
-    char *or = "";
-
-    ret[0]='\0'; // clear the string.
-    if (flags & NOTE_DELETE) {strcat(ret,or);strcat(ret,"NOTE_DELETE");or="|";}
-    if (flags & NOTE_WRITE) {strcat(ret,or);strcat(ret,"NOTE_WRITE");or="|";}
-    if (flags & NOTE_EXTEND) {strcat(ret,or);strcat(ret,"NOTE_EXTEND");or="|";}
-    if (flags & NOTE_ATTRIB) {strcat(ret,or);strcat(ret,"NOTE_ATTRIB");or="|";}
-    if (flags & NOTE_LINK) {strcat(ret,or);strcat(ret,"NOTE_LINK");or="|";}
-    if (flags & NOTE_RENAME) {strcat(ret,or);strcat(ret,"NOTE_RENAME");or="|";}
-    if (flags & NOTE_REVOKE) {strcat(ret,or);strcat(ret,"NOTE_REVOKE");or="|";}
-
-    return ret;
-}
-
 void ion_fs_watch_cb(evutil_socket_t fd, short what, void * arg) {
     struct timespec  timeout = { 0, 0 };
     struct kevent    event;
@@ -151,13 +133,6 @@ void ion_fs_watch_cb(evutil_socket_t fd, short what, void * arg) {
         watcher = (ion_fs_watcher *)event.udata;
         ZVAL_STR(&result, watcher->pathname);
         ion_promisor_sequence_invoke(watcher->sequence, &result);
-//        printf("Event %" PRIdPTR " occurred.  Filter %d, flags %d, filter flags %s, filter data %" PRIdPTR ", path %s\n",
-//               event.ident,
-//               event.filter,
-//               event.flags,
-//               flagstring(event.fflags),
-//               event.data,
-//               ((zend_string *)event.udata)->val);
     }
 }
 
@@ -181,6 +156,12 @@ int ion_fs_watch_close() {
 void ion_fs_watcher_dtor(zend_object * sequence) {
     ion_fs_watcher * watcher = ion_promisor_store_get(sequence);
     if(watcher) {
+        struct kevent event;
+        struct timespec timeout = { 0, 0 };
+        EV_SET( &event, watcher->fd, EVFILT_VNODE, EV_DELETE, 0, 0, NULL);
+        if(kevent(kq, &event, 1, NULL, 0, &timeout) == -1) {
+            zend_error(E_NOTICE, "FS watcher: Could not remove watcher from queue: %s", strerror(errno));
+        }
         zend_string_release(watcher->pathname);
         close(watcher->fd);
         efree(watcher);
@@ -230,7 +211,7 @@ CLASS_METHOD(ION_FS, watch) {
     watcher = ecalloc(1, sizeof(ion_fs_watcher));
     watcher->sequence = ion_promisor_sequence_new(NULL);
     watcher->fd = fd;
-    watcher->pathname = zend_string_copy(filename);
+    watcher->pathname = zend_string_init(realpath, strlen(realpath), 0);
     ion_promisor_store(watcher->sequence, watcher);
     ion_promisor_dtor(watcher->sequence, ion_fs_watcher_dtor);
 
@@ -241,7 +222,7 @@ CLASS_METHOD(ION_FS, watch) {
         zend_throw_exception(ion_class_entry(ION_RuntimeException), "Failed to add fsnotify event", 0);
         return;
     }
-    if(!zend_hash_str_add_ptr(ION(watchers), realpath, strlen(realpath), (void *) watcher)) {
+    if(!zend_hash_str_add_ptr(ION(watchers), realpath, strlen(realpath), watcher)) {
         zend_object_release(watcher->sequence);
         zend_throw_exception(ion_class_entry(ION_RuntimeException), "Failed to store watcher", 0);
         return;
