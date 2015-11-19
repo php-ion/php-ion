@@ -3,17 +3,146 @@
 #include "../pion.h"
 #include "FS.h"
 
-// https://developer.apple.com/library/mac/documentation/Darwin/Conceptual/FSEvents_ProgGuide/KernelQueues/KernelQueues.html
-
-
 zend_class_entry * ion_ce_ION_FS;
 zend_object_handlers ion_oh_ION_FS;
 
-#define NUM_EVENT_SLOTS 2
-#define NUM_EVENT_FDS 1
-int kq;
-struct kevent   events_to_monitor[NUM_EVENT_FDS];
+#if defined(HAVE_INOTIFY)
+int ind;
 ion_event     * notifier;
+
+int ion_fs_watch_init() {
+    ind = inotify_init();
+    if(ind < 0) {
+        zend_error(E_ERROR, "FS watcher: Could not open inotify queue: %s", strerror(errno));
+        return FAILURE;
+    }
+    notifier = event_new(ION(base), ind, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, ion_fs_watch_cb, NULL);
+    if(event_add(notifier, NULL) == FAILURE) {
+        event_del(notifier);
+        event_free(notifier);
+        zend_error(E_ERROR, "FS watcher: Could not add listener for queue");
+        return FAILURE;
+    }
+    return SUCCESS;
+}
+
+int ion_fs_watch_close() {
+    close(ind);
+    return SUCCESS;
+}
+
+ion_fs_watcher * ion_fs_watcher_add(const char * pathname, zend_long flags) {
+
+    wd = inotify_add_watch( fd, "/tmp", IN_CREATE | IN_DELETE );
+    int               fd;
+    struct kevent     event;
+    struct timespec   timeout = { 0, 0 };
+    ion_fs_watcher  * watcher = NULL;
+
+    watcher = ecalloc(1, sizeof(ion_fs_watcher));
+    watcher->sequence = ion_promisor_sequence_new(NULL);
+    watcher->fd = inotify_add_watch( fd, pathname, IN_CREATE | IN_DELETE );
+    watcher->pathname = zend_string_init(pathname, strlen(pathname), 0);
+    ion_promisor_store(watcher->sequence, watcher);
+    ion_promisor_dtor(watcher->sequence, ion_fs_watcher_dtor);
+
+    return watcher;
+}
+
+void ion_fs_watcher_remove(ion_fs_watcher * watcher) {
+    zend_string_release(watcher->pathname);
+    inotify_rm_watch(ind, watcher->fd);
+    close(watcher->fd);
+    efree(watcher);
+}
+
+void ion_fs_watch_cb(evutil_socket_t fd, short what, void * arg) {
+    // todo need linux
+}
+
+#elif defined(HAVE_KQUEUE)
+int kq;
+ion_event     * notifier;
+
+void ion_fs_watch_cb(evutil_socket_t fd, short what, void * arg) {
+    struct timespec  timeout = { 0, 0 };
+    struct kevent    event;
+    int              has_event = 0;
+    ion_fs_watcher * watcher = NULL;
+    zval             result;
+
+    while((has_event = kevent(kq, NULL, 0, &event, 1, &timeout))) {
+        if ((has_event < 0) || (event.flags == EV_ERROR)) {
+            /* An error occurred. */
+            zend_error(E_ERROR, "FS watcher: An error occurred: %s", strerror(errno));
+            return;
+        }
+        watcher = (ion_fs_watcher *)event.udata;
+        ZVAL_STR(&result, watcher->pathname);
+        ion_promisor_sequence_invoke(watcher->sequence, &result);
+    }
+}
+
+int ion_fs_watch_init() {
+    kq = kqueue();
+    notifier = event_new(ION(base), kq, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, ion_fs_watch_cb, NULL);
+    if(event_add(notifier, NULL) == FAILURE) {
+        event_del(notifier);
+        event_free(notifier);
+        zend_error(E_ERROR, "FS watcher: Could not open watchers queue: %s", strerror(errno));
+        return FAILURE;
+    }
+    return SUCCESS;
+}
+
+int ion_fs_watch_close() {
+    close(kq);
+    return SUCCESS;
+}
+
+ion_fs_watcher * ion_fs_watcher_add(const char * pathname, zend_long flags) {
+    int               fd;
+    struct kevent     event;
+    struct timespec   timeout = { 0, 0 };
+    ion_fs_watcher  * watcher = NULL;
+
+    fd = open(pathname, OPEN_FLAGS);
+    if (fd <= 0) {
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0 , "Failed to open file %s for events: %s", pathname, strerror(errno));
+        return NULL;
+    }
+
+    watcher = ecalloc(1, sizeof(ion_fs_watcher));
+    watcher->sequence = ion_promisor_sequence_new(NULL);
+    watcher->fd = fd;
+    watcher->pathname = zend_string_init(pathname, strlen(pathname), 0);
+    ion_promisor_store(watcher->sequence, watcher);
+    ion_promisor_dtor(watcher->sequence, ion_fs_watcher_dtor);
+
+    memset(&event, 0, sizeof(event));
+    EV_SET( &event, fd, EVFILT_VNODE, EV_ADD | EV_CLEAR, VNODE_EVENTS, 0, watcher);
+    if (kevent(kq, &event, 1, NULL, 0, &timeout) == -1) {
+        zend_object_release(watcher->sequence);
+        zend_throw_exception(ion_class_entry(ION_RuntimeException), "Failed to add fsnotify event", 0);
+        return NULL;
+    }
+
+    return watcher;
+}
+
+void ion_fs_watcher_remove(ion_fs_watcher * watcher) {
+    struct kevent event;
+    struct timespec timeout = { 0, 0 };
+    EV_SET( &event, watcher->fd, EVFILT_VNODE, EV_DELETE, 0, 0, NULL);
+    if(kevent(kq, &event, 1, NULL, 0, &timeout) == -1) {
+        zend_error(E_NOTICE, "FS watcher: Could not remove watcher from queue: %s", strerror(errno));
+    }
+    zend_string_release(watcher->pathname);
+    close(watcher->fd);
+    efree(watcher);
+}
+
+#endif
 
 void ion_fs_file_sent_one(ion_buffer * one, void * ctx) {
     bufferevent_disable(one, EV_READ | EV_WRITE);
@@ -116,55 +245,10 @@ METHOD_ARGS_BEGIN(ION_FS, readFile, 1)
     METHOD_ARG_LONG(length, 0)
 METHOD_ARGS_END()
 
-
-void ion_fs_watch_cb(evutil_socket_t fd, short what, void * arg) {
-    struct timespec  timeout = { 0, 0 };
-    struct kevent    event;
-    int              has_event = 0;
-    ion_fs_watcher * watcher = NULL;
-    zval             result;
-
-    while((has_event = kevent(kq, NULL, 0, &event, 1, &timeout))) {
-        if ((has_event < 0) || (event.flags == EV_ERROR)) {
-            /* An error occurred. */
-            zend_error(E_ERROR, "An error occurred (event count %d): %s", has_event, strerror(errno));
-            return;
-        }
-        watcher = (ion_fs_watcher *)event.udata;
-        ZVAL_STR(&result, watcher->pathname);
-        ion_promisor_sequence_invoke(watcher->sequence, &result);
-    }
-}
-
-int ion_fs_watch_init() {
-    kq = kqueue();
-    notifier = event_new(ION(base), kq, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, ion_fs_watch_cb, NULL);
-    if(event_add(notifier, NULL) == FAILURE) {
-        event_del(notifier);
-        event_free(notifier);
-        zend_error(E_ERROR, "FS watcher: Could not open kernel queue: %s", strerror(errno));
-        return FAILURE;
-    }
-    return SUCCESS;
-}
-
-int ion_fs_watch_close() {
-    close(kq);
-    return SUCCESS;
-}
-
 void ion_fs_watcher_dtor(zend_object * sequence) {
     ion_fs_watcher * watcher = ion_promisor_store_get(sequence);
     if(watcher) {
-        struct kevent event;
-        struct timespec timeout = { 0, 0 };
-        EV_SET( &event, watcher->fd, EVFILT_VNODE, EV_DELETE, 0, 0, NULL);
-        if(kevent(kq, &event, 1, NULL, 0, &timeout) == -1) {
-            zend_error(E_NOTICE, "FS watcher: Could not remove watcher from queue: %s", strerror(errno));
-        }
-        zend_string_release(watcher->pathname);
-        close(watcher->fd);
-        efree(watcher);
+        ion_fs_watcher_remove(watcher);
     }
 }
 
@@ -173,21 +257,16 @@ void ion_fs_watcher_clean(zval * zr) {
     zend_object_release(watcher->sequence);
 }
 
-
-/** public static function ION\FS::watch(string $filename, int $events) : Sequence */
+/** public static function ION\FS::watch(string $filename, int $events = 0) : Sequence */
 CLASS_METHOD(ION_FS, watch) {
     zend_string     * filename = NULL;
     zend_long         flags    = 0;
-    int               fd;
-    struct kevent     event;
-    struct timespec   timeout = { 0, 0 };
     char              realpath[MAXPATHLEN];
     ion_fs_watcher  * watcher = NULL;
-    uint              vnode_events = NOTE_DELETE |  NOTE_WRITE | NOTE_EXTEND | NOTE_ATTRIB | NOTE_LINK | NOTE_RENAME | NOTE_REVOKE;
 
-
-    ZEND_PARSE_PARAMETERS_START(2,2)
+    ZEND_PARSE_PARAMETERS_START(1,2)
         Z_PARAM_STR(filename)
+        Z_PARAM_OPTIONAL
         Z_PARAM_LONG(flags)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
@@ -202,25 +281,9 @@ CLASS_METHOD(ION_FS, watch) {
         RETURN_OBJ(watcher->sequence);
     }
 
-    fd = open(filename->val, O_EVTONLY);
-    if (fd <= 0) {
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0 , "Failed to open file %s for events: %s", filename->val, strerror(errno));
-        return;
-    }
-
-    watcher = ecalloc(1, sizeof(ion_fs_watcher));
-    watcher->sequence = ion_promisor_sequence_new(NULL);
-    watcher->fd = fd;
-    watcher->pathname = zend_string_init(realpath, strlen(realpath), 0);
-    ion_promisor_store(watcher->sequence, watcher);
-    ion_promisor_dtor(watcher->sequence, ion_fs_watcher_dtor);
-
-    memset(&event, 0, sizeof(event));
-    EV_SET( &event, fd, EVFILT_VNODE, EV_ADD | EV_CLEAR, vnode_events, 0, watcher);
-    if (kevent(kq, &event, 1, NULL, 0, &timeout) == -1) {
-        zend_object_release(watcher->sequence);
-        zend_throw_exception(ion_class_entry(ION_RuntimeException), "Failed to add fsnotify event", 0);
-        return;
+    watcher = ion_fs_watcher_add(realpath, flags);
+    if(!watcher) {
+        return; // exception has been thrown
     }
     if(!zend_hash_str_add_ptr(ION(watchers), realpath, strlen(realpath), watcher)) {
         zend_object_release(watcher->sequence);
@@ -231,7 +294,7 @@ CLASS_METHOD(ION_FS, watch) {
     RETURN_OBJ(watcher->sequence);
 }
 
-METHOD_ARGS_BEGIN(ION_FS, watch, 2)
+METHOD_ARGS_BEGIN(ION_FS, watch, 1)
     METHOD_ARG_STRING(filename, 0)
     METHOD_ARG_LONG(events, 0)
 METHOD_ARGS_END()
