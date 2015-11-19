@@ -7,33 +7,35 @@ zend_class_entry * ion_ce_ION_FS;
 zend_object_handlers ion_oh_ION_FS;
 
 #if defined(HAVE_INOTIFY)
-int ind;
-ion_event     * notifier;
 
 int ion_fs_watch_init() {
-    ind = inotify_init();
+    GION(watch_fd) = inotify_init();
     if(ind < 0) {
         zend_error(E_ERROR, "FS watcher: Could not open inotify queue: %s", strerror(errno));
         return FAILURE;
     }
-    notifier = event_new(ION(base), ind, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, ion_fs_watch_cb, NULL);
+    notifier = event_new(ION(base), GION(watch_fd), EV_READ | EV_WRITE | EV_PERSIST | EV_ET, ion_fs_watch_cb, NULL);
     if(event_add(notifier, NULL) == FAILURE) {
         event_del(notifier);
         event_free(notifier);
         zend_error(E_ERROR, "FS watcher: Could not add listener for queue");
         return FAILURE;
     }
+    GION(watch_event) = notifier;
     return SUCCESS;
 }
 
 int ion_fs_watch_close() {
-    close(ind);
+    event_del(GION(watch_event));
+    event_free(GION(watch_event));
+    GION(watch_event) = NULL;
+    close(GION(watch_fd));
     return SUCCESS;
 }
 
 ion_fs_watcher * ion_fs_watcher_add(const char * pathname, zend_long flags) {
 
-    wd = inotify_add_watch( fd, "/tmp", IN_CREATE | IN_DELETE );
+    wd = inotify_add_watch( GION(watch_fd), "/tmp", IN_CREATE | IN_DELETE );
     int               fd;
     struct kevent     event;
     struct timespec   timeout = { 0, 0 };
@@ -61,8 +63,6 @@ void ion_fs_watch_cb(evutil_socket_t fd, short what, void * arg) {
 }
 
 #elif defined(HAVE_KQUEUE)
-int kq;
-ion_event     * notifier;
 
 void ion_fs_watch_cb(evutil_socket_t fd, short what, void * arg) {
     struct timespec  timeout = { 0, 0 };
@@ -71,7 +71,7 @@ void ion_fs_watch_cb(evutil_socket_t fd, short what, void * arg) {
     ion_fs_watcher * watcher = NULL;
     zval             result;
 
-    while((has_event = kevent(kq, NULL, 0, &event, 1, &timeout))) {
+    while((has_event = kevent(GION(watch_fd), NULL, 0, &event, 1, &timeout))) {
         if ((has_event < 0) || (event.flags == EV_ERROR)) {
             /* An error occurred. */
             zend_error(E_ERROR, "FS watcher: An error occurred: %s", strerror(errno));
@@ -84,19 +84,23 @@ void ion_fs_watch_cb(evutil_socket_t fd, short what, void * arg) {
 }
 
 int ion_fs_watch_init() {
-    kq = kqueue();
-    notifier = event_new(ION(base), kq, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, ion_fs_watch_cb, NULL);
+    GION(watch_fd) = kqueue();
+    ion_event * notifier = event_new(GION(base), GION(watch_fd), EV_READ | EV_WRITE | EV_PERSIST | EV_ET, ion_fs_watch_cb, NULL);
     if(event_add(notifier, NULL) == FAILURE) {
         event_del(notifier);
         event_free(notifier);
         zend_error(E_ERROR, "FS watcher: Could not open watchers queue: %s", strerror(errno));
         return FAILURE;
     }
+    GION(watch_event) = notifier;
     return SUCCESS;
 }
 
 int ion_fs_watch_close() {
-    close(kq);
+    event_del(GION(watch_event));
+    event_free(GION(watch_event));
+    GION(watch_event) = NULL;
+    close(GION(watch_fd));
     return SUCCESS;
 }
 
@@ -120,8 +124,8 @@ ion_fs_watcher * ion_fs_watcher_add(const char * pathname, zend_long flags) {
     ion_promisor_dtor(watcher->sequence, ion_fs_watcher_dtor);
 
     memset(&event, 0, sizeof(event));
-    EV_SET( &event, fd, EVFILT_VNODE, EV_ADD | EV_CLEAR, VNODE_EVENTS, 0, watcher);
-    if (kevent(kq, &event, 1, NULL, 0, &timeout) == -1) {
+    EV_SET(&event, fd, EVFILT_VNODE, EV_ADD | EV_CLEAR, VNODE_EVENTS, 0, watcher);
+    if (kevent(GION(watch_fd), &event, 1, NULL, 0, &timeout) == -1) {
         zend_object_release(watcher->sequence);
         zend_throw_exception(ion_class_entry(ION_RuntimeException), "Failed to add fsnotify event", 0);
         return NULL;
@@ -133,8 +137,8 @@ ion_fs_watcher * ion_fs_watcher_add(const char * pathname, zend_long flags) {
 void ion_fs_watcher_remove(ion_fs_watcher * watcher) {
     struct kevent event;
     struct timespec timeout = { 0, 0 };
-    EV_SET( &event, watcher->fd, EVFILT_VNODE, EV_DELETE, 0, 0, NULL);
-    if(kevent(kq, &event, 1, NULL, 0, &timeout) == -1) {
+    EV_SET(&event, watcher->fd, EVFILT_VNODE, EV_DELETE, 0, 0, NULL);
+    if(kevent(GION(watch_fd), &event, 1, NULL, 0, &timeout) == -1) {
         zend_error(E_NOTICE, "FS watcher: Could not remove watcher from queue: %s", strerror(errno));
     }
     zend_string_release(watcher->pathname);
@@ -215,8 +219,8 @@ CLASS_METHOD(ION_FS, readFile) {
         zend_throw_exception(ion_class_entry(ION_RuntimeException), "Failed to create pair stream", 0);
         return;
     }
-    ion_buffer * one = bufferevent_socket_new(ION(base), pair[0], STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE);
-    ion_buffer * two = bufferevent_socket_new(ION(base), pair[1], STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE);
+    ion_buffer * one = bufferevent_socket_new(GION(base), pair[0], STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE);
+    ion_buffer * two = bufferevent_socket_new(GION(base), pair[1], STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE);
     bufferevent_enable(one, EV_WRITE);
     bufferevent_enable(two, EV_READ);
 //    bufferevent_setwatermark(two, EV_READ, (size_t)length + 1, (size_t)length + 10);
@@ -275,7 +279,7 @@ CLASS_METHOD(ION_FS, watch) {
         return;
     }
 
-    watcher = zend_hash_str_find_ptr(ION(watchers), realpath, strlen(realpath));
+    watcher = zend_hash_str_find_ptr(GION(watchers), realpath, strlen(realpath));
     if(watcher) {
         obj_add_ref(watcher->sequence);
         RETURN_OBJ(watcher->sequence);
@@ -285,7 +289,7 @@ CLASS_METHOD(ION_FS, watch) {
     if(!watcher) {
         return; // exception has been thrown
     }
-    if(!zend_hash_str_add_ptr(ION(watchers), realpath, strlen(realpath), watcher)) {
+    if(!zend_hash_str_add_ptr(GION(watchers), realpath, strlen(realpath), watcher)) {
         zend_object_release(watcher->sequence);
         zend_throw_exception(ion_class_entry(ION_RuntimeException), "Failed to store watcher", 0);
         return;
@@ -300,7 +304,7 @@ METHOD_ARGS_BEGIN(ION_FS, watch, 1)
 METHOD_ARGS_END()
 
 CLASS_METHOD(ION_FS, unwatchAll) {
-    zend_hash_clean(ION(watchers));
+    zend_hash_clean(GION(watchers));
 }
 
 METHOD_WITHOUT_ARGS(ION_FS, unwatchAll);
@@ -319,15 +323,15 @@ PHP_MINIT_FUNCTION(ION_FS) {
 }
 
 PHP_RINIT_FUNCTION(ION_FS) {
-    ALLOC_HASHTABLE(ION(watchers));
-    zend_hash_init(ION(watchers), 128, NULL, ion_fs_watcher_clean, 0);
+    ALLOC_HASHTABLE(GION(watchers));
+    zend_hash_init(GION(watchers), 128, NULL, ion_fs_watcher_clean, 0);
     return SUCCESS;
 }
 
 PHP_RSHUTDOWN_FUNCTION(ION_FS) {
-    zend_hash_clean(ION(watchers));
-    zend_hash_destroy(ION(watchers));
-    FREE_HASHTABLE(ION(watchers));
+    zend_hash_clean(GION(watchers));
+    zend_hash_destroy(GION(watchers));
+    FREE_HASHTABLE(GION(watchers));
     return SUCCESS;
 }
 

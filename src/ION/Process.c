@@ -27,7 +27,7 @@ CLASS_METHOD(ION_Process, fork) {
     } else if(pid) { // parent
         RETURN_LONG(pid);
     } else { // child
-        if(!ion_reinit()) {
+        if(event_reinit(GION(base)) == FAILURE) {
             php_error(E_NOTICE, "Some events could not be re-added");
         }
         RETURN_LONG(0);
@@ -103,13 +103,13 @@ CLASS_METHOD(ION_Process, signal) {
         Z_PARAM_LONG(signo)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    sequence = zend_hash_index_find_ptr(ION(signals), (zend_ulong)signo);
+    sequence = zend_hash_index_find_ptr(GION(signals), (zend_ulong)signo);
     if(sequence) {
         obj_add_ref(sequence);
         RETURN_OBJ(sequence);
     }
     sequence = ion_promisor_sequence_new(NULL);
-    event = evsignal_new(ION(base), (int)signo, ion_process_signal, sequence);
+    event = evsignal_new(GION(base), (int)signo, ion_process_signal, sequence);
     if(evsignal_add(event, NULL) == FAILURE) {
         zend_object_release(sequence);
         zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to listening signal %d", signo);
@@ -118,7 +118,7 @@ CLASS_METHOD(ION_Process, signal) {
     ion_promisor_store(sequence, event);
     ion_promisor_dtor(sequence, ion_process_signal_dtor);
     zval * pz;
-    pz = zend_hash_index_add_ptr(ION(signals), (zend_ulong)signo, (void *)sequence);
+    pz = zend_hash_index_add_ptr(GION(signals), (zend_ulong)signo, (void *)sequence);
     if(!pz) {
         zend_object_release(sequence);
         zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to store signal (%d) handler", signo);
@@ -142,9 +142,9 @@ CLASS_METHOD(ION_Process, clearSignal) {
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     if(signo >= 0) {
-        zend_hash_index_del(ION(signals), (zend_ulong)signo);
+        zend_hash_index_del(GION(signals), (zend_ulong)signo);
     } else {
-        zend_hash_clean(ION(signals));
+        zend_hash_clean(GION(signals));
     }
 }
 
@@ -340,7 +340,7 @@ zend_string * ion_buffer_read_all(ion_buffer * buffer) {
     }
 }
 
-void ion_exec_callback(bevent * bev, short what, void * arg) {
+void ion_exec_callback(ion_buffer * bev, short what, void * arg) {
     ion_exec * exec = (ion_exec *) arg;
     int        pid;
     int        status;
@@ -458,7 +458,7 @@ CLASS_METHOD(ION_Process, exec) {
         exec->stderr_fd = err_pipes[0];
         exec->err       = bufferevent_new(exec->stderr_fd, NULL, NULL, NULL, (void *)exec);
         exec->out       = bufferevent_new(exec->stdout_fd, NULL, NULL, ion_exec_callback, (void *)exec);
-        if(bufferevent_base_set(ION(base), exec->err) == FAILURE) {
+        if(bufferevent_base_set(GION(base), exec->err) == FAILURE) {
             bufferevent_free(exec->err);
             close(exec->stdout_fd);
             close(exec->stderr_fd);
@@ -466,7 +466,7 @@ CLASS_METHOD(ION_Process, exec) {
             zend_throw_exception(ion_class_entry(ION_RuntimeException),"Failed to initializate spawned process", 0);
             return;
         }
-        if(bufferevent_base_set(ION(base), exec->out) == FAILURE) {
+        if(bufferevent_base_set(GION(base), exec->out) == FAILURE) {
             bufferevent_free(exec->err);
             bufferevent_free(exec->out);
             close(exec->stdout_fd);
@@ -543,15 +543,15 @@ PHP_MINIT_FUNCTION(ION_Process) {
 }
 
 PHP_RINIT_FUNCTION(ION_Process) {
-    ALLOC_HASHTABLE(ION(signals));
-    zend_hash_init(ION(signals), 128, NULL, ion_process_clean_signal, 0);
+    ALLOC_HASHTABLE(GION(signals));
+    zend_hash_init(GION(signals), 128, NULL, ion_process_clean_signal, 0);
     return SUCCESS;
 }
 
 PHP_RSHUTDOWN_FUNCTION(ION_Process) {
-    zend_hash_clean(ION(signals));
-    zend_hash_destroy(ION(signals));
-    FREE_HASHTABLE(ION(signals));
+    zend_hash_clean(GION(signals));
+    zend_hash_destroy(GION(signals));
+    FREE_HASHTABLE(GION(signals));
     return SUCCESS;
 }
 

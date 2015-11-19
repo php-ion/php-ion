@@ -71,7 +71,7 @@ typedef struct _ion_stream_token {
 typedef struct _ion_stream {
     zend_object        std;
     zend_uint          state;   // flags
-    bevent           * buffer;  // input and output bufferevent
+    ion_buffer       * buffer;  // input/output buffer
     size_t             length;  // bytes for reading
     size_t             input_size;
     ion_stream_token * token;
@@ -99,7 +99,7 @@ typedef struct _ion_stream {
 #define ion_stream_is_valid_fd(stream) (bufferevent_getfd(stream->buffer) == -1)
 
 int ion_stream_pair(zend_object ** stream_one, zend_object ** stream_two, zend_class_entry * ce);
-zend_object * ion_stream_new_ex(bevent * buffer, int flags, zend_class_entry * cls);
+zend_object * ion_stream_new_ex(ion_buffer * buffer, int flags, zend_class_entry * cls);
 zend_string * ion_stream_get_name_self(zend_object * stream);
 zend_string * ion_stream_get_name_remote(zend_object * stream);
 zend_string * ion_stream_read(ion_stream * stream, size_t size);

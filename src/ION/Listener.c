@@ -45,7 +45,7 @@ static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct 
     zval           zstream;
 
     if(listener->on_connect) {
-        bevent * buffer = bufferevent_socket_new(ION(base), fd, BEV_OPT_CLOSE_ON_FREE);
+        ion_buffer * buffer = bufferevent_socket_new(GION(base), fd, BEV_OPT_CLOSE_ON_FREE);
         stream = ion_stream_new(buffer, ION_STREAM_STATE_ENABLED
                                         | ION_STREAM_STATE_SOCKET
                                         | ION_STREAM_STATE_CONNECTED
@@ -117,7 +117,7 @@ CLASS_METHOD(ION_Listener, __construct) {
             zend_throw_exception(ion_class_entry(InvalidArgumentException), "Address is not well-formed", 0);
             return;
         }
-        listener->listener = evconnlistener_new_bind(ION(base), _ion_listener_accept, listener,
+        listener->listener = evconnlistener_new_bind(GION(base), _ion_listener_accept, listener,
                                                      LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_EXEC, -1,
                                                      (struct sockaddr *)&sock, sock_len);
         if(listener->listener) {
@@ -137,7 +137,7 @@ CLASS_METHOD(ION_Listener, __construct) {
             zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, "Failed to listen on %s: %s", listen->val, evutil_socket_error_to_string(errno));
             return;
         }
-        listener->listener = evconnlistener_new(ION(base), _ion_listener_accept, listener,
+        listener->listener = evconnlistener_new(GION(base), _ion_listener_accept, listener,
                                                 LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_EXEC, -1, fd);
         listener->name = zend_string_init(resource->path, strlen(resource->path) + 1, 0);
     } else {
@@ -174,7 +174,7 @@ CLASS_METHOD(ION_Listener, onConnect) {
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
        Z_PARAM_ZVAL(action)
-    ZEND_PARSE_PARAMETERS_END();
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     listener->on_connect = ion_promisor_sequence_new(action);
 

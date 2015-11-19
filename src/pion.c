@@ -45,15 +45,4 @@ ZEND_API void php_efree_wrapper(void * ptr) {
     free(ptr);
 }
 
-ZEND_API zend_bool ion_reinit() {
-    zend_bool result;
-    if(event_reinit(ION(base)) == FAILURE) {
-        result = false;
-    } else {
-        result = true;
-    }
-    return result;
-}
-
-
 END_EXTERN_C()

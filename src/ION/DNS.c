@@ -43,7 +43,7 @@ void _ion_dns_getaddrinfo_callback(int errcode, struct evutil_addrinfo * addr, v
     zend_object_release(req->deferred);
     req->deferred = NULL;
     req->request = NULL;
-    if(zend_hash_del(ION(dns)->requests, req->domain) == FAILURE) {
+    if(zend_hash_del(GION(resolvers), req->domain) == FAILURE) {
         zend_error(E_ERROR, "Failed to remove a addrinfo request");
     }
 }
@@ -56,7 +56,7 @@ void _ion_dns_getaddrinfo_cancel(zend_object * object) {
     zend_object_release(req->deferred);
     req->deferred = NULL;
     req->request = NULL;
-    if(zend_hash_del(ION(dns)->requests, req->domain) == FAILURE) {
+    if(zend_hash_del(GION(resolvers), req->domain) == FAILURE) {
         zend_error(E_ERROR, "Failed to remove a addrinfo request");
     }
 }
@@ -86,7 +86,7 @@ CLASS_METHOD(ION_DNS, resolve) {
         Z_PARAM_OPTIONAL
         Z_PARAM_LONG(flags)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
-    deferred = zend_hash_find_ptr(ION(dns)->requests, domain);
+    deferred = zend_hash_find_ptr(GION(resolvers), domain);
     if(deferred) {
         obj_add_ref(deferred);
         RETURN_OBJ(deferred);
@@ -110,12 +110,12 @@ CLASS_METHOD(ION_DNS, resolve) {
     memset(req, 0, sizeof(ion_dns_addr_request));
     req->domain = zend_string_copy(domain);
     req->deferred = ion_promisor_deferred_new_ex(_ion_dns_getaddrinfo_cancel);
-    if(!zend_hash_add_ptr(ION(dns)->requests, domain, (void *)req)) {
+    if(!zend_hash_add_ptr(GION(resolvers), domain, (void *)req)) {
         zend_throw_exception(ion_class_entry(ION_RuntimeException), "Failed to store request", 0);
         return;
     }
     ion_promisor_store(req->deferred, req);
-    req->request = evdns_getaddrinfo(ION(dns)->evdns, domain->val, NULL, &hints, _ion_dns_getaddrinfo_callback, req);
+    req->request = evdns_getaddrinfo(GION(evdns), domain->val, NULL, &hints, _ion_dns_getaddrinfo_callback, req);
     obj_add_ref(req->deferred)
     RETURN_OBJ(req->deferred);
 }
@@ -140,32 +140,28 @@ PHP_MINIT_FUNCTION(ION_DNS) {
     PION_CLASS_CONST_LONG(ION_DNS, "RECORD_A", ION_DNS_RECORD_A);
     PION_CLASS_CONST_LONG(ION_DNS, "RECORD_AAAA", ION_DNS_RECORD_AAAA);
     PION_CLASS_CONST_LONG(ION_DNS, "RECORD_CNAME", ION_DNS_RECORD_CNAME);
-    ION(dns) = pemalloc(sizeof(ion_dns), 1);
-    memset(ION(dns), 0, sizeof(ion_dns));
-//    REGISTER_INI_ENTRIES();
 
-    ION(dns)->evdns = evdns_base_new(ION(base), 1);
-    evdns_base_resolv_conf_parse(ION(dns)->evdns, DNS_OPTIONS_ALL, ION_DNS_RESOLV_CONF_DEFAULT);
+    GION(evdns) = evdns_base_new(GION(base), 1);
+    evdns_base_resolv_conf_parse(GION(evdns), DNS_OPTIONS_ALL, ION_DNS_RESOLV_CONF_DEFAULT);
 
     return SUCCESS;
 }
 
 PHP_RINIT_FUNCTION(ION_DNS) {
-    ALLOC_HASHTABLE(ION(dns)->requests);
-    zend_hash_init(ION(dns)->requests, 128, NULL, _ion_dns_clean_requests, 0);
+    ALLOC_HASHTABLE(GION(resolvers));
+    zend_hash_init(GION(resolvers), 128, NULL, _ion_dns_clean_requests, 0);
     return SUCCESS;
 }
 
 PHP_RSHUTDOWN_FUNCTION(ION_DNS) {
-    zend_hash_clean(ION(dns)->requests);
-    zend_hash_destroy(ION(dns)->requests);
-    FREE_HASHTABLE(ION(dns)->requests);
+    zend_hash_clean(GION(resolvers));
+    zend_hash_destroy(GION(resolvers));
+    FREE_HASHTABLE(GION(resolvers));
     return SUCCESS;
 }
 
 PHP_MSHUTDOWN_FUNCTION(ION_DNS) {
-    evdns_base_free(ION(dns)->evdns, 0);
-    pefree(ION(dns), 1);
+    evdns_base_free(GION(evdns), 0);
 
     return SUCCESS;
 }

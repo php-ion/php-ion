@@ -132,10 +132,10 @@ long ion_stream_search_token(struct evbuffer * buffer, ion_stream_token * token)
     return SUCCESS;
 }
 
-void _ion_stream_input(bevent * bev, void * ctx) {
+void _ion_stream_input(ion_buffer * bev, void * ctx) {
 
     ion_stream      * stream = get_object_instance(ctx, ion_stream);
-    struct evbuffer * input;
+    ion_evbuffer    * input;
     zend_string     * data = NULL;
 
     obj_add_ref(&stream->std);
@@ -198,7 +198,7 @@ void _ion_stream_input(bevent * bev, void * ctx) {
     ION_CHECK_LOOP();
 }
 
-void _ion_stream_output(bevent * bev, void *ctx) {
+void _ion_stream_output(ion_buffer * bev, void *ctx) {
     ion_stream *stream = get_object_instance(ctx, ion_stream);
 
     obj_add_ref(&stream->std);
@@ -214,7 +214,7 @@ void _ion_stream_output(bevent * bev, void *ctx) {
     ION_CHECK_LOOP();
 }
 
-void _ion_stream_notify(bevent * bev, short what, void * ctx) {
+void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
     ion_stream * stream = get_object_instance(ctx, ion_stream);
 
     obj_add_ref(&stream->std);
@@ -305,7 +305,7 @@ int ion_stream_pair(zend_object ** stream_one, zend_object ** stream_two, zend_c
     zend_object * one;
     zend_object * two;
 
-    if(bufferevent_pair_new(ION(base), flags, pair) == FAILURE) {
+    if(bufferevent_pair_new(GION(base), flags, pair) == FAILURE) {
         zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to create pair", 0);
         return FAILURE;
     }
@@ -336,7 +336,7 @@ int ion_stream_pair(zend_object ** stream_one, zend_object ** stream_two, zend_c
     return SUCCESS;
 }
 
-zend_object * ion_stream_new_ex(bevent * buffer, int flags, zend_class_entry * cls) {
+zend_object * ion_stream_new_ex(ion_buffer * buffer, int flags, zend_class_entry * cls) {
     ion_stream * stream;
     zval         zstream;
     if(!cls) {
@@ -460,7 +460,7 @@ CLASS_METHOD(ION_Stream, resource) {
     int           fd2;
     int           flags = STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE;
     int           state = 0;
-    bevent      * buffer = NULL;
+    ion_buffer  * buffer = NULL;
     zend_object * stream = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
@@ -485,7 +485,7 @@ CLASS_METHOD(ION_Stream, resource) {
         return;
     }
 
-    buffer = bufferevent_socket_new(ION(base), fd2, flags);
+    buffer = bufferevent_socket_new(GION(base), fd2, flags);
     if(NULL == buffer) {
         zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to create Stream: buffer corrupted", 0);
         return;
@@ -526,8 +526,8 @@ METHOD_WITHOUT_ARGS(ION_Stream, pair)
 /** public static function ION\Stream::socket(string $host) : self */
 CLASS_METHOD(ION_Stream, socket) {
     zend_string * host = NULL;
-    php_url * resource;
-    bevent * buffer   = NULL;
+    php_url     * resource;
+    ion_buffer  * buffer   = NULL;
     zend_object * stream = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1,1)
@@ -539,7 +539,7 @@ CLASS_METHOD(ION_Stream, socket) {
         zend_throw_exception(ion_class_entry(InvalidArgumentException), "Invalid socket name", 0);
         return;
     }
-    buffer = bufferevent_socket_new(ION(base), -1, STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE);
+    buffer = bufferevent_socket_new(GION(base), -1, STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE);
 
     if(buffer == NULL) {
         zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Error creating the socket", 0);
@@ -548,7 +548,7 @@ CLASS_METHOD(ION_Stream, socket) {
     }
 
     if(resource->host) { // ip:port, [ipv6]:port, hostname:port
-        if(bufferevent_socket_connect_hostname(buffer, ION(dns)->evdns, AF_UNSPEC, resource->host, resource->port ? (int)resource->port : 0) == FAILURE) {
+        if(bufferevent_socket_connect_hostname(buffer, GION(evdns), AF_UNSPEC, resource->host, resource->port ? (int)resource->port : 0) == FAILURE) {
             php_url_free(resource);
             bufferevent_free(buffer);
             zend_throw_exception_ex(ion_class_entry(ION_Stream_RuntimeException), 0, "Failed to connect to %s: %s", host->val, strerror(errno));
@@ -1573,10 +1573,6 @@ PHP_MINIT_FUNCTION(ION_Stream) {
     PION_CLASS_CONST_LONG(ION_Stream, "STATE_ERROR",     ION_STREAM_STATE_ERROR);
     PION_CLASS_CONST_LONG(ION_Stream, "STATE_SHUTDOWN",  ION_STREAM_STATE_SHUTDOWN);
     PION_CLASS_CONST_LONG(ION_Stream, "STATE_CLOSED",    ION_STREAM_STATE_CLOSED);
-
-//    PION_CLASS_CONST_LONG(ION_Stream, "NAME_HOST",     ION_STREAM_NAME_HOST);
-//    PION_CLASS_CONST_LONG(ION_Stream, "NAME_ADDRESS",  ION_STREAM_NAME_ADDRESS);
-//    PION_CLASS_CONST_LONG(ION_Stream, "NAME_PORT",     ION_STREAM_NAME_PORT);
 
     PION_CLASS_CONST_LONG(ION_Stream, "INPUT",  EV_READ);
     PION_CLASS_CONST_LONG(ION_Stream, "OUTPUT", EV_WRITE);

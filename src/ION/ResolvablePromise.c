@@ -25,7 +25,7 @@ CLASS_METHOD(ION_ResolvablePromise, done) {
     }
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_ZVAL(data)
-    ZEND_PARSE_PARAMETERS_END();
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     ion_promisor_done(Z_OBJ_P(getThis()), data);
     RETURN_THIS();
@@ -56,7 +56,7 @@ CLASS_METHOD(ION_ResolvablePromise, fail) {
     }
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_ZVAL(error)
-    ZEND_PARSE_PARAMETERS_END();
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     ion_promisor_fail(Z_OBJ_P(getThis()), error);
     RETURN_THIS();

@@ -14,10 +14,11 @@ zend_object * ion_sequence_init(zend_class_entry * ce) {
 /** public function ION\Sequence::__construct(callable $handler) : self */
 CLASS_METHOD(ION_Sequence, __construct) {
     zval * handler = NULL;
+
     ZEND_PARSE_PARAMETERS_START(0, 1)
         Z_PARAM_OPTIONAL
         Z_PARAM_ZVAL_EX(handler, 1, 0)
-    ZEND_PARSE_PARAMETERS_END();
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
     ion_promisor_set_callbacks(Z_OBJ_P(getThis()), handler, NULL, NULL);
 }
 
@@ -29,10 +30,11 @@ METHOD_ARGS_END()
 /** public function ION\Sequence::__invoke(mixed ...$data) : void */
 CLASS_METHOD(ION_Sequence, __invoke) {
     zval * data = NULL;
+
     ZEND_PARSE_PARAMETERS_START(0, 1)
         Z_PARAM_OPTIONAL
         Z_PARAM_ZVAL(data)
-    ZEND_PARSE_PARAMETERS_END();
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
     ion_promisor_sequence_invoke(Z_OBJ_P(getThis()), data);
 }
 

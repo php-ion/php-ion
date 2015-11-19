@@ -6,11 +6,10 @@
 
 zend_class_entry * ion_ce_ION;
 zend_object_handlers ion_oh_ION;
-ion_base *ionBase;
 
 /** public function ION::reinit() : bool */
 CLASS_METHOD(ION, reinit) {
-    if(ion_reinit()) {
+    if(event_reinit(GION(base)) == SUCCESS) {
         RETURN_TRUE;
     } else {
         RETURN_FALSE;
@@ -18,16 +17,13 @@ CLASS_METHOD(ION, reinit) {
 }
 
 METHOD_WITHOUT_ARGS(ION, reinit);
-//METHOD_ARGS_BEGIN(ION, reinit, 1)
-//    METHOD_ARG(flags, 0)
-//METHOD_ARGS_END()
 
 /** public function ION::dispatch(int $flags = 0) : bool */
 CLASS_METHOD(ION, dispatch) {
     zend_long flags = 0;
     int ret;
 
-    if(ION(flags) & ION_IN_LOOP) {
+    if(GION(flags) & ION_LOOP_STARTED) {
         zend_throw_error(NULL, "Dispatching in progress", 1);
         return;
     }
@@ -37,9 +33,10 @@ CLASS_METHOD(ION, dispatch) {
         Z_PARAM_LONG(flags)
     ZEND_PARSE_PARAMETERS_END();
 
-    ION(flags) |= ION_IN_LOOP;
-    ret = event_base_loop(ION(base), (int)flags);
-    ION(flags) &= ~ION_IN_LOOP;
+    GION(flags) |= ION_LOOP_STARTED;
+    ret = event_base_loop(GION(base), (int)flags);
+//    ret = event_base_loop(GION(base), EVLOOP_NONBLOCK | EVLOOP_ONCE);
+    GION(flags) &= ~ION_LOOP_STARTED;
 
     if(ret == -1) {
         zend_throw_error(NULL, "Dispatching runtime error", 1);
@@ -70,9 +67,9 @@ CLASS_METHOD(ION, stop) {
     if(timeout > 0) {
         time.tv_usec = ((int)(timeout*1000000) % 1000000);
         time.tv_sec = (int)timeout;
-        event_base_loopexit(ION(base), &time);
+        event_base_loopexit(GION(base), &time);
     } else {
-        event_base_loopbreak(ION(base));
+        event_base_loopbreak(GION(base));
 //        event_base_loopexit(ION(base), NULL);
     }
 }
@@ -92,7 +89,7 @@ static void _timer_done(evutil_socket_t fd, short flags, void * arg) {
 
 static void _timer_dtor(zend_object * object) {
     ion_promisor * deferred = get_object_instance(object, ion_promisor);
-    event * timer = (event *) deferred->object;
+    ion_event * timer = (ion_event *) deferred->object;
     event_del(timer);
     event_free(timer);
     obj_ptr_dtor(object);
@@ -104,7 +101,7 @@ CLASS_METHOD(ION, await) {
     zend_object * deferred;
     double timeout = 0.0;
     struct timeval tv = { 0, 0 };
-    event * timer;
+    ion_event * timer;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_DOUBLE(timeout)
@@ -116,7 +113,7 @@ CLASS_METHOD(ION, await) {
     tv.tv_usec = ((int)(timeout*1000000) % 1000000);
     tv.tv_sec = (int)timeout;
     deferred = ion_promisor_deferred_new_ex(NULL);
-    timer = event_new(ION(base), -1, EV_TIMEOUT, _timer_done, deferred);
+    timer = event_new(GION(base), -1, EV_TIMEOUT, _timer_done, deferred);
     if(event_add(timer, &tv) == FAILURE) {
         event_del(timer);
         event_free(timer);
@@ -135,9 +132,6 @@ METHOD_ARGS_BEGIN(ION, await, 1)
     METHOD_ARG_FLOAT(time, 0)
 METHOD_ARGS_END()
 
-
-
-
 static void _ion_interval_free(ion_interval * interval) {
     if(interval->timer) {
         event_del(interval->timer);
@@ -147,7 +141,7 @@ static void _ion_interval_free(ion_interval * interval) {
         return;
     }
     if(interval->name) {
-        int res = zend_symtable_del(ION(timers), interval->name);
+        int res = zend_symtable_del(GION(timers), interval->name);
         ZEND_ASSERT(res == SUCCESS);
         zend_string_free(interval->name);
     }
@@ -194,6 +188,8 @@ CLASS_METHOD(ION, interval) {
         Z_PARAM_STR(name)
     ZEND_PARSE_PARAMETERS_END();
 
+    // todo: check existing interval by name
+
     interval = ecalloc(1, sizeof(ion_interval));
     interval->promisor   = ion_promisor_sequence_new(NULL);
     interval->tv.tv_usec = ((int)(timeout*1000000) % 1000000);
@@ -201,10 +197,10 @@ CLASS_METHOD(ION, interval) {
     if(name) {
         interval->name   = zend_string_copy(name);
     }
-    interval->timer      = event_new(ION(base), -1, EV_TIMEOUT, _ion_interval_invoke, interval);
+    interval->timer      = event_new(GION(base), -1, EV_TIMEOUT, _ion_interval_invoke, interval);
 
     if(interval->name) {
-        zend_hash_add_ptr(ION(timers), interval->name, interval);
+        zend_hash_add_ptr(GION(timers), interval->name, interval);
     }
 
     if(event_add(interval->timer, &interval->tv) == FAILURE) {
@@ -214,7 +210,8 @@ CLASS_METHOD(ION, interval) {
     } else {
         ion_promisor_store(interval->promisor, interval);
         ion_promisor_dtor(interval->promisor, _ion_interval_dtor);
-        RETURN_OBJ_ADDREF(interval->promisor);
+        obj_add_ref(interval->promisor);
+        RETURN_OBJ(interval->promisor);
     }
 }
 
@@ -232,7 +229,7 @@ CLASS_METHOD(ION, cancelInterval) {
         Z_PARAM_STR(name)
     ZEND_PARSE_PARAMETERS_END();
 
-    interval = zend_hash_find_ptr(ION(timers), name);
+    interval = zend_hash_find_ptr(GION(timers), name);
     if(interval) {
         _ion_interval_free(interval);
         RETURN_TRUE;
@@ -291,7 +288,6 @@ PHP_MINIT_FUNCTION(ION) {
     PION_CLASS_CONST_STRING(ION, "ENGINE_VERSION", event_get_version());
     PION_CLASS_CONST_LONG(ION, "LOOP_ONCE",        EVLOOP_ONCE);
     PION_CLASS_CONST_LONG(ION, "LOOP_NONBLOCK",    EVLOOP_NONBLOCK);
-//    PION_CLASS_CONST_LONG(ION, "RECREATE_BASE",    RECREATE_BASE);
 
     PION_CLASS_CONST_LONG(ION, "EV_READ",            EV_READ);
     PION_CLASS_CONST_LONG(ION, "EV_WRITE",           EV_WRITE);
@@ -306,15 +302,14 @@ PHP_MSHUTDOWN_FUNCTION(ION) {
 }
 
 PHP_RINIT_FUNCTION(ION) {
-    ALLOC_HASHTABLE(ION(timers));
-    zend_hash_init(ION(timers), 128, NULL, _ion_clean_interval, 0);
+    ALLOC_HASHTABLE(GION(timers));
+    zend_hash_init(GION(timers), 128, NULL, _ion_clean_interval, 0);
     return SUCCESS;
 }
 
-
 PHP_RSHUTDOWN_FUNCTION(ION) {
-    zend_hash_clean(ION(timers));
-    zend_hash_destroy(ION(timers));
-    FREE_HASHTABLE(ION(timers));
+    zend_hash_clean(GION(timers));
+    zend_hash_destroy(GION(timers));
+    FREE_HASHTABLE(GION(timers));
     return SUCCESS;
 }

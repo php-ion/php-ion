@@ -4,17 +4,17 @@
 
 /*  */
 #include "php.h"
-#include "ext/spl/spl_functions.h"
-#include "ext/standard/php_var.h"
 #include "ext/standard/info.h"
 
 /* Libevent */
 #include <event.h>
 
-#include "php_ion.h"
 #include "pion.h"
+#include "php_ion.h"
 
-extern ion_base *ionBase;
+ZEND_DECLARE_MODULE_GLOBALS(ion);
+
+//extern ion_base *ionBase;
 
 #ifdef COMPILE_DL_ION
 #ifdef ZTS
@@ -25,7 +25,7 @@ ZEND_GET_MODULE(ion);
 
 
 static const zend_module_dep ion_depends[] = {
-    ZEND_MOD_REQUIRED("SPL")
+    ZEND_MOD_REQUIRED("spl")
     {NULL, NULL, NULL}
 };
 
@@ -52,21 +52,12 @@ static void _engine_fatal(int err) {
     _exit(err);
 }
 
-/* ION module meta */
-zend_module_entry ion_module_entry = {
-        STANDARD_MODULE_HEADER_EX,
-        NULL,
-        ion_depends, // depends
-        "ion", // module name
-        NULL,
-        PHP_MINIT(ion), // module init callback
-        NULL,  // module shutdown callback
-        PHP_RINIT(ion),  // request init callback
-        PHP_RSHUTDOWN(ion), // request shutdown callback
-        PHP_MINFO(ion), // module info callback
-        ION_VERSION, // module version
-        STANDARD_MODULE_PROPERTIES
-};
+static PHP_GINIT_FUNCTION(ion) {
+#if defined(COMPILE_DL_ION) && defined(ZTS)
+    ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+    memset(&ion_globals, 0, sizeof(ion_globals));
+}
 
 /* Init module callback */
 PHP_MINIT_FUNCTION(ion) {
@@ -74,16 +65,10 @@ PHP_MINIT_FUNCTION(ion) {
     event_set_log_callback(_engine_log);
     event_set_fatal_callback(_engine_fatal);
 
-    ionBase            = pemalloc(sizeof(ion_base), 1);
-    memset(ionBase, 0, sizeof(ion_base));
-    ION(i)             = 1;
-    ION(base)          = event_base_new();
-
+    GION(base) = event_base_new();
 
     STARTUP_MODULE(exceptions);
     STARTUP_MODULE(ION_Debug);
-//    STARTUP_MODULE(ION_Data_LinkedList);
-//    STARTUP_MODULE(ION_Data_SkipList);
     STARTUP_MODULE(promisor);
     STARTUP_MODULE(ION_Promise);
     STARTUP_MODULE(ION_ResolvablePromise);
@@ -134,20 +119,14 @@ PHP_MINIT_FUNCTION(ion) {
 }
 
 PHP_MSHUTDOWN_FUNCTION(ion) {
-//    SHUTDOWN_MODULE(ION_Data_LinkedList);
-//    SHUTDOWN_MODULE(ION_Data_SkipList);
     SHUTDOWN_MODULE(ION_Process);
     SHUTDOWN_MODULE(ION_FS);
     SHUTDOWN_MODULE(ION_DNS);
-    SHUTDOWN_MODULE(ION_Sequence);
     SHUTDOWN_MODULE(ION_Deferred);
-    SHUTDOWN_MODULE(ION_ResolvablePromise);
-    SHUTDOWN_MODULE(ION_Promise);
     SHUTDOWN_MODULE(promisor);
     SHUTDOWN_MODULE(ION);
 
-    event_base_free( ION(base) );
-    pefree(ionBase, 1);
+    event_base_free( GION(base) );
 
 //    UNREGISTER_INI_ENTRIES();
 
@@ -219,3 +198,24 @@ PHP_MINFO_FUNCTION(ion) {
 
     event_base_free(base);
 }
+
+
+/* ION module meta */
+zend_module_entry ion_module_entry = {
+        STANDARD_MODULE_HEADER_EX,
+        NULL,
+        ion_depends, // depends
+        "ion", // module name
+        NULL,
+        PHP_MINIT(ion), // module init callback
+        PHP_MSHUTDOWN(ion),  // module shutdown callback
+        PHP_RINIT(ion),  // request init callback
+        PHP_RSHUTDOWN(ion), // request shutdown callback
+        PHP_MINFO(ion), // module info callback
+        ION_VERSION, // module version
+        PHP_MODULE_GLOBALS(ion),
+        PHP_GINIT(ion),
+        NULL,
+        NULL,
+        STANDARD_MODULE_PROPERTIES_EX
+};

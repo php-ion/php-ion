@@ -25,7 +25,7 @@ CLASS_METHOD(ION_Promise, __construct) {
         Z_PARAM_ZVAL_EX(done, 1, 0)
         Z_PARAM_ZVAL_EX(fail, 1, 0)
         Z_PARAM_ZVAL_EX(progress, 1, 0)
-    ZEND_PARSE_PARAMETERS_END();
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
     ion_promisor_set_callbacks(Z_OBJ_P(getThis()), done, fail, progress);
 }
 
@@ -65,9 +65,10 @@ METHOD_ARGS_END();
 CLASS_METHOD(ION_Promise, onDone) {
     zval * callback = NULL;
     zend_object * promise = NULL;
+
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_ZVAL(callback)
-    ZEND_PARSE_PARAMETERS_END();
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
     promise = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), callback, NULL, NULL);
     if(promise == NULL) {
         zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
@@ -84,9 +85,11 @@ METHOD_ARGS_END();
 CLASS_METHOD(ION_Promise, onFail) {
     zval * callback = NULL;
     zend_object * promise = NULL;
+
     ZEND_PARSE_PARAMETERS_START(1, 1)
             Z_PARAM_ZVAL(callback)
-    ZEND_PARSE_PARAMETERS_END();
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
     promise = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), NULL, callback, NULL);
     if(promise == NULL) {
         zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
@@ -103,9 +106,11 @@ METHOD_ARGS_END();
 CLASS_METHOD(ION_Promise, onProgress) {
     zval * callback = NULL;
     zend_object * promise = NULL;
+
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_ZVAL(callback)
-    ZEND_PARSE_PARAMETERS_END();
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
     promise = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), NULL, NULL, callback);
     if(promise == NULL) {
         zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
