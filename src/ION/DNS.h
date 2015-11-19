@@ -6,6 +6,7 @@
 BEGIN_EXTERN_C();
 
 #define ION_DNS_RESOLV_CONF_DEFAULT "/etc/resolv.conf"
+#define ION_DNS_HOSTS_FILE_DEFAULT "/etc/hosts"
 
 #define ION_DNS_RECORD_A       1
 #define ION_DNS_RECORD_AAAA    2

@@ -128,7 +128,7 @@ PHP_MSHUTDOWN_FUNCTION(ion) {
 
     event_base_free( GION(base) );
 
-//    UNREGISTER_INI_ENTRIES();
+    UNREGISTER_INI_ENTRIES();
 
     return SUCCESS;
 }

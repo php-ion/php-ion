@@ -130,19 +130,48 @@ CLASS_METHODS_START(ION_DNS)
     METHOD(ION_DNS, resolve,   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 CLASS_METHODS_END;
 
-//ZEND_INI_BEGIN()
-//    STD_PHP_INI_ENTRY("ion.dns.resolv_conf", ION_DNS_RESOLV_CONF_DEFAULT, PHP_INI_SYSTEM, OnUpdateStringUnempty, resolv_conf, ion_dns, ION(dns))
-//ZEND_INI_END()
+ZEND_INI_BEGIN()
+    STD_PHP_INI_ENTRY("ion.dns.resolv_conf", ION_DNS_RESOLV_CONF_DEFAULT, PHP_INI_SYSTEM, OnUpdateStringUnempty, resolv_conf, zend_ion_globals, ion_globals)
+    STD_PHP_INI_ENTRY("ion.dns.hosts_file",  ION_DNS_HOSTS_FILE_DEFAULT, PHP_INI_SYSTEM, OnUpdateString, hosts_file, zend_ion_globals, ion_globals)
+ZEND_INI_END()
 
 PHP_MINIT_FUNCTION(ION_DNS) {
-
+    REGISTER_INI_ENTRIES();
     PION_REGISTER_STATIC_CLASS(ION_DNS, "ION\\DNS");
     PION_CLASS_CONST_LONG(ION_DNS, "RECORD_A", ION_DNS_RECORD_A);
     PION_CLASS_CONST_LONG(ION_DNS, "RECORD_AAAA", ION_DNS_RECORD_AAAA);
     PION_CLASS_CONST_LONG(ION_DNS, "RECORD_CNAME", ION_DNS_RECORD_CNAME);
 
     GION(evdns) = evdns_base_new(GION(base), 1);
-    evdns_base_resolv_conf_parse(GION(evdns), DNS_OPTIONS_ALL, ION_DNS_RESOLV_CONF_DEFAULT);
+    int error = evdns_base_resolv_conf_parse(GION(evdns), DNS_OPTIONS_ALL, GION(resolv_conf));
+    if(error) {
+        switch(error) {
+            case 1:
+                zend_error(E_ERROR, "ion.dns.resolv_conf: failed to open file %s", GION(resolv_conf));
+                break;
+            case 2:
+                zend_error(E_ERROR, "ion.dns.resolv_conf: failed to stat file %s", GION(resolv_conf));
+                break;
+            case 3:
+                zend_error(E_ERROR, "ion.dns.resolv_conf: file %s too large", GION(resolv_conf));
+                break;
+            case 4:
+                zend_error(E_ERROR, "ion.dns.resolv_conf: out of memory");
+                break;
+            case 5:
+                zend_error(E_ERROR, "ion.dns.resolv_conf: short read from file %s", GION(resolv_conf));
+                break;
+            case 6:
+                zend_error(E_ERROR, "ion.dns.resolv_conf: no nameservers listed in the file %s", GION(resolv_conf));
+                break;
+            default:
+                zend_error(E_ERROR, "ion.dns.resolv_conf: unknown error occurred while reading file %s", GION(resolv_conf));
+        }
+        return FAILURE;
+    }
+    if(GION(hosts_file)) {
+        evdns_base_load_hosts(GION(evdns), GION(hosts_file));
+    }
 
     return SUCCESS;
 }
@@ -162,6 +191,6 @@ PHP_RSHUTDOWN_FUNCTION(ION_DNS) {
 
 PHP_MSHUTDOWN_FUNCTION(ION_DNS) {
     evdns_base_free(GION(evdns), 0);
-
+    UNREGISTER_INI_ENTRIES();
     return SUCCESS;
 }

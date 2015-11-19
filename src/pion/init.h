@@ -57,6 +57,9 @@ ZEND_BEGIN_MODULE_GLOBALS(ion)
     // DNS
     ion_evdns_base * evdns;      // event dns base
     HashTable      * resolvers;  // resolve requests
+    char           * resolv_conf;
+    zend_long        resolv_options;
+    char           * hosts_file;
 
     // Process
     HashTable * signals;     // registered signals
