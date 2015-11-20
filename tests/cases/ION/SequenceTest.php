@@ -53,23 +53,46 @@ class SequenceTest extends TestCase {
     }
 
 	/**
-	 * @memc heck
+	 * @memcheck
 	 */
 	public function testSequenceAsPromise() {
 		$seq = new Sequence(function ($x) {
-//			$this->out("work seq");
 			return $x + 10;
 		});
 
 		$this->promise(function () use ($seq) {
-//			$this->out("await seq");
 			$this->data["seq.result.1"] = yield $seq;
-//			$this->out("done seq");
-		}, false, 2);
+		}, false);
 
-//		$this->promise(function () use ($seq) {
-//			$this->out("run seq");
-			$seq(1);
-//		}, false, 3);
+        $seq(1);
+        $seq(2);
+
+        $this->assertEquals([
+            "seq.result.1" => 11
+        ], $this->data);
 	}
+
+    /**
+     * @group dev
+     * @memcheck
+     */
+    public function testThenSequence() {
+        $seq1 = new Sequence(function ($x) {
+            return $x + 10;
+        });
+        $seq2 = new Sequence(function ($x) {
+            return $x + 100;
+        });
+        $seq2->then(function ($x) {
+            $this->data["x"] = $x;
+        });
+
+        $seq1->then($seq2);
+
+        $seq1(1);
+
+        $this->assertEquals([
+            "x" => 111
+        ], $this->data);
+    }
 }

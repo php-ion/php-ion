@@ -32,7 +32,7 @@ METHOD_ARGS_END();
 /** public function ION\Promise::then(callable $done = null, callable $fail = null, callable $progress = null) : ION\Promise */
 /** public function ION\Promise::then(ION\Promise $handler) : ION\Promise */
 CLASS_METHOD(ION_Promise, then) {
-    zend_object * promise = NULL;
+    zend_object * handler = NULL;
     zval        * done = NULL;
     zval        * fail = NULL;
     zval        * progress = NULL;
@@ -48,17 +48,20 @@ CLASS_METHOD(ION_Promise, then) {
             zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can not promise itself", 0);
             return;
         }
-        ion_promisor_append(Z_OBJ_P(getThis()), Z_OBJ_P(done));
+        handler = Z_OBJ_P(done);
+        ion_promisor_append(Z_OBJ_P(getThis()), handler);
+        obj_add_ref(handler);
+        RETURN_OBJ(handler);
     } else {
-        promise = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), done, fail, progress);
-        if(promise == NULL) {
+        handler = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), done, fail, progress);
+        if(handler == NULL) {
             if(!EG(exception)) {
                 zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
             }
             return;
         }
     }
-    RETURN_OBJ(promise);
+    RETURN_OBJ(handler);
 }
 
 METHOD_ARGS_BEGIN(ION_Promise, then, 0)

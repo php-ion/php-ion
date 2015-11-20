@@ -59,11 +59,8 @@ class Process {
 	 * @param array $options execute options:
 	 * <pre>
 	 * [
-	 *   'env'   => [ $name => $value, ...],
 	 *   'user'  => $user_name_or_uid,
 	 *   'group' => $group_name_or_uid,
-	 *   'priority' => 0,
-	 *   'max_size' => 10 * MiB,
 	 *   'pid'   => &$pid
 	 * ]
 	 * </pre>

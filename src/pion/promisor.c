@@ -428,24 +428,27 @@ zend_object * ion_promisor_clone(zend_object * proto_obj) {
         if(clone->handler_count) {
             if(clone->handler_count != proto->handler_count) {
                 clone->handlers = erealloc(clone->handlers, sizeof(zend_object *) * clone->handler_count);
-//                clone->handlers = emalloc(sizeof(zend_object *) * clone->handler_count);
-//                memcpy(clone->handlers, &clone_handlers, clone->handler_count);
             }
         } else {
             efree(clone->handlers);
             clone->handlers = NULL;
         }
-//        clone->handler_count = proto->handler_count;
         if(extern_handlers) { // we has external promises and should realloc proto->handlers, remove NULL elements
-            zend_object ** handlers = proto->handlers;
-            proto->handlers = emalloc(sizeof(zend_object *) * (proto->handler_count - extern_handlers));
-            for(ushort i = 0, j = 0; i<proto->handler_count; i++) {
-                if(handlers[i]) {
-                    proto->handlers[j++] = handlers[i];
+            if(proto->handler_count - extern_handlers) {
+                zend_object ** handlers = proto->handlers;
+                proto->handlers = emalloc(sizeof(zend_object *) * (proto->handler_count - extern_handlers));
+                for(ushort i = 0, j = 0; i<proto->handler_count; i++) {
+                    if(handlers[i]) {
+                        proto->handlers[j++] = handlers[i];
+                    }
                 }
+                proto->handler_count = proto->handler_count - extern_handlers;
+                efree(handlers);
+            } else {
+                efree(proto->handlers);
+                proto->handlers = NULL;
+                proto->handler_count = 0;
             }
-            proto->handler_count = proto->handler_count - extern_handlers;
-            efree(handlers);
         }
     }
     if(!Z_ISUNDEF(proto->result)) {
