@@ -26,12 +26,15 @@ class Promise {
     public function __construct(callable ...$callbacks) {}
 
     /**
+     * then(callable $done = null, callable $fail = null, callable $progress = null)
+     * then(Promise $handler)
+     *
      * @param callable $done
      * @param callable $fail
      * @param callable $progress
      * @return Promise
      */
-    public function then(callable ...$callbacks) : Promise {}
+    public function then(...$handlers) : Promise {}
 
     /**
      * @param callable $callback
@@ -52,12 +55,12 @@ class Promise {
     public function onProgress(callable $callback) : Promise {}
 
     /**
-     * @todo
+     * @return string one of pending, done, canceled, failed, processing
      */
     public function getState() : string {}
 
     /**
-     * @todo
+     *
      */
     public function getFlags() : int {}
 
@@ -78,5 +81,11 @@ class Promise {
      * @return mixed
      */
     public function getResult() {}
+
+    /**
+     * @param string $name
+     * @return Promise
+     */
+    public function setName(string $name) : self {}
 
 }

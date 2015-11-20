@@ -43,9 +43,15 @@ typedef struct evdns_base     ion_evdns_base;
         event_base_loopbreak(GION(base)); \
     }
 
-#define SET_TIMEVAL(tval, dval)                          \
-    tval.tv_usec = (int)((int)(dval*1000000) % 1000000); \
-    tval.tv_sec = (int)dval;
+#define SET_TIMEVAL(tval, dval)                       \
+    (tval).tv_usec = (int)((dval)*1000000) % 1000000; \
+    (tval).tv_sec = (int)dval;
+
+#define SET_TIMEVAL_P(tvalp, dval)                      \
+    (tvalp)->tv_usec = (int)((dval)*1000000) % 1000000; \
+    (tvalp)->tv_sec = (int)(dval);
+
+#define STRARGS(str) str, sizeof(str) - 1
 
 ZEND_BEGIN_MODULE_GLOBALS(ion)
     // base

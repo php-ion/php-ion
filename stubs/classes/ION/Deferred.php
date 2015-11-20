@@ -1,13 +1,13 @@
 <?php
+
 namespace ION;
+
 /**
  * Ticket for deferred actions
- * @todo more doc
  */
 class Deferred extends ResolvablePromise {
 
 	/**
-	 * @todo more doc
 	 * @param callable $canceler
 	 */
 	public function __construct(callable $canceler = null) {}

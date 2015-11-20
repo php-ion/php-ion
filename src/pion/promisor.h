@@ -7,33 +7,35 @@
 #include "callback.h"
 #include "exceptions.h"
 #include <Zend/zend_generators.h>
+#include <Zend/zend_closures.h>
 
 // Result states
-#define ION_PROMISOR_DONE      (1<<0)
-#define ION_PROMISOR_FAILED    (1<<1)
-#define ION_PROMISOR_FINISHED  (ION_PROMISOR_DONE | ION_PROMISOR_FAILED)
+#define ION_PROMISOR_PROCESSING (1<<0)
+#define ION_PROMISOR_DONE       (1<<1)
+#define ION_PROMISOR_FAILED     (1<<2)
+#define ION_PROMISOR_FINISHED   (ION_PROMISOR_DONE | ION_PROMISOR_FAILED)
 
 // Info
-#define ION_PROMISOR_PROGRESS  (1<<2)
+#define ION_PROMISOR_PROGRESS  (1<<3)
 
 // Fail reason
-#define ION_PROMISOR_CANCELED  (1<<3)
-#define ION_PROMISOR_TIMED_OUT (1<<4)
+#define ION_PROMISOR_CANCELED  (1<<4)
+#define ION_PROMISOR_TIMED_OUT (1<<5)
 
 // Types
-#define ION_PROMISOR_TYPE_PROMISE  (1<<5)
-#define ION_PROMISOR_TYPE_SEQUENCE (1<<6)
-#define ION_PROMISOR_TYPE_DEFERRED (1<<7)
-#define ION_PROMISOR_INTERNAL      (1<<8)
-#define ION_PROMISOR_PROTOTYPE     (1<<9)
+#define ION_PROMISOR_TYPE_PROMISE  (1<<6)
+#define ION_PROMISOR_TYPE_SEQUENCE (1<<7)
+#define ION_PROMISOR_TYPE_DEFERRED (1<<8)
+#define ION_PROMISOR_INTERNAL      (1<<9)
+#define ION_PROMISOR_PROTOTYPE     (1<<10)
 
 // Callbacks flags
-#define ION_PROMISOR_HAS_DONE      (1<<10)
-#define ION_PROMISOR_HAS_FAIL      (1<<11)
-#define ION_PROMISOR_HAS_PROGRESS  (1<<12)
-#define ION_PROMISOR_YIELDED       (1<<13)
+#define ION_PROMISOR_HAS_DONE      (1<<11)
+#define ION_PROMISOR_HAS_FAIL      (1<<12)
+#define ION_PROMISOR_HAS_PROGRESS  (1<<13)
+#define ION_PROMISOR_YIELDED       (1<<14)
 
-#define ION_PROMISOR_RESOLVED      (1<<14)
+#define ION_PROMISOR_RESOLVED      (1<<15)
 
 #define ION_PROMISOR_NESTED_FLAGS  ION_PROMISOR_PROTOTYPE
 
@@ -44,7 +46,8 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Sequence;
 extern ZEND_API zend_class_entry * ion_ce_ION_Promise_CancelException;
 extern ZEND_API zend_class_entry * ion_ce_ION_Promise_TimeoutException;
 
-#define ion_ce_Generator    zend_ce_generator
+#define ion_ce_Generator zend_ce_generator
+#define ion_ce_Closure   zend_ce_closure
 
 typedef void (* promisor_canceler_t)(zend_object * promisor);
 typedef void (* promisor_dtor_t)(zend_object * promisor);
@@ -52,9 +55,7 @@ typedef void (* promisor_dtor_t)(zend_object * promisor);
 
 typedef struct _ion_promisor {
     zend_object         std;
-#ifdef ION_DEBUG
-    long                uid; // to distinguish promise-objects
-#endif
+    zend_string       * name;
     uint                flags;
     pion_cb           * done;
     pion_cb           * fail;
@@ -62,9 +63,7 @@ typedef struct _ion_promisor {
     zend_object       * await;
     zval                result;
     zend_object       * generator;
-    zend_object      ** generators_stack;
-    ushort              generators_count;
-    struct event      * ttl;
+    void              * timer; // todo
     zend_object      ** handlers;
     ushort              handler_count;
     zend_class_entry  * scope;
@@ -73,13 +72,19 @@ typedef struct _ion_promisor {
     promisor_dtor_t     dtor;
 } ion_promisor;
 
+// Creating
 zend_object * ion_promisor_promise_new(zval * done, zval * fail, zval * progress);
 zend_object * ion_promisor_sequence_new(zval * init);
 zend_object * ion_promisor_deferred_new(zval * cancelable);
 zend_object * ion_promisor_deferred_new_ex(promisor_canceler_t cancelable);
 
+// Manipulations
 zend_object * ion_promisor_clone(zend_object * proto_obj);
 zend_object * ion_promisor_clone_obj(zval * zobject);
+
+int ion_promisor_append(zend_object * container, zend_object * handler);
+int ion_promisor_remove(zend_object * container, zend_object * handler);
+int ion_promisor_remove_named(zend_object * container, zend_string * name);
 
 // Stores and destructors
 #define ion_promisor_store(promisor, pobject)  get_object_instance(promisor, ion_promisor)->object = (void *) pobject
@@ -134,6 +139,14 @@ zend_object * ion_sequence_init(zend_class_entry * ce);
         elem = NULL;                                           \
     }
 
+#define Z_ISPROMISE_P(pz) Z_TYPE_P(pz) == IS_OBJECT && (  \
+          Z_OBJCE_P(pz) == ion_class_entry(ION_Promise)   \
+          || Z_OBJCE_P(pz) == ion_class_entry(ION_ResolvablePromise)  \
+          || Z_OBJCE_P(pz) == ion_class_entry(ION_Deferred)   \
+          || Z_OBJCE_P(pz) == ion_class_entry(ION_Sequence)   \
+          || instanceof_function(Z_OBJCE_P(pz), ion_class_entry(ION_Promise)))
+
+#define Z_ISPROMISE(zv) Z_ISPROMISE_P(&zv)
 
 static zend_always_inline void ion_promisor_done_long(zend_object * promisor, long lval) {
     zval value;

@@ -71,8 +71,11 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
     int            result_type = 0;
     zend_bool      resolved;
     zend_bool      skip_generator = 0;
-    zend_class_entry * object_ce = NULL;
     pion_cb      * callback = NULL;
+
+    if(promise->flags & ION_PROMISOR_FINISHED) {
+        return;
+    }
 
     ZVAL_OBJ(&zpromise, promise_obj);
     Z_ADDREF(zpromise);
@@ -88,6 +91,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
             resolved = 1;
         }
     } else {
+        promise->flags |= ION_PROMISOR_PROCESSING;
         if(type & ION_PROMISOR_DONE) {
             callback = promise->done;
         } else if(type & ION_PROMISOR_CANCELED) {
@@ -141,8 +145,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
             resolved = 1;
 
             if (Z_TYPE(result) == IS_OBJECT) {
-                object_ce = Z_OBJCE(result);
-                if (object_ce == ion_class_entry(Generator)) {
+                if (Z_OBJCE(result) == ion_class_entry(Generator)) {
                     if(skip_generator || promise->generator) {
                         resolved = 1;
                     } else {
@@ -150,9 +153,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
                         result = pion_cb_obj_call_without_args(generator_current, promise->generator);
                         goto watch_result;
                     }
-                } else if (object_ce == ion_class_entry(ION_Promise)
-                           || object_ce == ion_class_entry(ION_Deferred)
-                           || instanceof_function(object_ce, ion_class_entry(ION_Promise))) {
+                } else if (Z_ISPROMISE(result)) {
                     ion_promisor * await = get_instance(&result, ion_promisor);
                     if (await->flags & ION_PROMISOR_FINISHED) {
                         ZVAL_COPY(&result, &await->result);
@@ -226,6 +227,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
     if(resolved) {
         promise->result = result;
         promise->flags |= result_type;
+        promise->flags &= ~ION_PROMISOR_PROCESSING;
         ion_promisor_release(promise_obj);
         if(promise->handler_count) {
             for(ushort i = 0; i < promise->handler_count; i++) {
@@ -328,8 +330,8 @@ int ion_promisor_set_callbacks(zend_object * promise_obj, zval * done, zval * fa
 
 zend_object * ion_promisor_push_callbacks(zend_object * promise_obj, zval * on_done, zval * on_fail, zval * on_progress) {
     ion_promisor * promisor = get_object_instance(promise_obj, ion_promisor);
-    zend_object * handler;
-    zval zpromisor;
+    zend_object  * handler;
+    zval           zpromisor;
 
     if(promisor->flags & ION_PROMISOR_FINISHED) {
         handler = ion_promisor_promise_new(on_done, on_fail, on_progress);
@@ -338,6 +340,7 @@ zend_object * ion_promisor_push_callbacks(zend_object * promise_obj, zval * on_d
         object_init_ex(&zpromisor, ion_class_entry(ION_Promise));
         handler = Z_OBJ(zpromisor);
         if(ion_promisor_set_callbacks(handler, on_done, on_fail, on_progress) == FAILURE) {
+            zval_ptr_dtor(&zpromisor);
             return NULL;
         }
         PION_ARRAY_PUSH(promisor->handlers, promisor->handler_count, handler);
@@ -384,7 +387,7 @@ zend_object * ion_promisor_clone(zend_object * proto_obj) {
         zend_throw_exception(ion_class_entry(ION_InvalidUsageException), "Trying to clone an internal promisor", 0);
         return clone_obj;
     }
-    if(proto->await || proto->generator || proto->generators_count) {
+    if(proto->await || proto->generator) {
         zend_throw_exception(ion_class_entry(ION_InvalidUsageException), "Promisor in progress", 0);
         return clone_obj;
     }
@@ -400,7 +403,6 @@ zend_object * ion_promisor_clone(zend_object * proto_obj) {
     if(proto->progress) {
         clone->progress = pion_cb_dup(proto->progress);
     }
-    clone->uid = proto->uid * 1000;
     if(proto->handler_count) {
         ion_promisor * handler;
         ushort         extern_handlers = 0;
@@ -463,6 +465,10 @@ void ion_promisor_free(zend_object * promisor_obj) {
 
     zend_object_std_dtor(promisor_obj);
     ion_promisor_release(promisor_obj);
+    if(promisor->name) {
+        zend_string_release(promisor->name);
+        promisor->name = NULL;
+    }
     if(promisor->await) {
         zend_object_release(promisor->await);
         promisor->await = NULL;
@@ -470,13 +476,6 @@ void ion_promisor_free(zend_object * promisor_obj) {
     if(promisor->generator) {
         zend_object_release(promisor->generator);
         promisor->generator = NULL;
-    }
-    if(promisor->generators_count) {
-        for(uint i=0; i<promisor->generators_count; i++) {
-            zend_object_release(promisor->generators_stack[i]);
-        }
-        efree(promisor->generators_stack);
-        promisor->generators_count = 0;
     }
     if(promisor->handler_count) {
 
@@ -487,4 +486,68 @@ void ion_promisor_free(zend_object * promisor_obj) {
         promisor->handler_count = 0;
     }
     zval_ptr_dtor(&promisor->result);
+}
+
+int ion_promisor_append(zend_object * container, zend_object * handler) {
+    ion_promisor * promisor = get_object_instance(container, ion_promisor);
+    PION_ARRAY_PUSH(promisor->handlers, promisor->handler_count, handler);
+    obj_add_ref(handler);
+    return SUCCESS;
+}
+
+int ion_promisor_remove(zend_object * container, zend_object * handler) {
+    ion_promisor * promisor = get_object_instance(container, ion_promisor);
+    ushort         removed = 0;
+
+    if(promisor->handler_count) {
+        for(ushort i = 0; i < promisor->handler_count; i++) {
+            if(promisor->handlers[i] == handler) {
+                zend_object_release(promisor->handlers[i]);
+                promisor->handlers[i] = NULL;
+                removed++;
+            }
+        }
+
+        if(removed) {
+            zend_object * *handlers = promisor->handlers;
+            promisor->handlers = emalloc(sizeof(zend_object *) * (promisor->handler_count - removed));
+            for(ushort i = 0, j = 0; i<promisor->handler_count; i++) {
+                if(handlers[i]) {
+                    promisor->handlers[j++] = handlers[i];
+                }
+            }
+            promisor->handler_count = promisor->handler_count - removed;
+            efree(handlers);
+        }
+    }
+    return SUCCESS;
+}
+
+int ion_promisor_remove_named(zend_object * container, zend_string * name) {
+    ion_promisor * promisor = get_object_instance(container, ion_promisor);
+    ushort         removed = 0;
+
+    if(promisor->handler_count) {
+        for(ushort i = 0; i < promisor->handler_count; i++) {
+            ion_promisor * handler = get_object_instance(promisor->handlers[i], ion_promisor);
+            if(handler->name && strcmp(handler->name->val, name->val)) {
+                zend_object_release(promisor->handlers[i]);
+                promisor->handlers[i] = NULL;
+                removed++;
+            }
+        }
+
+        if(removed) {
+            zend_object * *handlers = promisor->handlers;
+            promisor->handlers = emalloc(sizeof(zend_object *) * (promisor->handler_count - removed));
+            for(ushort i = 0, j = 0; i<promisor->handler_count; i++) {
+                if(handlers[i]) {
+                    promisor->handlers[j++] = handlers[i];
+                }
+            }
+            promisor->handler_count = promisor->handler_count - removed;
+            efree(handlers);
+        }
+    }
+    return SUCCESS;
 }

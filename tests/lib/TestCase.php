@@ -50,7 +50,7 @@ class TestCase extends \PHPUnit_Framework_TestCase {
     }
 
     public function promise(callable $action, $stop = true, $id = 0) {
-        ION::promise($action)->setUID($id)
+        ION::promise($action)
             ->then(function ($result) use ($stop) {
                 if($result !== null) {
                     $this->data["result"] = $this->describe($result);
@@ -63,7 +63,7 @@ class TestCase extends \PHPUnit_Framework_TestCase {
                 if($stop) {
                     $this->stop();
                 }
-            })->setUID($id*10);
+            });
     }
 
     /**

@@ -13,10 +13,10 @@ use ION\RuntimeException;
  * @static
  * */
 class ION {
-	const PRIORITY_LOW     = 5;
-	const PRIORITY_DEFAULT = 3;
-	const PRIORITY_HIGH    = 1;
-	const PRIORITY_URGENT  = 0;
+    const PRIORITY_LOW     = 5;
+    const PRIORITY_DEFAULT = 3;
+    const PRIORITY_HIGH    = 1;
+    const PRIORITY_URGENT  = 0;
     /**
      * Version of ION
      * */
@@ -34,37 +34,37 @@ class ION {
      * */
     const LOOP_NONBLOCK = 2;
 
-	/**
-	 * Indicates that a timeout has occurred.
-	 */
-	const EV_TIMEOUT = 0x01;
-	/**
-	 * Wait for a socket or FD to become readable
-	 */
-	const EV_READ = 0x02;
-	/**
-	 * Wait for a socket or FD to become writeable
-	 */
-	const EV_WRITE = 0x04;
-	/**
-	 * Wait for a POSIX signal to be raised
-	 */
+    /**
+     * Indicates that a timeout has occurred.
+     */
+    const EV_TIMEOUT = 0x01;
+    /**
+     * Wait for a socket or FD to become readable
+     */
+    const EV_READ = 0x02;
+    /**
+     * Wait for a socket or FD to become writeable
+     */
+    const EV_WRITE = 0x04;
+    /**
+     * Wait for a POSIX signal to be raised
+     */
     const EV_SIGNAL = 0x08;
-	/**
-	 * Persistent event
-	 */
-	const EV_PERSIST = 0x10;
+    /**
+     * Persistent event
+     */
+    const EV_PERSIST = 0x10;
 //	const EV_ET = 0x20;
 
-	/**
-	 * Reinitialize the event dispatcher after a fork.
-	 * Some event mechanisms do not survive across fork. The event base needs to be reinitialized with this method.
-	 *
-	 * @since 1.0
-	 * @param int $flags
-	 * @return bool
-	 * @throws \RuntimeException if error occurs
-	 * */
+    /**
+     * Reinitialize the event dispatcher after a fork.
+     * Some event mechanisms do not survive across fork. The event base needs to be reinitialized with this method.
+     *
+     * @since 1.0
+     * @param int $flags
+     * @return bool
+     * @throws \RuntimeException if error occurs
+     * */
     public static function reinit($flags = 0) : bool {}
 
     /**
@@ -89,7 +89,7 @@ class ION {
      * @param float $timeout the amount of time after which the dispatch should terminate.
      * @throws RuntimeException if error occurs
      * */
-    public static function stop(float $timeout = -1) {}
+    public static function stop(float $timeout = 0.0) {}
 
     /**
      * Asynchronous sleep.
