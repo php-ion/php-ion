@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 use ION\Sequence;
 use ION\Deferred;
 use ION\Promise;
