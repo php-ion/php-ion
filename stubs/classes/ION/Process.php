@@ -19,38 +19,26 @@ class Process {
 	public static function fork($flags = 0) {}
 
     /**
-     * @todo
-     * @param callable $callback
-     * @return Sequence
-     */
-    public static function onMessage(callable $callback) {}
-
-    /**
-     * @todo
-     * @param int $pid
-     * @return Message
-     */
-    public static function message($pid) {}
-
-    /**
      * Set signal handler
      * @param int $signo signal number or text name
      * @return Sequence
      */
-	public static function signal(int $signo) {}
+	public static function signal(int $signo) : Sequence {}
 
 	/**
 	 * Remove signal(s) handlers
-	 * @param int $signo if -1 remove all handlers all signals
+	 * @param int $signo if -1 remove all handlers from all signals
 	 */
 	public static function clearSignal(int $signo = -1) {}
 
-	/**
-	 * Send a signal to a process
-	 * @param int $signo signal number
-	 * @param int $pid process ID
-	 * */
-	public static function kill($signo, $pid) {}
+    /**
+     * Send a signal to a process
+     * @param int $signo signal number
+     * @param int $pid process ID
+     *
+     * @return bool
+     */
+	public static function kill(int $signo, int $pid) : bool {}
 
 	/**
 	 * Execute an external program
@@ -73,13 +61,13 @@ class Process {
 	 * Return the current process identifier
 	 * @return int
 	 * */
-	public static function getPid() {}
+	public static function getPid() : int {}
 
 	/**
 	 * Return the parent process identifier
 	 * @return int
 	 * */
-	public static function getParentPid() {}
+	public static function getParentPid() : int {}
 
 	/**
 	 * Get user information
@@ -88,7 +76,7 @@ class Process {
 	 * @throws \RuntimeException if error occurs
 	 * @throws \InvalidArgumentException if user not found or invalid argument type
 	 */
-	public static function getUser($user = null) {}
+	public static function getUser($user = null) : array {}
 
 	/**
 	 * Set process user
@@ -98,14 +86,14 @@ class Process {
 	 * @throws \RuntimeException if error occurs
 	 * @throws \InvalidArgumentException if user not found or invalid argument type
 	 */
-	public static function setUser($user, $set_group = true) {}
+	public static function setUser($user, $set_group = true) : array {}
 
 	/**
 	 * Get program scheduling priority
 	 * @param int $pid
 	 * @return int
 	 */
-	public static function getPriority($pid = null) {}
+	public static function getPriority($pid = null) : int {}
 
 	/**
 	 * Set program scheduling priority
@@ -113,5 +101,5 @@ class Process {
 	 * @param int $pid
 	 * @return int previous priority
 	 */
-	public static function setPriority($priority, $pid = null) {}
+	public static function setPriority($priority, $pid = null) : int {}
 }

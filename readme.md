@@ -36,10 +36,10 @@ ION Extension [dev]
 # Indev
 
 * Listening FS events
+* SSL support
 
 # Planned
 
-* SSL support
 * DNS server
 * Server socket pool
 * Client socket pool
