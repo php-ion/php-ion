@@ -59,7 +59,6 @@ typedef struct _ion_promisor {
     uint                flags;
     pion_cb           * done;
     pion_cb           * fail;
-    pion_cb           * progress;
     zend_object       * await;
     zval                result;
     zend_object       * generator;
@@ -73,7 +72,7 @@ typedef struct _ion_promisor {
 } ion_promisor;
 
 // Creating
-zend_object * ion_promisor_promise_new(zval * done, zval * fail, zval * progress);
+zend_object * ion_promisor_promise_new(zval * done, zval * fail);
 zend_object * ion_promisor_sequence_new(zval * init);
 zend_object * ion_promisor_deferred_new(zval * cancelable);
 zend_object * ion_promisor_deferred_new_ex(promisor_canceler_t cancelable);
@@ -83,8 +82,9 @@ zend_object * ion_promisor_clone(zend_object * proto_obj);
 zend_object * ion_promisor_clone_obj(zval * zobject);
 
 int ion_promisor_append(zend_object * container, zend_object * handler);
-int ion_promisor_remove(zend_object * container, zend_object * handler);
-int ion_promisor_remove_named(zend_object * container, zend_string * name);
+void ion_promisor_remove(zend_object * container, zend_object * handler);
+void ion_promisor_remove_named(zend_object * container, zend_string * name);
+void ion_promisor_cleanup(ion_promisor * promisor, ushort removed);  // realloc promisor->handlers, remove NULL elements
 
 // Stores and destructors
 #define ion_promisor_store(promisor, pobject)  get_object_instance(promisor, ion_promisor)->object = (void *) pobject
@@ -104,8 +104,8 @@ void ion_promisor_notify(zend_object * promisor, zval * info);
 #define ion_promisor_fail(promisor, error)   ion_promisor_resolve(promisor, error, ION_PROMISOR_FAILED)
 
 // Callbacks
-int ion_promisor_set_callbacks(zend_object * promisor, zval * done, zval * fail, zval * progress);
-zend_object * ion_promisor_push_callbacks(zend_object * promisor, zval * done, zval * fail, zval * progress);
+int ion_promisor_set_callbacks(zend_object * promisor, zval * done, zval * fail);
+zend_object * ion_promisor_push_callbacks(zend_object * promisor, zval * done, zval * fail);
 
 // Instance
 
@@ -147,6 +147,8 @@ zend_object * ion_sequence_init(zend_class_entry * ce);
           || instanceof_function(Z_OBJCE_P(pz), ion_class_entry(ION_Promise)))
 
 #define Z_ISPROMISE(zv) Z_ISPROMISE_P(&zv)
+
+#define ion_promisor_is_empty() (get_object_instance(object, ion_promisor)->handler_count == 0)
 
 static zend_always_inline void ion_promisor_done_long(zend_object * promisor, long lval) {
     zval value;

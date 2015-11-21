@@ -73,10 +73,11 @@ class SequenceTest extends TestCase {
 	}
 
     /**
-     * @group dev
      * @memcheck
      */
-    public function testThenSequence() {
+    public function testSequenceThenSequence() {
+        $this->data["var"] = "x";
+
         $seq1 = new Sequence(function ($x) {
             return $x + 10;
         });
@@ -84,15 +85,74 @@ class SequenceTest extends TestCase {
             return $x + 100;
         });
         $seq2->then(function ($x) {
-            $this->data["x"] = $x;
+            $this->data[ $this->data["var"] ] = $x;
         });
 
         $seq1->then($seq2);
 
         $seq1(1);
+        $this->data["var"] = "y";
+        $seq1(2);
+        $this->data["var"] = "z";
+        $seq2(3);
 
         $this->assertEquals([
-            "x" => 111
+            "var" => "z",
+            "x" => 111,
+            "y" => 112,
+            "z" => 103
+        ], $this->data);
+    }
+
+    /**
+     * @memcheck
+     */
+    public function testPromiseThen() {
+        $this->data["var"] = "x";
+        $promise = new ResolvablePromise(function ($x) {
+            return $x + 10;
+        });
+        $seq2 = new Sequence(function ($x) {
+            return $x + 100;
+        });
+        $seq2->then(function ($x) {
+            $this->data[ $this->data["var"] ] = $x;
+        });
+
+        $promise->then($seq2);
+
+        $promise->done(1);
+        $this->data["var"] = "y";
+        $seq2(2);
+
+        $this->assertEquals([
+            "var" => "y",
+            "x" => 111,
+            "y" => 102,
+        ], $this->data);
+
+
+    }
+
+    /**
+     * @memcheck
+     */
+    public function testSequenceThenPromise() {
+        $promise = new ResolvablePromise(function ($x) {
+            return $x + 10;
+        });
+        $seq = new Sequence(function ($x) {
+            return $x + 100;
+        });
+        $seq->then($promise)->then(function ($x) {
+            $this->data["x"] = $x;
+        });
+
+        $seq(1);
+        $seq(2);
+
+        $this->assertEquals([
+            "x" => 111,
         ], $this->data);
     }
 }

@@ -25,9 +25,10 @@ class PromiseTest extends TestCase {
      */
     public function testCreate() {
         $promise  = new Promise();
-        $promise1 = new Promise(null, __CLASS__."::staticMethod", [$this, 'method']);
-        $promise2 = new Promise('intval', null, [__CLASS__, 'staticMethod']);
-        $promise3 = new Promise(function() {}, new Callback(function() {}, false), null);
+        $promise1 = new Promise(null, __CLASS__."::staticMethod");
+        $promise2 = new Promise('intval', null);
+        $promise3 = new Promise(function() {}, new Callback(function() {}, false));
+        $promise3->setName("name");
     }
 
     /**
@@ -35,8 +36,8 @@ class PromiseTest extends TestCase {
      * @memcheck
      */
     public function testThen() {
-        $promise = new Promise(function() {}, function() {}, function() {});
-        $promise->then(function() {}, function() {}, function () {});
+        $promise = new Promise(function() {}, function() {});
+        $promise->then(function() {}, function() {});
     }
 
     /**
@@ -44,15 +45,15 @@ class PromiseTest extends TestCase {
      * @memcheck
      */
     public function testThenThenThen() {
-        $promise = new Promise(function() {}, function() {}, function() {});
+        $promise = new Promise(function() {}, function() {});
         $promise
-            ->then(function() {}, null, null)
-            ->then(null, function() {}, null)
-            ->then(null, null, function() {})
-            ->then(function() {}, null, function() {})
-            ->then(null, function() {}, null)
-            ->then(function() {}, function() {}, null)
-            ->then(null, function() {}, function() {})
+            ->then(function() {}, null)
+            ->then(null, function() {})
+            ->then(null, null)
+            ->then(function() {}, null)
+            ->then(null, function() {})
+            ->then(function() {}, function() {})
+            ->then(null, function() {})
             ;
     }
 
@@ -61,14 +62,14 @@ class PromiseTest extends TestCase {
      * @memcheck
      */
     public function testParallelThenThenThen() {
-        $promise = new Promise(function() {}, function() {}, function() {});
-        $promise->then(function() {}, null, null);
-        $promise->then(null, function() {}, null);
-        $promise->then(null, null, function() {});
-        $promise->then(function() {}, null, function() {});
-        $promise->then(null, function() {}, null);
-        $promise->then(function() {}, function() {}, null);
-        $promise->then(null, function() {}, function() {});
+        $promise = new Promise(function() {}, function() {});
+        $promise->then(function() {}, null);
+        $promise->then(null, function() {});
+        $promise->then(null, null);
+        $promise->then(function() {}, null);
+        $promise->then(null, function() {});
+        $promise->then(function() {}, function() {});
+        $promise->then(null, function() {});
     }
 
 
@@ -76,7 +77,7 @@ class PromiseTest extends TestCase {
      * @memcheck
      */
     public function testDone() {
-        $promise = new Promise(function() {}, function() {}, function() {});
+        $promise = new Promise(function() {}, function() {});
         $promise->onDone(function() {});
         $promise
             ->onDone(function() {})
@@ -88,22 +89,11 @@ class PromiseTest extends TestCase {
      * @memcheck
      */
     public function testFail() {
-        $promise = new Promise(function() {}, function() {}, function() {});
+        $promise = new Promise(function() {}, function() {});
         $promise->onFail(function() {});
         $promise
             ->onFail(function() {})
             ->onFail(function() {});
-    }
-
-    /**
-     * @memcheck
-     */
-    public function testProgress() {
-        $promise = new Promise(function() {}, function() {}, function() {});
-        $promise->onProgress(function() {});
-        $promise
-            ->onProgress(function() {})
-            ->onProgress(function() {});
     }
 
     /**
@@ -121,7 +111,7 @@ class PromiseTest extends TestCase {
      * @memcheck
      */
     public function testCloneable() {
-        $promise = new ResolvablePromise(function() {}, function() {}, function() {});
+        $promise = new ResolvablePromise(function() {}, function() {});
         $promise->a = 1;
         $promise->then(function() {})->then(function () {}, function () {});
         $promise->then(function() {});
@@ -137,15 +127,14 @@ class PromiseTest extends TestCase {
      * @memcheck
      */
     public function testMixedChain() {
-        $promise = new Promise(function() {}, function() {}, function() {});
-        $promise->then(function() {}, function() {}, function() {});
+        $promise = new Promise(function() {}, function() {});
+        $promise->then(function() {}, function() {});
         $promise->onDone(function() {})
             ->then(function() {})
             ->onFail(function() {});
         $promise->onFail(function() {})
             ->onDone(function() {})
             ->then(function() {}, function() {});
-        $promise->onProgress(function() {});
     }
 
     /**
@@ -158,8 +147,6 @@ class PromiseTest extends TestCase {
             return $x + 1;
         }, function($error) {
             $this->data["x0.error"] = $error;
-        }, function($info) {
-            $this->data["x0.progress"] = $info;
         });
 
         $promise
@@ -754,5 +741,53 @@ class PromiseTest extends TestCase {
 		], $this->data);
 	}
 
+    /**
+     * @memcheck
+     */
+    public function testForget() {
+        $promise1 = new ResolvablePromise(function () {
+            $this->data["promise.1"] = true;
+        });
+        $promise2 = new Promise(function () {
+            $this->data["promise.2"] = true;
+        });
+        $promise3 = new Promise(function () {
+            $this->data["promise.3"] = true;
+        });
+        $promise1->then($promise2);
+        $promise1->forget($promise3);
+        $promise1->forget($promise2);
+        $promise1->done(null);
 
+        $this->assertSame([
+            "promise.1" => true
+        ], $this->data);
+    }
+
+
+    /**
+     * @memcheck
+     */
+    public function testForgetNamed() {
+        $promise1 = new ResolvablePromise(function () {
+            $this->data["promise.1"] = true;
+        });
+        $promise2 = new Promise(function () {
+            $this->data["promise.2"] = true;
+        });
+        $promise2->setName("promise2");
+        $promise3 = new Promise(function () {
+            $this->data["promise.3"] = true;
+        });
+        $promise3->setName("promise3");
+
+        $promise1->then($promise2);
+        $promise1->forget("promise3");
+        $promise1->forget("promise2");
+        $promise1->done(null);
+
+        $this->assertSame([
+            "promise.1" => true
+        ], $this->data);
+    }
 }

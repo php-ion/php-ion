@@ -258,10 +258,10 @@ CLASS_METHOD(ION, promise) {
         }
     }
     if (zend_is_callable(resolver, IS_CALLABLE_CHECK_SILENT, NULL)) {
-        promise = ion_promisor_promise_new(resolver, NULL, NULL);
+        promise = ion_promisor_promise_new(resolver, NULL);
         ion_promisor_done_null(promise);
     } else {
-        promise = ion_promisor_promise_new(NULL, NULL, NULL);
+        promise = ion_promisor_promise_new(NULL, NULL);
         ion_promisor_done(promise, resolver);
     }
     RETURN_OBJ(promise);

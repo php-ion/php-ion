@@ -9,39 +9,34 @@ zend_object * ion_promise_init(zend_class_entry * ce) {
     RETURN_INSTANCE(ION_Promise, promise);
 }
 
-/** public function ION\Promise::__construct(callable $done = null, callable $fail = null, callable $progress = null) : int */
+/** public function ION\Promise::__construct(callable $done = null, callable $fail = null) : int */
 CLASS_METHOD(ION_Promise, __construct) {
     zval * done = NULL;
     zval * fail = NULL;
-    zval * progress = NULL;
-    ZEND_PARSE_PARAMETERS_START(0, 3)
+    ZEND_PARSE_PARAMETERS_START(0, 2)
         Z_PARAM_OPTIONAL
         Z_PARAM_ZVAL_EX(done, 1, 0)
         Z_PARAM_ZVAL_EX(fail, 1, 0)
-        Z_PARAM_ZVAL_EX(progress, 1, 0)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
-    ion_promisor_set_callbacks(Z_OBJ_P(getThis()), done, fail, progress);
+    ion_promisor_set_callbacks(Z_OBJ_P(getThis()), done, fail);
 }
 
 METHOD_ARGS_BEGIN(ION_Promise, __construct, 0)
     METHOD_ARG_CALLBACK(done, 0, 1)
     METHOD_ARG_CALLBACK(fail, 0, 1)
-    METHOD_ARG_CALLBACK(progress, 0, 1)
 METHOD_ARGS_END();
 
-/** public function ION\Promise::then(callable $done = null, callable $fail = null, callable $progress = null) : ION\Promise */
+/** public function ION\Promise::then(callable $done = null, callable $fail = null) : ION\Promise */
 /** public function ION\Promise::then(ION\Promise $handler) : ION\Promise */
 CLASS_METHOD(ION_Promise, then) {
     zend_object * handler = NULL;
     zval        * done = NULL;
     zval        * fail = NULL;
-    zval        * progress = NULL;
 
-    ZEND_PARSE_PARAMETERS_START(0, 3)
+    ZEND_PARSE_PARAMETERS_START(0, 2)
         Z_PARAM_OPTIONAL
         Z_PARAM_ZVAL_EX(done, 1, 0)
         Z_PARAM_ZVAL_EX(fail, 1, 0)
-        Z_PARAM_ZVAL_EX(progress, 1, 0)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
     if(done && Z_ISPROMISE_P(done)) {
         if(Z_OBJ_P(done) == Z_OBJ_P(getThis())) {
@@ -53,7 +48,7 @@ CLASS_METHOD(ION_Promise, then) {
         obj_add_ref(handler);
         RETURN_OBJ(handler);
     } else {
-        handler = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), done, fail, progress);
+        handler = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), done, fail);
         if(handler == NULL) {
             if(!EG(exception)) {
                 zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
@@ -67,7 +62,6 @@ CLASS_METHOD(ION_Promise, then) {
 METHOD_ARGS_BEGIN(ION_Promise, then, 0)
     METHOD_ARG(done, 0)
     METHOD_ARG_CALLBACK(fail, 0, 1)
-    METHOD_ARG_CALLBACK(progress, 0, 1)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Promise, forget) {
@@ -99,7 +93,7 @@ CLASS_METHOD(ION_Promise, onDone) {
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_ZVAL(callback)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
-    promise = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), callback, NULL, NULL);
+    promise = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), callback, NULL);
     if(promise == NULL) {
         zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
         return;
@@ -120,7 +114,7 @@ CLASS_METHOD(ION_Promise, onFail) {
             Z_PARAM_ZVAL(callback)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    promise = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), NULL, callback, NULL);
+    promise = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), NULL, callback);
     if(promise == NULL) {
         zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
         return;
@@ -129,27 +123,6 @@ CLASS_METHOD(ION_Promise, onFail) {
 }
 
 METHOD_ARGS_BEGIN(ION_Promise, onFail, 1)
-    METHOD_ARG_CALLBACK(callback, 0, 0)
-METHOD_ARGS_END();
-
-/** public function ION\Promise::onProgress(callable $callback) : ION\Promise */
-CLASS_METHOD(ION_Promise, onProgress) {
-    zval * callback = NULL;
-    zend_object * promise = NULL;
-
-    ZEND_PARSE_PARAMETERS_START(1, 1)
-        Z_PARAM_ZVAL(callback)
-    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
-
-    promise = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), NULL, NULL, callback);
-    if(promise == NULL) {
-        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
-        return;
-    }
-    RETURN_OBJ(promise);
-}
-
-METHOD_ARGS_BEGIN(ION_Promise, onProgress, 1)
     METHOD_ARG_CALLBACK(callback, 0, 0)
 METHOD_ARGS_END();
 
@@ -204,7 +177,6 @@ CLASS_METHODS_START(ION_Promise)
     METHOD(ION_Promise, forget,        ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, onDone,        ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, onFail,        ZEND_ACC_PUBLIC)
-    METHOD(ION_Promise, onProgress,    ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, getState,      ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, getFlags,      ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, setName,       ZEND_ACC_PUBLIC)

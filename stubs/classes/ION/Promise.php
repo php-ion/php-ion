@@ -20,21 +20,30 @@ class Promise {
      * @param callable $callable
      * @param ...$args
      */
-    public static function call(callable $callable, ...$args) {}
-
-//    public function __construct(callable $done = null, callable $fail = null, callable $progress = null) {}
-    public function __construct(callable ...$callbacks) {}
+    public static function invoke(callable $callable, ...$args) {}
 
     /**
-     * then(callable $done = null, callable $fail = null, callable $progress = null)
-     * then(Promise $handler)
-     *
+     * Promise constructor.
      * @param callable $done
      * @param callable $fail
-     * @param callable $progress
+     */
+    public function __construct(callable $done = null, callable $fail = null) {}
+
+    /**
+     * then(callable $done = null, callable $fail = null)
+     * then(Promise $handler)
+     *
+     * @param Promise|callable $done
+     * @param callable $fail
      * @return Promise
      */
-    public function then(...$handlers) : Promise {}
+    public function then($done = null, callable $fail = null) : Promise {}
+
+    /**
+     * @param Promise|string $handler
+     * @return self
+     */
+    public function forget($handler) : self {}
 
     /**
      * @param callable $callback
@@ -49,12 +58,6 @@ class Promise {
     public function onFail(callable $callback) : Promise {}
 
     /**
-     * @param callable $callback
-     * @return Promise
-     */
-    public function onProgress(callable $callback) : Promise {}
-
-    /**
      * @return string one of pending, done, canceled, failed, processing
      */
     public function getState() : string {}
@@ -63,13 +66,6 @@ class Promise {
      *
      */
     public function getFlags() : int {}
-
-    /**
-     * @todo
-     * @param mixed $info
-     * @return Promise
-     */
-    public function notify(mixed $info) : Promise {}
 
     /**
      * @param float $sec

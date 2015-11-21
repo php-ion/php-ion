@@ -19,7 +19,7 @@ CLASS_METHOD(ION_Sequence, __construct) {
         Z_PARAM_OPTIONAL
         Z_PARAM_ZVAL_EX(handler, 1, 0)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
-    ion_promisor_set_callbacks(Z_OBJ_P(getThis()), handler, NULL, NULL);
+    ion_promisor_set_callbacks(Z_OBJ_P(getThis()), handler, NULL);
 }
 
 METHOD_ARGS_BEGIN(ION_Sequence, __construct, 0)
