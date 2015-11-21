@@ -19,6 +19,7 @@ class FSTest extends TestCase {
 	}
 
 	/**
+     * @group dev
 	 * @memcheck
 	 */
 	public function testWatch() {
@@ -26,9 +27,9 @@ class FSTest extends TestCase {
 		@unlink($file);
 		file_put_contents($file, "a1");
 		$expected = realpath($file);
-		FS::watch($file, FS::WATCH_MODIFY)->then(function($filename) {
+		FS::watch($file)->then(function($filename) {
 			$this->data["changed"] = $filename;
-		});
+		})->setName('test');
 		$this->promise(function () use ($file) {
 			yield \ION::await(0.02);
 			@unlink($file);
@@ -38,6 +39,7 @@ class FSTest extends TestCase {
 		});
 		$this->loop();
 		FS::unwatchAll();
+//        FS::watch($file)->forget('test');
 		$this->assertEquals([
 			"changed" => $expected
 		], $this->data);

@@ -212,7 +212,6 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, int type) {
             if(!is_valid_generator) {
                 zend_object_release(promise->generator);
                 promise->generator = NULL;
-                promise->flags |= ION_PROMISOR_RESOLVED;
             }
             goto watch_result;
         }
@@ -425,23 +424,7 @@ zend_object * ion_promisor_clone(zend_object * proto_obj) {
             clone->handlers = NULL;
         }
         ion_promisor_cleanup(proto, extern_handlers);
-//        if(extern_handlers) { // we has external promises and should realloc proto->handlers, remove NULL elements
-//            if(proto->handler_count - extern_handlers) {
-//                zend_object ** handlers = proto->handlers;
-//                proto->handlers = emalloc(sizeof(zend_object *) * (proto->handler_count - extern_handlers));
-//                for(ushort i = 0, j = 0; i<proto->handler_count; i++) {
-//                    if(handlers[i]) {
-//                        proto->handlers[j++] = handlers[i];
-//                    }
-//                }
-//                proto->handler_count = proto->handler_count - extern_handlers;
-//                efree(handlers);
-//            } else {
-//                efree(proto->handlers);
-//                proto->handlers = NULL;
-//                proto->handler_count = 0;
-//            }
-//        }
+        ion_promisor_autoclean(proto);
     }
     if(!Z_ISUNDEF(proto->result)) {
         ZVAL_COPY(&clone->result, &proto->result);
@@ -455,8 +438,6 @@ zend_object * ion_promisor_clone_obj(zval * zobject) {
 
 void ion_promisor_free(zend_object * promisor_obj) {
     ion_promisor * promisor = get_object_instance(promisor_obj, ion_promisor);
-
-//    PHPDBG("promisor %d free", (int)promisor->uid);
 
     zend_object_std_dtor(promisor_obj);
     ion_promisor_release(promisor_obj);
@@ -488,6 +469,12 @@ int ion_promisor_append(zend_object * container, zend_object * handler) {
     PION_ARRAY_PUSH(promisor->handlers, promisor->handler_count, handler);
     obj_add_ref(handler);
     return SUCCESS;
+}
+
+void ion_promisor_set_autoclean(zend_object * object, promisor_canceler_t autocleaner) {
+    ion_promisor * promisor = get_object_instance(object, ion_promisor);
+    promisor->canceler = autocleaner;
+    promisor->flags |= ION_PROMISOR_AUTOCLEAN;
 }
 
 void ion_promisor_cleanup(ion_promisor * promisor, ushort removed) {
@@ -525,6 +512,7 @@ void ion_promisor_remove(zend_object * container, zend_object * handler) {
 
         ion_promisor_cleanup(promisor, removed);
     }
+    ion_promisor_autoclean(promisor);
 }
 
 void ion_promisor_remove_named(zend_object * container, zend_string * name) {
@@ -543,5 +531,6 @@ void ion_promisor_remove_named(zend_object * container, zend_string * name) {
 
         ion_promisor_cleanup(promisor, removed);
     }
+    ion_promisor_autoclean(promisor);
 }
 

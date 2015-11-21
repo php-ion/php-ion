@@ -81,6 +81,12 @@ void ion_process_clean_signal(zval * zs) {
     zend_object_release(sequence);
 }
 
+void ion_process_autoclean_signal(zend_object * sequence) {
+    ion_promisor * promisor = get_object_instance(sequence, ion_promisor);
+    ion_event    * event = ion_promisor_store_get(promisor);
+    int            signo = event_get_fd(event);
+    zend_hash_index_del(GION(signals), (zend_ulong)signo);
+}
 
 void ion_process_signal(int signo, short flags, void * ctx) {
     ION_LOOP_CB_BEGIN();
@@ -109,6 +115,7 @@ CLASS_METHOD(ION_Process, signal) {
         RETURN_OBJ(sequence);
     }
     sequence = ion_promisor_sequence_new(NULL);
+    ion_promisor_set_autoclean(sequence, ion_process_autoclean_signal);
     event = evsignal_new(GION(base), (int)signo, ion_process_signal, sequence);
     if(evsignal_add(event, NULL) == FAILURE) {
         zend_object_release(sequence);

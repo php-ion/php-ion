@@ -30,12 +30,12 @@
 #define ION_PROMISOR_PROTOTYPE     (1<<10)
 
 // Callbacks flags
-#define ION_PROMISOR_HAS_DONE      (1<<11)
-#define ION_PROMISOR_HAS_FAIL      (1<<12)
-#define ION_PROMISOR_HAS_PROGRESS  (1<<13)
-#define ION_PROMISOR_YIELDED       (1<<14)
+#define ION_PROMISOR_HAS_DONE        (1<<11)
+#define ION_PROMISOR_HAS_FAIL        (1<<12)
+#define ION_PROMISOR_HAS_PROGRESS    (1<<13)
+#define ION_PROMISOR_YIELDED         (1<<14)
 
-#define ION_PROMISOR_RESOLVED      (1<<15)
+#define ION_PROMISOR_AUTOCLEAN       (1<<15)
 
 #define ION_PROMISOR_NESTED_FLAGS  ION_PROMISOR_PROTOTYPE
 
@@ -75,7 +75,7 @@ typedef struct _ion_promisor {
 zend_object * ion_promisor_promise_new(zval * done, zval * fail);
 zend_object * ion_promisor_sequence_new(zval * init);
 zend_object * ion_promisor_deferred_new(zval * cancelable);
-zend_object * ion_promisor_deferred_new_ex(promisor_canceler_t cancelable);
+zend_object * ion_promisor_deferred_new_ex(promisor_canceler_t canceler);
 
 // Manipulations
 zend_object * ion_promisor_clone(zend_object * proto_obj);
@@ -85,6 +85,7 @@ int ion_promisor_append(zend_object * container, zend_object * handler);
 void ion_promisor_remove(zend_object * container, zend_object * handler);
 void ion_promisor_remove_named(zend_object * container, zend_string * name);
 void ion_promisor_cleanup(ion_promisor * promisor, ushort removed);  // realloc promisor->handlers, remove NULL elements
+void ion_promisor_set_autoclean(zend_object * container, promisor_canceler_t autocleaner);
 
 // Stores and destructors
 #define ion_promisor_store(promisor, pobject)  get_object_instance(promisor, ion_promisor)->object = (void *) pobject
@@ -115,6 +116,8 @@ zend_object * ion_deferred_init(zend_class_entry * ce);
 zend_object * ion_sequence_init(zend_class_entry * ce);
 
 // Utils
+
+
 #define PION_ARRAY_PUSH(array, counter, elem)                 \
     if(counter) {                                             \
         array = erealloc(array, sizeof(elem) * ++counter);    \
@@ -147,6 +150,14 @@ zend_object * ion_sequence_init(zend_class_entry * ce);
           || instanceof_function(Z_OBJCE_P(pz), ion_class_entry(ION_Promise)))
 
 #define Z_ISPROMISE(zv) Z_ISPROMISE_P(&zv)
+
+#define ion_promisor_autoclean(promisor)                    \
+    if((promisor->flags & ION_PROMISOR_AUTOCLEAN) && !promisor->handler_count && promisor->canceler) {    \
+        promisor->canceler(&promisor->std);     \
+    }
+
+#define ion_promisor_should_cancel(promisor) \
+    ((promisor->flags & ION_PROMISOR_CANCEL_ON_EMPTY) && !promisor->handler_count && promisor->canceler)
 
 #define ion_promisor_is_empty() (get_object_instance(object, ion_promisor)->handler_count == 0)
 

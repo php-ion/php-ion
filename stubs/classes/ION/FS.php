@@ -30,7 +30,7 @@ class FS {
 	 * @param int $events
 	 * @return Sequence
 	 */
-	public static function watch(string $filename, int $events) : Sequence {}
+	public static function watch(string $filename, int $events = 0) : Sequence {}
 
 	public static function unwatchAll() {}
 }

@@ -26,15 +26,15 @@ class ProcessTest extends TestCase {
 	public function testSignals() {
 		Process::signal(SIGHUP)->then(function ($signo) {
 			$this->data["signal"] = $signo;
-		});
+		})->setName("test");
+
 		$this->promise(function () {
 			yield \ION::await(0.01);
 			Process::kill(SIGHUP, getmypid());
 			yield \ION::await(0.01);
 		});
 		$this->loop();
-		Process::clearSignal(SIGHUP);
-
+        Process::signal(SIGHUP)->forget('test');
 		$this->assertEquals([
 			"signal" => SIGHUP
 		], $this->data);
