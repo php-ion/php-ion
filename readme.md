@@ -45,6 +45,7 @@ ION Extension [dev]
 * Client socket pool
 * HTTP server
 * HTTP client
+* Thread-safety
 * IPC
 
 
