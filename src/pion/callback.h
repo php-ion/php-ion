@@ -131,13 +131,5 @@ zend_object * _pion_new_object_arg_1(zend_class_entry *ce, zval *arg1 TSRMLS_DC)
 zend_object * _pion_new_object_arg_2(zend_class_entry *ce, zval *arg1, zval *arg2 TSRMLS_DC);
 zend_object * _pion_new_object_arg_3(zend_class_entry *ce, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC);
 
-//zval* pionInitException(zend_class_entry *cls, char *message, int code TSRMLS_DC);
-
-/* Call PHP named function */
-zval* pionCallFunction(const char *function_name, int num_args, zval **args TSRMLS_DC);
-zval* pionCallFunctionWithoutArgs(const char *function_name, zval *arg1 TSRMLS_DC);
-zval* pionCallFunctionWith1Arg(const char *function_name, zval *arg1 TSRMLS_DC);
-zval* pionCallFunctionWith2Args(const char *function_name, zval *arg1, zval *arg2 TSRMLS_DC);
-zval* pionCallFunctionWith3Args(const char *function_name, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC);
 
 #endif //PION_CALLBACK_H

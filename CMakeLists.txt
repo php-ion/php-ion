@@ -27,6 +27,7 @@ set(ION_SOURCE_FILES
         src/php_ion.c
         src/pion/init.h
         src/pion/zts.h
+        src/pion/ssl.h
         src/pion/exceptions.c
         src/pion/debug.c
         src/pion/callback.c
@@ -47,7 +48,9 @@ set(ION_SOURCE_FILES
         src/ION/Listener.c
         src/ION/Stream.c
         src/ION/Process.c
-        src/ION/FS.c)
+        src/ION/FS.c
+        src/ION/SSL.c
+        )
 
 #src/ION/Deferred.c
 #src/ION/Data/SkipList.c

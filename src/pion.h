@@ -10,6 +10,7 @@
 #include "pion/engine.h"
 #include "pion/promisor.h"
 #include "pion/net.h"
+#include "pion/ssl.h"
 #include "pion/stream.h"
 
 //typedef struct event event;

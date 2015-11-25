@@ -33,7 +33,7 @@ class ListenerTest extends TestCase {
     public function testAccept($address, $name, $stream_address = null) {
 
         $listener = new Listener($address);
-        $listener->onConnect(function (Stream $connect) {
+        $listener->start()->accept()->then(function (Stream $connect) {
             $this->data["connect"] = $this->describe($connect);
 
             $this->stop();
@@ -73,6 +73,6 @@ class ListenerTest extends TestCase {
      */
     public function testToString() {
         $listener = new Listener("tcp://".ION_TEST_SERVER_HOST);
-       $this->assertEquals(ION_TEST_SERVER_HOST, strval($listener));
+       $this->assertEquals("tcp://".ION_TEST_SERVER_HOST, strval($listener));
     }
 }

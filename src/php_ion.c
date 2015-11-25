@@ -26,6 +26,7 @@ ZEND_GET_MODULE(ion);
 
 static const zend_module_dep ion_depends[] = {
     ZEND_MOD_REQUIRED("spl")
+    ZEND_MOD_REQUIRED("openssl")
     {NULL, NULL, NULL}
 };
 
@@ -75,6 +76,7 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_Deferred);
     STARTUP_MODULE(ION_Sequence);
     STARTUP_MODULE(ION);
+    STARTUP_MODULE(ION_SSL);
     STARTUP_MODULE(ION_DNS);
     STARTUP_MODULE(ION_FS);
     STARTUP_MODULE(ION_Listener);

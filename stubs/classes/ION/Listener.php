@@ -2,36 +2,69 @@
 
 namespace ION;
 
-
+/**
+ * This class gives you a way to listen for and accept incoming TCP connections.
+ * @package ION
+ */
 class Listener {
 
-	public function __construct($listen) {}
+    /**
+     * Listens for a connection on a socket
+     *
+     * @param string $listen socket name HOST:PORT or unix domain socket
+     * @param int $backlog Set the maximum number of pending connections that the network stack should allow to wait in a not-yet-accepted
+     * state at any time; see documentation for your system’s listen() function for more details.
+     * If backlog is negative, Libevent tries to pick a good value for the backlog.
+     */
+	public function __construct(string $listen, int $backlog = -1) {}
 
     /**
-     * @param callable $action
+     * @param SSL $ssl
+     * @return Listener
+     */
+    public function setSSL(SSL $ssl) : self {}
+
+    /**
+     * Create and enable socket listener
+     * @return Listener
+     */
+    public function start() : self {}
+
+    /**
+     * When a new connection is received, the sequence is invoked with new connection.
+     *
      * @return Sequence
      */
-	public function onConnect(callable $action) {}
+	public function accept() : Sequence {}
+
+    /**
+     * Reenable listener for new connections.
+     *
+     * @return self
+     */
+	public function enable() : self {}
+
+    /**
+     * Temporarily disable listener for new connections.
+     *
+     * @return self
+     */
+	public function disable() : self {}
 
     /**
      * @return self
      */
-	public function enable() {}
+	public function shutdown() : self {}
 
     /**
-     * @return self
+     *
      */
-	public function disable() {}
-
-    /**
-     * @return self
-     */
-	public function shutdown() {}
+    public function getName() : string {}
 
 	/**
 	 * @return string
 	 */
-	public function __toString() {}
+	public function __toString() : string {}
 
 	public function __destruct() {}
 }

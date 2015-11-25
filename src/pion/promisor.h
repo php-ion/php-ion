@@ -2,7 +2,7 @@
 #define PION_PROMISOR_H
 
 #include <php.h>
-#include "zts.h"
+#include "init.h"
 #include "../config.h"
 #include "callback.h"
 #include "exceptions.h"
@@ -242,18 +242,18 @@ static zend_always_inline void ion_promisor_exception_eg(zend_object * promisor,
     ion_promisor_fail(promisor, &value);
     zval_ptr_dtor(&value);
 }
-
-
-static zend_always_inline void ion_promisor_exception_ex(zend_object * promisor, zend_class_entry * ce, long code, const char * message, ...) {
-    va_list args;
-    zval value;
-    zend_object * exception = NULL;
-    va_start(args, message);
-    exception = pion_exception_new_ex(ce, code, message, args);
-    va_end(args);
-    ZVAL_OBJ(&value, exception);
-    ion_promisor_fail(promisor, &value);
-    zval_ptr_dtor(&value);
-}
+//
+//
+//static zend_always_inline void ion_promisor_exception_ex(zend_object * promisor, zend_class_entry * ce, long code, const char * message, ...) {
+//    va_list args;
+//    zval value;
+//    zend_object * exception = NULL;
+//    va_start(args, message);
+//    exception = pion_exception_new_ex(ce, code, message, args);
+//    va_end(args);
+//    ZVAL_OBJ(&value, exception);
+//    ion_promisor_fail(promisor, &value);
+//    zval_ptr_dtor(&value);
+//}
 
 #endif //PION_PROMISOR_H

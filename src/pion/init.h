@@ -1,10 +1,12 @@
 #ifndef PION_INIT_H
 #define PION_INIT_H
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#endif
 #include <php.h>
 #include <event.h>
-#include "engine.h"
+//#include "engine.h"
 
 #ifdef PHP_WIN32
 #	define ION_API __declspec(dllexport)
@@ -75,6 +77,9 @@ ZEND_BEGIN_MODULE_GLOBALS(ion)
     int         watch_fd;    // inotify or kqueue file descriptor
     ion_event * watch_event; // watch_fd listener
     HashTable * watchers;    // list of listened filenames
+
+    // SSL
+    int         ssl_index;
 ZEND_END_MODULE_GLOBALS(ion)
 
 ZEND_EXTERN_MODULE_GLOBALS(ion);

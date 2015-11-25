@@ -52,11 +52,11 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Stream;
 
 typedef struct _ion_listener {
     zend_object   std;
-    zend_uint     flags;
-    zend_object * on_connect;
+    uint     flags;
+    zend_object * accept;
     zend_object * ssl;
     zend_string * name;
-    int           backlog;
+    zend_long     backlog;
     ion_evlistener * listener;
 } ion_listener;
 

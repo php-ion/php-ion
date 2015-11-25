@@ -7,6 +7,11 @@ use ION\Stream\ConnectionException;
 use ION\Test\TestCase;
 
 class StreamTest extends TestCase {
+
+    public function listen($address) {
+        $listener = new Listener($address);
+        return $listener->start();
+    }
     /**
      * @memcheck
      */
@@ -109,6 +114,8 @@ class StreamTest extends TestCase {
             [$string, "89", 8],
             [$string, "89", 8, 6, 100],
             [$string, "89", -1, 9, 10],
+            [$string, "a", -1],
+            [$string, $string."a", -1],
         );
     }
 
@@ -167,6 +174,10 @@ class StreamTest extends TestCase {
             22 => [$string, "getLine", ["a", Stream::MODE_TRIM_TOKEN], false, $string],
             23 => [$string, "getLine", ["a", Stream::MODE_WITH_TOKEN], false, $string],
             24 => [$string, "getLine", ["a", Stream::MODE_WITHOUT_TOKEN], false, $string],
+
+            25 => [$string, "getLine", [$string."0", Stream::MODE_TRIM_TOKEN], false, $string],
+            26 => [$string, "getLine", [$string."0", Stream::MODE_WITH_TOKEN], false, $string],
+            27 => [$string, "getLine", [$string."0", Stream::MODE_WITHOUT_TOKEN], false, $string],
         );
     }
 
