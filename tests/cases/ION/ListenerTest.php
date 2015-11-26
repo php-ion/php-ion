@@ -8,18 +8,17 @@ use ION\Test\TestCase;
 class ListenerTest extends TestCase {
 
     /**
-     *
      * @memcheck
      */
     public function testCreate() {
-        $listener = new Listener("tcp://".ION_TEST_SERVER_IPV4);
-        $listener = new Listener("tcp://".ION_TEST_SERVER_IPV6);
+        $listener = new Listener(ION_TEST_SERVER_IPV4, 10);
+        $listener = new Listener(ION_TEST_SERVER_IPV6, -1);
     }
 
     public function providerHosts() {
         return [
-            ["tcp://".ION_TEST_SERVER_IPV4, ION_TEST_SERVER_IPV4],
-            ["tcp://".ION_TEST_SERVER_IPV6, ION_TEST_SERVER_IPV6],
+            [ION_TEST_SERVER_IPV4, ION_TEST_SERVER_IPV4],
+            [ION_TEST_SERVER_IPV6, ION_TEST_SERVER_IPV6],
 //            [ION_TEST_SERVER_UNIX, ION_TEST_SERVER_UNIX, "unix://".ION_TEST_SERVER_UNIX], // TODO: fix ION::stop() when unix listening
         ];
     }
@@ -33,9 +32,8 @@ class ListenerTest extends TestCase {
     public function testAccept($address, $name, $stream_address = null) {
 
         $listener = new Listener($address);
-        $listener->start()->accept()->then(function (Stream $connect) {
+        $listener->accept()->then(function (Stream $connect) {
             $this->data["connect"] = $this->describe($connect);
-
             $this->stop();
         })->onFail(function (\Throwable $error) {
             $this->data["error"] = $this->describe($error);
@@ -56,7 +54,7 @@ class ListenerTest extends TestCase {
      * @memcheck
      */
     public function testEnableDisable() {
-        $listener = new Listener("tcp://".ION_TEST_SERVER_HOST);
+        $listener = new Listener(ION_TEST_SERVER_HOST);
         $listener->disable()->enable();
     }
 
@@ -64,7 +62,7 @@ class ListenerTest extends TestCase {
      * @memcheck
      */
     public function testShutDown() {
-        $listener = new Listener("tcp://".ION_TEST_SERVER_HOST);
+        $listener = new Listener(ION_TEST_SERVER_HOST);
         $listener->shutdown();
     }
 
@@ -72,7 +70,7 @@ class ListenerTest extends TestCase {
      * @memcheck
      */
     public function testToString() {
-        $listener = new Listener("tcp://".ION_TEST_SERVER_HOST);
-       $this->assertEquals("tcp://".ION_TEST_SERVER_HOST, strval($listener));
+        $listener = new Listener(ION_TEST_SERVER_HOST);
+       $this->assertEquals(ION_TEST_SERVER_HOST, strval($listener));
     }
 }

@@ -4,6 +4,7 @@ namespace ION;
 
 /**
  * This class gives you a way to listen for and accept incoming TCP connections.
+ * example.com:80, 127.0.0.1:8080, [::1]:8081, /tmp/server.sock
  * @package ION
  */
 class Listener {

@@ -113,8 +113,61 @@ CLASS_METHOD(ION_Listener, __construct) {
         Z_PARAM_LONG(back_log)
     ZEND_PARSE_PARAMETERS_END();
 
-    listener->backlog = back_log;
-    listener->name = zend_string_copy(listen);
+    if(listen->val[0] != '/') { // ipv4, ipv6, hostname
+        struct sockaddr_storage sock;
+        socklen_t sock_len = sizeof(struct sockaddr_storage);
+        int result = evutil_parse_sockaddr_port(listen->val, (struct sockaddr *)&sock, (int *)&sock_len);
+        if(result == SUCCESS) {
+            if(sock.ss_family == AF_INET) {
+                listener->flags |= ION_STREAM_NAME_IPV4;
+            } else if(sock.ss_family == AF_INET6) {
+                listener->flags |= ION_STREAM_NAME_IPV6;
+            } else {
+                zend_throw_exception_ex(ion_class_entry(ION_InvalidUsageException), 0, "Address family %d not supported by protocol family", sock.ss_family);
+                return;
+            }
+        } else {
+            zend_throw_exception_ex(ion_class_entry(InvalidArgumentException), 0, "Address %s is not well-formed", listen->val);
+            return;
+        }
+        listener->listener = evconnlistener_new_bind(GION(base), _ion_listener_accept, listener,
+                                                     LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_EXEC, (int)back_log,
+                                                     (struct sockaddr *)&sock, sock_len);
+        if(listener->listener) {
+            pion_net_sock_name(evconnlistener_get_fd(listener->listener), PION_NET_NAME_LOCAL, &listener->name);
+        }
+    } else { // unix socket
+        evutil_socket_t fd;
+        struct sockaddr_un local;
+        socklen_t sock_len = sizeof(struct sockaddr_un);
+
+        listener->flags |= ION_STREAM_NAME_UNIX;
+        fd = socket(AF_UNIX, SOCK_STREAM, 0);
+        if(fd < 0) {
+            zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, "Failed to listen socket %s: %s", listener->name->val, evutil_socket_error_to_string(errno));
+            return;
+        }
+        memset(&local, 0, sizeof(local));
+        local.sun_family = AF_UNIX;
+        strncpy(local.sun_path, listen->val, 100);
+        unlink(local.sun_path);
+        if(bind(fd, (struct sockaddr *)&local, sock_len) == FAILURE) {
+            zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, "Failed to listen on %s: %s", listener->name->val, evutil_socket_error_to_string(errno));
+            return;
+        }
+        listener->listener = evconnlistener_new(GION(base), _ion_listener_accept, listener,
+             LEV_OPT_CLOSE_ON_FREE | LEV_OPT_CLOSE_ON_EXEC, (int)back_log, fd);
+        listener->name = zend_string_copy(listen);
+    }
+
+    if(listener->listener) {
+        evconnlistener_set_error_cb(listener->listener, _ion_listener_error);
+        evconnlistener_enable(listener->listener);
+        listener->flags |= ION_STREAM_STATE_ENABLED;
+    } else {
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, "Failed to listen on %s: %s", listener->name->val, evutil_socket_error_to_string(errno));
+        return;
+    }
 }
 
 METHOD_ARGS_BEGIN(ION_Listener, __construct, 2)
@@ -144,7 +197,6 @@ METHOD_WITHOUT_ARGS(ION_Listener, accept);
 CLASS_METHOD(ION_Listener, setSSL) {
     ion_listener * listener = get_this_instance(ion_listener);
     zval         * zssl = NULL;
-
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_OBJECT(zssl)

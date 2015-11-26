@@ -8,10 +8,6 @@ use ION\Test\TestCase;
 
 class StreamTest extends TestCase {
 
-    public function listen($address) {
-        $listener = new Listener($address);
-        return $listener->start();
-    }
     /**
      * @memcheck
      */
@@ -214,8 +210,8 @@ class StreamTest extends TestCase {
     }
 
     public function listener($ip, callable $callback) {
-        $listener = new Listener("tcp://".$ip);
-        $listener->onConnect($callback)->onFail(function ($error) {
+        $listener = new Listener($ip);
+        $listener->accept()->then($callback)->onFail(function ($error) {
             $this->data["listener.error"] = $this->describe($error);
         });
         return $listener;

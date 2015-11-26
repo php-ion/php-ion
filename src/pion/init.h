@@ -32,6 +32,18 @@ typedef struct event_base     ion_event_base;
 typedef struct event_config   ion_event_config;
 typedef struct evdns_base     ion_evdns_base;
 
+#ifndef zend_uint
+#define zend_uint uint32_t
+#endif
+
+#ifndef true
+#define true 1
+#endif
+
+#ifndef false
+#define false 0
+#endif
+
 //#define ION(prop) \
 //    ionBase->prop
 

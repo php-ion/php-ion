@@ -4,23 +4,6 @@
 #include <ext/spl/spl_functions.h>
 //#include <Zend/zend_generators.h>
 
-#ifndef zend_uint
-#define zend_uint uint32_t
-#endif
-
-#ifndef true
-#define true 1
-#endif
-
-#ifndef false
-#define false 0
-#endif
-
-typedef struct _class_info {
-    zend_class_entry * ce;
-    zend_object_handlers * handlers;
-} class_info;
-
 #define ion_get_class(class_name) ion_ce_ ## class_name
 
 #define CE2(class) class ## _info.ce
