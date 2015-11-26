@@ -14,13 +14,15 @@ class SSL {
 
     /**
      * @param int $method
+     * @return SSL
      */
-    public static function server(int $method = self::METHOD_AUTO) {}
+    public static function server(int $method = self::METHOD_AUTO) : self {}
 
     /**
      * @param int $method
+     * @return SSL
      */
-    public static function client(int $method = self::METHOD_AUTO) {}
+    public static function client(int $method = self::METHOD_AUTO) : self {}
 
     /**
      * SSL constructor. Use methods SSL::server() or SSL::client()
@@ -28,14 +30,15 @@ class SSL {
     private function __construct() {}
 
     /**
+     * Enable/disable ticket algorithm (default: true).
      * Normally clients and servers will, where possible, transparently make use of RFC4507bis tickets for stateless session resumption.
-     * If this option is set this functionality is disabled and tickets will not be used by clients or servers.
+     * @param bool $state
      * @return SSL
      */
-    public function noTicket() : self {}
+    public function ticket(bool $state = true) : self {}
 
     /**
-     * Disable/enable TLS compression.
+     * Disable/enable TLS compression (default: true).
      * Disable TLS compression can help mitigate the CRIME attack vector.
      * @param bool $state
      * @return SSL
@@ -43,14 +46,14 @@ class SSL {
     public function compression(bool $state = true) : self {}
 
     /**
-     * Require verification of SSL certificate used.
+     * Require verification of SSL certificate used (default: true).
      * @param bool $state
      * @return SSL
      */
     public function verifyPeer(bool $state = true) : self {}
 
     /**
-     * Abort if the certificate chain is too deep. Set -1 to no verification.
+     * Abort if the certificate chain is too deep (default: -1).
      * @param int $max
      * @return SSL
      */
@@ -74,26 +77,20 @@ class SSL {
     public function passPhrase(string $phrase) : self {}
 
     /**
+     * Allow self-signed certificates (default: false). Requires verify_peer.
      * @param bool $state
      * @return SSL
      */
     public function allowSelfSigned(bool $state = true) : self {}
 
     /**
-     * Location of Certificate Authority file on local filesystem which should be used with the verifyPeer(true) to authenticate the identity of the remote peer.
-     * @param string $file existing file
-     * @return SSL
-     */
-    public function cafile(string $file) : self {}
-
-    /**
+     * Set location of Certificate Authority file on local filesystem which should be used with the verifyPeer(true) to authenticate the identity of the remote peer.
      * If Certificate Authority file is not specified or if the certificate is not found there,
      * the directory pointed to by capath is searched for a suitable certificate.
      * $path must be a correctly hashed certificate directory.
-     * @param string $path
+     * @param string $cafile
+     * @param string $capath
      * @return SSL
      */
-    public function capath(string $path) : self {}
-
-    public function ca(string $cafile, string $capath) : self {}
+    public function ca(string $cafile, string $capath = null) : self {}
 }

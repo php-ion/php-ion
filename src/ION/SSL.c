@@ -192,35 +192,32 @@ void ion_ssl_free(zend_object * object) {
 
 }
 
-CLASS_METHOD(ION_SSL, server) {
-    zend_long   crypt_method = 0;
+zend_object * ion_ssl_factory(zend_long flags) {
     zval        zssl;
     ion_ssl   * ssl;
     zend_long   ssl_ctx_options;
+    zend_bool   is_client = (flags & ION_SSL_IS_CLIENT) ? true : false;
+    zend_long   crypt_method = flags & ION_SSL_CRYPTO_METHODS_MASK;
     const SSL_METHOD * method;
-
-    ZEND_PARSE_PARAMETERS_START(0, 1)
-        Z_PARAM_LONG(crypt_method)
-    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     object_init_ex(&zssl, ion_ce_ION_SSL);
     ssl = get_instance(&zssl, ion_ssl);
 
     if (crypt_method) { // use a specific crypto method
         ssl_ctx_options = SSL_OP_ALL;
-        method = ion_ssl_select_crypto_method(crypt_method, false);
+        method = ion_ssl_select_crypto_method(crypt_method, is_client);
         if (method == NULL) {
             if(!EG(exception)) {
                 zend_throw_exception(ion_ce_ION_SSLException, "Invalid crypt method", 0);
             }
-            return;
+            return NULL;
         }
     } else { // use generic SSLv23
-        method = SSLv23_server_method();
+        method = is_client ? SSLv23_client_method() : SSLv23_server_method();
         ssl_ctx_options = ion_ssl_get_crypto_method_ctx_flags(crypt_method);
         if (ssl_ctx_options == -1) {
             zend_throw_exception(ion_ce_ION_SSLException, "Invalid crypt method", 0);
-            return;
+            return NULL;
         }
     }
 #if OPENSSL_VERSION_NUMBER >= 0x10001001L
@@ -233,22 +230,39 @@ CLASS_METHOD(ION_SSL, server) {
     if (ssl->ctx == NULL) {
         zval_ptr_dtor(&zssl);
         zend_throw_exception(ion_ce_ION_SSLException, "SSL context creation failure", 0);
-        return;
+        return NULL;
     }
 
     if (SSL_CTX_set_cipher_list(ssl->ctx, ION_SSL_DEFAULT_CIPHERS) != 1) {
         zend_throw_exception_ex(ion_ce_ION_SSLException, 0, "Failed setting cipher list: %s", ION_SSL_DEFAULT_CIPHERS);
-        return;
+        return NULL;
     }
 
 #if OPENSSL_VERSION_NUMBER >= 0x0090605fL
     ssl_ctx_options &= ~SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
 #endif
 
+    SSL_CTX_set_verify(ssl->ctx, SSL_VERIFY_PEER, ion_ssl_verify_cb);
+
     SSL_CTX_set_options(ssl->ctx, ssl_ctx_options);
     SSL_CTX_set_session_id_context(ssl->ctx, (unsigned char *)(void *)ssl->ctx, sizeof(ssl->ctx));
 
-    RETURN_ZVAL(&zssl, 0, 0);
+    return Z_OBJ(zssl);
+}
+
+CLASS_METHOD(ION_SSL, server) {
+    zend_object * object;
+    zend_long     crypt_method = 0;
+
+    ZEND_PARSE_PARAMETERS_START(0, 1)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_LONG(crypt_method)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    object = ion_ssl_factory(crypt_method);
+    if(object) {
+        RETURN_OBJ(object);
+    }
 }
 
 METHOD_ARGS_BEGIN(ION_SSL, server, 0)
@@ -256,7 +270,18 @@ METHOD_ARGS_BEGIN(ION_SSL, server, 0)
 METHOD_ARGS_END()
 
 CLASS_METHOD(ION_SSL, client) {
+    zend_object * object;
+    zend_long     crypt_method = 0;
 
+    ZEND_PARSE_PARAMETERS_START(0, 1)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_LONG(crypt_method)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    object = ion_ssl_factory(crypt_method & ION_SSL_IS_CLIENT);
+    if(object) {
+        RETURN_OBJ(object);
+    }
 }
 
 METHOD_ARGS_BEGIN(ION_SSL, client, 0)
@@ -267,26 +292,27 @@ CLASS_METHOD(ION_SSL, __construct) {}
 
 METHOD_WITHOUT_ARGS(ION_SSL, __construct)
 
-CLASS_METHOD(ION_SSL, noTicket) {
+CLASS_METHOD(ION_SSL, ticket) {
     zend_bool   status = 0;
     ion_ssl   * ssl = get_this_instance(ion_ssl);
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
+        Z_PARAM_OPTIONAL
         Z_PARAM_BOOL(status)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
 #if OPENSSL_VERSION_NUMBER >= 0x0090806fL
     if(status) {
-        SSL_CTX_set_options(ssl->ctx, SSL_OP_NO_TICKET);
-    } else {
         SSL_CTX_clear_options(ssl->ctx, SSL_OP_NO_TICKET);
+    } else {
+        SSL_CTX_set_options(ssl->ctx, SSL_OP_NO_TICKET);
     }
 #endif
 
     RETURN_THIS();
 }
 
-METHOD_ARGS_BEGIN(ION_SSL, noTicket, 0)
+METHOD_ARGS_BEGIN(ION_SSL, ticket, 0)
     METHOD_ARG_BOOL(status, 0)
 METHOD_ARGS_END()
 
@@ -295,6 +321,7 @@ CLASS_METHOD(ION_SSL, compression) {
     ion_ssl   * ssl = get_this_instance(ion_ssl);
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
+        Z_PARAM_OPTIONAL
         Z_PARAM_BOOL(status)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
@@ -319,7 +346,8 @@ CLASS_METHOD(ION_SSL, verifyPeer) {
     ion_ssl   * ssl = get_this_instance(ion_ssl);
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
-            Z_PARAM_BOOL(status)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_BOOL(status)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     if(status) {
@@ -341,6 +369,7 @@ CLASS_METHOD(ION_SSL, verifyDepth) {
     ion_ssl   * ssl = get_this_instance(ion_ssl);
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
+        Z_PARAM_OPTIONAL
         Z_PARAM_LONG(depth)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
@@ -447,6 +476,7 @@ CLASS_METHOD(ION_SSL, allowSelfSigned) {
     ion_ssl   * ssl = get_this_instance(ion_ssl);
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
+        Z_PARAM_OPTIONAL
         Z_PARAM_BOOL(state)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
@@ -518,10 +548,10 @@ METHOD_ARGS_END()
 
 
 CLASS_METHODS_START(ION_SSL)
-    METHOD(ION_SSL, server,          ZEND_ACC_PRIVATE | ZEND_ACC_STATIC)
-    METHOD(ION_SSL, client,          ZEND_ACC_PRIVATE | ZEND_ACC_STATIC)
+    METHOD(ION_SSL, server,          ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_SSL, client,          ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_SSL, __construct,     ZEND_ACC_PRIVATE)
-    METHOD(ION_SSL, noTicket,        ZEND_ACC_PUBLIC)
+    METHOD(ION_SSL, ticket,          ZEND_ACC_PUBLIC)
     METHOD(ION_SSL, compression,     ZEND_ACC_PUBLIC)
     METHOD(ION_SSL, verifyPeer,      ZEND_ACC_PUBLIC)
     METHOD(ION_SSL, verifyDepth,     ZEND_ACC_PUBLIC)

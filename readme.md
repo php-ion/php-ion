@@ -201,7 +201,10 @@ $stream = Stream::resource(STDIN);
 list($stream1, $stream2) = Stream::pair();
 $stream = Stream::connect("tcp://example.com:80");
 $stream = Stream::connect("/var/run/server.sock");
-$stream = Stream::connect("ssl://example.com:443");
+$stream = Stream::connect("example.com:443", [
+    "ssl" => SSL::client(),
+    "local_ip" => ""
+]);
 ```
 
 ```php
@@ -213,11 +216,11 @@ $data = yield $stream->read(1024);
 $data = yield $stream->readLine("\r\n\r\n", 64 * KiB);
 $data = yield $stream->readAll();
 
-yield $stream->awaitConnection();
+yield $stream->connect();
 yield $stream->awaitShutdown();
 yield $stream->flush();
 
-$stream->onData()->then()->then() // ... build sequence
+$stream->incoming()->then(...$handlers)->then(...$handlers);
 ```
 
 ### Listeners
