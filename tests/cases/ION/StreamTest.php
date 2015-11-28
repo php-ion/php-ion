@@ -39,7 +39,7 @@ class StreamTest extends TestCase {
         return [
             ["tcp:///127.0.0.1", "Invalid socket name"],
 //            ["tcp://unexist.example.com:80", "Failed to connect to %s: %s"],
-            ["?query", "Invalid socket name"],
+            ["?query", "Host ?query is not well-formed"],
         ];
     }
 
@@ -218,6 +218,7 @@ class StreamTest extends TestCase {
     }
 
     /**
+     * @group dev
      * @memcheck
      */
     public function testAwaitConnection() {
@@ -231,7 +232,7 @@ class StreamTest extends TestCase {
             $listener->enable();
         }, false);
         $this->promise(function () {
-            $sock = Stream::socket("tcp://".ION_TEST_SERVER_IPV4);
+            $sock = Stream::socket(ION_TEST_SERVER_IPV4);
             $this->data["pre_connect"] = $sock->isConnected();
             yield $sock->awaitConnection();
             $this->data["post_connect"] = $sock->isConnected();
@@ -251,7 +252,7 @@ class StreamTest extends TestCase {
      */
     public function testAwaitConnectionFail() {
         $this->promise(function () {
-            $sock = Stream::socket("tcp://".ION_TEST_SERVER_IPV4);
+            $sock = Stream::socket(ION_TEST_SERVER_IPV4);
             $this->data["pre_connect"] = $sock->isConnected();
             yield $sock->awaitConnection();
             $this->data["post_connect"] = $sock->isConnected();
@@ -278,7 +279,7 @@ class StreamTest extends TestCase {
             $connect->close();
         });
         $this->promise(function () {
-            $sock = Stream::socket("tcp://".ION_TEST_SERVER_IPV4);
+            $sock = Stream::socket(ION_TEST_SERVER_IPV4);
             yield ION::await(0.1);
             $this->data["is_closed"] = $sock->isClosed();
             $this->data["tail"] = $sock->getAll();
@@ -301,7 +302,7 @@ class StreamTest extends TestCase {
             $connect->close();
         });
         $this->promise(function () {
-            $sock = Stream::socket("tcp://".ION_TEST_SERVER_IPV4);
+            $sock = Stream::socket(ION_TEST_SERVER_IPV4);
             yield ION::await(0.05);
             return $sock->getAll();
         });
@@ -317,7 +318,7 @@ class StreamTest extends TestCase {
     public function testAwaitShutdown() {
         $listener = $this->listener(ION_TEST_SERVER_IPV4, $this->chunkSender(["01234", "56789"]));
         $this->promise(function () {
-            $sock = Stream::socket("tcp://".ION_TEST_SERVER_IPV4);
+            $sock = Stream::socket(ION_TEST_SERVER_IPV4);
             $this->data["closed"] = yield $sock->awaitShutdown();
             return $sock->getAll();
         });
@@ -381,7 +382,7 @@ class StreamTest extends TestCase {
     public function testReads($chunks, $method, $args, $result, $tail = null) {
         $listener = $this->listener(ION_TEST_SERVER_IPV4, $this->chunkSender($chunks));
         $this->promise(function () use ($method, $args) {
-            $sock = Stream::socket("tcp://".ION_TEST_SERVER_IPV4);
+            $sock = Stream::socket(ION_TEST_SERVER_IPV4);
             $this->data["read"] = yield $sock->{$method}(...$args);
             yield $sock->awaitShutdown();
             $this->data["tail"] = $sock->getAll();
@@ -410,7 +411,7 @@ class StreamTest extends TestCase {
         $listener = $this->listener(ION_TEST_SERVER_IPV4, $this->chunkSender(["01234"]));
 
         $this->promise(function () {
-            $socket = Stream::socket("tcp://".ION_TEST_SERVER_IPV4);
+            $socket = Stream::socket(ION_TEST_SERVER_IPV4);
             $socket->__debugInfo();
             yield $socket->awaitConnection();
             $socket->readLine("a");
@@ -436,7 +437,7 @@ class StreamTest extends TestCase {
             $connect->close();
         });
         $this->promise(function () {
-            $socket = Stream::socket("tcp://" . ION_TEST_SERVER_IPV4);
+            $socket = Stream::socket(ION_TEST_SERVER_IPV4);
             $this->data["client.remote.before"] = $socket->getRemotePeer();
             yield $socket->awaitConnection();
             $this->data["client.remote.after"] = $socket->getRemotePeer();
@@ -460,7 +461,7 @@ class StreamTest extends TestCase {
     public function testDestructMemoryLeak() {
         $listener = $this->listener(ION_TEST_SERVER_IPV4, $this->chunkSender(["01234"]));
         $this->promise(function () {
-            $socket = Stream::socket("tcp://".ION_TEST_SERVER_IPV4);
+            $socket = Stream::socket(ION_TEST_SERVER_IPV4);
             $socket->readLine("z");
             $socket->flush();
             $socket->awaitConnection();
@@ -486,7 +487,7 @@ class StreamTest extends TestCase {
             $connect->close();
         });
         $this->promise(function () {
-            $socket = Stream::socket("tcp://" . ION_TEST_SERVER_IPV4);
+            $socket = Stream::socket(ION_TEST_SERVER_IPV4);
             yield $socket->awaitConnection();
             $this->data["client.stream"] = strval($socket);
             yield ION::await(0.1);
@@ -506,7 +507,7 @@ class StreamTest extends TestCase {
     public function testOnData() {
         $listener = $this->listener(ION_TEST_SERVER_IPV4, $this->chunkSender(["0123", "4567"]));
         $this->promise(function () {
-            $socket = Stream::socket("tcp://" . ION_TEST_SERVER_IPV4);
+            $socket = Stream::socket(ION_TEST_SERVER_IPV4);
             $socket->onData()->then(function (Stream $stream) {
                 $this->data["data"] = $stream->getAll();
             });
@@ -532,7 +533,7 @@ class StreamTest extends TestCase {
             $connect->close();
         });
         $this->promise(function () {
-            $socket = Stream::socket("tcp://" . ION_TEST_SERVER_IPV4);
+            $socket = Stream::socket(ION_TEST_SERVER_IPV4);
             $this->data["file"] = yield $socket->readAll();
             yield ION::await(0.02);
         });
@@ -553,7 +554,7 @@ class StreamTest extends TestCase {
             $connect->close();
         });
         $this->promise(function () {
-            $socket = Stream::socket("tcp://" . ION_TEST_SERVER_IPV4);
+            $socket = Stream::socket(ION_TEST_SERVER_IPV4);
             $this->data["file"] = yield $socket->readAll();
             yield ION::await(0.02);
         });

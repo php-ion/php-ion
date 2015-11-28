@@ -71,6 +71,30 @@ class ListenerTest extends TestCase {
      */
     public function testToString() {
         $listener = new Listener(ION_TEST_SERVER_HOST);
-       $this->assertEquals(ION_TEST_SERVER_HOST, strval($listener));
+        $this->assertEquals(ION_TEST_SERVER_HOST, strval($listener));
+    }
+
+    /**
+     * @memcheck
+     */
+    public function _testSSL() {
+        $listener = new Listener(ION_TEST_SERVER_HOST);
+        $listener->setSSL(
+            SSL::server()->localCert(ION_RESOURCES.'/cert', ION_RESOURCES.'/pkey')->allowSelfSigned()
+        );
+        $listener->accept()->then(function (Stream $connect) {
+            $this->data["connect"] = $this->describe($connect);
+            $connect->write("HELLO");
+            yield $connect->flush();
+            $this->stop();
+        })->onFail(function (\Throwable $error) {
+            $this->data["error"] = $this->describe($error);
+            $this->stop();
+        });
+
+        $client = stream_socket_client("ssl://".ION_TEST_SERVER_HOST, $errno, $error, 10, STREAM_CLIENT_ASYNC_CONNECT);
+        stream_set_blocking($client, 0);
+
+        $this->loop();
     }
 }

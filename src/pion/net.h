@@ -16,4 +16,12 @@
 int pion_net_sock_name(evutil_socket_t sock, short flags, zend_string ** addr);
 int pion_net_addr_to_name(struct sockaddr * addr, socklen_t addr_len, zend_string ** address);
 
+typedef struct _pion_net_host {
+    zend_string * hostname;
+    zend_long     port;
+} pion_net_host;
+
+pion_net_host * pion_net_host_parse(const char * host, size_t host_len);
+void pion_net_host_free(pion_net_host * host);
+
 #endif //PION_NET_H

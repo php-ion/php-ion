@@ -1,6 +1,7 @@
 #include "../pion.h"
 #include <ext/standard/url.h>
 #include <sys/fcntl.h>
+#include <event2/bufferevent_ssl.h>
 
 #ifndef O_NOATIME
 # define O_NOATIME 0
@@ -42,6 +43,11 @@ void ion_stream_free(zend_object * stream) {
         if(istream->state & ION_STREAM_STATE_ENABLED) {
             bufferevent_disable(istream->buffer, EV_READ | EV_WRITE);
         }
+        if(istream->crypt) {
+            SSL *ctx = bufferevent_openssl_get_ssl(istream->buffer);
+            SSL_set_shutdown(ctx, SSL_RECEIVED_SHUTDOWN);
+            SSL_shutdown(ctx);
+        }
         bufferevent_free(istream->buffer);
     }
     if(istream->name_self) {
@@ -50,6 +56,7 @@ void ion_stream_free(zend_object * stream) {
     if(istream->name_remote) {
         zend_string_release(istream->name_remote);
     }
+
 }
 
 zend_string * ion_stream_get_name_self(zend_object * stream_obj) {
@@ -523,56 +530,85 @@ CLASS_METHOD(ION_Stream, pair) {
 METHOD_WITHOUT_ARGS(ION_Stream, pair)
 
 
-/** public static function ION\Stream::socket(string $host) : self */
+/** public static function ION\Stream::socket(string $host, ION\SSL $crypto) : self */
 CLASS_METHOD(ION_Stream, socket) {
+    zval        * zcrypto = NULL;
     zend_string * host = NULL;
-    php_url     * resource;
+    zend_uint     state = ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_ENABLED | ION_STREAM_FROM_ME;
     ion_buffer  * buffer   = NULL;
     zend_object * stream = NULL;
 
-    ZEND_PARSE_PARAMETERS_START(1,1)
+    ZEND_PARSE_PARAMETERS_START(1,2)
         Z_PARAM_STR(host)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_OBJECT_EX(zcrypto, 1, 0)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
-//    PARSE_ARGS("s", &host, &host_len);
-    resource = php_url_parse_ex(host->val, host->len);
-    if (resource == NULL) {
-        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Invalid socket name", 0);
-        return;
-    }
-    buffer = bufferevent_socket_new(GION(base), -1, STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE);
 
-    if(buffer == NULL) {
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Error creating the socket", 0);
-        php_url_free(resource);
-        return;
-    }
+    errno = 0;
 
-    if(resource->host) { // ip:port, [ipv6]:port, hostname:port
-        if(bufferevent_socket_connect_hostname(buffer, GION(evdns), AF_UNSPEC, resource->host, resource->port ? (int)resource->port : 0) == FAILURE) {
-            php_url_free(resource);
-            bufferevent_free(buffer);
-            zend_throw_exception_ex(ion_class_entry(ION_Stream_RuntimeException), 0, "Failed to connect to %s: %s", host->val, strerror(errno));
+    if(zcrypto) {
+        SSL * ssl_ctx = ion_ssl_client_stream_handler(Z_OBJ_P(zcrypto));
+        if(!ssl_ctx) {
+            zend_throw_exception_ex(ion_ce_ION_Stream_RuntimeException, 0, "Failed to setup SSL/TLS handler for stream %s", host->val);
             return;
         }
-    } else if(resource->path) { // unix domain socket: /path/to/socket.sock
-        // todo
+        buffer = bufferevent_openssl_socket_new(GION(base), -1, ssl_ctx, BUFFEREVENT_SSL_CONNECTING, STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE);
+        state |= ION_STREAM_ENCRYPTED;
     } else {
-        php_url_free(resource);
-        bufferevent_free(buffer);
-        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Invalid socket name", 0);
+        buffer = bufferevent_socket_new(GION(base), -1, STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE);
+    }
+
+    if(buffer == NULL) {
+        zend_throw_exception_ex(ion_ce_ION_Stream_RuntimeException, 0, "Error creating the socket %s", host->val);
         return;
     }
-    php_url_free(resource);
-    stream = ion_stream_new_ex(buffer, ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_ENABLED | ION_STREAM_FROM_ME, zend_get_called_scope(execute_data));
+
+    stream = ion_stream_new_ex(buffer, state, zend_get_called_scope(execute_data));
     if(!stream) {
-        // todo check EG(exception)
+        if(zcrypto) {
+            SSL * ctx = bufferevent_openssl_get_ssl(buffer);
+            SSL_set_shutdown(ctx, SSL_RECEIVED_SHUTDOWN);
+            SSL_shutdown(ctx);
+        }
+        bufferevent_free(buffer);
         return;
     }
+
+    if(strchr(host->val, '/') == NULL) { // ipv4:port, [ipv6]:port, hostname:port
+        pion_net_host * net_host = pion_net_host_parse(host->val, host->len);
+        if(!net_host) {
+            zend_object_release(stream);
+            zend_throw_exception_ex(ion_class_entry(ION_Stream_RuntimeException), 0, "Host %s is not well-formed", host->val);
+            return;
+        }
+        if(bufferevent_socket_connect_hostname(buffer, GION(evdns), AF_UNSPEC, net_host->hostname->val, (int)net_host->port) == FAILURE) {
+            pion_net_host_free(net_host);
+            zend_object_release(stream);
+            if(bufferevent_socket_get_dns_error(buffer)) {
+                zend_throw_exception_ex(
+                        ion_ce_ION_Stream_RuntimeException, 0,
+                        "Failed to connect to host %s: %s",
+                        host->val, evutil_gai_strerror(bufferevent_socket_get_dns_error(buffer)));
+            } else if(errno) {
+                zend_throw_exception_ex(
+                        ion_ce_ION_Stream_RuntimeException, 0,
+                        "Failed to connect to %s: %s", host->val, strerror(errno));
+            } else {
+                zend_throw_exception_ex(ion_ce_ION_Stream_RuntimeException, 0, "Failed to connect to %s", host->val);
+            }
+            return;
+        }
+        pion_net_host_free(net_host);
+    } else { // unix domain socket: /path/to/socket.sock
+        // todo
+    }
+
     RETURN_OBJ(stream);
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, socket, 1)
     METHOD_ARG_STRING(host, 0)
+    METHOD_ARG_OBJECT(crypt, ION\\SSL, 0, 0)
 METHOD_ARGS_END()
 //
 ///** private function ION\Stream::_input() : void */
@@ -1535,7 +1571,7 @@ CLASS_METHODS_START(ION_Stream)
     METHOD(ION_Stream, close,           ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, onData,          ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, awaitShutdown,   ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, enableSSL,       ZEND_ACC_PUBLIC)
+//    METHOD(ION_Stream, encrypt,       ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, getRemotePeer,   ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, getLocalName,    ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, isClosed,        ZEND_ACC_PUBLIC)

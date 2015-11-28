@@ -39,6 +39,7 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Stream;
 #define ION_STREAM_NAME_UNIX       (1<<16)
 #define ION_STREAM_NAME_MASK       (ION_STREAM_NAME_IPV4 | ION_STREAM_NAME_IPV6 | ION_STREAM_NAME_UNIX)
 
+#define ION_STREAM_ENCRYPTED       (1<<17)
 
 // ** state flags end **
 
@@ -80,6 +81,7 @@ typedef struct _ion_stream {
     zend_object      * connect;
     zend_object      * shutdown;
     zend_object      * on_data;
+    zend_object      * crypt;
     zend_string      * name_self;
     zend_string      * name_remote;
 } ion_stream;
@@ -97,6 +99,8 @@ typedef struct _ion_stream {
 #define ion_stream_output_length(stream) evbuffer_get_length( bufferevent_get_output(stream->buffer) )
 
 #define ion_stream_is_valid_fd(stream) (bufferevent_getfd(stream->buffer) == -1)
+
+#define ion_stream_set_crypt(stream, encryptor) get_object_instance(stream, ion_stream)->crypt = encryptor
 
 int ion_stream_pair(zend_object ** stream_one, zend_object ** stream_two, zend_class_entry * ce);
 zend_object * ion_stream_new_ex(ion_buffer * buffer, int flags, zend_class_entry * cls);

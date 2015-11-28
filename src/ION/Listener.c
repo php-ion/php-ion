@@ -52,7 +52,7 @@ static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct 
         if(listener->ssl) {
             SSL * stream_ssl_handler = ion_ssl_server_stream_handler(listener->ssl);
             if(!stream_ssl_handler) {
-                zend_error(E_WARNING, "Failed to create connection SSL handler for listener %s", listener->name->val);
+                zend_error(E_WARNING, "Failed to create connection SSL/TLS handler for listener %s", listener->name->val);
                 evutil_closesocket(fd);
 
             } else {
