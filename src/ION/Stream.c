@@ -574,11 +574,11 @@ CLASS_METHOD(ION_Stream, socket) {
         return;
     }
 
-    if(strchr(host->val, '/') == NULL) { // ipv4:port, [ipv6]:port, hostname:port
+    if(strchr(host->val, DEFAULT_SLASH) == NULL) { // ipv4:port, [ipv6]:port, hostname:port
         pion_net_host * net_host = pion_net_host_parse(host->val, host->len);
         if(!net_host) {
             zend_object_release(stream);
-            zend_throw_exception_ex(ion_class_entry(ION_Stream_RuntimeException), 0, "Host %s is not well-formed", host->val);
+            zend_throw_exception_ex(ion_ce_InvalidArgumentException, 0, "Host %s is not well-formed", host->val);
             return;
         }
         if(bufferevent_socket_connect_hostname(buffer, GION(evdns), AF_UNSPEC, net_host->hostname->val, (int)net_host->port) == FAILURE) {
@@ -600,6 +600,24 @@ CLASS_METHOD(ION_Stream, socket) {
         }
         pion_net_host_free(net_host);
     } else { // unix domain socket: /path/to/socket.sock
+        char pathname[MAXPATHLEN];
+        char realpath[MAXPATHLEN];
+        size_t pathname_len = host->len;
+        if(host->len > MAXPATHLEN) {
+            zend_throw_exception_ex(ion_ce_InvalidArgumentException, 0, "Host '%s' too long", host->val);
+            return;
+        }
+        memset(&pathname, 0, sizeof(pathname));
+        memcpy(&pathname, host->val, pathname_len);
+        pathname_len = zend_dirname(pathname, pathname_len);
+        if(!pathname_len) {
+            zend_throw_exception_ex(ion_ce_InvalidArgumentException, 0, "Host %s is not well-formed", host->val);
+            return;
+        }
+        if(!VCWD_REALPATH(pathname, realpath)) {
+            zend_throw_exception_ex(ion_ce_InvalidArgumentException, 0, "Failed to open socket %s: No such directory", host->val);
+            return;
+        }
         // todo
     }
 

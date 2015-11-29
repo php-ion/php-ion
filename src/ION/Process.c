@@ -348,6 +348,7 @@ zend_string * ion_buffer_read_all(ion_buffer * buffer) {
 }
 
 void ion_exec_callback(ion_buffer * bev, short what, void * arg) {
+    ION_LOOP_CB_BEGIN();
     ion_exec * exec = (ion_exec *) arg;
     int        pid;
     int        status;
@@ -386,6 +387,7 @@ void ion_exec_callback(ion_buffer * bev, short what, void * arg) {
         close(exec->stderr_fd);
         efree(exec);
     }
+    ION_LOOP_CB_END();
 }
 
 void ion_exec_cancel(zend_object * deferred) {

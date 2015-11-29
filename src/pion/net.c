@@ -81,34 +81,48 @@ int pion_net_addr_to_name(struct sockaddr * addr, socklen_t addr_len, zend_strin
 }
 
 pion_net_host * pion_net_host_parse(const char * host, size_t host_len) {
-    char * port_digits;
-    zend_bool port_found = 0;
-    size_t hostname_len = host_len;
-    for(; hostname_len > 0; --hostname_len) {
-        if(host[ hostname_len ] == ':') {
-            port_found = 1;
-            break;
-        }
-    }
-    if(!port_found) {
+    char hostname[MAX_DOMAIN_LENGTH];
+    int port = 0;
+    if(host_len > MAX_DOMAIN_LENGTH + 2) {
         return NULL;
     }
-    errno = 0;
-    pion_net_host * net_host = ecalloc(1, sizeof(pion_net_host));
-    net_host->hostname = zend_string_alloc(hostname_len, 0);
-    strncpy(ZSTR_VAL(net_host->hostname), host, hostname_len);
-    ZSTR_VAL(net_host->hostname)[hostname_len] = '\0';
-    port_digits = emalloc(host_len - hostname_len + 2);
-    strncpy(port_digits, host + hostname_len + 1, host_len - hostname_len + 1);
-    port_digits[host_len - hostname_len + 1] = '\0';
-    net_host->port = strtol(port_digits, NULL, 10);
-    efree(port_digits);
-    if(errno) {
-        zend_string_release(net_host->hostname);
-        efree(net_host);
+    if(sscanf(host, "%[^:]:%d", hostname, &port) == 2) {
+        pion_net_host * net_host = ecalloc(1, sizeof(pion_net_host));
+        net_host->hostname = zend_string_init(hostname, strlen(hostname), 0);
+        net_host->port = port;
+        return net_host;
+    } else {
         return NULL;
     }
-    return net_host;
+
+//    char * port_digits;
+//    zend_bool port_found = 0;
+//    size_t hostname_len = host_len;
+//    for(; hostname_len > 0; --hostname_len) {
+//        if(host[ hostname_len ] == ':') {
+//            port_found = 1;
+//            break;
+//        }
+//    }
+//    if(!port_found) {
+//        return NULL;
+//    }
+//    errno = 0;
+//    pion_net_host * net_host = ecalloc(1, sizeof(pion_net_host));
+//    net_host->hostname = zend_string_alloc(hostname_len, 0);
+//    strncpy(ZSTR_VAL(net_host->hostname), host, hostname_len);
+//    ZSTR_VAL(net_host->hostname)[hostname_len] = '\0';
+//    port_digits = emalloc(host_len - hostname_len + 2);
+//    strncpy(port_digits, host + hostname_len + 1, host_len - hostname_len + 1);
+//    port_digits[host_len - hostname_len + 1] = '\0';
+//    net_host->port = strtol(port_digits, NULL, 10);
+//    efree(port_digits);
+//    if(errno) {
+//        zend_string_release(net_host->hostname);
+//        efree(net_host);
+//        return NULL;
+//    }
+//    return net_host;
 }
 
 void pion_net_host_free(pion_net_host * host) {

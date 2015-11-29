@@ -4,6 +4,7 @@
 #include <php.h>
 #include <event2/util.h>
 
+#define MAX_DOMAIN_LENGTH 255
 
 #define PION_NET_NAME_UNKNOWN 0
 #define PION_NET_NAME_IPV4    1

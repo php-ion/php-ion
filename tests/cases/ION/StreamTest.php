@@ -31,19 +31,19 @@ class StreamTest extends TestCase {
      */
     public function testSocket() {
         $listener = new Listener(ION_TEST_SERVER_IPV4);
-        $stream = Stream::socket("tcp://".ION_TEST_SERVER_IPV4);
+        $stream = Stream::socket(ION_TEST_SERVER_IPV4);
         $this->assertInstanceOf('ION\Stream', $stream);
     }
 
     public function providerSocketFailures() {
         return [
-            ["tcp:///127.0.0.1", "Invalid socket name"],
-//            ["tcp://unexist.example.com:80", "Failed to connect to %s: %s"],
+            ["tcp://127.0.0.1:80", "Failed to open socket tcp://127.0.0.1:80: No such directory"],
             ["?query", "Host ?query is not well-formed"],
         ];
     }
 
     /**
+     * @group dev
      * @dataProvider providerSocketFailures
      * @param string $url
      * @param string $message
@@ -218,7 +218,6 @@ class StreamTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testAwaitConnection() {
