@@ -134,8 +134,8 @@ zend_long ion_ssl_get_crypto_method_ctx_flags(zend_long method_flags) {
 
 static int ion_ssl_verify_cb(int preverify_ok, X509_STORE_CTX * ctx) {
     SSL     * ssl;
-    int       ret = 0;
-    int       err;
+    int       ret = preverify_ok;
+    int       err = 0;
     int       depth;
     ion_ssl * issl;
 
@@ -245,6 +245,12 @@ zend_object * ion_ssl_factory(zend_long flags) {
 #endif
 
     SSL_CTX_set_verify(ssl->ctx, SSL_VERIFY_PEER, ion_ssl_verify_cb);
+
+    if ((ssl->flags & ION_SSL_IS_CLIENT) && !SSL_CTX_set_default_verify_paths(ssl->ctx)) {
+        zend_throw_exception(ion_ce_ION_SSLException,
+                             "Unable to set default verify locations", 0);
+        return NULL;
+    }
 
     SSL_CTX_set_options(ssl->ctx, ssl_ctx_options);
     SSL_CTX_set_session_id_context(ssl->ctx, (unsigned char *)(void *)ssl->ctx, sizeof(ssl->ctx));
@@ -530,12 +536,6 @@ CLASS_METHOD(ION_SSL, ca) {
     if (cafile || capath) {
         if (!SSL_CTX_load_verify_locations(ssl->ctx, cafile_str, capath_str)) {
             zend_throw_exception_ex(ion_ce_ION_SSLException, 0, "Unable to load verify locations %s, %s", cafile_str, capath_str);
-            return;
-        }
-    } else {
-        if ((ssl->flags & ION_SSL_IS_CLIENT) && !SSL_CTX_set_default_verify_paths(ssl->ctx)) {
-            zend_throw_exception(ion_ce_ION_SSLException,
-                             "Unable to set default verify locations", 0);
             return;
         }
     }

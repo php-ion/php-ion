@@ -49,7 +49,7 @@ class TestCase extends \PHPUnit_Framework_TestCase {
         }
     }
 
-    public function promise(callable $action, $stop = true, $id = 0) {
+    public function promise(callable $action, $stop = true) {
         ION::promise($action)
             ->then(function ($result) use ($stop) {
                 if($result !== null) {

@@ -38,12 +38,13 @@ class Stream {
 
     /**
      * Recognized resource formats are schema://hostname:port or path to unix socket:
-     * ssl://www.example.com:80, tcp://1.2.3.4:567, tls://[::1]:8080, /var/run/service.sock
-     * @param string $resource
+     * www.example.com:80, 1.2.3.4:567, [::1]:8080, /var/run/service.sock
+     * @param string $host
+     * @param SSL $encrypt
+     * @return Stream
      *
-     * @return self
      */
-    public static function socket(string $host) {}
+    public static function socket(string $host, SSL $encrypt = null) {}
 
     /**
      * Create a pair of linked streams.
@@ -114,23 +115,24 @@ class Stream {
     public function setInputSize(int $bytes) {}
 
     /**
-     * @todo
-     * @param mixed $ssl
+     * Starts encryption for current stream.
+     *
+     * @param SSL $ssl
      * @return self
      */
-    public function ensureSSL($ssl) {}
+    public function encrypt(SSL $ssl) {}
 
     /**
      * Queries the remote side of the given socket which may either result in host:port or in a Unix filesystem path, dependent on its type
      * @return mixed
      */
-    public function getRemotePeer() {}
+    public function getPeerName() {}
 
     /**
      * Queries the local side of the given socket which may either result in host:port or in a Unix filesystem path, dependent on its type
      * @return string|false
      */
-    public function getLocalName() {}
+    public function getName() {}
 
     /**
      * Search for a string within an incoming buffer

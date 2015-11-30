@@ -10,8 +10,8 @@
 
 zend_class_entry     * ion_ce_ION_Stream;
 zend_object_handlers   ion_oh_ION_Stream;
-zend_class_entry     * ion_ce_ION_Stream_RuntimeException;
-zend_object_handlers   ion_oh_ION_Stream_RuntimeException;
+zend_class_entry     * ion_ce_ION_StreamException;
+zend_object_handlers   ion_oh_ION_StreamException;
 zend_class_entry     * ion_ce_ION_Stream_ConnectionException;
 zend_object_handlers   ion_oh_ION_Stream_ConnectionException;
 
@@ -156,7 +156,7 @@ void _ion_stream_input(ion_buffer * bev, void * ctx) {
                 if(!data) {
                     ion_promisor_exception_eg(
                             stream->read,
-                            ion_class_entry(ION_Stream_RuntimeException),
+                            ion_ce_ION_StreamException,
                             "Stream corrupted: failed to read token from buffer", 0
                     );
                 } else {
@@ -168,7 +168,7 @@ void _ion_stream_input(ion_buffer * bev, void * ctx) {
                 if(!data) {
                     ion_promisor_exception_eg(
                             stream->read,
-                            ion_class_entry(ION_Stream_RuntimeException),
+                            ion_ce_ION_StreamException,
                             "Stream corrupted: failed to read token from buffer", 0
                     );
                 } else {
@@ -237,7 +237,7 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
                 if(!data) {
                     ion_promisor_exception_eg(
                             stream->read,
-                            ion_class_entry(ION_Stream_RuntimeException),
+                            ion_ce_ION_StreamException,
                             "Stream corrupted: failed to read data from buffer", 0
                     );
                 } else {
@@ -257,19 +257,25 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
             const char  * error_message;
             zend_object * exception;
             zval          zex;
+            zend_class_entry * exception_ce;
+
             if((error_ulong =  bufferevent_get_openssl_error(bev))) {
                 error_message = ERR_error_string(error_ulong, NULL);
+                exception_ce = ion_ce_ION_SSLException;
             } else if((error_int =  bufferevent_socket_get_dns_error(bev))) {
                 error_message = evutil_gai_strerror(error_int);
+                exception_ce = ion_ce_ION_DNSException;
             } else if((error_int = EVUTIL_SOCKET_ERROR())) {
                 error_message = evutil_socket_error_to_string(error_int);
+                exception_ce = ion_ce_ION_Stream_ConnectionException;
             } else {
                 error_message = "unknown error";
+                exception_ce = ion_ce_ION_StreamException;
             }
 
             exception = pion_exception_new_ex(
-                    ion_ce_ION_Stream_ConnectionException, 0,
-                    "Connection %s corrupted: %s", ion_stream_get_name_remote(&stream->std), error_message
+                exception_ce, 0,
+                "Connection %s corrupted: %s", ion_stream_get_name_remote(&stream->std), error_message
             );
             ZVAL_OBJ(&zex, exception);
             if(stream->connect) {
@@ -292,7 +298,7 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
             if(stream->read) {
                 ion_promisor_exception(
                         stream->read,
-                        ion_get_class(ION_Stream_ConnectionException),
+                        ion_ce_ION_Stream_ConnectionException,
                         "Timed out", 0
                 );
             }
@@ -300,7 +306,7 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
             if(stream->flush) {
                 ion_promisor_exception(
                         stream->flush,
-                        ion_get_class(ION_Stream_ConnectionException),
+                        ion_ce_ION_Stream_ConnectionException,
                         "Timed out", 0
                 );
             }
@@ -327,14 +333,14 @@ int ion_stream_pair(zend_object ** stream_one, zend_object ** stream_two, zend_c
     zend_object * two;
 
     if(bufferevent_pair_new(GION(base), flags, pair) == FAILURE) {
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to create pair", 0);
+        zend_throw_exception(ion_ce_ION_StreamException, "Failed to create pair", 0);
         return FAILURE;
     }
     if(bufferevent_enable(pair[0], EV_READ | EV_WRITE) == FAILURE ||
        bufferevent_enable(pair[1], EV_READ | EV_WRITE) == FAILURE) {
         bufferevent_free(pair[0]);
         bufferevent_free(pair[1]);
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to enable stream", 0);
+        zend_throw_exception(ion_ce_ION_StreamException, "Failed to enable stream", 0);
         return FAILURE;
     }
 
@@ -383,7 +389,7 @@ zend_object * ion_stream_new_ex(ion_buffer * buffer, int flags, zend_class_entry
         if(bufferevent_enable(buffer, EV_READ | EV_WRITE) == FAILURE) {
             bufferevent_free(buffer);
             zval_ptr_dtor(&zstream);
-            zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to enable stream", 0);
+            zend_throw_exception(ion_ce_ION_StreamException, "Failed to enable stream", 0);
             return NULL;
         }
     }
@@ -502,13 +508,13 @@ CLASS_METHOD(ION_Stream, resource) {
 
     fd2 = dup(fd);
     if (fd2 == -1) {
-        zend_throw_exception_ex(ion_class_entry(ION_Stream_RuntimeException), errno, "Failed to duplicate fd: %s", strerror(errno));
+        zend_throw_exception_ex(ion_ce_ION_StreamException, errno, "Failed to duplicate fd: %s", strerror(errno));
         return;
     }
 
     buffer = bufferevent_socket_new(GION(base), fd2, flags);
     if(NULL == buffer) {
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to create Stream: buffer corrupted", 0);
+        zend_throw_exception(ion_ce_ION_StreamException, "Failed to create Stream: buffer corrupted", 0);
         return;
     }
     stream = ion_stream_new_ex(buffer, state | ION_STREAM_STATE_ENABLED, zend_get_called_scope(execute_data));
@@ -563,7 +569,7 @@ CLASS_METHOD(ION_Stream, socket) {
     if(encrypt) {
         SSL * ssl_handler = ion_ssl_client_stream_handler(Z_OBJ_P(encrypt));
         if(!ssl_handler) {
-            zend_throw_exception_ex(ion_ce_ION_Stream_RuntimeException, 0, "Failed to setup SSL/TLS handler for stream %s", host->val);
+            zend_throw_exception_ex(ion_ce_ION_StreamException, 0, "Failed to setup SSL/TLS handler for stream %s", host->val);
             return;
         }
         buffer = bufferevent_openssl_socket_new(GION(base), -1, ssl_handler, BUFFEREVENT_SSL_CONNECTING, STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE);
@@ -574,7 +580,7 @@ CLASS_METHOD(ION_Stream, socket) {
     }
 
     if(buffer == NULL) {
-        zend_throw_exception_ex(ion_ce_ION_Stream_RuntimeException, 0, "Error creating the socket %s", host->val);
+        zend_throw_exception_ex(ion_ce_ION_StreamException, 0, "Error creating the socket %s", host->val);
         return;
     }
 
@@ -604,15 +610,15 @@ CLASS_METHOD(ION_Stream, socket) {
             zend_object_release(stream);
             if(bufferevent_socket_get_dns_error(buffer)) {
                 zend_throw_exception_ex(
-                        ion_ce_ION_Stream_RuntimeException, 0,
+                        ion_ce_ION_StreamException, 0,
                         "Failed to connect to host %s: %s",
                         host->val, evutil_gai_strerror(bufferevent_socket_get_dns_error(buffer)));
             } else if(errno) {
                 zend_throw_exception_ex(
-                        ion_ce_ION_Stream_RuntimeException, 0,
+                        ion_ce_ION_StreamException, 0,
                         "Failed to connect to %s: %s", host->val, strerror(errno));
             } else {
-                zend_throw_exception_ex(ion_ce_ION_Stream_RuntimeException, 0, "Failed to connect to %s", host->val);
+                zend_throw_exception_ex(ion_ce_ION_StreamException, 0, "Failed to connect to %s", host->val);
             }
             return;
         }
@@ -674,7 +680,7 @@ CLASS_METHOD(ION_Stream, enable) {
 
     CHECK_STREAM_BUFFER(stream);
     if(bufferevent_enable(stream->buffer, EV_READ | EV_WRITE)) {
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to enable stream", 0);
+        zend_throw_exception(ion_ce_ION_StreamException, "Failed to enable stream", 0);
         return;
     }
     stream->state |= ION_STREAM_STATE_ENABLED;
@@ -736,7 +742,7 @@ CLASS_METHOD(ION_Stream, setTimeouts) {
         Z_PARAM_DOUBLE(write_timeout)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
     if(read_timeout < 0 || write_timeout < 0) {
-        zend_throw_exception(ion_class_entry(InvalidArgumentException), "timeout should be unsigned", 0);
+        zend_throw_exception(ion_ce_InvalidArgumentException, "timeout should be unsigned", 0);
         return;
     }
     SET_TIMEVAL(read_tv, read_timeout);
@@ -760,7 +766,7 @@ CLASS_METHOD(ION_Stream, setPriority) {
         Z_PARAM_LONG(prio)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
     if(bufferevent_priority_set(stream->buffer, (int)prio) == FAILURE) {
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "bufferevent_priority_set failed", 0);
+        zend_throw_exception(ion_ce_ION_StreamException, "bufferevent_priority_set failed", 0);
         return;
     }
     RETURN_THIS();
@@ -780,7 +786,7 @@ CLASS_METHOD(ION_Stream, setInputSize) {
         Z_PARAM_LONG(bytes)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
     if(bytes < 0) {
-        zend_throw_exception(ion_get_class(InvalidArgumentException), "The number of bytes cannot be negative", 0);
+        zend_throw_exception(ion_ce_InvalidArgumentException, "The number of bytes cannot be negative", 0);
         return;
     }
     stream->input_size = (size_t)bytes;
@@ -809,7 +815,7 @@ CLASS_METHOD(ION_Stream, write) {
     }
 
     if(bufferevent_write(stream->buffer, ZSTR_VAL(data), ZSTR_LEN(data)) == FAILURE) {
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to write data", 0);
+        zend_throw_exception(ion_ce_ION_StreamException, "Failed to write data", 0);
         return;
     }
 
@@ -924,16 +930,13 @@ CLASS_METHOD(ION_Stream, search) {
     ZEND_PARSE_PARAMETERS_END();
 
     if(!ZSTR_LEN(token.token)) {
-        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Empty token string", 0); \
-
-//        ThrowInvalidArgument("Empty token string");
+        zend_throw_exception(ion_ce_InvalidArgumentException, "Empty token string", 0); \
         return;
     }
 
     buffer = bufferevent_get_input(stream->buffer);
     if(ion_stream_search_token(buffer, &token) == FAILURE) {
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to get internal buffer pointer for token_length/offset", 0); \
-//        ThrowRuntime("Failed to get internal buffer pointer for token_length/offset", -1);
+        zend_throw_exception(ion_ce_ION_StreamException, "Failed to get internal buffer pointer for token_length/offset", 0); \
         return;
     }
 
@@ -960,7 +963,7 @@ CLASS_METHOD(ION_Stream, getSize) {
     } else if(type == EV_WRITE) {
         buffer = bufferevent_get_output(stream->buffer);
     } else {
-        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Invalid buffer identify", 0); \
+        zend_throw_exception(ion_ce_InvalidArgumentException, "Invalid buffer identify", 0); \
         return;
     }
 
@@ -990,7 +993,7 @@ CLASS_METHOD(ION_Stream, get) {
 
     data = ion_stream_read(stream, (size_t)bytes);
     if(data == NULL) {
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Stream buffer is unreachable", 0);
+        zend_throw_exception(ion_ce_ION_StreamException, "Stream buffer is unreachable", 0);
         return;
     }
     RETURN_STR(data);
@@ -1008,7 +1011,7 @@ CLASS_METHOD(ION_Stream, getAll) {
     CHECK_STREAM_BUFFER(stream);
     data = ion_stream_read(stream, ion_stream_input_length(stream));
     if(data == NULL) {
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Stream buffer is unreachable", 0);
+        zend_throw_exception(ion_ce_ION_StreamException, "Stream buffer is unreachable", 0);
         return;
     }
     RETURN_STR(data);
@@ -1036,7 +1039,7 @@ CLASS_METHOD(ION_Stream, getLine) {
     }
 
     if(ion_stream_search_token(bufferevent_get_input(stream->buffer), &token) == FAILURE) {
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to get internal buffer pointer for token_length/offset", 0);
+        zend_throw_exception(ion_ce_ION_StreamException, "Failed to get internal buffer pointer for token_length/offset", 0);
         return;
     }
 
@@ -1090,7 +1093,7 @@ CLASS_METHOD(ION_Stream, read) {
             obj_add_ref(stream->read);
             RETURN_OBJ(stream->read);
         } else {
-            zend_throw_exception(ion_class_entry(LogicException), "Stream already read", 0);
+            zend_throw_exception(ion_ce_ION_InvalidUsageException, "Stream already read", 0);
             return;
         }
     }
@@ -1099,7 +1102,7 @@ CLASS_METHOD(ION_Stream, read) {
     if(current >= length) {
         data = ion_stream_read(stream, (size_t)length);
         if(data == NULL) {
-            zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Stream is unreachable", 0);
+            zend_throw_exception(ion_ce_ION_StreamException, "Stream is unreachable", 0);
             return;
         }
         RETURN_STR(data);
@@ -1135,12 +1138,12 @@ CLASS_METHOD(ION_Stream, readLine) {
 
     token.flags &= ION_STREAM_TOKEN_MODE_MASK;
     if(ZSTR_LEN(token.token) == 0) {
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to get internal buffer pointer for token_length/offset", 0);
+        zend_throw_exception(ion_ce_ION_StreamException, "Failed to get internal buffer pointer for token_length/offset", 0);
         return;
     }
 
     if(ion_stream_search_token(bufferevent_get_input(stream->buffer), &token) == FAILURE) {
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to get internal buffer pointer for token_length/offset", 0);
+        zend_throw_exception(ion_ce_ION_StreamException, "Failed to get internal buffer pointer for token_length/offset", 0);
         return;
     }
 
@@ -1187,7 +1190,7 @@ CLASS_METHOD(ION_Stream, readAll) {
             obj_add_ref(stream->read);
             RETURN_OBJ(stream->read);
         } else {
-            zend_throw_exception(ion_class_entry(LogicException), "Stream already read", 0);
+            zend_throw_exception(ion_ce_ION_InvalidUsageException, "Stream already read", 0);
             return;
         }
     }
@@ -1198,7 +1201,7 @@ CLASS_METHOD(ION_Stream, readAll) {
             if(data) {
                 RETURN_STR(data);
             } else {
-                zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Stream buffer is unreachable", 0);
+                zend_throw_exception(ion_ce_ION_StreamException, "Stream buffer is unreachable", 0);
                 return;
             }
         } else {
@@ -1289,14 +1292,14 @@ CLASS_METHOD(ION_Stream, awaitShutdown) {
 
 METHOD_WITHOUT_ARGS(ION_Stream, awaitShutdown)
 
-///** public function ION\Stream::ensureSSL(ION\SSL $ssl) : self */
-//CLASS_METHOD(ION_Stream, ensureSSL) {
-//
-//}
-//
-//METHOD_ARGS_BEGIN(ION_Stream, ensureSSL, 1)
-//    METHOD_ARG(ssl, 0)
-//METHOD_ARGS_END()
+/** public function ION\Stream::encrypt(ION\SSL $ssl) : self */
+CLASS_METHOD(ION_Stream, encrypt) {
+
+}
+
+METHOD_ARGS_BEGIN(ION_Stream, encrypt, 1)
+    METHOD_ARG_OBJECT(ssl, ION\\SSL, 0, 0)
+METHOD_ARGS_END()
 
 /** public function ION\Stream::isClosed() : int */
 CLASS_METHOD(ION_Stream, isClosed) {
@@ -1558,7 +1561,7 @@ CLASS_METHOD(ION_Stream, appendToInput) {
 
     evbuffer_unfreeze(input, 0);
     if(evbuffer_add(input, (const void *)data->val, (size_t)data->len)) {
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Failed to append data to input", 0);
+        zend_throw_exception(ion_ce_ION_StreamException, "Failed to append data to input", 0);
         return;
     }
     stream->state &= ~ION_STREAM_STATE_FLUSHED;
@@ -1607,7 +1610,7 @@ CLASS_METHODS_START(ION_Stream)
     METHOD(ION_Stream, close,           ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, onData,          ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, awaitShutdown,   ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, encrypt,       ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, encrypt,         ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, getRemotePeer,   ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, getLocalName,    ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, isClosed,        ZEND_ACC_PUBLIC)
@@ -1650,7 +1653,7 @@ PHP_MINIT_FUNCTION(ION_Stream) {
     PION_CLASS_CONST_LONG(ION_Stream, "OUTPUT", EV_WRITE);
     PION_CLASS_CONST_LONG(ION_Stream, "BOTH",   EV_WRITE | EV_READ);
 
-    PION_REGISTER_VOID_EXTENDED_CLASS(ION_Stream_RuntimeException, ion_class_entry(ION_RuntimeException), "ION\\Stream\\RuntimeException");
-    PION_REGISTER_VOID_EXTENDED_CLASS(ION_Stream_ConnectionException, ion_class_entry(ION_Stream_RuntimeException), "ION\\Stream\\ConnectionException");
+    PION_REGISTER_VOID_EXTENDED_CLASS(ION_StreamException, ion_ce_ION_RuntimeException, "ION\\StreamException");
+    PION_REGISTER_VOID_EXTENDED_CLASS(ION_Stream_ConnectionException, ion_ce_ION_StreamException, "ION\\Stream\\ConnectionException");
     return SUCCESS;
 }

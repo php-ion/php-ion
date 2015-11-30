@@ -75,26 +75,55 @@ class ListenerTest extends TestCase {
     }
 
     /**
-     * @memcheck
+     * @group dev
      */
-    public function _testSSL() {
+    public function testEncrypt() {
+        $dn = array(
+            "countryName" => "UK",
+            "stateOrProvinceName" => "Somerset",
+            "localityName" => "Glastonbury",
+            "organizationName" => "The Brain Room Limited",
+            "organizationalUnitName" => "PHP Documentation Team",
+            "commonName" => "Wez Furlong",
+            "emailAddress" => "wez@example.com"
+        );
+        // Generate certificate
+        $privkey = openssl_pkey_new();
+        $cert    = openssl_csr_new($dn, $privkey);
+        $cert    = openssl_csr_sign($cert, null, $privkey, 365);
+        // Generate PEM file
+        # Optionally change the passphrase from 'comet' to whatever you want, or leave it empty for no passphrase
+        $pem_passphrase = 'testing';
+        $pem = array();
+        openssl_x509_export($cert, $pem[0]);
+        openssl_pkey_export($privkey, $pem[1], $pem_passphrase);
+        $pem = implode($pem);
+        $pemfile = ION_VAR.'/server.pem';
+        file_put_contents($pemfile, $pem);
+
         $listener = new Listener(ION_TEST_SERVER_HOST);
-        $listener->setSSL(
-            SSL::server()->localCert(ION_RESOURCES.'/cert', ION_RESOURCES.'/pkey')->allowSelfSigned()
+        $listener->encrypt(
+            SSL::server(SSL::METHOD_TLSv12)->passPhrase($pem_passphrase)->localCert($pemfile)->allowSelfSigned()
         );
         $listener->accept()->then(function (Stream $connect) {
             $this->data["connect"] = $this->describe($connect);
-            $connect->write("HELLO");
+            $this->data["incoming"] = yield $connect->readLine("\r\n");
+            $connect->write("welcome\r\n");
             yield $connect->flush();
             $this->stop();
         })->onFail(function (\Throwable $error) {
-            $this->data["error"] = $this->describe($error);
+            $this->data["server.error"] = $this->describe($error);
             $this->stop();
         });
 
-        $client = stream_socket_client("ssl://".ION_TEST_SERVER_HOST, $errno, $error, 10, STREAM_CLIENT_ASYNC_CONNECT);
-        stream_set_blocking($client, 0);
+        $this->promise(function () {
+            $socket = Stream::socket(ION_TEST_SERVER_HOST, SSL::client()->allowSelfSigned());
+            $socket->write("hello\r\n");
+            $this->data["outgoing"] = yield $socket->readLine("\r\n");
+        }, false);
 
         $this->loop();
+
+        $this->out($this->data);
     }
 }

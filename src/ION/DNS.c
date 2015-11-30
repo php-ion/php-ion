@@ -3,6 +3,8 @@
 
 zend_class_entry * ion_ce_ION_DNS;
 zend_object_handlers ion_oh_ION_DNS;
+zend_class_entry * ion_ce_ION_DNSException;
+zend_object_handlers ion_oh_ION_DNSException;
 
 void _ion_dns_getaddrinfo_callback(int errcode, struct evutil_addrinfo * addr, void * arg) {
     zval result, A, AAAA;
@@ -172,6 +174,8 @@ PHP_MINIT_FUNCTION(ION_DNS) {
     if(GION(hosts_file)) {
         evdns_base_load_hosts(GION(evdns), GION(hosts_file));
     }
+
+    PION_REGISTER_VOID_EXTENDED_CLASS(ION_DNSException, ion_ce_ION_RuntimeException, "ION\\DNSException");
 
     return SUCCESS;
 }

@@ -35,8 +35,8 @@ void ion_listener_free(zend_object * object) {
     if(listener->accept) {
         zend_object_release(listener->accept);
     }
-    if(listener->ssl) {
-        zend_object_release(listener->ssl);
+    if(listener->encrypt) {
+        zend_object_release(listener->encrypt);
     }
 }
 
@@ -47,27 +47,31 @@ static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct 
     ion_stream   * istream = NULL;
     zval           zstream;
     ion_buffer   * buffer = NULL;
+    int            state = ION_STREAM_STATE_ENABLED | ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_CONNECTED | ION_STREAM_FROM_PEER;
 
     if(listener->accept) {
-        if(listener->ssl) {
-            SSL * stream_ssl_handler = ion_ssl_server_stream_handler(listener->ssl);
-            if(!stream_ssl_handler) {
-                zend_error(E_WARNING, "Failed to create connection SSL/TLS handler for listener %s", listener->name->val);
+        if(listener->encrypt) {
+            SSL * ssl_handler = ion_ssl_server_stream_handler(listener->encrypt);
+            if(!ssl_handler) {
+                zend_error(E_WARNING, "Failed to create SSL/TLS handler for incoming connection to %s", listener->name->val);
                 evutil_closesocket(fd);
 
             } else {
-                buffer = bufferevent_openssl_socket_new(GION(base), fd, stream_ssl_handler,
+                buffer = bufferevent_openssl_socket_new(GION(base), fd, ssl_handler,
                                                         BUFFEREVENT_SSL_ACCEPTING,
                                                         BEV_OPT_CLOSE_ON_FREE);
+                state |= ION_STREAM_ENCRYPTED;
+                SSL_set_ex_data(ssl_handler, GION(ssl_index), listener->encrypt);
             }
         } else {
             buffer = bufferevent_socket_new(GION(base), fd, BEV_OPT_CLOSE_ON_FREE);
         }
         if(buffer) {
-            stream = ion_stream_new(buffer, ION_STREAM_STATE_ENABLED
-                                            | ION_STREAM_STATE_SOCKET
-                                            | ION_STREAM_STATE_CONNECTED
-                                            | ION_STREAM_FROM_PEER);
+            stream = ion_stream_new(buffer, state);
+            if(listener->encrypt) {
+                obj_add_ref(listener->encrypt);
+                ion_stream_store_encrypt(stream, listener->encrypt);
+            }
             istream = get_object_instance(stream, ion_stream);
             if(listener->name) {
                 istream->name_self = zend_string_copy(listener->name);
@@ -193,8 +197,8 @@ CLASS_METHOD(ION_Listener, accept) {
 METHOD_WITHOUT_ARGS(ION_Listener, accept);
 
 
-/** public function ION\Listener::setSSL(ION\SSL $ssl) : self */
-CLASS_METHOD(ION_Listener, setSSL) {
+/** public function ION\Listener::encrypt(ION\SSL $ssl) : self */
+CLASS_METHOD(ION_Listener, encrypt) {
     ion_listener * listener = get_this_instance(ion_listener);
     zval         * zssl = NULL;
 
@@ -203,12 +207,12 @@ CLASS_METHOD(ION_Listener, setSSL) {
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     zval_add_ref(zssl);
-    listener->ssl = Z_OBJ_P(zssl);
+    listener->encrypt = Z_OBJ_P(zssl);
 
     RETURN_THIS();
 }
 
-METHOD_ARGS_BEGIN(ION_Listener, setSSL, 1)
+METHOD_ARGS_BEGIN(ION_Listener, encrypt, 1)
     METHOD_ARG_OBJECT(ssl, ION\\SSL, 0, 0)
 METHOD_ARGS_END()
 
@@ -336,7 +340,7 @@ METHOD_WITHOUT_ARGS(ION_Listener, getName);
 
 CLASS_METHODS_START(ION_Listener)
     METHOD(ION_Listener, __construct,   ZEND_ACC_PUBLIC)
-    METHOD(ION_Listener, setSSL,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Listener, encrypt,       ZEND_ACC_PUBLIC)
     METHOD(ION_Listener, accept,        ZEND_ACC_PUBLIC)
     METHOD(ION_Listener, start,         ZEND_ACC_PUBLIC)
     METHOD(ION_Listener, enable,        ZEND_ACC_PUBLIC)

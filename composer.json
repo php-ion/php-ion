@@ -14,6 +14,7 @@
   "require-dev": {
     "ext-posix": "*",
     "ext-pcntl": "*",
+    "ext-openssl": "*",
     "phpunit/phpunit": "*"
   },
   "autoload": {

@@ -36,7 +36,7 @@ ION Extension [dev]
 # Indev
 
 * Listening FS events
-* SSL support
+* SSL/TLS support
 * Thread-safety
 
 # Planned
@@ -231,7 +231,7 @@ use ION\Sequence;
 
 ```php
 $listener = new Listener("0.0.0.0:8080");
-$listener->connect()->then(function (Stream $connect) {
+$listener->accept()->then(function (Stream $connect) {
    // ...
 }); // build sequence
 ```
@@ -264,10 +264,10 @@ use ION\Stream\Server;
 ```php
 $server  = new Server();
 $server->listen("0.0.0.0:8080");
-$server->listen("0.0.0.0:8443", $ssl);
+$server->listen("0.0.0.0:8443")->encrypt($ssl);
 $server->setIdleTimeout(30);
 $server->setMaxConnections(1000);
-$server->connect()->then(function (Stream $connect) {
+$server->accept()->then(function (Stream $connect) {
     // ...
 }) // ...
 
@@ -280,20 +280,19 @@ $stream = $server->getConnection("127.0.0.1:43762");
 
 ```php
 use ION\Stream;
-use ION\Listener;
-use ION\Stream\Server;
+use ION\Stream\Client;
 ```
 
 ```php
-$client  = new Client();
+$client = new Client();
 $client->socket("127.0.0.1:3306");
 $client->socket("10.0.22.133:3312", $ssl);
 $client->setIdleTimeout(30);
 $client->setMaxConnections(1000);
-$client->onHandshake()->then($hanler1)->then($hanler2); // build sequence
-$client->onShutdown()->then($hanler3)->then($hanler4); // build sequence
+$client->handshake()->then($handler1); // sequence
+$client->onShutdown()->then($handler2); // sequence
 
-$stream = yield $client->getStream();
+$stream = yield $client->connect();
 // ...
 ```
 

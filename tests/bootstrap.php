@@ -1,5 +1,6 @@
 <?php
 define('ION_RESOURCES', __DIR__ . "/resources");
+define('ION_VAR', __DIR__ . "/var");
 
 //require_once __DIR__ . "/TestCase.php";
 //require_once __DIR__ . "/TestCase/Server.php";

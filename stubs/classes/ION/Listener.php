@@ -23,7 +23,7 @@ class Listener {
      * @param SSL $ssl
      * @return Listener
      */
-    public function setSSL(SSL $ssl) : self {}
+    public function encrypt(SSL $ssl) : self {}
 
     /**
      * Create and enable socket listener

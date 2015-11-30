@@ -5,6 +5,8 @@
 
 extern ZEND_API zend_class_entry * ion_ce_ION_Listener;
 extern ZEND_API zend_class_entry * ion_ce_ION_Stream;
+extern ZEND_API zend_class_entry * ion_ce_ION_StreamException;
+extern ZEND_API zend_class_entry * ion_ce_ION_Stream_ConnectionException;
 
 // ** state flags begin **
 // stream types
@@ -52,11 +54,11 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Stream;
 #define ION_STREAM_TOKEN_LIMIT        8
 
 typedef struct _ion_listener {
-    zend_object   std;
-    uint     flags;
-    zend_object * accept;
-    zend_object * ssl;
-    zend_string * name;
+    zend_object      std;
+    uint             flags;
+    zend_object    * accept;
+    zend_object    * encrypt;
+    zend_string    * name;
     ion_evlistener * listener;
 } ion_listener;
 
@@ -112,18 +114,18 @@ int    ion_stream_close_fd(ion_stream * stream TSRMLS_DC);
 
 #define CHECK_STREAM_BUFFER(stream)                          \
     if(stream->buffer == NULL) {                             \
-        zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Stream buffer is not initialized", 0); \
+        zend_throw_exception(ion_ce_ION_StreamException, "Stream buffer is not initialized", 0); \
         return;                                              \
     }
 
 #define CHECK_STREAM_STATE(stream)                              \
     if(stream->state & ION_STREAM_STATE_CLOSED) {               \
         if(stream->state & ION_STREAM_STATE_EOF) {              \
-            zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Stream has been terminated by EOF", 0); \
+            zend_throw_exception(ion_ce_ION_StreamException, "Stream has been terminated by EOF", 0); \
         } else if(stream->state & ION_STREAM_STATE_ERROR) {     \
-            zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Stream is corrupted", 0); \
+            zend_throw_exception(ion_ce_ION_StreamException, "Stream is corrupted", 0); \
         } else if(stream->state & ION_STREAM_STATE_SHUTDOWN) {  \
-            zend_throw_exception(ion_class_entry(ION_Stream_RuntimeException), "Stream has been shut down", 0); \
+            zend_throw_exception(ion_ce_ION_StreamException, "Stream has been shut down", 0); \
         }                                                       \
         return;                                                 \
     }

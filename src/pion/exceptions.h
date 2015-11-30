@@ -30,6 +30,9 @@ BEGIN_EXTERN_C()
 extern ZEND_API zend_class_entry * ion_ce_ION_RuntimeException;
 extern ZEND_API zend_class_entry * ion_ce_ION_InvalidUsageException;
 
+// ION subsystems exception
+extern ZEND_API zend_class_entry * ion_ce_ION_DNSException;
+
 zend_object * pion_exception_new(zend_class_entry * exception_ce, const char * message, long code);
 zend_object * pion_exception_new_ex(zend_class_entry * exception_ce, long code, const char * message, ...);
 

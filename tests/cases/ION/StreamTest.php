@@ -564,12 +564,10 @@ class StreamTest extends TestCase {
     }
 
     /**
-     * @group dev
+     * @memcheck
      */
     public function testEncrypted() {
         $this->promise(function () {
-//            $socket = Stream::socket("example.com:80");
-//            $socket = Stream::socket("example.com:443", SSL::client(SSL::METHOD_TLSv12));
             $socket = Stream::socket("example.com:443", SSL::client());
             $socket->write(implode("\r\n", ["GET / HTTP/1.1",
                 "Host: example.com",
@@ -577,12 +575,15 @@ class StreamTest extends TestCase {
                 "Accept: text/html",
                 "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36",
                 "Accept-Language: en-US,en;q=0.8,ru;q=0.6"])."\r\n\r\n");
-            $this->data["headers"] = yield $socket->readLine("\r\n\r\n");
-//            yield ION::await(0.02);
+            $this->data["response"] = yield $socket->readAll();
         });
+        $this->loop(1);
 
-        $this->loop();
+        $this->assertTrue(isset($this->data["response"]));
+        $this->assertEquals("HTTP/1.1 200 OK", strstr($this->data["response"], "\r\n", true));
+    }
 
-        var_dump($this->data);
+    public function testEnableEncryption() {
+
     }
 }
