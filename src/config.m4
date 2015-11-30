@@ -63,6 +63,7 @@ if test "$PHP_ION" != "no"; then
        EXTRA_LIBS="$EXTRA_LIBS -ldl"
     ])
 
+    # libevent
     LIBNAME=event
     LIBSYMBOL=event_base_loop
 
@@ -76,6 +77,21 @@ if test "$PHP_ION" != "no"; then
     ],[
       -L$ION_DIR/lib $EXTRA_LIBS
     ])
+
+    # libevent openssl
+    LIBNAME=event_openssl
+    LIBSYMBOL=bufferevent_openssl_socket_new
+
+    PHP_CHECK_LIBRARY($LIBNAME, $LIBSYMBOL,
+    [
+      PHP_ADD_LIBRARY_WITH_PATH($LIBNAME, $ION_DIR/lib, ION_SHARED_LIBADD)
+      AC_DEFINE(HAVE_LIBEVENT_OPENSSL, 1, [ libevent openssl support ])
+    ],[
+      AC_MSG_ERROR([libevent does not support openssl. Install libevent_openssl. ])
+    ],[
+      -L$ION_DIR/lib $EXTRA_LIBS
+    ])
+
     # PHP_SUBST(LIBEVENT_SHARED_LIBADD)
     case $build_os in
     darwin1*.*.*)

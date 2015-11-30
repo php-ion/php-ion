@@ -202,6 +202,7 @@ zend_object * ion_ssl_factory(zend_long flags) {
 
     object_init_ex(&zssl, ion_ce_ION_SSL);
     ssl = get_instance(&zssl, ion_ssl);
+    ssl->flags |= flags;
 
     if (crypt_method) { // use a specific crypto method
         ssl_ctx_options = SSL_OP_ALL;
@@ -214,7 +215,8 @@ zend_object * ion_ssl_factory(zend_long flags) {
         }
     } else { // use generic SSLv23
         method = is_client ? SSLv23_client_method() : SSLv23_server_method();
-        ssl_ctx_options = ion_ssl_get_crypto_method_ctx_flags(crypt_method);
+        ssl_ctx_options = SSL_OP_ALL;
+//        ssl_ctx_options = ion_ssl_get_crypto_method_ctx_flags(crypt_method);
         if (ssl_ctx_options == -1) {
             zend_throw_exception(ion_ce_ION_SSLException, "Invalid crypt method", 0);
             return NULL;
@@ -278,7 +280,7 @@ CLASS_METHOD(ION_SSL, client) {
         Z_PARAM_LONG(crypt_method)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    object = ion_ssl_factory(crypt_method & ION_SSL_IS_CLIENT);
+    object = ion_ssl_factory(crypt_method | ION_SSL_IS_CLIENT);
     if(object) {
         RETURN_OBJ(object);
     }

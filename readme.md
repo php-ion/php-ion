@@ -37,6 +37,7 @@ ION Extension [dev]
 
 * Listening FS events
 * SSL support
+* Thread-safety
 
 # Planned
 
@@ -45,7 +46,6 @@ ION Extension [dev]
 * Client socket pool
 * HTTP server
 * HTTP client
-* Thread-safety
 * IPC
 
 
@@ -199,12 +199,10 @@ use ION\Sequence;
 ```php
 $stream = Stream::resource(STDIN);
 list($stream1, $stream2) = Stream::pair();
-$stream = Stream::connect("tcp://example.com:80");
+$stream = Stream::connect("example.com:80");
 $stream = Stream::connect("/var/run/server.sock");
-$stream = Stream::connect("example.com:443", [
-    "ssl" => SSL::client(),
-    "local_ip" => ""
-]);
+$stream = Stream::connect("example.com:443", $ssl);
+$stream = Stream::connect(["93.184.216.34:0" => "example.com:443"]); // connecting from IP 93.184.216.34
 ```
 
 ```php
@@ -232,7 +230,7 @@ use ION\Sequence;
 ```
 
 ```php
-$listener = new Listener("tcp://0.0.0.0:8080");
+$listener = new Listener("0.0.0.0:8080");
 $listener->connect()->then(function (Stream $connect) {
    // ...
 }); // build sequence
@@ -288,8 +286,8 @@ use ION\Stream\Server;
 
 ```php
 $client  = new Client();
-$client->socket("tcp://127.0.0.1:3306");
-$client->socket("ssl://10.0.22.133:3312");
+$client->socket("127.0.0.1:3306");
+$client->socket("10.0.22.133:3312", $ssl);
 $client->setIdleTimeout(30);
 $client->setMaxConnections(1000);
 $client->onHandshake()->then($hanler1)->then($hanler2); // build sequence
@@ -324,7 +322,7 @@ $data = yield FS::readFile($filename = "/path/to/file", $offset = 0, $limit = 10
 ### FS events
 
 ```php
-FS::watch($path = "/path/to/file", $flags = FS::NOTIFY_CHANGE | FS::NOTIFY_RECURSIVE)->then($handler);
+FS::watch("/path/to/file")->then($handler);
 ```
 
 ## Process
@@ -358,11 +356,12 @@ use ION\Process;
 ```
 
 ```php
-$result = yield Process::exec("venor/bin/phpunit --tap");
+$result = yield Process::exec("vendor/bin/phpunit --tap");
 ```
 
 ```php
-$result = yield Process::exec("venor/bin/phpunit --tap", [
+$result = yield Process::exec("vendor/bin/phpunit --tap", [
+    "cwd"  => "/data/project",
     "user" => "nobody",
     "group" => "nobody",
     "pid" => &$pid  // get the PID by reference
@@ -373,9 +372,5 @@ var_dump($result->stderr);
 ```
 
 ### IPC
-
-todo
-
-## C API
 
 todo

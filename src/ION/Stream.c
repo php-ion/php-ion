@@ -2,6 +2,7 @@
 #include <ext/standard/url.h>
 #include <sys/fcntl.h>
 #include <event2/bufferevent_ssl.h>
+#include <openssl/err.h>
 
 #ifndef O_NOATIME
 # define O_NOATIME 0
@@ -22,39 +23,40 @@ zend_object * ion_stream_init(zend_class_entry * ce) {
     RETURN_INSTANCE(ION_Stream, istream);
 }
 
-void ion_stream_free(zend_object * stream) {
-    ion_stream * istream = get_object_instance(stream, ion_stream);
-    if(istream->read) {
-        zend_object_release(istream->read);
+void ion_stream_free(zend_object * stream_object) {
+    ion_stream * stream = get_object_instance(stream_object, ion_stream);
+    if(stream->read) {
+        zend_object_release(stream->read);
     }
-    if(istream->connect) {
-        zend_object_release(istream->connect);
+    if(stream->connect) {
+        zend_object_release(stream->connect);
     }
-    if(istream->shutdown) {
-        zend_object_release(istream->shutdown);
+    if(stream->shutdown) {
+        zend_object_release(stream->shutdown);
     }
-    if(istream->flush) {
-        zend_object_release(istream->flush);
+    if(stream->flush) {
+        zend_object_release(stream->flush);
     }
-    if(istream->on_data) {
-        zend_object_release(istream->on_data);
+    if(stream->on_data) {
+        zend_object_release(stream->on_data);
     }
-    if(istream->buffer) {
-        if(istream->state & ION_STREAM_STATE_ENABLED) {
-            bufferevent_disable(istream->buffer, EV_READ | EV_WRITE);
+    if(stream->buffer) {
+        if(stream->state & ION_STREAM_STATE_ENABLED) {
+            bufferevent_disable(stream->buffer, EV_READ | EV_WRITE);
         }
-        if(istream->crypt) {
-            SSL *ctx = bufferevent_openssl_get_ssl(istream->buffer);
+        if(stream->encrypt) {
+            SSL *ctx = bufferevent_openssl_get_ssl(stream->buffer);
             SSL_set_shutdown(ctx, SSL_RECEIVED_SHUTDOWN);
             SSL_shutdown(ctx);
+            zend_object_release(stream->encrypt);
         }
-        bufferevent_free(istream->buffer);
+        bufferevent_free(stream->buffer);
     }
-    if(istream->name_self) {
-        zend_string_release(istream->name_self);
+    if(stream->name_self) {
+        zend_string_release(stream->name_self);
     }
-    if(istream->name_remote) {
-        zend_string_release(istream->name_remote);
+    if(stream->name_remote) {
+        zend_string_release(stream->name_remote);
     }
 
 }
@@ -249,27 +251,39 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
         }
     } else if(what & BEV_EVENT_ERROR) {
         stream->state |= ION_STREAM_STATE_ERROR;
-        if(stream->connect) {
-            ion_promisor_exception(
-                    stream->connect,
-                    ion_get_class(ION_Stream_ConnectionException),
-                    evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()), 0
+        if(stream->connect || stream->read || stream->flush) {
+            zend_ulong    error_ulong = 0;
+            int           error_int = 0;
+            const char  * error_message;
+            zend_object * exception;
+            zval          zex;
+            if((error_ulong =  bufferevent_get_openssl_error(bev))) {
+                error_message = ERR_error_string(error_ulong, NULL);
+            } else if((error_int =  bufferevent_socket_get_dns_error(bev))) {
+                error_message = evutil_gai_strerror(error_int);
+            } else if((error_int = EVUTIL_SOCKET_ERROR())) {
+                error_message = evutil_socket_error_to_string(error_int);
+            } else {
+                error_message = "unknown error";
+            }
+
+            exception = pion_exception_new_ex(
+                    ion_ce_ION_Stream_ConnectionException, 0,
+                    "Connection %s corrupted: %s", ion_stream_get_name_remote(&stream->std), error_message
             );
+            ZVAL_OBJ(&zex, exception);
+            if(stream->connect) {
+                ion_promisor_fail(stream->connect, &zex);
+            }
+            if(stream->read) {
+                ion_promisor_fail(stream->read, &zex);
+            }
+            if(stream->flush) {
+                ion_promisor_fail(stream->flush, &zex);
+            }
+            zval_ptr_dtor(&zex);
         }
-        if(stream->read) {
-            ion_promisor_exception(
-                    stream->read,
-                    ion_get_class(ION_Stream_ConnectionException),
-                    evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()), 0
-            );
-        }
-        if(stream->flush) {
-            ion_promisor_exception(
-                    stream->flush,
-                    ion_get_class(ION_Stream_ConnectionException),
-                    evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()), 0
-            );
-        }
+
         if(stream->shutdown) {
             ion_promisor_done_object(stream->shutdown, &stream->std);
         }
@@ -532,7 +546,7 @@ METHOD_WITHOUT_ARGS(ION_Stream, pair)
 
 /** public static function ION\Stream::socket(string $host, ION\SSL $crypto) : self */
 CLASS_METHOD(ION_Stream, socket) {
-    zval        * zcrypto = NULL;
+    zval        * encrypt = NULL;
     zend_string * host = NULL;
     zend_uint     state = ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_ENABLED | ION_STREAM_FROM_ME;
     ion_buffer  * buffer   = NULL;
@@ -541,19 +555,20 @@ CLASS_METHOD(ION_Stream, socket) {
     ZEND_PARSE_PARAMETERS_START(1,2)
         Z_PARAM_STR(host)
         Z_PARAM_OPTIONAL
-        Z_PARAM_OBJECT_EX(zcrypto, 1, 0)
+        Z_PARAM_OBJECT_EX(encrypt, 1, 0)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     errno = 0;
 
-    if(zcrypto) {
-        SSL * ssl_ctx = ion_ssl_client_stream_handler(Z_OBJ_P(zcrypto));
-        if(!ssl_ctx) {
+    if(encrypt) {
+        SSL * ssl_handler = ion_ssl_client_stream_handler(Z_OBJ_P(encrypt));
+        if(!ssl_handler) {
             zend_throw_exception_ex(ion_ce_ION_Stream_RuntimeException, 0, "Failed to setup SSL/TLS handler for stream %s", host->val);
             return;
         }
-        buffer = bufferevent_openssl_socket_new(GION(base), -1, ssl_ctx, BUFFEREVENT_SSL_CONNECTING, STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE);
+        buffer = bufferevent_openssl_socket_new(GION(base), -1, ssl_handler, BUFFEREVENT_SSL_CONNECTING, STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE);
         state |= ION_STREAM_ENCRYPTED;
+        SSL_set_ex_data(ssl_handler, GION(ssl_index), Z_OBJ_P(encrypt));
     } else {
         buffer = bufferevent_socket_new(GION(base), -1, STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE);
     }
@@ -565,13 +580,16 @@ CLASS_METHOD(ION_Stream, socket) {
 
     stream = ion_stream_new_ex(buffer, state, zend_get_called_scope(execute_data));
     if(!stream) {
-        if(zcrypto) {
+        if(encrypt) {
             SSL * ctx = bufferevent_openssl_get_ssl(buffer);
             SSL_set_shutdown(ctx, SSL_RECEIVED_SHUTDOWN);
             SSL_shutdown(ctx);
         }
         bufferevent_free(buffer);
         return;
+    } else if(encrypt) {
+        zval_add_ref(encrypt);
+        ion_stream_store_encrypt(stream, Z_OBJ_P(encrypt));
     }
 
     if(strchr(host->val, DEFAULT_SLASH) == NULL) { // ipv4:port, [ipv6]:port, hostname:port
@@ -626,7 +644,7 @@ CLASS_METHOD(ION_Stream, socket) {
 
 METHOD_ARGS_BEGIN(ION_Stream, socket, 1)
     METHOD_ARG_STRING(host, 0)
-    METHOD_ARG_OBJECT(crypt, ION\\SSL, 0, 0)
+    METHOD_ARG_OBJECT(encrypt, ION\\SSL, 0, 0)
 METHOD_ARGS_END()
 //
 ///** private function ION\Stream::_input() : void */

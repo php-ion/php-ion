@@ -57,7 +57,6 @@ typedef struct _ion_listener {
     zend_object * accept;
     zend_object * ssl;
     zend_string * name;
-    zend_long     backlog;
     ion_evlistener * listener;
 } ion_listener;
 
@@ -81,7 +80,7 @@ typedef struct _ion_stream {
     zend_object      * connect;
     zend_object      * shutdown;
     zend_object      * on_data;
-    zend_object      * crypt;
+    zend_object      * encrypt;
     zend_string      * name_self;
     zend_string      * name_remote;
 } ion_stream;
@@ -100,7 +99,7 @@ typedef struct _ion_stream {
 
 #define ion_stream_is_valid_fd(stream) (bufferevent_getfd(stream->buffer) == -1)
 
-#define ion_stream_set_crypt(stream, encryptor) get_object_instance(stream, ion_stream)->crypt = encryptor
+#define ion_stream_store_encrypt(stream, encryptor) get_object_instance(stream, ion_stream)->encrypt = encryptor
 
 int ion_stream_pair(zend_object ** stream_one, zend_object ** stream_two, zend_class_entry * ce);
 zend_object * ion_stream_new_ex(ion_buffer * buffer, int flags, zend_class_entry * cls);
