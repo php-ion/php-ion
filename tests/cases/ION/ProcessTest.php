@@ -86,8 +86,7 @@ class ProcessTest extends TestCase {
     public function testFork() {
         $pid = Process::fork();
         if ($pid) {
-            $this->assertSame($pid, pcntl_waitpid($pid, $status));
-            $this->assertSame(0, $status);
+            $this->assertTrue(posix_kill($pid, 0));
         } else {
             usleep(10000);
             exit(0);

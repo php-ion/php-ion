@@ -21,7 +21,7 @@ class FSTest extends TestCase {
 	/**
 	 * @memcheck
 	 */
-	public function testWatch() {
+	public function _testWatch() {
 		$file = "/tmp/iddqd";
 		@unlink($file);
 		file_put_contents($file, "a1");

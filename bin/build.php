@@ -313,7 +313,7 @@ class BuildRunner {
 		}
 		$this->line("\n** ".getcwd().": $cmd");
 		if($gdb) {
-			$run_cmd = $this->getBin('gdb').' -ex "run"  -ex "thread apply all bt" -ex "set pagination 0" -batch -return-child-result -silent --args  '.$cmd;
+			$run_cmd = $this->getBin('gdb').' -ex "handle SIGHUP nostop" -ex "run" -ex "thread apply all bt" -ex "set pagination 0" -batch -return-child-result -silent --args  '.$cmd;
 			$this->line("*** Using gdb: $run_cmd");
 		} else {
 			$run_cmd = $cmd.' 2>&1';

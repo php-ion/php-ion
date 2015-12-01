@@ -54,7 +54,7 @@ class Process {
 	 * </pre>
 	 * @return Deferred|ExecResult
 	 * */
-	public static function exec($command,  array $options = array()) {}
+	public static function exec($command,  array $options = array()) : Deferred {}
 
 
 	/**
@@ -102,4 +102,18 @@ class Process {
 	 * @return int previous priority
 	 */
 	public static function setPriority($priority, $pid = null) : int {}
+
+    /**
+     * Receive message from spawned workers.
+     * @param string $name
+     * @return Sequence
+     */
+    public static function message(string $name) : Sequence {}
+
+    /**
+     * @param string $name
+     * @param int $pid
+     * @return Message
+     */
+    public static function send(string $name, int $pid) : Message {}
 }
