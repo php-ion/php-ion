@@ -237,6 +237,21 @@ $listener->accept()->then(function (Stream $connect) {
 }); // build sequence
 ```
 
+### SSL/TLS encryption
+
+```php
+$crypto = SSL::client()->allowSelfSigned();
+$stream = Stream::connect("example.com:443", $ssl);
+// ...
+```
+
+```php
+$crypto = SSL::server(SSL::METHOD_TLSv12)->loadCert('cacert.pem', 'cakey.pem')->allowSelfSigned();
+$listener = new Listener("0.0.0.0:8080");
+$listener->encrypt($crypto);
+// ...
+```
+
 ### Groups
 
 ```php
