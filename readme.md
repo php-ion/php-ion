@@ -32,12 +32,13 @@ ION Extension [dev]
 * Sending and listening POSIX signals
 * Async execution an external program
 * Async reading files from FS
+* SSL/TLS encryption supports
 
 # Indev
 
 * Listening FS events
-* SSL/TLS support
 * Thread-safety
+* Windows support (via docker)
 
 # Planned
 
