@@ -103,6 +103,44 @@ zend_string * ion_stream_get_name_remote(zend_object * stream_obj) {
     return zend_string_copy(stream->name_remote);
 }
 
+zend_string * ion_stream_describe(zend_object * stream_object) {
+    ion_stream  * stream = get_object_instance(stream_object, ion_stream);
+    zend_string * describe = NULL;
+    zend_string * address_remote;
+    zend_string * address_local;
+    if(stream->buffer == NULL) {
+        return zend_string_init(STRARGS("Stream(empty)"), 0);
+    }
+    if(stream->state & ION_STREAM_STATE_SOCKET) {
+        if(ion_stream_is_valid_fd(stream)) {
+            return zend_string_init(STRARGS("Stream(invalid)"), 0);
+        }
+        address_local   = ion_stream_get_name_self(stream_object);
+        address_remote  = ion_stream_get_name_remote(stream_object);
+        if(address_remote == NULL) {
+            address_remote = zend_string_init("undefined", strlen("undefined"), 0);
+        }
+        if(address_local == NULL) {
+            address_remote = zend_string_init("undefined", strlen("undefined"), 0);
+        }
+
+        if(stream->state & ION_STREAM_FROM_PEER) {
+            describe = strpprintf(MAX_DOMAIN_LENGTH, "Stream(%s<-%s)", address_local->val, address_remote->val);
+        } else if(stream->state & ION_STREAM_FROM_ME) {
+            describe = strpprintf(MAX_DOMAIN_LENGTH, "Stream(%s->%s)", address_local->val, address_remote->val);
+        } else {
+            describe = strpprintf(MAX_DOMAIN_LENGTH, "Stream(%s<->%s)", address_local->val, address_remote->val);
+        }
+        zend_string_release(address_local);
+        zend_string_release(address_remote);
+        return describe;
+    } else if(stream->state & ION_STREAM_STATE_PAIR) {
+        return zend_string_init(STRARGS("Stream(twin)"), 0);
+    } else {
+        return zend_string_init(STRARGS("Stream(pipe)"), 0);
+    }
+}
+
 long ion_stream_search_token(struct evbuffer * buffer, ion_stream_token * token) {
     struct evbuffer_ptr ptr_end;
     struct evbuffer_ptr ptr_start;
@@ -258,6 +296,7 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
             zend_object * exception;
             zval          zex;
             zend_class_entry * exception_ce;
+            zend_string * desc = ion_stream_describe(&stream->std);
 
             if((error_ulong =  bufferevent_get_openssl_error(bev))) {
                 error_message = ERR_error_string(error_ulong, NULL);
@@ -275,8 +314,9 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
 
             exception = pion_exception_new_ex(
                 exception_ce, 0,
-                "Connection %s corrupted: %s", ion_stream_get_name_remote(&stream->std), error_message
+                "%s error: %s", desc->val, error_message
             );
+            zend_string_release(desc);
             ZVAL_OBJ(&zex, exception);
             if(stream->connect) {
                 ion_promisor_fail(stream->connect, &zex);
@@ -313,9 +353,14 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
         }
     } else if(what & BEV_EVENT_CONNECTED) {
         stream->state |= ION_STREAM_STATE_CONNECTED;
+        if(stream->name_remote) {
+            zend_string_release(stream->name_remote);
+            stream->name_remote = NULL;
+        }
         if(stream->connect) {
             ion_promisor_done_object(stream->connect, &stream->std);
         }
+
     } else {
         zend_error(E_WARNING, "Unknown type notification: %d", what);
     }
@@ -585,6 +630,7 @@ CLASS_METHOD(ION_Stream, socket) {
     }
 
     stream = ion_stream_new_ex(buffer, state, zend_get_called_scope(execute_data));
+    ion_stream_set_peer_name(stream, zend_string_copy(host));
     if(!stream) {
         if(encrypt) {
             SSL * ctx = bufferevent_openssl_get_ssl(buffer);
@@ -821,9 +867,9 @@ CLASS_METHOD(ION_Stream, write) {
 
 //    bufferevent_flush(stream->buffer, EV_WRITE, BEV_NORMAL);
 //
-//    if(evbuffer_get_length(bufferevent_get_output(stream->buffer))) {
+    if(ion_stream_output_length(stream) && (stream->state & ION_STREAM_STATE_FLUSHED)) {
         stream->state &= ~ION_STREAM_STATE_FLUSHED;
-//    }
+    }
     RETURN_THIS();
 
 
@@ -1500,42 +1546,7 @@ METHOD_WITHOUT_ARGS(ION_Stream, getLocalName)
 
 /** public function ION\Stream::__toString() : string */
 CLASS_METHOD(ION_Stream, __toString) {
-    ion_stream  * stream = get_this_instance(ion_stream);
-    char        * address_combined;
-    zend_string * address_remote;
-    zend_string * address_local;
-    if(stream->buffer == NULL) {
-        RETURN_STRING("stream:empty");
-    }
-    if(stream->state & ION_STREAM_STATE_SOCKET) {
-        if(ion_stream_is_valid_fd(stream)) {
-            RETURN_STRING("stream:invalid");
-        }
-        address_local = ion_stream_get_name_self(Z_OBJ_P(getThis()));
-        address_remote  = ion_stream_get_name_remote(Z_OBJ_P(getThis()));
-        if(address_remote == NULL) {
-            address_remote = zend_string_init("undefined", strlen("undefined"), 0);
-        }
-        if(address_local == NULL) {
-            address_remote = zend_string_init("undefined", strlen("undefined"), 0);
-        }
-
-        if(stream->state & ION_STREAM_FROM_PEER) {
-            spprintf(&address_combined, 0, "stream:socket(%s<-%s)", address_local->val, address_remote->val);
-        } else if(stream->state & ION_STREAM_FROM_ME) {
-            spprintf(&address_combined, 0, "stream:socket(%s->%s)", address_local->val, address_remote->val);
-        } else {
-            spprintf(&address_combined, 0, "stream:socket(%s<->%s)", address_local->val, address_remote->val);
-        }
-        RETVAL_STRING(address_combined);
-        zend_string_release(address_local);
-        zend_string_release(address_remote);
-        efree(address_combined);
-    } else if(stream->state & ION_STREAM_STATE_PAIR) {
-        RETURN_STRING("stream:twin");
-    } else {
-        RETURN_STRING("stream:pipe");
-    }
+    RETURN_STR(ion_stream_describe(Z_OBJ_P(getThis())));
 }
 
 METHOD_WITHOUT_ARGS(ION_Stream, __toString)

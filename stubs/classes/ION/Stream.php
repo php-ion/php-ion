@@ -34,7 +34,7 @@ class Stream {
      * @param resource $resource
      * @return self
      */
-    public static function resource($resource) {}
+    public static function resource($resource) : self {}
 
     /**
      * Recognized resource formats are schema://hostname:port or path to unix socket:
@@ -44,7 +44,7 @@ class Stream {
      * @return Stream
      *
      */
-    public static function socket(string $host, SSL $encrypt = null) {}
+    public static function socket(string $host, SSL $encrypt = null) : self {}
 
     /**
      * Create a pair of linked streams.
@@ -52,7 +52,7 @@ class Stream {
      *
      * @return self[]
      */
-    public static function pair() {}
+    public static function pair() : array {}
 
     /**
      *

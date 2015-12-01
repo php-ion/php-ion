@@ -1,4 +1,3 @@
-
 #include "SSL.h"
 
 zend_class_entry     * ion_ce_ION_SSL;
@@ -34,18 +33,6 @@ zend_object_handlers   ion_oh_ION_SSLException;
 #define HAVE_TLS_ALPN 1
 #endif
 #endif
-
-#define ION_SSL_CRYPTO_METHOD_AUTO       0
-#define ION_SSL_IS_CLIENT               (1<<0)
-#define ION_SSL_CRYPTO_METHOD_SSLv2     (1<<1)
-#define ION_SSL_CRYPTO_METHOD_SSLv3     (1<<2)
-#define ION_SSL_CRYPTO_METHOD_TLSv10    (1<<3)
-#define ION_SSL_CRYPTO_METHOD_TLSv11    (1<<4)
-#define ION_SSL_CRYPTO_METHOD_TLSv12    (1<<5)
-#define ION_SSL_CRYPTO_METHODS_MASK     (ION_SSL_CRYPTO_METHOD_SSLv2 | ION_SSL_CRYPTO_METHOD_SSLv3 \
-    | ION_SSL_CRYPTO_METHOD_TLSv10 | ION_SSL_CRYPTO_METHOD_TLSv11 | ION_SSL_CRYPTO_METHOD_TLSv12)
-
-#define ION_SSL_ALLOW_SELF_SIGNED       (1<<10)
 
 ION_API SSL * ion_ssl_server_stream_handler(zend_object * ssl) {
     ion_ssl * issl = get_object_instance(ssl, ion_ssl);
@@ -169,6 +156,8 @@ static int ion_ssl_passwd_cb(char * buf, int num, int verify, void * data) {
             memcpy(buf, ZSTR_VAL(ssl->passphrase), ZSTR_LEN(ssl->passphrase) + 1);
             return (int)ZSTR_LEN(ssl->passphrase);
         }
+    } else {
+        ssl->flags |= ION_SSL_PASSPHRASE_REQUESTED;
     }
     return 0;
 }
@@ -235,10 +224,10 @@ zend_object * ion_ssl_factory(zend_long flags) {
         return NULL;
     }
 
-    if (SSL_CTX_set_cipher_list(ssl->ctx, ION_SSL_DEFAULT_CIPHERS) != 1) {
-        zend_throw_exception_ex(ion_ce_ION_SSLException, 0, "Failed setting cipher list: %s", ION_SSL_DEFAULT_CIPHERS);
-        return NULL;
-    }
+//    if (SSL_CTX_set_cipher_list(ssl->ctx, ION_SSL_DEFAULT_CIPHERS) != 1) {
+//        zend_throw_exception_ex(ion_ce_ION_SSLException, 0, "Failed setting cipher list: %s", ION_SSL_DEFAULT_CIPHERS);
+//        return NULL;
+//    }
 
 #if OPENSSL_VERSION_NUMBER >= 0x0090605fL
     ssl_ctx_options &= ~SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
@@ -405,6 +394,11 @@ CLASS_METHOD(ION_SSL, localCert) {
     char resolved_path_buff[MAXPATHLEN];
 
     if (VCWD_REALPATH(local_cert->val, resolved_path_buff)) {
+        if(!(ssl->flags & ION_SSL_HAS_PASSPHRASE_CB)) {
+            SSL_CTX_set_default_passwd_cb_userdata(ssl->ctx, ssl);
+            SSL_CTX_set_default_passwd_cb(ssl->ctx, ion_ssl_passwd_cb);
+            ssl->flags |= ION_SSL_HAS_PASSPHRASE_CB;
+        }
         /* a certificate to use for authentication */
         if (SSL_CTX_use_certificate_chain_file(ssl->ctx, resolved_path_buff) != 1) {
             zend_throw_exception_ex(ion_ce_ION_SSLException, 0,
@@ -416,14 +410,18 @@ CLASS_METHOD(ION_SSL, localCert) {
             if (VCWD_REALPATH(local_pk->val, resolved_path_buff_pk)) {
                 if (SSL_CTX_use_PrivateKey_file(ssl->ctx, resolved_path_buff_pk, SSL_FILETYPE_PEM) != 1) {
                     zend_throw_exception_ex(ion_ce_ION_SSLException,0,
-                        "Unable to set private key file '%s'", resolved_path_buff_pk);
+                        "Unable to set private key file '%s'%s", resolved_path_buff_pk,
+                        (ssl->flags & ION_SSL_PASSPHRASE_REQUESTED) ? " (passphrase required; set passphrase before)" : ""
+                    );
                     return;
                 }
             }
         } else {
             if (SSL_CTX_use_PrivateKey_file(ssl->ctx, resolved_path_buff, SSL_FILETYPE_PEM) != 1) {
                 zend_throw_exception_ex(ion_ce_ION_SSLException, 0,
-                    "Unable to set private key file '%s'", resolved_path_buff);
+                    "Unable to set private key file '%s'%s", resolved_path_buff,
+                    (ssl->flags & ION_SSL_PASSPHRASE_REQUESTED) ? " (passphrase required; set passphrase before)" : ""
+                );
                 return;
             }
         }
@@ -467,9 +465,16 @@ CLASS_METHOD(ION_SSL, passPhrase) {
         Z_PARAM_STR(phrase)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    SSL_CTX_set_default_passwd_cb_userdata(ssl->ctx, ssl);
-    SSL_CTX_set_default_passwd_cb(ssl->ctx, ion_ssl_passwd_cb);
+    if(!(ssl->flags & ION_SSL_HAS_PASSPHRASE_CB)) {
+        SSL_CTX_set_default_passwd_cb_userdata(ssl->ctx, ssl);
+        SSL_CTX_set_default_passwd_cb(ssl->ctx, ion_ssl_passwd_cb);
+        ssl->flags |= ION_SSL_HAS_PASSPHRASE_CB;
+    }
+    if(ssl->passphrase) {
+        zend_string_release(ssl->passphrase);
+    }
     ssl->passphrase = zend_string_copy(phrase);
+    ssl->flags &= ~ION_SSL_PASSPHRASE_REQUESTED;
 
     RETURN_THIS();
 }
@@ -565,8 +570,11 @@ CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_SSL) {
 
-    SSL_load_error_strings();
     SSL_library_init();
+    SSL_load_error_strings();
+    OpenSSL_add_all_ciphers();
+    OpenSSL_add_all_digests();
+    OpenSSL_add_all_algorithms();
     /* We MUST have entropy, or else there's no point to crypto. */
     if (!RAND_poll()) {
         zend_error(E_ERROR, "SSL: failed to generate entropy");
@@ -590,6 +598,13 @@ PHP_MINIT_FUNCTION(ION_SSL) {
 
     PION_REGISTER_VOID_EXTENDED_CLASS(ION_SSLException, ion_ce_ION_RuntimeException, "ION\\SSLException");
 
+
+    return SUCCESS;
+}
+
+
+PHP_MSHUTDOWN_FUNCTION(ION_SSL) {
+    EVP_cleanup();
 
     return SUCCESS;
 }

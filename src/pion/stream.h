@@ -102,11 +102,14 @@ typedef struct _ion_stream {
 #define ion_stream_is_valid_fd(stream) (bufferevent_getfd(stream->buffer) == -1)
 
 #define ion_stream_store_encrypt(stream, encryptor) get_object_instance(stream, ion_stream)->encrypt = encryptor
+#define ion_stream_set_peer_name(stream, name) get_object_instance(stream, ion_stream)->name_remote = name
+#define ion_stream_set_name(stream, name) get_object_instance(stream, ion_stream)->name_self = name
 
 int ion_stream_pair(zend_object ** stream_one, zend_object ** stream_two, zend_class_entry * ce);
 zend_object * ion_stream_new_ex(ion_buffer * buffer, int flags, zend_class_entry * cls);
 zend_string * ion_stream_get_name_self(zend_object * stream);
 zend_string * ion_stream_get_name_remote(zend_object * stream);
+zend_string * ion_stream_describe(zend_object * stream);
 zend_string * ion_stream_read(ion_stream * stream, size_t size);
 zend_string * ion_stream_read_token(ion_stream * stream, ion_stream_token * token);
 long   ion_stream_search_token(struct evbuffer * buffer, ion_stream_token * token TSRMLS_DC);

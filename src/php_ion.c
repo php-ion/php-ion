@@ -126,6 +126,7 @@ PHP_MSHUTDOWN_FUNCTION(ion) {
     SHUTDOWN_MODULE(ION_DNS);
     SHUTDOWN_MODULE(ION_Deferred);
     SHUTDOWN_MODULE(promisor);
+    SHUTDOWN_MODULE(ION_SSL);
     SHUTDOWN_MODULE(ION);
 
     event_base_free( GION(base) );

@@ -249,6 +249,8 @@ class StreamTest extends TestCase {
      * @memcheck
      */
     public function testAwaitConnectionFail() {
+        $server_ip = ION_TEST_SERVER_IPV4;
+        $client_ip = strstr(ION_TEST_SERVER_IPV4, ":", true);
         $this->promise(function () {
             $sock = Stream::socket(ION_TEST_SERVER_IPV4);
             $this->data["pre_connect"] = $sock->isConnected();
@@ -256,15 +258,12 @@ class StreamTest extends TestCase {
             $this->data["post_connect"] = $sock->isConnected();
             yield ION::await(0.1);
         });
-        $this->loop();
-        $this->assertEquals([
-            "error" => [
-                'exception' => 'ION\Stream\ConnectionException',
-                'message'   => 'Connection refused',
-                'code'      => 0
-            ],
-            "pre_connect" => false,
-        ], $this->data);
+        $this->loop();// Stream(127.0.0.1:49362->127.0.0.1:8976) error: Connection refused
+        $this->assertFalse($this->data['pre_connect']);
+        $this->assertTrue(isset($this->data['error']));
+        $this->assertEquals('ION\Stream\ConnectionException', $this->data['error']['exception']);
+        $this->assertEquals(0, $this->data['error']['code']);
+        $this->assertStringMatchesFormat("Stream({$client_ip}:%i->{$server_ip}) error: Connection refused", $this->data['error']['message']);
     }
 
     /**
@@ -495,8 +494,8 @@ class StreamTest extends TestCase {
 
         $ip = strstr(ION_TEST_SERVER_IPV4, ":", true);
         $server_addr = ION_TEST_SERVER_IPV4;
-        $this->assertStringMatchesFormat("stream:socket($ip:%i->$server_addr)", $this->data["client.stream"]);
-        $this->assertStringMatchesFormat("stream:socket($server_addr<-$ip:%i)", $this->data["server.stream"]);
+        $this->assertStringMatchesFormat("Stream($ip:%i->$server_addr)", $this->data["client.stream"]);
+        $this->assertStringMatchesFormat("Stream($server_addr<-$ip:%i)", $this->data["server.stream"]);
     }
 
     /**
