@@ -52,10 +52,10 @@ ion_fs_watcher * ion_fs_watcher_add(const char * pathname, zend_long flags) {
 }
 
 void ion_fs_watcher_remove(ion_fs_watcher * watcher) {
-    zend_string_release(watcher->pathname);
-    inotify_rm_watch(ind, watcher->fd);
-    close(watcher->fd);
-    efree(watcher);
+//    zend_string_release(watcher->pathname);
+//    inotify_rm_watch(ind, watcher->fd);
+//    close(watcher->fd);
+//    efree(watcher);
 }
 
 void ion_fs_watch_cb(evutil_socket_t fd, short what, void * arg) {
@@ -201,7 +201,7 @@ CLASS_METHOD(ION_FS, readFile) {
         Z_PARAM_LONG(length)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    fd = open(filename->val, O_RDONLY | O_CLOEXEC | O_NONBLOCK);
+    fd = open(filename->val, O_RDONLY | FD_CLOEXEC | O_NONBLOCK);
     if(fd == -1) {
         zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to open file %s: %s", filename->val, strerror(errno));
         return;
