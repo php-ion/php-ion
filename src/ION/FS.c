@@ -5,6 +5,10 @@
 zend_class_entry * ion_ce_ION_FS;
 zend_object_handlers ion_oh_ION_FS;
 
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
+#endif
+
 #if defined(HAVE_INOTIFY)
 
 int ion_fs_watch_init() {
@@ -165,8 +169,9 @@ void ion_fs_pair_close_two(ion_buffer * two, short what, void * ctx) {
 
     if(what & BEV_EVENT_EOF) {
         size_t size = evbuffer_get_length( bufferevent_get_input(two) );
-        zend_string  * data = zend_string_alloc(size - 1, 0);
+        zend_string  * data = zend_string_alloc(size, 0);
         bufferevent_read(two, ZSTR_VAL(data), size);
+        ZSTR_VAL(data)[size] = '\0';
         ion_promisor_done_string(deferred, data, 0);
         zend_string_release(data);
     } else if(what &  BEV_EVENT_ERROR) {
@@ -191,8 +196,7 @@ CLASS_METHOD(ION_FS, readFile) {
     int               fd;
     struct stat       st;
     ion_evbuffer    * evbuffer;
-    evutil_socket_t pair[2] = {-1, -1};
-    int d;
+    evutil_socket_t   pair[2] = {-1, -1};
 
     ZEND_PARSE_PARAMETERS_START(1,3)
         Z_PARAM_STR(filename)
@@ -201,7 +205,7 @@ CLASS_METHOD(ION_FS, readFile) {
         Z_PARAM_LONG(length)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    fd = open(filename->val, O_RDONLY | FD_CLOEXEC | O_NONBLOCK);
+    fd = open(filename->val, O_RDONLY | O_CLOEXEC | O_NONBLOCK);
     if(fd == -1) {
         zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to open file %s: %s", filename->val, strerror(errno));
         return;
@@ -236,7 +240,7 @@ CLASS_METHOD(ION_FS, readFile) {
         zend_throw_exception(ion_class_entry(ION_RuntimeException), "Failed to transfer data via sendfile/mmap", 0);
         return;
     }
-    bufferevent_write(one, "\0", 1);
+//    bufferevent_write(one, "\0", 1);
     bufferevent_setcb(one, NULL, ion_fs_file_sent_one, ion_fs_pair_close_one, NULL);
     bufferevent_setcb(two, NULL, NULL, ion_fs_pair_close_two, deferred);
     obj_add_ref(deferred);

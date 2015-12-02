@@ -8,7 +8,8 @@ use ION\Test\TestCase;
 class FSTest extends TestCase {
 
 	/**
-	 * @memcheck
+     * @group dev
+	 * @mem check
 	 */
 	public function testReadFile() {
 		$this->promise(function () {
