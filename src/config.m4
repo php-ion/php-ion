@@ -44,7 +44,7 @@ if test "$PHP_ION" != "no"; then
     # --enable-ion-debug
     if test "$PHP_ION_DEBUG" != "no"; then
         AC_DEFINE(ION_DEBUG, 1, [enable ION debug mode])
-        CFLAGS="$CFLAGS -Wall -g3 -ggdb -O0 -std=c99"
+        CFLAGS="$CFLAGS -Wall -g3 -ggdb -O"
     fi
 
     # --enable-ion-coverage

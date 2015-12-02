@@ -144,7 +144,7 @@ class BuildRunner {
 		}
 
 		if($this->hasOption('make', 'm')) {
-			$this->exec($this->getBin('make').' -j4',  "src/");
+			$this->exec($this->getBin('make').' -j2 --quiet',  "src/");
 		}
 
 		if($this->hasOption('info', 'i')) {

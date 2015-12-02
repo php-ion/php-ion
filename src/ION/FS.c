@@ -192,7 +192,7 @@ CLASS_METHOD(ION_FS, readFile) {
     struct stat       st;
     ion_evbuffer    * evbuffer;
     evutil_socket_t pair[2] = {-1, -1};
-
+    int d;
 
     ZEND_PARSE_PARAMETERS_START(1,3)
         Z_PARAM_STR(filename)

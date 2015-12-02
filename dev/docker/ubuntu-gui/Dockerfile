@@ -45,10 +45,10 @@ EXPOSE 22
 # Define commonly used JAVA_HOME variable
 ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
 ENV PHP_DIR /root/php
-ENV CFLAGS "$CFLAGS -Wall -g3 -ggdb -O0 -std=c99"
+ENV CFLAGS "$CFLAGS -Wall -g3 -ggdb -O0"
 
-RUN wget -q https://download.jetbrains.com/cpp/clion-1.2.1.tar.gz
-RUN tar -xzf clion-1.2.1.tar.gz
+RUN wget -q 'https://download.jetbrains.com/cpp/clion-1.2.1.tar.gz'
+RUN tar -xzf 'clion-1.2.1.tar.gz'
 
 RUN git clone --depth=1 https://github.com/php/php-src.git /root/src/php
 
@@ -60,6 +60,7 @@ RUN ./buildconf && ./configure \
     --with-config-file-path=$PHP_DIR \
     --with-config-file-scan-dir=$PHP_DIR/conf.d \
     --with-libdir=/lib/x86_64-linux-gnu \
+    --includedir=/usr/include/x86_64-linux-gnu \
     --enable-bcmath \
     --with-bz2 \
     --enable-calendar \
