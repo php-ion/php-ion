@@ -11,13 +11,13 @@
 #ifdef PHP_WIN32
 #	define ION_API __declspec(dllexport)
 #elif defined(__GNUC__) && __GNUC__ >= 4
-#	define ION_API __attribute__ ((visibility("default")))
+# define ION_API __attribute__ ((visibility("default")))
 #else
-#	define ION_API
+# define ION_API
 #endif
 
 #ifdef ZTS
-#include "TSRM.h"
+# include "TSRM.h"
 #endif
 
 #if defined(COMPILE_DL_ION) && defined(ZTS)
@@ -33,21 +33,16 @@ typedef struct event_config   ion_event_config;
 typedef struct evdns_base     ion_evdns_base;
 
 #ifndef zend_uint
-#define zend_uint uint32_t
+# define zend_uint uint32_t
 #endif
 
 #ifndef true
-#define true 1
+# define true 1
 #endif
 
 #ifndef false
-#define false 0
+# define false 0
 #endif
-
-//#define ION(prop) \
-//    ionBase->prop
-
-//#define ion_loop_break() event_base_loopbreak(ION(base))
 
 #define ION_LOOP_CB_BEGIN()
 #define ION_LOOP_CB_END() ION_CHECK_LOOP()

@@ -1,5 +1,4 @@
 #include <sys/fcntl.h>
-#include <sys/event.h>
 #include "../pion.h"
 #include "FS.h"
 
@@ -9,46 +8,47 @@ zend_object_handlers ion_oh_ION_FS;
 #if defined(HAVE_INOTIFY)
 
 int ion_fs_watch_init() {
-    GION(watch_fd) = inotify_init();
-    if(ind < 0) {
-        zend_error(E_ERROR, "FS watcher: Could not open inotify queue: %s", strerror(errno));
-        return FAILURE;
-    }
-    notifier = event_new(ION(base), GION(watch_fd), EV_READ | EV_WRITE | EV_PERSIST | EV_ET, ion_fs_watch_cb, NULL);
-    if(event_add(notifier, NULL) == FAILURE) {
-        event_del(notifier);
-        event_free(notifier);
-        zend_error(E_ERROR, "FS watcher: Could not add listener for queue");
-        return FAILURE;
-    }
-    GION(watch_event) = notifier;
+//    GION(watch_fd) = inotify_init();
+//    if(ind < 0) {
+//        zend_error(E_ERROR, "FS watcher: Could not open inotify queue: %s", strerror(errno));
+//        return FAILURE;
+//    }
+//    notifier = event_new(ION(base), GION(watch_fd), EV_READ | EV_WRITE | EV_PERSIST | EV_ET, ion_fs_watch_cb, NULL);
+//    if(event_add(notifier, NULL) == FAILURE) {
+//        event_del(notifier);
+//        event_free(notifier);
+//        zend_error(E_ERROR, "FS watcher: Could not add listener for queue");
+//        return FAILURE;
+//    }
+//    GION(watch_event) = notifier;
     return SUCCESS;
 }
 
 int ion_fs_watch_close() {
-    event_del(GION(watch_event));
-    event_free(GION(watch_event));
-    GION(watch_event) = NULL;
-    close(GION(watch_fd));
+//    event_del(GION(watch_event));
+//    event_free(GION(watch_event));
+//    GION(watch_event) = NULL;
+//    close(GION(watch_fd));
     return SUCCESS;
 }
 
 ion_fs_watcher * ion_fs_watcher_add(const char * pathname, zend_long flags) {
 
-    wd = inotify_add_watch( GION(watch_fd), "/tmp", IN_CREATE | IN_DELETE );
-    int               fd;
-    struct kevent     event;
-    struct timespec   timeout = { 0, 0 };
-    ion_fs_watcher  * watcher = NULL;
+//    wd = inotify_add_watch( GION(watch_fd), "/tmp", IN_CREATE | IN_DELETE );
+//    int               fd;
+//    struct kevent     event;
+//    struct timespec   timeout = { 0, 0 };
+//    ion_fs_watcher  * watcher = NULL;
+//
+//    watcher = ecalloc(1, sizeof(ion_fs_watcher));
+//    watcher->sequence = ion_promisor_sequence_new(NULL);
+//    watcher->fd = inotify_add_watch( fd, pathname, IN_CREATE | IN_DELETE );
+//    watcher->pathname = zend_string_init(pathname, strlen(pathname), 0);
+//    ion_promisor_store(watcher->sequence, watcher);
+//    ion_promisor_dtor(watcher->sequence, ion_fs_watcher_dtor);
+//
+//    return watcher;
 
-    watcher = ecalloc(1, sizeof(ion_fs_watcher));
-    watcher->sequence = ion_promisor_sequence_new(NULL);
-    watcher->fd = inotify_add_watch( fd, pathname, IN_CREATE | IN_DELETE );
-    watcher->pathname = zend_string_init(pathname, strlen(pathname), 0);
-    ion_promisor_store(watcher->sequence, watcher);
-    ion_promisor_dtor(watcher->sequence, ion_fs_watcher_dtor);
-
-    return watcher;
 }
 
 void ion_fs_watcher_remove(ion_fs_watcher * watcher) {

@@ -18,6 +18,7 @@ typedef struct _ion_fs_watcher {
 #if defined(HAVE_INOTIFY)
 //...
 #elif defined(HAVE_KQUEUE)
+# include <sys/event.h>
 # define VNODE_EVENTS (NOTE_DELETE |  NOTE_WRITE | NOTE_EXTEND | NOTE_ATTRIB | NOTE_LINK | NOTE_RENAME | NOTE_REVOKE)
 # ifdef O_EVTONLY  // osx: descriptor requested for event notifications only
 #  define OPEN_FLAGS O_EVTONLY
