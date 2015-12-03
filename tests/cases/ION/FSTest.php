@@ -8,7 +8,7 @@ use ION\Test\TestCase;
 class FSTest extends TestCase {
 
 	/**
-     * @group dev
+     *
 	 * @mem check
 	 */
 	public function testReadFile() {
@@ -20,28 +20,27 @@ class FSTest extends TestCase {
 	}
 
 	/**
+     * @group dev
 	 * @memcheck
 	 */
-	public function _testWatch() {
-		$file = "/tmp/iddqd";
+	public function testWatch() {
+		$file = ION_VAR."/iddqd";
 		@unlink($file);
 		file_put_contents($file, "a1");
 		$expected = realpath($file);
-		FS::watch($file)->then(function($filename) {
-			$this->data["changed"] = $filename;
+		FS::watch($file)->then(function($files) {
+			$this->data["changed"] = $files;
 		})->setName('test');
 		$this->promise(function () use ($file) {
 			yield \ION::await(0.02);
 			@unlink($file);
 //			file_put_contents('/tmp/iddqd', "a2", FILE_APPEND);
 			yield \ION::await(0.1);
-
 		});
 		$this->loop();
 		FS::unwatchAll();
 //        FS::watch($file)->forget('test');
-		$this->assertEquals([
-			"changed" => $expected
-		], $this->data);
+        $this->assertCount(1, $this->data["changed"]);
+        $this->assertArrayHasKey($expected, $this->data["changed"]);
 	}
 }

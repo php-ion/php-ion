@@ -12,58 +12,80 @@ zend_object_handlers ion_oh_ION_FS;
 #if defined(HAVE_INOTIFY)
 
 int ion_fs_watch_init() {
-//    GION(watch_fd) = inotify_init();
-//    if(ind < 0) {
-//        zend_error(E_ERROR, "FS watcher: Could not open inotify queue: %s", strerror(errno));
-//        return FAILURE;
-//    }
-//    notifier = event_new(ION(base), GION(watch_fd), EV_READ | EV_WRITE | EV_PERSIST | EV_ET, ion_fs_watch_cb, NULL);
-//    if(event_add(notifier, NULL) == FAILURE) {
-//        event_del(notifier);
-//        event_free(notifier);
-//        zend_error(E_ERROR, "FS watcher: Could not add listener for queue");
-//        return FAILURE;
-//    }
-//    GION(watch_event) = notifier;
     return SUCCESS;
 }
 
 int ion_fs_watch_close() {
-//    event_del(GION(watch_event));
-//    event_free(GION(watch_event));
-//    GION(watch_event) = NULL;
-//    close(GION(watch_fd));
+
     return SUCCESS;
 }
 
 ion_fs_watcher * ion_fs_watcher_add(const char * pathname, zend_long flags) {
+    int               fd;
+    ion_fs_watcher  * watcher = NULL;
 
-//    wd = inotify_add_watch( GION(watch_fd), "/tmp", IN_CREATE | IN_DELETE );
-//    int               fd;
-//    struct kevent     event;
-//    struct timespec   timeout = { 0, 0 };
-//    ion_fs_watcher  * watcher = NULL;
-//
-//    watcher = ecalloc(1, sizeof(ion_fs_watcher));
-//    watcher->sequence = ion_promisor_sequence_new(NULL);
-//    watcher->fd = inotify_add_watch( fd, pathname, IN_CREATE | IN_DELETE );
-//    watcher->pathname = zend_string_init(pathname, strlen(pathname), 0);
-//    ion_promisor_store(watcher->sequence, watcher);
-//    ion_promisor_dtor(watcher->sequence, ion_fs_watcher_dtor);
-//
-//    return watcher;
+    fd = inotify_init();
+    if(fd < 0) {
+        zend_throw_exception_ex(ion_ce_ION_RuntimeException, 0 , "Failed to init inotify for file %s: %s", pathname, strerror(errno));
+        return NULL;
+    }
+    watcher = ecalloc(1, sizeof(ion_fs_watcher));
+    watcher->sequence = ion_promisor_sequence_new(NULL);
+    watcher->fd = fd;
+    watcher->pathname = zend_string_init(pathname, strlen(pathname), 0);
+    ion_promisor_store(watcher->sequence, watcher);
+    ion_promisor_dtor(watcher->sequence, ion_fs_watcher_dtor);
+    watcher->event = event_new(GION(base), fd, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, ion_fs_watch_cb, watcher);
+    if(event_add(watcher->event, NULL) == FAILURE) {
+        zend_object_release(watcher->sequence);
+        zend_throw_exception_ex(ion_ce_ION_RuntimeException, 0 , "Could not activate listener of %s", pathname);
+        return NULL;
+    }
+    if(inotify_add_watch(fd, pathname, ION_FS_WATCH_EVENTS) < 0) {
+        zend_object_release(watcher->sequence);
+        zend_throw_exception_ex(ion_ce_ION_RuntimeException, 0 , "Failed to listen of %s", pathname);
+        return NULL;
+    }
+
+    return watcher;
 
 }
 
 void ion_fs_watcher_remove(ion_fs_watcher * watcher) {
-//    zend_string_release(watcher->pathname);
-//    inotify_rm_watch(ind, watcher->fd);
-//    close(watcher->fd);
-//    efree(watcher);
+    zend_string_release(watcher->pathname);
+    close(watcher->fd);
+    event_del(watcher->event);
+    event_free(watcher->event);
+    efree(watcher);
 }
 
 void ion_fs_watch_cb(evutil_socket_t fd, short what, void * arg) {
-    // todo need linux
+    ssize_t          read_bytes = 0;
+    ssize_t          has_bytes = 0;
+    ion_fs_watcher * watcher = (ion_fs_watcher *)arg;
+    zval             result;
+    struct inotify_event event;
+    char             path[MAXPATHLEN];
+
+    array_init(&result);
+    while(ioctl(fd, FIONREAD, &has_bytes) != FAILURE && has_bytes) {
+        read_bytes = read(watcher->fd, (void *)&event, INOTIFY_EVENT_SIZE);
+        if(read_bytes < 0) {
+            /* An error occurred. */
+            zend_error(E_ERROR, "FS watcher: An error occurred: %s", strerror(errno));
+            return;
+        }
+        if(event.len) {
+            memcpy(path, watcher->pathname->val, watcher->pathname->len);
+            memcpy(path + watcher->pathname->len, "/", 1);
+            read(watcher->fd, (void *)path + watcher->pathname->len + 1, event.len);
+            add_assoc_long(&result, path, event.mask);
+        } else {
+            add_assoc_long(&result, watcher->pathname->val, event.mask);
+        }
+    }
+    ion_promisor_sequence_invoke(watcher->sequence, &result);
+    zval_ptr_dtor(&result);
 }
 
 #elif defined(HAVE_KQUEUE)
@@ -82,8 +104,10 @@ void ion_fs_watch_cb(evutil_socket_t fd, short what, void * arg) {
             return;
         }
         watcher = (ion_fs_watcher *)event.udata;
-        ZVAL_STR(&result, watcher->pathname);
+        array_init(&result);
+        add_assoc_long(&result, watcher->pathname->val, event.fflags);
         ion_promisor_sequence_invoke(watcher->sequence, &result);
+        zval_ptr_dtor(&result);
     }
 }
 
@@ -128,7 +152,7 @@ ion_fs_watcher * ion_fs_watcher_add(const char * pathname, zend_long flags) {
     ion_promisor_dtor(watcher->sequence, ion_fs_watcher_dtor);
 
     memset(&event, 0, sizeof(event));
-    EV_SET(&event, fd, EVFILT_VNODE, EV_ADD | EV_CLEAR, VNODE_EVENTS, 0, watcher);
+    EV_SET(&event, fd, EVFILT_VNODE, EV_ADD | EV_CLEAR, ION_FS_WATCH_EVENTS, 0, watcher);
     if (kevent(GION(watch_fd), &event, 1, NULL, 0, &timeout) == -1) {
         zend_object_release(watcher->sequence);
         zend_throw_exception(ion_class_entry(ION_RuntimeException), "Failed to add fsnotify event", 0);
@@ -199,10 +223,10 @@ CLASS_METHOD(ION_FS, readFile) {
     evutil_socket_t   pair[2] = {-1, -1};
 
     ZEND_PARSE_PARAMETERS_START(1,3)
-        Z_PARAM_STR(filename)
-        Z_PARAM_OPTIONAL
-        Z_PARAM_LONG(offset)
-        Z_PARAM_LONG(length)
+            Z_PARAM_STR(filename)
+            Z_PARAM_OPTIONAL
+            Z_PARAM_LONG(offset)
+            Z_PARAM_LONG(length)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     fd = open(filename->val, O_RDONLY | O_CLOEXEC | O_NONBLOCK);
@@ -248,9 +272,9 @@ CLASS_METHOD(ION_FS, readFile) {
 }
 
 METHOD_ARGS_BEGIN(ION_FS, readFile, 1)
-    METHOD_ARG_STRING(filename, 0)
-    METHOD_ARG_LONG(offset, 0)
-    METHOD_ARG_LONG(length, 0)
+                METHOD_ARG_STRING(filename, 0)
+                METHOD_ARG_LONG(offset, 0)
+                METHOD_ARG_LONG(length, 0)
 METHOD_ARGS_END()
 
 void ion_fs_watcher_dtor(zend_object * sequence) {
@@ -273,9 +297,9 @@ CLASS_METHOD(ION_FS, watch) {
     ion_fs_watcher  * watcher = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1,2)
-        Z_PARAM_STR(filename)
-        Z_PARAM_OPTIONAL
-        Z_PARAM_LONG(flags)
+            Z_PARAM_STR(filename)
+            Z_PARAM_OPTIONAL
+            Z_PARAM_LONG(flags)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     if(!VCWD_REALPATH(filename->val, realpath)) {
@@ -303,8 +327,8 @@ CLASS_METHOD(ION_FS, watch) {
 }
 
 METHOD_ARGS_BEGIN(ION_FS, watch, 1)
-    METHOD_ARG_STRING(filename, 0)
-    METHOD_ARG_LONG(events, 0)
+                METHOD_ARG_STRING(filename, 0)
+                METHOD_ARG_LONG(events, 0)
 METHOD_ARGS_END()
 
 CLASS_METHOD(ION_FS, unwatchAll) {
@@ -314,10 +338,10 @@ CLASS_METHOD(ION_FS, unwatchAll) {
 METHOD_WITHOUT_ARGS(ION_FS, unwatchAll);
 
 CLASS_METHODS_START(ION_FS)
-    METHOD(ION_FS, readFile,   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_FS, watch,      ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_FS, unwatchAll, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-CLASS_METHODS_END;
+                METHOD(ION_FS, readFile,   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+                METHOD(ION_FS, watch,      ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+                METHOD(ION_FS, unwatchAll, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+        CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_FS) {
     PION_REGISTER_STATIC_CLASS(ION_FS, "ION\\FS");

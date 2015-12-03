@@ -1,19 +1,19 @@
 #ifndef PION_INIT_H
 #define PION_INIT_H
 
-#define _GNU_SOURCE
 #ifdef HAVE_CONFIG_H
-#include "../config.h"
+# include "../config.h"
 #endif
+
 #include <php.h>
 #include <event.h>
 
 #ifdef PHP_WIN32
-#define ION_API __declspec(dllexport)
+# define ION_API __declspec(dllexport)
 #elif defined(__GNUC__) && __GNUC__ >= 4
-#define ION_API __attribute__ ((visibility("default")))
+# define ION_API __attribute__ ((visibility("default")))
 #else
-#define ION_API
+# define ION_API
 #endif
 
 #ifdef ZTS

@@ -13,13 +13,17 @@ typedef struct _ion_fs_watcher {
     zend_string * pathname;
     int           flags;
     int           fd;
+    ion_event   * event;
 } ion_fs_watcher;
 
 #if defined(HAVE_INOTIFY)
-//...
+# include <sys/inotify.h>
+# include <sys/ioctl.h>
+# define INOTIFY_EVENT_SIZE (sizeof(struct inotify_event))
+# define ION_FS_WATCH_EVENTS (IN_ATTRIB | IN_CREATE | IN_DELETE | IN_DELETE_SELF | IN_MODIFY | IN_MOVE_SELF | IN_MOVED_FROM | IN_MOVED_TO)
 #elif defined(HAVE_KQUEUE)
 # include <sys/event.h>
-# define VNODE_EVENTS (NOTE_DELETE |  NOTE_WRITE | NOTE_EXTEND | NOTE_ATTRIB | NOTE_LINK | NOTE_RENAME | NOTE_REVOKE)
+# define ION_FS_WATCH_EVENTS (NOTE_DELETE |  NOTE_WRITE | NOTE_EXTEND | NOTE_ATTRIB | NOTE_LINK | NOTE_RENAME | NOTE_REVOKE)
 # ifdef O_EVTONLY  // osx: descriptor requested for event notifications only
 #  define OPEN_FLAGS O_EVTONLY
 # else
