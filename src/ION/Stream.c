@@ -824,8 +824,8 @@ METHOD_ARGS_BEGIN(ION_Stream, setPriority, 1)
     METHOD_ARG_LONG(priority, 0)
 METHOD_ARGS_END()
 
-/** public function ION\Stream::setInputSize(int $bytes) : self */
-CLASS_METHOD(ION_Stream, setInputSize) {
+/** public function ION\Stream::setInputBufferSize(int $bytes) : self */
+CLASS_METHOD(ION_Stream, setInputBufferSize) {
     zend_long    bytes = 0;
     ion_stream * stream = get_this_instance(ion_stream);
 
@@ -842,7 +842,7 @@ CLASS_METHOD(ION_Stream, setInputSize) {
     RETURN_THIS();
 }
 
-METHOD_ARGS_BEGIN(ION_Stream, setInputSize, 1)
+METHOD_ARGS_BEGIN(ION_Stream, setInputBufferSize, 1)
     METHOD_ARG_LONG(bytes, 0)
 METHOD_ARGS_END()
 
@@ -1616,36 +1616,36 @@ CLASS_METHODS_START(ION_Stream)
     METHOD(ION_Stream, _error,          ZEND_ACC_PRIVATE)
     METHOD(ION_Stream, _timeout,        ZEND_ACC_PRIVATE)
 #endif
-    METHOD(ION_Stream, enable,          ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, disable,         ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, connect, ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, setTimeouts,     ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, setPriority,     ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, setInputSize,    ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, write,           ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, sendFile,        ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, flush,           ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, search,          ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, getSize,         ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, get,             ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, getAll,          ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, getLine,         ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, read,            ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, readAll,         ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, readLine,        ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, close,           ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, onData,          ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, awaitShutdown,   ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, encrypt,         ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, getPeerName,     ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, getName,         ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, isClosed,        ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, isEnabled,       ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, isConnected,     ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, getState,        ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, __destruct,      ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, __toString,      ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, __debugInfo,     ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, enable,             ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, disable,            ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, connect,            ZEND_ACC_PUBLIC)
+//    METHOD(ION_Stream, setTimeouts,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, setPriority,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, setInputBufferSize, ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, write,              ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, sendFile,           ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, flush,              ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, search,             ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getSize,            ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, get,                ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getAll,             ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getLine,            ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, read,               ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, readAll,            ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, readLine,           ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, close,              ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, onData,             ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, awaitShutdown,      ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, encrypt,            ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getPeerName,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getName,            ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, isClosed,           ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, isEnabled,          ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, isConnected,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getState,           ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, __destruct,         ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, __toString,         ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, __debugInfo,        ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Stream) {

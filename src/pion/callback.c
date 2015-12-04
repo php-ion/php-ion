@@ -533,14 +533,14 @@ zval _pion_cb_obj_call_with_3_args(pion_cb *cb, zend_object * obj, zval *arg1, z
     return pion_cb_obj_call(cb, obj, 3, args);
 }
 
-zval _pion_cb_obj_call_with_4_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2, zval *arg3, zval *arg4 TSRMLS_DC) {
-    zval args[4];
-    args[0] = *arg1;
-    args[1] = *arg2;
-    args[2] = *arg3;
-    args[3] = *arg4;
-    return pion_cb_obj_call(cb, obj, 4, args);
-}
+//zval _pion_cb_obj_call_with_4_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2, zval *arg3, zval *arg4 TSRMLS_DC) {
+//    zval args[4];
+//    args[0] = *arg1;
+//    args[1] = *arg2;
+//    args[2] = *arg3;
+//    args[3] = *arg4;
+//    return pion_cb_obj_call(cb, obj, 4, args);
+//}
 
 
 int pion_call_constructor(zend_class_entry * ce, zend_object * this_ptr, int args_num, zval *args TSRMLS_DC) {
@@ -579,7 +579,7 @@ int pion_call_constructor(zend_class_entry * ce, zend_object * this_ptr, int arg
     return SUCCESS;
 }
 
-zend_object * _pion_new_object(zend_class_entry *ce, int args_num, zval *args TSRMLS_DC) {
+zend_object * pion_new_object(zend_class_entry *ce, int args_num, zval *args) {
     zval object;
 
     object_init_ex(&object, ce);
@@ -594,23 +594,23 @@ zend_object * _pion_new_object(zend_class_entry *ce, int args_num, zval *args TS
 }
 
 
-zend_object * _pion_new_object_arg_1(zend_class_entry *ce, zval *arg1 TSRMLS_DC) {
-    zval args[1];
-    args[0] = *arg1;
-    return pion_new_object(ce, 1, args);
-}
-
-zend_object * _pion_new_object_arg_2(zend_class_entry *ce, zval *arg1, zval *arg2 TSRMLS_DC) {
-    zval args[2];
-    args[0] = *arg1;
-    args[1] = *arg2;
-    return pion_new_object(ce, 2, args);
-}
-
-zend_object * _pion_new_object_arg_3(zend_class_entry *ce, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC) {
-    zval args[3];
-    args[0] = *arg1;
-    args[1] = *arg2;
-    args[2] = *arg3;
-    return pion_new_object(ce, 3, args);
-}
+//zend_object * _pion_new_object_arg_1(zend_class_entry *ce, zval *arg1 TSRMLS_DC) {
+//    zval args[1];
+//    args[0] = *arg1;
+//    return pion_new_object(ce, 1, args);
+//}
+//
+//zend_object * _pion_new_object_arg_2(zend_class_entry *ce, zval *arg1, zval *arg2 TSRMLS_DC) {
+//    zval args[2];
+//    args[0] = *arg1;
+//    args[1] = *arg2;
+//    return pion_new_object(ce, 2, args);
+//}
+//
+//zend_object * _pion_new_object_arg_3(zend_class_entry *ce, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC) {
+//    zval args[3];
+//    args[0] = *arg1;
+//    args[1] = *arg2;
+//    args[2] = *arg3;
+//    return pion_new_object(ce, 3, args);
+//}

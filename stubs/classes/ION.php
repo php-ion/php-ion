@@ -18,7 +18,7 @@ class ION {
     /**
      * Version of ION
      * */
-    const VERSION = 'x.y-z-ghash';
+    const VERSION = 'x.y-z';
 
     /**
      * Block until we have an active event, then exit once all active events have had their callbacks run.

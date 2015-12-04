@@ -87,6 +87,17 @@ class StreamTest extends TestCase {
     }
 
     /**
+     * @group dev
+     * @memcheck
+     */
+    public function testInputBufferSize() {
+        list($a, $b) = Stream::pair();
+        /* @var Stream $a */
+        /* @var Stream $b */
+        $a->setInputBufferSize(KiB);
+    }
+
+    /**
      *
      * @memcheck
      */
@@ -435,7 +446,6 @@ class StreamTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
      * @dataProvider providerDoubleReads
      * @param array $chunks
@@ -652,5 +662,25 @@ class StreamTest extends TestCase {
 
     public function testEnableEncryption() {
 
+    }
+
+    /**
+     * @group dev
+     * @memcheck
+     */
+    public function testExtends() {
+        list($a, $b) = MyStream::pair();
+        $this->assertInstanceOf(MyStream::class, $a);
+        $this->assertInstanceOf(MyStream::class, $b);
+        $this->assertTrue($a->custom);
+        $this->assertTrue($b->custom);
+    }
+}
+
+class MyStream extends Stream {
+    public $custom = false;
+
+    public function __construct() {
+        $this->custom = true;
     }
 }

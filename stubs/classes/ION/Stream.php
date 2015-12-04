@@ -112,7 +112,7 @@ class Stream {
      * @param int $bytes
      * @return self
      */
-    public function setInputSize(int $bytes) : self {}
+    public function setInputBufferSize(int $bytes) : self {}
 
     /**
      * Starts encryption for current stream.
