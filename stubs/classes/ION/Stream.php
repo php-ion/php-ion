@@ -8,25 +8,22 @@ class Stream {
     const MODE_WITH_TOKEN = 2;
     const MODE_WITHOUT_TOKEN = 4;
 
-    const STATE_SOCKET = 1;
-    const STATE_PAIR = 2;
-    const STATE_PIPE = 4;
+    const TYPE_SOCKET = 1;
+    const TYPE_PAIR   = 2;
+    const TYPE_PIPE   = 4;
 
-    const STATE_FLUSHED = 32;
-    const STATE_HAS_DATA = 64;
-    const STATE_CONNECTED = 1024;
-    const STATE_EOF = 2048;
-    const STATE_ERROR = 4096;
-    const STATE_SHUTDOWN = 8192;
-    const STATE_CLOSED = 14336;
+    const STATE_FLUSHED    = 32;
+    const STATE_HAS_DATA   = 64;
+    const STATE_ENABLED    = 512;
+    const STATE_CONNECTED  = 1024;
+    const STATE_EOF        = 2048;
+    const STATE_ERROR      = 4096;
+    const STATE_SHUTDOWN   = 8192;
+    const STATE_CLOSED     = self::STATE_EOF | self::STATE_ERROR | self::STATE_SHUTDOWN;
 
-    const NAME_HOST = 0;
-    const NAME_ADDRESS = 1;
-    const NAME_PORT = 2;
-
-    const INPUT = 2;
+    const INPUT  = 2;
     const OUTPUT = 4;
-    const BOTH = 6;
+    const BOTH   = self::INPUT | self::OUTPUT;
 
     /**
      * Create streams from resource of PHP stream.
@@ -74,20 +71,20 @@ class Stream {
      *
      * @return self
      */
-    public function enable() {}
+    public function enable() : self {}
 
     /**
      * Deactivate stream for listening events
      *
      * @return self
      */
-    public function disable() {}
+    public function disable() : self {}
 
     /**
      * @todo
      * @return Deferred|self
      */
-    public function connect() {}
+    public function connect() : Deferred {}
 
     /**
      * Set the read and write timeouts for a Stream.
@@ -108,14 +105,14 @@ class Stream {
      * @param int $priority
      * @return self
      */
-    public function setPriority(int $priority) {}
+    public function setPriority(int $priority) : self {}
 
     /**
      * If the input buffer is beyond the $bytes, the stream stops reading from the network. By default: unlimited
      * @param int $bytes
      * @return self
      */
-    public function setInputSize(int $bytes) {}
+    public function setInputSize(int $bytes) : self {}
 
     /**
      * Starts encryption for current stream.
@@ -123,19 +120,21 @@ class Stream {
      * @param SSL $ssl
      * @return self
      */
-    public function encrypt(SSL $ssl) {}
+    public function encrypt(SSL $ssl) : self {}
 
     /**
      * Queries the remote side of the given socket which may either result in host:port or in a Unix filesystem path, dependent on its type
      * @return mixed
      */
-    public function getPeerName() {}
+    public function getPeerName() : string {}
 
     /**
      * Queries the local side of the given socket which may either result in host:port or in a Unix filesystem path, dependent on its type
      * @return string|false
      */
-    public function getName() {}
+    public function getName() : string {}
+
+    public function getState() : int {}
 
     /**
      * Search for a string within an incoming buffer
@@ -146,14 +145,14 @@ class Stream {
      *
      * @return int|false the position of where the $token exists relative to the beginning of the incoming buffer
      */
-    public function search(string $token, int $offset = 0, int $length = 0) {}
+    public function search(string $token, int $offset = 0, int $length = 0) : int {}
 
 
     /**
      * @param int $type
      * @return int
      */
-    public function getSize(int $type = self::INPUT) {}
+    public function getSize(int $type = self::INPUT) : int {}
 
     /**
      * Get N bytes
@@ -161,13 +160,13 @@ class Stream {
      * @param int $bytes
      * @return string
      */
-    public function get(int $bytes) {}
+    public function get(int $bytes) : string {}
 
     /**
      * Reads remainder of a stream into a string
      * @return string
      */
-    public function getAll() {}
+    public function getAll() : string {}
 
     /**
      * Gets line from input buffer up to a given delimiter
@@ -177,7 +176,7 @@ class Stream {
      *
      * @return string
      */
-    public function getLine(string $token, int $flag = self::MODE_TRIM_TOKEN, int $max_length = 0) {}
+    public function getLine(string $token, int $flag = self::MODE_TRIM_TOKEN, int $max_length = 0) : string {}
 
     /**
      * @param int $count
@@ -265,10 +264,6 @@ class Stream {
      */
     public function isEnabled() {}
 
-    /**
-     * @return bool
-     */
-    public function getState() {}
 
     /**
      * @return string

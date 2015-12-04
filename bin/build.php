@@ -162,7 +162,7 @@ class BuildRunner {
 			} else {
 				$group = "";
 			}
-			$phpunit = $this->getBin('php'/*, ['USE_ZEND_ALLOC' => $this->zend_alloc]*/)." -e -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --debug --colors=never $group ".$this->getOption('test', 't', '');
+			$phpunit = $this->getBin('php'/*, ['USE_ZEND_ALLOC' => $this->zend_alloc]*/)." -e -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --colors=always $group ".$this->getOption('test', 't', '');
 			$this->exec($phpunit, false, $use_gdb);
             if($this->hasOption('coverage', 'o')) {
                 $this->exec($this->getBin('lcov')." --directory . --capture --output-file coverage.info");

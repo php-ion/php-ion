@@ -33,18 +33,16 @@ ION Extension [dev]
 * Async execution an external program
 * Async reading files from FS
 * SSL/TLS encryption supports
+* Listening FS events
 
 # Indev
 
-* Listening FS events
-* Thread-safety
-* Windows support (via docker)
+* Server socket pool
+* Client socket pool
 
 # Planned
 
 * DNS server
-* Server socket pool
-* Client socket pool
 * HTTP server
 * HTTP client
 * IPC

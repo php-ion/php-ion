@@ -756,8 +756,8 @@ void _ion_stream_connect_dtor(zend_object * deferred) {
     }
 }
 
-/** public function ION\Stream::awaitConnection() : Deferred|true */
-CLASS_METHOD(ION_Stream, awaitConnection) {
+/** public function ION\Stream::connect() : Deferred|true */
+CLASS_METHOD(ION_Stream, connect) {
     ion_stream * stream = get_this_instance(ion_stream);
 
     CHECK_STREAM_BUFFER(stream);
@@ -774,7 +774,7 @@ CLASS_METHOD(ION_Stream, awaitConnection) {
     }
 }
 
-METHOD_WITHOUT_ARGS(ION_Stream, awaitConnection)
+METHOD_WITHOUT_ARGS(ION_Stream, connect)
 
 /** public function ION\Stream::setTimeouts(double $read_timeout, double $write_timeout) : self */
 //CLASS_METHOD(ION_Stream, setTimeouts) {
@@ -1141,7 +1141,7 @@ CLASS_METHOD(ION_Stream, read) {
             obj_add_ref(stream->read);
             RETURN_OBJ(stream->read);
         } else {
-            zend_throw_exception(ion_ce_ION_InvalidUsageException, "Stream already read", 0);
+            zend_throw_exception(ion_ce_ION_InvalidUsageException, "Stream locked for reading: already in the process of reading", 0);
             return;
         }
     }
@@ -1188,6 +1188,19 @@ CLASS_METHOD(ION_Stream, readLine) {
     if(ZSTR_LEN(token.token) == 0) {
         zend_throw_exception(ion_ce_ION_StreamException, "Failed to get internal buffer pointer for token_length/offset", 0);
         return;
+    }
+
+    if(stream->read) {
+        if(stream->token
+           && zend_string_equals(stream->token->token, token.token)
+           && (stream->token->flags & ION_STREAM_TOKEN_MODE_MASK) == token.flags
+           && stream->token->length == token.length) {
+            obj_add_ref(stream->read);
+            RETURN_OBJ(stream->read);
+        } else {
+            zend_throw_exception(ion_ce_ION_InvalidUsageException, "Stream locked for reading: already in the process of reading", 0);
+            return;
+        }
     }
 
     if(ion_stream_search_token(bufferevent_get_input(stream->buffer), &token) == FAILURE) {
@@ -1238,7 +1251,7 @@ CLASS_METHOD(ION_Stream, readAll) {
             obj_add_ref(stream->read);
             RETURN_OBJ(stream->read);
         } else {
-            zend_throw_exception(ion_ce_ION_InvalidUsageException, "Stream already read", 0);
+            zend_throw_exception(ion_ce_ION_InvalidUsageException, "Stream locked for reading: already in the process of reading", 0);
             return;
         }
     }
@@ -1492,8 +1505,8 @@ CLASS_METHOD(ION_Stream, __destruct) {
 METHOD_WITHOUT_ARGS(ION_Stream, __destruct)
 
 
-/** public function ION\Stream::getRemotePeer() : string */
-CLASS_METHOD(ION_Stream, getRemotePeer) {
+/** public function ION\Stream::getPeerName() : string */
+CLASS_METHOD(ION_Stream, getPeerName) {
     ion_stream  * stream = get_this_instance(ion_stream);
     zend_string * remote_name;
     if(stream->buffer == NULL) {
@@ -1517,10 +1530,10 @@ CLASS_METHOD(ION_Stream, getRemotePeer) {
     }
 }
 
-METHOD_WITHOUT_ARGS(ION_Stream, getRemotePeer)
+METHOD_WITHOUT_ARGS(ION_Stream, getPeerName)
 
-/** public function ION\Stream::getLocalName() : string */
-CLASS_METHOD(ION_Stream, getLocalName) {
+/** public function ION\Stream::getName() : string */
+CLASS_METHOD(ION_Stream, getName) {
     ion_stream * stream = get_this_instance(ion_stream);
     zend_string * local_name;
     if(stream->buffer == NULL) {
@@ -1544,7 +1557,7 @@ CLASS_METHOD(ION_Stream, getLocalName) {
     }
 }
 
-METHOD_WITHOUT_ARGS(ION_Stream, getLocalName)
+METHOD_WITHOUT_ARGS(ION_Stream, getName)
 
 /** public function ION\Stream::__toString() : string */
 CLASS_METHOD(ION_Stream, __toString) {
@@ -1605,7 +1618,7 @@ CLASS_METHODS_START(ION_Stream)
 #endif
     METHOD(ION_Stream, enable,          ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, disable,         ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, awaitConnection, ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, connect, ZEND_ACC_PUBLIC)
 //    METHOD(ION_Stream, setTimeouts,     ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, setPriority,     ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, setInputSize,    ZEND_ACC_PUBLIC)
@@ -1624,8 +1637,8 @@ CLASS_METHODS_START(ION_Stream)
     METHOD(ION_Stream, onData,          ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, awaitShutdown,   ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, encrypt,         ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, getRemotePeer,   ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, getLocalName,    ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getPeerName,     ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getName,         ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, isClosed,        ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, isEnabled,       ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, isConnected,     ZEND_ACC_PUBLIC)
