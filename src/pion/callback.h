@@ -67,7 +67,7 @@ zval _pion_cb_obj_call(pion_cb *cb, zend_object * obj, int num, zval *args TSRML
 zval _pion_cb_obj_call_with_1_arg(pion_cb * cb, zend_object * obj, zval* arg1 TSRMLS_DC);
 zval _pion_cb_obj_call_with_2_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2 TSRMLS_DC);
 zval _pion_cb_obj_call_with_3_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC);
-zval _pion_cb_obj_call_with_4_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2, zval *arg3, zval *arg4 TSRMLS_DC);
+//zval _pion_cb_obj_call_with_4_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2, zval *arg3, zval *arg4 TSRMLS_DC);
 
 #define pion_cb_call(cb, num_args, args) \
     _pion_cb_call(cb, num_args, args TSRMLS_CC)
@@ -79,8 +79,8 @@ zval _pion_cb_obj_call_with_4_args(pion_cb *cb, zend_object * obj, zval *arg1, z
     _pion_cb_call_with_2_args(cb, arg1, arg2 TSRMLS_CC)
 #define pion_cb_call_with_3_args(cb, arg1, arg2, arg3) \
     _pion_cb_call_with_3_args(cb, arg1, arg2, arg3 TSRMLS_CC)
-#define pion_cb_call_with_4_args(cb, arg1, arg2, arg3, arg4) \
-    _pion_cb_call_with_4_args(cb, arg1, arg2, arg3, arg4 TSRMLS_CC)
+//#define pion_cb_call_with_4_args(cb, arg1, arg2, arg3, arg4) \
+//    _pion_cb_call_with_4_args(cb, arg1, arg2, arg3, arg4 TSRMLS_CC)
 
 #define pion_cb_obj_call(cb, obj, num_args, args) \
     _pion_cb_obj_call(cb, obj, num_args, args TSRMLS_CC)

@@ -52,6 +52,8 @@ class ION {
     const EV_PERSIST = 0x10;
 //	const EV_ET = 0x20;
 
+    const DEBUG = 0;
+
     /**
      * Reinitialize the event dispatcher after a fork.
      * Some event mechanisms do not survive across fork. The event base needs to be reinitialized with this method.

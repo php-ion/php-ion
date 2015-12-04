@@ -190,26 +190,14 @@ void _ion_stream_input(ion_buffer * bev, void * ctx) {
         input = bufferevent_get_input(stream->buffer);
         if(stream->token) { // readLine()
             if(ion_stream_search_token(bufferevent_get_input(stream->buffer), stream->token) == FAILURE) {
-                data = ion_stream_read_token(stream, stream->token);
-                if(!data) {
-                    ion_promisor_exception_eg(
-                            stream->read,
-                            ion_ce_ION_StreamException,
-                            "Stream corrupted: failed to read token from buffer", 0
-                    );
-                } else {
-                    ion_promisor_done_string(stream->read, data, 0);
-                    zend_string_release(data);
-                }
+                ion_promisor_exception_eg(
+                        stream->read,
+                        ion_ce_ION_StreamException,
+                        "Stream corrupted: failed to read token from buffer", 0
+                );
             } else if(stream->token->position != -1) { // found
                 data = ion_stream_read_token(stream, stream->token);
-                if(!data) {
-                    ion_promisor_exception_eg(
-                            stream->read,
-                            ion_ce_ION_StreamException,
-                            "Stream corrupted: failed to read token from buffer", 0
-                    );
-                } else {
+                if(data) {
                     ion_promisor_done_string(stream->read, data, 0);
                     zend_string_release(data);
                 }

@@ -667,6 +667,41 @@ class PromiseTest extends TestCase {
         }
     }
 
+    /**
+     * @group dev
+     */
+    public function testTypeHintInActionInternalFast() {
+        $push = function ($value) {
+            $this->data[] = $value;
+        };
+        $promise = new ResolvablePromise();
+        $promise
+            ->then('floatval')
+            ->then($push)       // 0
+            ->then('intval')
+            ->then($push)       // 1
+            ->then('boolval')
+            ->then($push)       // 2
+            ->then('strval')
+            ->then($push)       // 3
+            ->then(function () {
+                return [];
+            })
+            ->then('is_array')
+            ->then($push)       // 4
+            ->then(function() {
+                return new \ArrayIterator([]);
+            })
+            ->then('iterator_count')
+            ->then($push)       // 5
+            ->onFail(function ($error) {
+                $this->data["error"] = $this->describe($error);
+            })
+            ;
+        $promise->done("5.5s");
+//        var_dump($this->data);
+    }
+
 	/**
 	 *
 	 * @memcheck
