@@ -797,24 +797,26 @@ METHOD_WITHOUT_ARGS(ION_Stream, awaitConnection)
 //    RETURN_THIS();
 //}
 
-METHOD_ARGS_BEGIN(ION_Stream, setTimeouts, 2)
-    METHOD_ARG_DOUBLE(read_timeout, 0)
-    METHOD_ARG_DOUBLE(write_timeout, 0)
-METHOD_ARGS_END()
+//METHOD_ARGS_BEGIN(ION_Stream, setTimeouts, 2)
+//    METHOD_ARG_DOUBLE(read_timeout, 0)
+//    METHOD_ARG_DOUBLE(write_timeout, 0)
+//METHOD_ARGS_END()
 
 /** public function ION\Stream::setPriority(int $priority) : self */
 CLASS_METHOD(ION_Stream, setPriority) {
-    zend_long    prio = 0;
+    zend_long    prio = ION_PRIORITY_DEFAULT;
     ion_stream * stream = get_this_instance(ion_stream);
 
     CHECK_STREAM_BUFFER(stream);
     ZEND_PARSE_PARAMETERS_START(1,1)
         Z_PARAM_LONG(prio)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
-    if(bufferevent_priority_set(stream->buffer, (int)prio) == FAILURE) {
-        zend_throw_exception(ion_ce_ION_StreamException, "bufferevent_priority_set failed", 0);
+    if(prio < 0 || prio > ION_MAX_PRIORITY) {
+        zend_throw_exception(ion_ce_InvalidArgumentException, "Invalid priority value", 0);
         return;
     }
+    // do not check result, non-socket buffers always returns FAILURE
+    bufferevent_priority_set(stream->buffer, (int)prio);
     RETURN_THIS();
 }
 

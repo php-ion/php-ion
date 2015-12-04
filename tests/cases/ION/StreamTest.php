@@ -69,6 +69,16 @@ class StreamTest extends TestCase {
     }
 
     /**
+     * @group dev
+     */
+    public function testPriority() {
+        list($a, $b) = Stream::pair();
+        /* @var Stream $a */
+        /* @var Stream $b */
+        $a->setPriority(ION::PRIORITY_HIGH);
+    }
+
+    /**
      *
      * @memcheck
      */

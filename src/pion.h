@@ -18,6 +18,9 @@
 #define ION_LOOP_STARTED   1
 #define ION_LOOP_CORRUPTED 2
 
+#define ION_MAX_PRIORITY   6
+#define ION_PRIORITY_DEFAULT   3
+
 //typedef struct _ion_dns {
 //    struct evdns_base * evdns;
 //    HashTable         * requests;

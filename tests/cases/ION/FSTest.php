@@ -20,7 +20,6 @@ class FSTest extends TestCase {
 	}
 
 	/**
-     * @group dev
 	 * @memcheck
 	 */
 	public function testWatch() {
@@ -43,4 +42,8 @@ class FSTest extends TestCase {
         $this->assertCount(1, $this->data["changed"]);
         $this->assertArrayHasKey($expected, $this->data["changed"]);
 	}
+
+    public function testWatchRecursive() {
+        // todo
+    }
 }

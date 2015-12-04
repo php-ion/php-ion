@@ -63,10 +63,12 @@ static PHP_GINIT_FUNCTION(ion) {
 /* Init module callback */
 PHP_MINIT_FUNCTION(ion) {
     event_set_mem_functions(php_emalloc_wrapper, php_realloc_wrapper, php_efree_wrapper);
-    event_set_log_callback(_engine_log);
     event_set_fatal_callback(_engine_fatal);
+    event_set_log_callback(_engine_log);
 
     GION(base) = event_base_new();
+
+    event_base_priority_init(GION(base), ION_MAX_PRIORITY);
 
     STARTUP_MODULE(exceptions);
     STARTUP_MODULE(ION_Debug);
