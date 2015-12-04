@@ -334,23 +334,23 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
             ion_promisor_done_object(stream->shutdown, &stream->std);
         }
     } else if(what & BEV_EVENT_TIMEOUT) {
-        if(what & BEV_EVENT_READING) {
-            if(stream->read) {
-                ion_promisor_exception(
-                        stream->read,
-                        ion_ce_ION_Stream_ConnectionException,
-                        "Timed out", 0
-                );
-            }
-        } else {
-            if(stream->flush) {
-                ion_promisor_exception(
-                        stream->flush,
-                        ion_ce_ION_Stream_ConnectionException,
-                        "Timed out", 0
-                );
-            }
-        }
+//        if(what & BEV_EVENT_READING) {
+//            if(stream->read) {
+//                ion_promisor_exception(
+//                        stream->read,
+//                        ion_ce_ION_Stream_ConnectionException,
+//                        "Timed out", 0
+//                );
+//            }
+//        } else {
+//            if(stream->flush) {
+//                ion_promisor_exception(
+//                        stream->flush,
+//                        ion_ce_ION_Stream_ConnectionException,
+//                        "Timed out", 0
+//                );
+//            }
+//        }
     } else if(what & BEV_EVENT_CONNECTED) {
         stream->state |= ION_STREAM_STATE_CONNECTED;
         if(stream->name_remote) {
@@ -777,25 +777,25 @@ CLASS_METHOD(ION_Stream, awaitConnection) {
 METHOD_WITHOUT_ARGS(ION_Stream, awaitConnection)
 
 /** public function ION\Stream::setTimeouts(double $read_timeout, double $write_timeout) : self */
-CLASS_METHOD(ION_Stream, setTimeouts) {
-    ion_stream * stream = get_this_instance(ion_stream);
-    double read_timeout = 0.0, write_timeout = 0.0;
-    struct timeval read_tv = { 0, 0 }, write_tv = { 0, 0 };
-
-    CHECK_STREAM_BUFFER(stream);
-    ZEND_PARSE_PARAMETERS_START(2,2)
-        Z_PARAM_DOUBLE(read_timeout)
-        Z_PARAM_DOUBLE(write_timeout)
-    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
-    if(read_timeout < 0 || write_timeout < 0) {
-        zend_throw_exception(ion_ce_InvalidArgumentException, "timeout should be unsigned", 0);
-        return;
-    }
-    SET_TIMEVAL(read_tv, read_timeout);
-    SET_TIMEVAL(write_tv, write_timeout);
-    bufferevent_set_timeouts(stream->buffer, &read_tv, &write_tv);
-    RETURN_THIS();
-}
+//CLASS_METHOD(ION_Stream, setTimeouts) {
+//    ion_stream * stream = get_this_instance(ion_stream);
+//    double read_timeout = 0.0, write_timeout = 0.0;
+//    struct timeval read_tv = { 0, 0 }, write_tv = { 0, 0 };
+//
+//    CHECK_STREAM_BUFFER(stream);
+//    ZEND_PARSE_PARAMETERS_START(2,2)
+//        Z_PARAM_DOUBLE(read_timeout)
+//        Z_PARAM_DOUBLE(write_timeout)
+//    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+//    if(read_timeout < 0 || write_timeout < 0) {
+//        zend_throw_exception(ion_ce_InvalidArgumentException, "timeout should be unsigned", 0);
+//        return;
+//    }
+//    SET_TIMEVAL(read_tv, read_timeout);
+//    SET_TIMEVAL(write_tv, write_timeout);
+//    bufferevent_set_timeouts(stream->buffer, &read_tv, &write_tv);
+//    RETURN_THIS();
+//}
 
 METHOD_ARGS_BEGIN(ION_Stream, setTimeouts, 2)
     METHOD_ARG_DOUBLE(read_timeout, 0)
@@ -1604,7 +1604,7 @@ CLASS_METHODS_START(ION_Stream)
     METHOD(ION_Stream, enable,          ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, disable,         ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, awaitConnection, ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, setTimeouts,     ZEND_ACC_PUBLIC)
+//    METHOD(ION_Stream, setTimeouts,     ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, setPriority,     ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, setInputSize,    ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, write,           ZEND_ACC_PUBLIC)

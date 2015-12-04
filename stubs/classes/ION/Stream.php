@@ -87,17 +87,20 @@ class Stream {
      * @todo
      * @return Deferred|self
      */
-    public function awaitConnection() {}
+    public function connect() {}
 
     /**
-     * Set the read and write timeout for a Stream.
+     * Set the read and write timeouts for a Stream.
      * A Stream timeout will fire the first time that the indicated amount of time has elapsed since a successful
      * read or write operation, during which the Stream was trying to read or write.
+     * In other words, if reading or writing is disabled, or if the stream's read or write operation has been suspended
+     * because there's no data to write, or not enough bandwidth, or so on, the timeout isn't active.
+     * The timeout only becomes active when we we're willing to actually read or write.
      * @param float $read_timeout
      * @param float $write_timeout
      * @return self
      */
-    public function setTimeouts(float $read_timeout, float $write_timeout) {}
+//    public function setTimeouts(float $read_timeout, float $write_timeout) {}
 
     /**
      * Assign a priority to a stream.
@@ -108,7 +111,7 @@ class Stream {
     public function setPriority(int $priority) {}
 
     /**
-     * If the input buffer is beyond the $bytes, the stream stops reading from the network.
+     * If the input buffer is beyond the $bytes, the stream stops reading from the network. By default: unlimited
      * @param int $bytes
      * @return self
      */
