@@ -145,9 +145,9 @@ class ProcessTest extends TestCase {
 		$this->assertTrue(is_integer($this->data['result']['pid']));
 		$this->assertEquals('stdout', trim($this->data['result']['stdout']));
 		$this->assertEquals('stderr', trim($this->data['result']['stderr']));
-		$this->assertEquals(0, trim($this->data['result']['status']));
+		$this->assertEquals(0, $this->data['result']['status']);
 		$this->assertFalse($this->data['result']['signaled']);
-		$this->assertEquals(0, trim($this->data['result']['signal']));
+		$this->assertEquals(0, $this->data['result']['signal']);
 
 	}
 
