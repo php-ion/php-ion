@@ -546,7 +546,7 @@ class PromiseTest extends TestCase {
     }
 
 
-    public function providerTypeHintInAction($intern = true) {
+    public function providerTypeHintInAction($intern = false) {
         $std = new \StdClass;
         if($intern) {
             $class = Debug::class;
@@ -698,7 +698,7 @@ class PromiseTest extends TestCase {
     }
 
     /**
-     * @group dev
+     * @memcheck
      * @dataProvider providerTypeHintInActionIntern
      */
     public function testTypeHintInActionIntern($ok, $arg, callable $action) {
