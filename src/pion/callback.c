@@ -319,7 +319,7 @@ static zend_always_inline zend_bool pion_verify_arg_type_internal(pion_cb * cb, 
     } else if (zf->internal_function.fn_flags & ZEND_ACC_VARIADIC) {
         cur_arg_info = &zf->internal_function.arg_info[zf->internal_function.num_args];
     } else {
-        return SUCCESS;
+        return true;
     }
     if (cur_arg_info->type_hint) {
         ZVAL_DEREF(arg);
@@ -327,15 +327,15 @@ static zend_always_inline zend_bool pion_verify_arg_type_internal(pion_cb * cb, 
             if (cur_arg_info->class_name) {
                 ce = zend_fetch_class_ex(cur_arg_info->class_name, (ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD));
                 if (!ce || !instanceof_function(Z_OBJCE_P(arg), ce)) {
-                    return FAILURE;
+                    return false;
                 }
             }
         } else if (Z_TYPE_P(arg) != IS_NULL || !cur_arg_info->allow_null) {
             if (cur_arg_info->class_name) {
-                return FAILURE;
+                return false;
             } else if (cur_arg_info->type_hint == IS_CALLABLE) {
                 if (!zend_is_callable(arg, IS_CALLABLE_CHECK_SILENT, NULL)) {
-                    return FAILURE;
+                    return false;
                 }
             } else if (cur_arg_info->type_hint == _IS_BOOL &&
                        EXPECTED(Z_TYPE_P(arg) == IS_FALSE || Z_TYPE_P(arg) == IS_TRUE)) {
@@ -345,7 +345,7 @@ static zend_always_inline zend_bool pion_verify_arg_type_internal(pion_cb * cb, 
             }
         }
     }
-    return SUCCESS;
+    return true;
 }
 
 
