@@ -288,7 +288,7 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
 
             if((error_ulong =  bufferevent_get_openssl_error(bev))) {
                 error_message = ERR_error_string(error_ulong, NULL);
-                exception_ce = ion_ce_ION_SSLException;
+                exception_ce = ion_ce_ION_CryptoException;
             } else if((error_int =  bufferevent_socket_get_dns_error(bev))) {
                 error_message = evutil_gai_strerror(error_int);
                 exception_ce = ion_ce_ION_DNSException;
@@ -583,7 +583,7 @@ CLASS_METHOD(ION_Stream, pair) {
 METHOD_WITHOUT_ARGS(ION_Stream, pair)
 
 
-/** public static function ION\Stream::socket(string $host, ION\SSL $crypto) : self */
+/** public static function ION\Stream::socket(string $host, ION\Crypto $crypto) : self */
 CLASS_METHOD(ION_Stream, socket) {
     zval        * encrypt = NULL;
     zend_string * host = NULL;
@@ -600,7 +600,7 @@ CLASS_METHOD(ION_Stream, socket) {
     errno = 0;
 
     if(encrypt) {
-        SSL * ssl_handler = ion_ssl_client_stream_handler(Z_OBJ_P(encrypt));
+        SSL * ssl_handler = ion_crypto_client_stream_handler(Z_OBJ_P(encrypt));
         if(!ssl_handler) {
             zend_throw_exception_ex(ion_ce_ION_StreamException, 0, "Failed to setup SSL/TLS handler for stream %s", host->val);
             return;
@@ -684,7 +684,7 @@ CLASS_METHOD(ION_Stream, socket) {
 
 METHOD_ARGS_BEGIN(ION_Stream, socket, 1)
     METHOD_ARG_STRING(host, 0)
-    METHOD_ARG_OBJECT(encrypt, ION\\SSL, 0, 0)
+    METHOD_ARG_OBJECT(encrypt, ION\\Crypto, 0, 0)
 METHOD_ARGS_END()
 //
 ///** private function ION\Stream::_input() : void */
@@ -1341,13 +1341,13 @@ CLASS_METHOD(ION_Stream, awaitShutdown) {
 
 METHOD_WITHOUT_ARGS(ION_Stream, awaitShutdown)
 
-/** public function ION\Stream::encrypt(ION\SSL $ssl) : self */
+/** public function ION\Stream::encrypt(ION\Crypto $ssl) : self */
 CLASS_METHOD(ION_Stream, encrypt) {
 
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, encrypt, 1)
-    METHOD_ARG_OBJECT(ssl, ION\\SSL, 0, 0)
+    METHOD_ARG_OBJECT(ssl, ION\\Crypto, 0, 0)
 METHOD_ARGS_END()
 
 /** public function ION\Stream::isClosed() : int */

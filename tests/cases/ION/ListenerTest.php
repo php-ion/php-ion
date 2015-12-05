@@ -80,12 +80,12 @@ class ListenerTest extends TestCase {
     public function testEncrypt() {
 
         $listener = new Listener(ION_TEST_SERVER_HOST);
-        $server_ssl = SSL::server(SSL::METHOD_TLSv12)
+        $server_ssl = Crypto::server(Crypto::METHOD_TLSv12)
             ->passPhrase('unittest')
             ->localCert(ION_RESOURCES.'/cacert.pem', ION_RESOURCES.'/cakey.pem')
             ->allowSelfSigned();
 
-        $client_ssl = SSL::client(SSL::METHOD_TLSv12)
+        $client_ssl = Crypto::client(Crypto::METHOD_TLSv12)
             ->allowSelfSigned();
 
         $listener->encrypt($server_ssl);

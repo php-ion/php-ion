@@ -3,7 +3,7 @@
 namespace ION;
 
 
-class SSL {
+class Crypto {
     const METHOD_AUTO   = 0;
 
     const METHOD_SSLv2  = 1<<1;
@@ -14,13 +14,13 @@ class SSL {
 
     /**
      * @param int $method
-     * @return SSL
+     * @return Crypto
      */
     public static function server(int $method = self::METHOD_AUTO) : self {}
 
     /**
      * @param int $method
-     * @return SSL
+     * @return Crypto
      */
     public static function client(int $method = self::METHOD_AUTO) : self {}
 
@@ -33,7 +33,7 @@ class SSL {
      * Enable/disable ticket algorithm (default: true).
      * Normally clients and servers will, where possible, transparently make use of RFC4507bis tickets for stateless session resumption.
      * @param bool $state
-     * @return SSL
+     * @return Crypto
      */
     public function ticket(bool $state = true) : self {}
 
@@ -41,21 +41,21 @@ class SSL {
      * Disable/enable TLS compression (default: true).
      * Disable TLS compression can help mitigate the CRIME attack vector.
      * @param bool $state
-     * @return SSL
+     * @return Crypto
      */
     public function compression(bool $state = true) : self {}
 
     /**
      * Require verification of SSL certificate used (default: true).
      * @param bool $state
-     * @return SSL
+     * @return Crypto
      */
     public function verifyPeer(bool $state = true) : self {}
 
     /**
      * Abort if the certificate chain is too deep (default: -1).
      * @param int $max
-     * @return SSL
+     * @return Crypto
      */
     public function verifyDepth(int $max = -1) : self {}
 
@@ -65,21 +65,21 @@ class SSL {
      * The private key also may be contained in a separate file specified by $local_pk
      * @param string $local_cert path to local certificate file on filesystem.
      * @param string $local_pk path to local private key file on filesystem in case of separate files for certificate and private key.
-     * @return SSL
+     * @return Crypto
      */
     public function localCert(string $local_cert, string $local_pk = null) : self {}
 
     /**
      * Passphrase with which your local_cert file was encoded.
      * @param string $phrase
-     * @return SSL
+     * @return Crypto
      */
     public function passPhrase(string $phrase) : self {}
 
     /**
      * Allow self-signed certificates (default: false). Requires verify_peer.
      * @param bool $state
-     * @return SSL
+     * @return Crypto
      */
     public function allowSelfSigned(bool $state = true) : self {}
 
@@ -90,7 +90,7 @@ class SSL {
      * $path must be a correctly hashed certificate directory.
      * @param string $cafile
      * @param string $capath
-     * @return SSL
+     * @return Crypto
      */
     public function ca(string $cafile, string $capath = null) : self {}
 }

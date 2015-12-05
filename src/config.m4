@@ -125,7 +125,7 @@ if test "$PHP_ION" != "no"; then
     ION/Deferred.c
     ION/Sequence.c
     ION.c
-    ION/SSL.c
+    ION/Crypto.c
     ION/DNS.c
     ION/FS.c
     ION/Listener.c

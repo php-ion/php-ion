@@ -20,10 +20,10 @@ class Listener {
 	public function __construct(string $listen, int $backlog = -1) {}
 
     /**
-     * @param SSL $ssl
+     * @param Crypto $ssl
      * @return Listener
      */
-    public function encrypt(SSL $ssl) : self {}
+    public function encrypt(Crypto $ssl) : self {}
 
     /**
      * When a new connection is received, the sequence is invoked with new connection.

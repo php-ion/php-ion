@@ -37,11 +37,11 @@ class Stream {
      * Recognized resource formats are schema://hostname:port or path to unix socket:
      * www.example.com:80, 1.2.3.4:567, [::1]:8080, /var/run/service.sock
      * @param string $host
-     * @param SSL $encrypt
+     * @param Crypto $encrypt
      * @return Stream
      *
      */
-    public static function socket(string $host, SSL $encrypt = null) : self {}
+    public static function socket(string $host, Crypto $encrypt = null) : self {}
 
     /**
      * Create a pair of linked streams.
@@ -117,10 +117,10 @@ class Stream {
     /**
      * Starts encryption for current stream.
      *
-     * @param SSL $ssl
+     * @param Crypto $ssl
      * @return self
      */
-    public function encrypt(SSL $ssl) : self {}
+    public function encrypt(Crypto $ssl) : self {}
 
     /**
      * Queries the remote side of the given socket which may either result in host:port or in a Unix filesystem path, dependent on its type

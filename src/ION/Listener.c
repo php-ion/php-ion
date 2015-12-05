@@ -49,7 +49,7 @@ static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct 
 
     if(listener->accept) {
         if(listener->encrypt) {
-            SSL * ssl_handler = ion_ssl_server_stream_handler(listener->encrypt);
+            SSL * ssl_handler = ion_crypto_server_stream_handler(listener->encrypt);
             if(!ssl_handler) {
                 zend_error(E_WARNING, "Failed to create SSL/TLS handler for incoming connection to %s", listener->name->val);
                 evutil_closesocket(fd);
@@ -195,7 +195,7 @@ CLASS_METHOD(ION_Listener, accept) {
 METHOD_WITHOUT_ARGS(ION_Listener, accept);
 
 
-/** public function ION\Listener::encrypt(ION\SSL $ssl) : self */
+/** public function ION\Listener::encrypt(ION\Crypto $ssl) : self */
 CLASS_METHOD(ION_Listener, encrypt) {
     ion_listener * listener = get_this_instance(ion_listener);
     zval         * zssl = NULL;
@@ -211,7 +211,7 @@ CLASS_METHOD(ION_Listener, encrypt) {
 }
 
 METHOD_ARGS_BEGIN(ION_Listener, encrypt, 1)
-    METHOD_ARG_OBJECT(ssl, ION\\SSL, 0, 0)
+    METHOD_ARG_OBJECT(ssl, ION\\Crypto, 0, 0)
 METHOD_ARGS_END()
 
 

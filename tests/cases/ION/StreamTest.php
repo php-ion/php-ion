@@ -644,7 +644,7 @@ class StreamTest extends TestCase {
      */
     public function testEncrypted() {
         $this->promise(function () {
-            $socket = Stream::socket("example.com:443", SSL::client());
+            $socket = Stream::socket("example.com:443", Crypto::client());
             $socket->write(implode("\r\n", ["GET / HTTP/1.1",
                 "Host: example.com",
                 "Connection: close",
