@@ -26,12 +26,6 @@ class Listener {
     public function encrypt(SSL $ssl) : self {}
 
     /**
-     * Create and enable socket listener
-     * @return Listener
-     */
-    public function start() : self {}
-
-    /**
      * When a new connection is received, the sequence is invoked with new connection.
      *
      * @return Sequence

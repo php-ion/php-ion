@@ -187,22 +187,154 @@ METHOD_ARGS_BEGIN(ION_Debug, globalCbFetchMethod, 2)
 METHOD_ARGS_END();
 
 
-CLASS_METHOD(ION_Debug, sandbox) {
-//    zend_error(E_NOTICE, "A non well formed numeric value encountered");
-//    char * tmp = emalloc(sizeof(char)*7);
-//    memcpy(tmp, "alloc1", sizeof("alloc1")+1);
-//    efree(tmp);
-//    efree(tmp);
-//    char * tmp1 = emalloc(sizeof(char)*4);
-//    memcpy(tmp1, "all2", sizeof("all2")+1);
-//    char * tmp2 = emalloc(sizeof(char)*4);
-//    memcpy(tmp2, "all3", sizeof("all3")+1);
+CLASS_METHOD(ION_Debug, noHint) {
+    zval * val = NULL;
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+            Z_PARAM_ZVAL(val);
+    ZEND_PARSE_PARAMETERS_END();
+
+    RETURN_TRUE;
 }
 
-//METHOD_ARGS_BEGIN(ION_Debug, sandbox, 1)
-//    ZEND_ARG_TYPE_INFO(0, res, IS_RESOURCE, 0)
-//METHOD_ARGS_END();
-//
+METHOD_ARGS_BEGIN(ION_Debug, noHint, 1)
+    METHOD_ARG(val, 0)
+METHOD_ARGS_END();
+
+CLASS_METHOD(ION_Debug, intHint) {
+    zend_long lval = 0;
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_LONG(lval);
+    ZEND_PARSE_PARAMETERS_END();
+
+    RETURN_TRUE;
+}
+
+METHOD_ARGS_BEGIN(ION_Debug, intHint, 1)
+    METHOD_ARG_LONG(val, 0)
+METHOD_ARGS_END();
+
+CLASS_METHOD(ION_Debug, doubleHint) {
+    double val = 0;
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_DOUBLE(val);
+    ZEND_PARSE_PARAMETERS_END();
+
+    RETURN_TRUE;
+}
+
+METHOD_ARGS_BEGIN(ION_Debug, doubleHint, 1)
+    METHOD_ARG_DOUBLE(val, 0)
+METHOD_ARGS_END();
+
+CLASS_METHOD(ION_Debug, boolHint) {
+    zend_bool val = 0;
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_BOOL(val);
+    ZEND_PARSE_PARAMETERS_END();
+
+    RETURN_TRUE;
+}
+
+METHOD_ARGS_BEGIN(ION_Debug, boolHint, 1)
+    METHOD_ARG_BOOL(val, 0)
+METHOD_ARGS_END();
+
+CLASS_METHOD(ION_Debug, stringHint) {
+    zend_string * val = NULL;
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_STR(val);
+    ZEND_PARSE_PARAMETERS_END();
+
+    RETURN_TRUE;
+}
+
+METHOD_ARGS_BEGIN(ION_Debug, stringHint, 1)
+    METHOD_ARG_STRING(val, 0)
+METHOD_ARGS_END();
+
+CLASS_METHOD(ION_Debug, arrayHint) {
+    zval * val = NULL;
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_ARRAY(val);
+    ZEND_PARSE_PARAMETERS_END();
+
+    RETURN_TRUE;
+}
+
+METHOD_ARGS_BEGIN(ION_Debug, arrayHint, 1)
+    METHOD_ARG_ARRAY(val, 0, 0)
+METHOD_ARGS_END();
+
+CLASS_METHOD(ION_Debug, ArrayObjectHint) {
+    zval * val = NULL;
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+            Z_PARAM_ARRAY(val);
+    ZEND_PARSE_PARAMETERS_END();
+
+    RETURN_TRUE;
+}
+
+METHOD_ARGS_BEGIN(ION_Debug, ArrayObjectHint, 1)
+                METHOD_ARG_OBJECT(val, ArrayObject, 0, 0)
+METHOD_ARGS_END();
+
+CLASS_METHOD(ION_Debug, SplDoublyLinkedListHint) {
+    zval * val = NULL;
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_OBJECT(val);
+    ZEND_PARSE_PARAMETERS_END();
+
+    RETURN_TRUE;
+}
+
+METHOD_ARGS_BEGIN(ION_Debug, SplDoublyLinkedListHint, 1)
+    METHOD_ARG_OBJECT(val, SplDoublyLinkedList, 0, 0)
+METHOD_ARGS_END();
+
+CLASS_METHOD(ION_Debug, ArrayAccessHint) {
+    zval * val = NULL;
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+            Z_PARAM_OBJECT(val);
+    ZEND_PARSE_PARAMETERS_END();
+
+    RETURN_TRUE;
+}
+
+METHOD_ARGS_BEGIN(ION_Debug, ArrayAccessHint, 1)
+    METHOD_ARG_OBJECT(val, ArrayAccess, 0, 0)
+METHOD_ARGS_END();
+
+CLASS_METHOD(ION_Debug, SplQueueHint) {
+    zval * val = NULL;
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+            Z_PARAM_OBJECT(val);
+    ZEND_PARSE_PARAMETERS_END();
+
+    RETURN_TRUE;
+}
+
+METHOD_ARGS_BEGIN(ION_Debug, SplQueueHint, 1)
+    METHOD_ARG_OBJECT(val, SplQueue, 0, 0)
+METHOD_ARGS_END();
+
+CLASS_METHOD(ION_Debug, CallableHint) {
+    zval * val = NULL;
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_ZVAL(val);
+    ZEND_PARSE_PARAMETERS_END();
+
+    RETURN_TRUE;
+}
+
+METHOD_ARGS_BEGIN(ION_Debug, CallableHint, 1)
+    METHOD_ARG_CALLBACK(val, 0, 0)
+METHOD_ARGS_END();
+
+
+CLASS_METHOD(ION_Debug, sandbox) {
+
+}
+
 METHOD_WITHOUT_ARGS(ION_Debug, sandbox)
 
 CLASS_METHODS_START(ION_Debug)
@@ -215,6 +347,18 @@ CLASS_METHODS_START(ION_Debug)
     METHOD(ION_Debug, globalCbCreateFromZval, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, globalCbFetchMethod,    ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, sandbox,                ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+
+    METHOD(ION_Debug, noHint,                 ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, intHint,                ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, doubleHint,             ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, boolHint,               ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, stringHint,             ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, arrayHint,              ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, ArrayObjectHint,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, SplDoublyLinkedListHint,ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, ArrayAccessHint,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, SplQueueHint,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Debug, CallableHint,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Debug) {

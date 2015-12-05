@@ -546,103 +546,129 @@ class PromiseTest extends TestCase {
     }
 
 
-    public function providerTypeHintInAction() {
+    public function providerTypeHintInAction($intern = true) {
         $std = new \StdClass;
+        if($intern) {
+            $class = Debug::class;
+            $no_hint                  = "$class::noHint";
+            $SplDoublyLinkedList_hint = "$class::SplDoublyLinkedListHint";
+            $ArrayAccess_hint         = "$class::ArrayAccessHint";
+            $SplQueue_hint            = "$class::SplQueueHint";
+            $array_hint               = "$class::arrayHint";
+            $ArrayObject_hint         = "$class::ArrayObjectHint";
+            $callable_hint            = "$class::callableHint";
+            $int_hint                 = "$class::intHint";
+            $double_hint              = "$class::doubleHint";
+            $string_hint              = "$class::stringHint";
+            $bool_hint                = "$class::boolHint";
+        } else {
+            $no_hint                  = function ($elem) { return true; };
+            $SplDoublyLinkedList_hint = function (\SplDoublyLinkedList $elem) { return true; };
+            $ArrayAccess_hint         = function (\ArrayAccess $elem) { return true; };
+            $SplQueue_hint            = function (\SplQueue $elem) { return true; };
+            $array_hint               = function (array $elem) { return true; };
+            $ArrayObject_hint         = function (\ArrayObject $elem) { return true; };
+            $callable_hint            = function (callable $elem) { return true; };
+            $int_hint                 = function (int $elem) { return true; };
+            $double_hint               = function (float $elem) { return true; };
+            $string_hint              = function (string $elem) { return true; };
+            $bool_hint                = function (bool $elem) { return true; };
+        }
         return array(
             // objects
             // true
-            [true, new \SplDoublyLinkedList(), function ($elem) { return true; } ],
-            [true, new \SplDoublyLinkedList(), function (\SplDoublyLinkedList $elem) { return true; }  ],
-            [true, new \SplQueue(), function (\SplDoublyLinkedList $elem) { return true; }  ],
-            [true, new \SplQueue(), function (\ArrayAccess $elem) { return true; }  ],
+            [true, new \SplDoublyLinkedList(), $no_hint ],
+            [true, new \SplDoublyLinkedList(), $SplDoublyLinkedList_hint  ],
+            [true, new \SplQueue(), $SplDoublyLinkedList_hint  ],
+            [true, new \SplQueue(), $ArrayAccess_hint ],
             // false
-            [false, new \SplDoublyLinkedList(), function (\SplQueue $elem) { return true; }  ],
-            [false, new \SplPriorityQueue(), function (\SplQueue $elem) { return true; }  ],
-            [false, new \ArrayObject(), function (\SplQueue $elem) { return true; }  ],
+            [false, new \SplDoublyLinkedList(), $SplQueue_hint ],
+            [false, new \SplPriorityQueue(), $SplQueue_hint ],
+            [false, new \ArrayObject(), $SplQueue_hint ],
 
             // arrays
             // true
-            [true, [], function ($elem) { return true; }  ],
-            [true, [], function (array $elem) { return true; }  ],
+            [true, [], $no_hint  ],
+            [true, [], $array_hint ],
             // false
-            [false, [], function (\ArrayObject $elem) { return true; }  ],
-            [false, new \ArrayObject(), function (array $elem) { return true; }  ],
+            [false, [], $ArrayObject_hint  ],
+            [false, new \ArrayObject(), $array_hint  ],
 
             // callables
             // true
-            [true, function () {}, function ($elem) { return true; }  ],
-            [true, function () {}, $cb = function (callable $elem) { return true; }  ],
-            [true, __CLASS__ . "::simpleGenerator", $cb  ],
-            [true, [__CLASS__, "simpleGenerator"], $cb ],
-            [true, [$this, __METHOD__], $cb  ],
-            [true, "intval", $cb  ],
+            [true, function () {}, $no_hint ],
+            [true, function () {}, $callable_hint ],
+            [true, __CLASS__ . "::simpleGenerator", $callable_hint  ],
+            [true, [__CLASS__, "simpleGenerator"], $callable_hint ],
+            [true, [$this, __METHOD__], $callable_hint  ],
+            [true, "intval", $callable_hint  ],
             // false
-            [false, "null", $cb  ],
-            [false, ["zz", "zz"], $cb  ],
-            [false, "zz:zz", $cb ],
-            [false, [$this, "zz"], $cb  ],
+            [false, "null", $callable_hint  ],
+            [false, ["zz", "zz"], $callable_hint  ],
+            [false, "zz:zz", $callable_hint ],
+            [false, [$this, "zz"], $callable_hint  ],
 
             // integers
             // true
-            [true, 5, function ($elem) { return true; }  ],
-            [true, 5, $cb = function (int $elem) { return true; }  ],
-            [true, "5", $cb  ],
-            [true, "5.5", $cb  ],
-            [true, 5.0, $cb  ],
-            [true, 5.5, $cb  ],
-            [true, "5.z", $cb  ],
-            [true, true, $cb  ],
-            [true, false, $cb ],
+            [true, 5, $no_hint  ],
+            [true, 5, $int_hint ],
+            [true, "5", $int_hint  ],
+            [true, "5.5", $int_hint  ],
+            [true, 5.0, $int_hint  ],
+            [true, 5.5, $int_hint  ],
+            [true, "5.z", $int_hint  ],
+            [true, true, $int_hint  ],
+            [true, false, $int_hint ],
             // false
-            [false, null,  $cb ],
-            [false, "z",   $cb  ],
-            [false, [],    $cb  ],
-            [false, $std,  $cb  ],
-            [false, STDIN, $cb  ],
+            [false, null,  $int_hint ],
+            [false, "z",   $int_hint  ],
+            [false, [],    $int_hint  ],
+            [false, $std,  $int_hint  ],
+            [false, STDIN, $int_hint  ],
 
             // floats
             // true
-            [true, 5.5,   function ($elem) { return true; }  ],
-            [true, 5.5,   $cb = function (float $elem) { return true; }  ],
-            [true, 5,     $cb  ],
-            [true, 5.0,   $cb  ],
-            [true, "5",   $cb  ],
-            [true, "5.5", $cb  ],
-            [true, true,  $cb  ],
-            [true, false, $cb  ],
+            [true, 5.5,   $no_hint ],
+            [true, 5.5,   $double_hint ],
+            [true, 5,     $double_hint  ],
+            [true, 5.0,   $double_hint  ],
+            [true, "5",   $double_hint  ],
+            [true, "5.5", $double_hint  ],
+            [true, true,  $double_hint  ],
+            [true, false, $double_hint  ],
             // false
-            [false, null,  $cb  ],
-            [false, "5.z", $cb  ],
-            [false, "z.z", $cb  ],
-            [false, [],    $cb  ],
-            [false, $std,  $cb  ],
-            [false, STDIN, $cb  ],
+            [false, null,  $double_hint  ],
+            [false, "5.z", $double_hint  ],
+            [false, "z.z", $double_hint  ],
+            [false, [],    $double_hint  ],
+            [false, $std,  $double_hint  ],
+            [false, STDIN, $double_hint  ],
 
             // strings
             // true
-            [true, "str",   function ($elem) { return true; }  ],
-            [true, "str",   $cb = function (string $elem) { return true; }  ],
-            [true, 5,       $cb  ],
-            [true, 5.5,     $cb  ],
-            [true, true,    $cb  ],
-            [true, false,   $cb  ],
-            [true, new \Exception(),   $cb  ],
+            [true, "str",   $no_hint ],
+            [true, "str",   $string_hint ],
+            [true, 5,       $string_hint  ],
+            [true, 5.5,     $string_hint  ],
+            [true, true,    $string_hint  ],
+            [true, false,   $string_hint  ],
+            [true, new \Exception(),   $string_hint  ],
             // false
-            [false, new \SplDoublyLinkedList(),   $cb  ],
-            [false, STDIN,   $cb  ],
-            [false, [],      $cb  ],
+            [false, new \SplDoublyLinkedList(),   $string_hint  ],
+            [false, STDIN,   $string_hint  ],
+            [false, [],      $string_hint  ],
 
             // booleans
-            [true, "str",   function ($elem) { return true; }  ],
-            [true, "str",   $cb = function (bool $elem) { return true; }  ],
-            [true, 5,       $cb  ],
-            [true, 5.5,     $cb  ],
-            [true, true,    $cb  ],
-            [true, false,   $cb  ],
+            [true, "str",   $no_hint ],
+            [true, "str",   $bool_hint ],
+            [true, 5,       $bool_hint  ],
+            [true, 5.5,     $bool_hint  ],
+            [true, true,    $bool_hint  ],
+            [true, false,   $bool_hint  ],
             // false
-            [false, new \SplDoublyLinkedList(), $cb  ],
-            [false, STDIN,  $cb  ],
-            [false, [],     $cb  ],
+            [false, new \SplDoublyLinkedList(), $bool_hint  ],
+            [false, STDIN,  $bool_hint  ],
+            [false, [],     $bool_hint  ],
 
         );
     }
@@ -667,39 +693,16 @@ class PromiseTest extends TestCase {
         }
     }
 
+    public function providerTypeHintInActionIntern() {
+        return $this->providerTypeHintInAction(true);
+    }
+
     /**
      * @group dev
+     * @dataProvider providerTypeHintInActionIntern
      */
-    public function testTypeHintInActionInternalFast() {
-        $push = function ($value) {
-            $this->data[] = $value;
-        };
-        $promise = new ResolvablePromise();
-        $promise
-            ->then('floatval')
-            ->then($push)       // 0
-            ->then('intval')
-            ->then($push)       // 1
-            ->then('boolval')
-            ->then($push)       // 2
-            ->then('strval')
-            ->then($push)       // 3
-            ->then(function () {
-                return [];
-            })
-            ->then('is_array')
-            ->then($push)       // 4
-            ->then(function() {
-                return new \ArrayIterator([]);
-            })
-            ->then('iterator_count')
-            ->then($push)       // 5
-            ->onFail(function ($error) {
-                $this->data["error"] = $this->describe($error);
-            })
-            ;
-        $promise->done("5.5s");
-//        var_dump($this->data);
+    public function testTypeHintInActionIntern($ok, $arg, callable $action) {
+        $this->testTypeHintInAction($ok, $arg, $action);
     }
 
 	/**

@@ -15,7 +15,7 @@ class Printer extends \PHPUnit_TextUI_ResultPrinter {
      */
     public function addError(\PHPUnit_Framework_Test $test, \Exception $e, $time) {
         $this->writeProgressWithColor('fg-red, bold', sprintf(
-            "\nFail %d/%d %s",
+            "\rFail %d/%d %s",
             $this->numTestsRun,
             $this->numTests,
             \PHPUnit_Util_Test::describe($test)
