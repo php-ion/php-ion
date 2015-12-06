@@ -4,8 +4,6 @@ namespace ION;
 
 
 class Crypto {
-    const METHOD_AUTO   = 0;
-
     const METHOD_SSLv2  = 1<<1;
     const METHOD_SSLv3  = 1<<2;
     const METHOD_TLSv10 = 1<<3;
@@ -13,16 +11,21 @@ class Crypto {
     const METHOD_TLSv12 = 1<<5;
 
     /**
-     * @param int $method
-     * @return Crypto
+     *
      */
-    public static function server(int $method = self::METHOD_AUTO) : self {}
+    const SUPPORTED_METHODS = self::METHOD_SSLv2 | self::METHOD_SSLv3 | self::METHOD_TLSv10 | self::METHOD_TLSv11 | self::METHOD_TLSv12;
 
     /**
      * @param int $method
      * @return Crypto
      */
-    public static function client(int $method = self::METHOD_AUTO) : self {}
+    public static function server(int $method = self::SUPPORTED_METHODS) : self {}
+
+    /**
+     * @param int $method
+     * @return Crypto
+     */
+    public static function client(int $method = self::SUPPORTED_METHODS) : self {}
 
     /**
      * SSL constructor. Use methods SSL::server() or SSL::client()

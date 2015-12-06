@@ -52,30 +52,30 @@ ION_API SSL * ion_crypto_client_stream_handler(zend_object * ssl) {
 
 static const SSL_METHOD * ion_crypto_select_crypto_method(zend_long method_value, zend_bool is_client)
 {
-    if (method_value == ION_CRYPTO_CRYPTO_METHOD_SSLv2) {
+    if (method_value == ION_CRYPTO_METHOD_SSLv2) {
 #ifdef HAVE_SSL2
         return is_client ? (SSL_METHOD *)SSLv2_client_method() : (SSL_METHOD *)SSLv2_server_method();
 #else
         zend_throw_exception(ion_ce_ION_CryptoException, "SSLv2 unavailable in the OpenSSL library against which PHP is linked", 0);
         return NULL;
 #endif
-    } else if (method_value == ION_CRYPTO_CRYPTO_METHOD_SSLv3) {
+    } else if (method_value == ION_CRYPTO_METHOD_SSLv3) {
 #ifdef HAVE_SSL3
         return is_client ? SSLv3_client_method() : SSLv3_server_method();
 #else
         zend_throw_exception(ion_ce_ION_CryptoException, "SSLv3 unavailable in the OpenSSL library against which PHP is linked", 0);
         return NULL;
 #endif
-    } else if (method_value == ION_CRYPTO_CRYPTO_METHOD_TLSv10) {
+    } else if (method_value == ION_CRYPTO_METHOD_TLSv10) {
         return is_client ? TLSv1_client_method() : TLSv1_server_method();
-    } else if (method_value == ION_CRYPTO_CRYPTO_METHOD_TLSv11) {
+    } else if (method_value == ION_CRYPTO_METHOD_TLSv11) {
 #ifdef HAVE_TLS11
         return is_client ? TLSv1_1_client_method() : TLSv1_1_server_method();
 #else
         zend_throw_exception(ion_ce_ION_CryptoException, "TLSv1.1 unavailable in the OpenSSL library against which PHP is linked", 0);
         return NULL;
 #endif
-    } else if (method_value == ION_CRYPTO_CRYPTO_METHOD_TLSv12) {
+    } else if (method_value == ION_CRYPTO_METHOD_TLSv12) {
 #ifdef HAVE_TLS12
         return is_client ? TLSv1_2_client_method() : TLSv1_2_server_method();
 #else
@@ -93,25 +93,25 @@ zend_long ion_crypto_get_crypto_method_ctx_flags(zend_long method_flags) {
     zend_long ssl_ctx_options = SSL_OP_ALL;
 
 #ifdef HAVE_SSL2
-    if (!(method_flags & ION_CRYPTO_CRYPTO_METHOD_SSLv2)) {
+    if (!(method_flags & ION_CRYPTO_METHOD_SSLv2)) {
 		ssl_ctx_options |= SSL_OP_NO_SSLv2;
 	}
 #endif
 #ifdef HAVE_SSL3
-    if (!(method_flags & ION_CRYPTO_CRYPTO_METHOD_SSLv3)) {
+    if (!(method_flags & ION_CRYPTO_METHOD_SSLv3)) {
 		ssl_ctx_options |= SSL_OP_NO_SSLv3;
 	}
 #endif
-    if (!(method_flags & ION_CRYPTO_CRYPTO_METHOD_TLSv10)) {
+    if (!(method_flags & ION_CRYPTO_METHOD_TLSv10)) {
         ssl_ctx_options |= SSL_OP_NO_TLSv1;
     }
 #ifdef HAVE_TLS11
-    if (!(method_flags & ION_CRYPTO_CRYPTO_METHOD_TLSv11)) {
+    if (!(method_flags & ION_CRYPTO_METHOD_TLSv11)) {
 		ssl_ctx_options |= SSL_OP_NO_TLSv1_1;
 	}
 #endif
 #ifdef HAVE_TLS12
-    if (!(method_flags & ION_CRYPTO_CRYPTO_METHOD_TLSv12)) {
+    if (!(method_flags & ION_CRYPTO_METHOD_TLSv12)) {
 		ssl_ctx_options |= SSL_OP_NO_TLSv1_2;
 	}
 #endif
@@ -186,14 +186,14 @@ zend_object * ion_crypto_factory(zend_long flags) {
     ion_ssl   * ssl;
     zend_long   ssl_ctx_options;
     zend_bool   is_client = (flags & ION_CRYPTO_IS_CLIENT) ? true : false;
-    zend_long   crypt_method = flags & ION_CRYPTO_CRYPTO_METHODS_MASK;
+    zend_long   crypt_method = flags & ION_CRYPTO_METHODS_MASK;
     const SSL_METHOD * method;
 
     object_init_ex(&zssl, ion_ce_ION_Crypto);
     ssl = get_instance(&zssl, ion_ssl);
     ssl->flags |= flags;
 
-    if (crypt_method) { // use a specific crypto method
+    if (has_one_bit(crypt_method)) { // use a specific crypto method
         ssl_ctx_options = SSL_OP_ALL;
         method = ion_crypto_select_crypto_method(crypt_method, is_client);
         if (method == NULL) {
@@ -202,7 +202,7 @@ zend_object * ion_crypto_factory(zend_long flags) {
             }
             return NULL;
         }
-    } else { // use generic SSLv23
+    } else if(crypt_method) { // use generic SSLv23
         method = is_client ? SSLv23_client_method() : SSLv23_server_method();
         ssl_ctx_options = SSL_OP_ALL;
 //        ssl_ctx_options = ion_crypto_get_crypto_method_ctx_flags(crypt_method);
@@ -210,6 +210,9 @@ zend_object * ion_crypto_factory(zend_long flags) {
             zend_throw_exception(ion_ce_ION_CryptoException, "Invalid crypt method", 0);
             return NULL;
         }
+    } else {
+        zend_throw_exception(ion_ce_InvalidArgumentException, "No method is specified", 0);
+        return NULL;
     }
 #if OPENSSL_VERSION_NUMBER >= 0x10001001L
     ssl->ctx = SSL_CTX_new(method);
@@ -249,7 +252,7 @@ zend_object * ion_crypto_factory(zend_long flags) {
 
 CLASS_METHOD(ION_Crypto, server) {
     zend_object * object;
-    zend_long     crypt_method = 0;
+    zend_long     crypt_method = ION_CRYPTO_METHODS_MASK;
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
         Z_PARAM_OPTIONAL
@@ -268,7 +271,7 @@ METHOD_ARGS_END()
 
 CLASS_METHOD(ION_Crypto, client) {
     zend_object * object;
-    zend_long     crypt_method = 0;
+    zend_long     crypt_method = ION_CRYPTO_METHODS_MASK;
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
         Z_PARAM_OPTIONAL
@@ -569,6 +572,7 @@ CLASS_METHODS_START(ION_Crypto)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Crypto) {
+    zend_long  methods = 0;
 
     SSL_library_init();
     SSL_load_error_strings();
@@ -588,13 +592,27 @@ PHP_MINIT_FUNCTION(ION_Crypto) {
     pion_set_object_handler(ION_Crypto, free_obj, ion_crypto_free);
     pion_set_object_handler(ION_Crypto, clone_obj, NULL);
 
-    PION_CLASS_CONST_LONG(ION_Crypto, "METHOD_AUTO",  ION_CRYPTO_CRYPTO_METHOD_AUTO);
+#ifdef HAVE_SSL2
+    methods |= ION_CRYPTO_METHOD_SSLv2;
+#endif
+#ifdef HAVE_SSL3
+    methods |= ION_CRYPTO_METHOD_SSLv3;
+#endif
+    methods |= ION_CRYPTO_METHOD_TLSv10;
+#ifdef HAVE_TLS11
+    methods |= ION_CRYPTO_METHOD_TLSv11;
+#endif
+#ifdef HAVE_TLS12
+    methods |= ION_CRYPTO_METHOD_TLSv12;
+#endif
 
-    PION_CLASS_CONST_LONG(ION_Crypto, "METHOD_SSLv2",  ION_CRYPTO_CRYPTO_METHOD_SSLv2);
-    PION_CLASS_CONST_LONG(ION_Crypto, "METHOD_SSLv3",  ION_CRYPTO_CRYPTO_METHOD_SSLv3);
-    PION_CLASS_CONST_LONG(ION_Crypto, "METHOD_TLSv10",   ION_CRYPTO_CRYPTO_METHOD_TLSv10);
-    PION_CLASS_CONST_LONG(ION_Crypto, "METHOD_TLSv11",   ION_CRYPTO_CRYPTO_METHOD_TLSv11);
-    PION_CLASS_CONST_LONG(ION_Crypto, "METHOD_TLSv12",   ION_CRYPTO_CRYPTO_METHOD_TLSv12);
+    PION_CLASS_CONST_LONG(ION_Crypto, "SUPPORTED_METHODS",  methods);
+
+    PION_CLASS_CONST_LONG(ION_Crypto, "METHOD_SSLv2",  ION_CRYPTO_METHOD_SSLv2);
+    PION_CLASS_CONST_LONG(ION_Crypto, "METHOD_SSLv3",  ION_CRYPTO_METHOD_SSLv3);
+    PION_CLASS_CONST_LONG(ION_Crypto, "METHOD_TLSv10",   ION_CRYPTO_METHOD_TLSv10);
+    PION_CLASS_CONST_LONG(ION_Crypto, "METHOD_TLSv11",   ION_CRYPTO_METHOD_TLSv11);
+    PION_CLASS_CONST_LONG(ION_Crypto, "METHOD_TLSv12",   ION_CRYPTO_METHOD_TLSv12);
 
     PION_REGISTER_VOID_EXTENDED_CLASS(ION_CryptoException, ion_ce_ION_RuntimeException, "ION\\CryptoException");
 

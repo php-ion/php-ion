@@ -21,6 +21,8 @@
 #define ION_MAX_PRIORITY   6
 #define ION_PRIORITY_DEFAULT   3
 
+#define has_one_bit(b) (b && !(b & (b-1)))
+
 //typedef struct _ion_dns {
 //    struct evdns_base * evdns;
 //    HashTable         * requests;
