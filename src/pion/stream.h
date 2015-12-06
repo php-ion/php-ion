@@ -42,6 +42,7 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Stream_ConnectionException;
 #define ION_STREAM_NAME_MASK       (ION_STREAM_NAME_IPV4 | ION_STREAM_NAME_IPV6 | ION_STREAM_NAME_UNIX)
 
 #define ION_STREAM_ENCRYPTED       (1<<17)
+#define ION_STREAM_HAS_UNDERLYING  (1<<18)
 
 // ** state flags end **
 
@@ -76,6 +77,7 @@ typedef struct _ion_stream {
     ion_buffer       * buffer;  // input/output buffer
     size_t             length;  // bytes for reading
     size_t             input_size;
+    int                priority;
     ion_stream_token * token;
     zend_object      * read;
     zend_object      * flush;

@@ -1,4 +1,7 @@
-#include "Crypto.h"
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/rand.h>
+#include "../pion.h"
 
 zend_class_entry     * ion_ce_ION_Crypto;
 zend_object_handlers   ion_oh_ION_Crypto;
@@ -35,7 +38,7 @@ zend_object_handlers   ion_oh_ION_CryptoException;
 #endif
 
 ION_API SSL * ion_crypto_server_stream_handler(zend_object * ssl) {
-    ion_ssl * issl = get_object_instance(ssl, ion_ssl);
+    ion_crypto * issl = get_object_instance(ssl, ion_crypto);
     if(!(issl->flags & ION_CRYPTO_IS_CLIENT)) {
         return SSL_new(issl->ctx);
     }
@@ -43,7 +46,7 @@ ION_API SSL * ion_crypto_server_stream_handler(zend_object * ssl) {
 }
 
 ION_API SSL * ion_crypto_client_stream_handler(zend_object * ssl) {
-    ion_ssl * issl = get_object_instance(ssl, ion_ssl);
+    ion_crypto * issl = get_object_instance(ssl, ion_crypto);
     if(issl->flags & ION_CRYPTO_IS_CLIENT) {
         return SSL_new(issl->ctx);
     }
@@ -124,10 +127,10 @@ static int ion_crypto_verify_cb(int preverify_ok, X509_STORE_CTX * ctx) {
     int       ret = preverify_ok;
     int       err = 0;
     int       depth;
-    ion_ssl * issl;
+    ion_crypto * issl;
 
     ssl  = X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
-    issl = (ion_ssl *) SSL_get_ex_data(ssl, GION(ssl_index));
+    issl = (ion_crypto *) SSL_get_ex_data(ssl, GION(ssl_index));
 
 
     X509_STORE_CTX_get_current_cert(ctx);
@@ -149,7 +152,7 @@ static int ion_crypto_verify_cb(int preverify_ok, X509_STORE_CTX * ctx) {
 }
 
 static int ion_crypto_passwd_cb(char * buf, int num, int verify, void * data) {
-    ion_ssl * ssl = (ion_ssl *)data;
+    ion_crypto * ssl = (ion_crypto *)data;
 
     if (ssl->passphrase) {
         if (ZSTR_LEN(ssl->passphrase) < num - 1) {
@@ -163,13 +166,13 @@ static int ion_crypto_passwd_cb(char * buf, int num, int verify, void * data) {
 }
 
 zend_object * ion_crypto_init(zend_class_entry * ce) {
-    ion_ssl * ssl = ecalloc(1, sizeof(ion_stream));
+    ion_crypto * ssl = ecalloc(1, sizeof(ion_stream));
     ssl->verify_depth = -1;
     RETURN_INSTANCE(ION_Crypto, ssl);
 }
 
 void ion_crypto_free(zend_object * object) {
-    ion_ssl * ssl = get_object_instance(object, ion_ssl);
+    ion_crypto * ssl = get_object_instance(object, ion_crypto);
     if(ssl->ctx) {
         SSL_CTX_free(ssl->ctx);
         ssl->ctx = NULL;
@@ -183,14 +186,14 @@ void ion_crypto_free(zend_object * object) {
 
 zend_object * ion_crypto_factory(zend_long flags) {
     zval        zssl;
-    ion_ssl   * ssl;
+    ion_crypto * ssl;
     zend_long   ssl_ctx_options;
     zend_bool   is_client = (flags & ION_CRYPTO_IS_CLIENT) ? true : false;
     zend_long   crypt_method = flags & ION_CRYPTO_METHODS_MASK;
     const SSL_METHOD * method;
 
     object_init_ex(&zssl, ion_ce_ION_Crypto);
-    ssl = get_instance(&zssl, ion_ssl);
+    ssl = get_instance(&zssl, ion_crypto);
     ssl->flags |= flags;
 
     if (has_one_bit(crypt_method)) { // use a specific crypto method
@@ -294,7 +297,7 @@ METHOD_WITHOUT_ARGS(ION_Crypto, __construct)
 
 CLASS_METHOD(ION_Crypto, ticket) {
     zend_bool   status = 0;
-    ion_ssl   * ssl = get_this_instance(ion_ssl);
+    ion_crypto * ssl = get_this_instance(ion_crypto);
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
         Z_PARAM_OPTIONAL
@@ -318,7 +321,7 @@ METHOD_ARGS_END()
 
 CLASS_METHOD(ION_Crypto, compression) {
     zend_bool   status = 0;
-    ion_ssl   * ssl = get_this_instance(ion_ssl);
+    ion_crypto * ssl = get_this_instance(ion_crypto);
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
         Z_PARAM_OPTIONAL
@@ -343,7 +346,7 @@ METHOD_ARGS_END()
 /* public function ION\SSL::verifyPeer(bool $status = true) : self */
 CLASS_METHOD(ION_Crypto, verifyPeer) {
     zend_bool   status = 0;
-    ion_ssl   * ssl = get_this_instance(ion_ssl);
+    ion_crypto * ssl = get_this_instance(ion_crypto);
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
         Z_PARAM_OPTIONAL
@@ -366,7 +369,7 @@ METHOD_ARGS_END()
 /* public function ION\SSL::verifyDepth(int $depth = -1) : self */
 CLASS_METHOD(ION_Crypto, verifyDepth) {
     zend_long   depth = -1;
-    ion_ssl   * ssl = get_this_instance(ion_ssl);
+    ion_crypto * ssl = get_this_instance(ion_crypto);
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
         Z_PARAM_OPTIONAL
@@ -386,7 +389,7 @@ METHOD_ARGS_END()
 CLASS_METHOD(ION_Crypto, localCert) {
     zend_string * local_cert = NULL;
     zend_string * local_pk = NULL;
-    ion_ssl   * ssl = get_this_instance(ion_ssl);
+    ion_crypto * ssl = get_this_instance(ion_crypto);
 
     ZEND_PARSE_PARAMETERS_START(1,2)
         Z_PARAM_STR(local_cert)
@@ -462,7 +465,7 @@ METHOD_ARGS_END()
 /* public function ION\SSL::passPhrase(string $phrase) : self */
 CLASS_METHOD(ION_Crypto, passPhrase) {
     zend_string * phrase = NULL;
-    ion_ssl     * ssl = get_this_instance(ion_ssl);
+    ion_crypto * ssl = get_this_instance(ion_crypto);
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_STR(phrase)
@@ -489,7 +492,7 @@ METHOD_ARGS_END()
 /* public function ION\SSL::allowSelfSigned(bool $state = true) : self */
 CLASS_METHOD(ION_Crypto, allowSelfSigned) {
     zend_bool   state = true;
-    ion_ssl   * ssl = get_this_instance(ion_ssl);
+    ion_crypto * ssl = get_this_instance(ion_crypto);
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
         Z_PARAM_OPTIONAL
@@ -515,7 +518,7 @@ CLASS_METHOD(ION_Crypto, ca) {
     zend_string * capath = NULL;
     char * cafile_str = NULL;
     char * capath_str = NULL;
-    ion_ssl     * ssl = get_this_instance(ion_ssl);
+    ion_crypto * ssl = get_this_instance(ion_crypto);
 
     ZEND_PARSE_PARAMETERS_START(0, 2)
         Z_PARAM_OPTIONAL

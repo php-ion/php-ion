@@ -20,6 +20,7 @@ const ion_stream_token empty_stream_token = { NULL, 0, 0, ION_STREAM_MODE_TRIM_T
 
 zend_object * ion_stream_init(zend_class_entry * ce) {
     ion_stream * istream = ecalloc(1, sizeof(ion_stream));
+    istream->priority = -1;
     RETURN_INSTANCE(ION_Stream, istream);
 }
 
@@ -44,6 +45,9 @@ void ion_stream_free(zend_object * stream_object) {
         if(stream->state & ION_STREAM_STATE_ENABLED) {
             bufferevent_disable(stream->buffer, EV_READ | EV_WRITE);
         }
+//        if(stream->state & ION_STREAM_HAS_UNDERLYING) {
+//            bufferevent_free(bufferevent_get_underlying(stream->buffer));
+//        }
         if(stream->encrypt) {
             SSL *ctx = bufferevent_openssl_get_ssl(stream->buffer);
             SSL_set_shutdown(ctx, SSL_RECEIVED_SHUTDOWN);
@@ -805,6 +809,7 @@ CLASS_METHOD(ION_Stream, setPriority) {
     }
     // do not check result, non-socket buffers always returns FAILURE
     bufferevent_priority_set(stream->buffer, (int)prio);
+    stream->priority = (int)prio;
     RETURN_THIS();
 }
 
@@ -1341,9 +1346,48 @@ CLASS_METHOD(ION_Stream, awaitShutdown) {
 
 METHOD_WITHOUT_ARGS(ION_Stream, awaitShutdown)
 
-/** public function ION\Stream::encrypt(ION\Crypto $ssl) : self */
+/** public function ION\Stream::encrypt(ION\Crypto $encrypt) : self */
 CLASS_METHOD(ION_Stream, encrypt) {
+    ion_stream * stream = get_this_instance(ion_stream);
+    zval       * encrypt = NULL;
+    SSL        * ssl_handler = NULL;
+    enum bufferevent_ssl_state ssl_state;
 
+    if(stream->state & ION_STREAM_ENCRYPTED) {
+        zend_throw_exception(ion_ce_ION_StreamException, "Stream already has encryption", 0);
+        return;
+    }
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_OBJECT(encrypt)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    if(ion_crypto_check_is_client(Z_OBJ_P(encrypt))) {
+        ssl_handler = ion_crypto_client_stream_handler(Z_OBJ_P(encrypt));
+        ssl_state   = BUFFEREVENT_SSL_CONNECTING;
+    } else {
+        ssl_handler = ion_crypto_server_stream_handler(Z_OBJ_P(encrypt));
+        ssl_state   = BUFFEREVENT_SSL_ACCEPTING;
+    }
+
+    if(!ssl_handler) {
+        zend_throw_exception(ion_ce_ION_StreamException, "Failed to setup SSL/TLS handler", 0);
+        return;
+    }
+    stream->buffer = bufferevent_openssl_filter_new(GION(base), stream->buffer, ssl_handler, ssl_state, STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE);
+    bufferevent_setcb(stream->buffer, _ion_stream_input, _ion_stream_output, _ion_stream_notify, (void *) stream);
+    if(stream->state & ION_STREAM_STATE_ENABLED) {
+        bufferevent_enable(stream->buffer, EV_READ | EV_WRITE);
+    }
+    if(stream->priority > 0) {
+        bufferevent_priority_set(stream->buffer, stream->priority);
+    }
+    stream->state |= ION_STREAM_ENCRYPTED | ION_STREAM_HAS_UNDERLYING;
+    stream->encrypt = Z_OBJ_P(encrypt);
+    zval_add_ref(encrypt);
+    SSL_set_ex_data(ssl_handler, GION(ssl_index), Z_OBJ_P(encrypt));
+
+    RETURN_THIS();
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, encrypt, 1)
