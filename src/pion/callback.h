@@ -119,7 +119,7 @@ int     pion_call_constructor(zend_class_entry * ce, zend_object * object, int n
 zend_object * pion_new_object(zend_class_entry * ce, int args_num, zval *args);
 #define pion_new_object_arg_0(ce)                         _pion_new_object(ce, 0, NULL TSRMLS_CC)
 #define pion_new_object_arg_1(ce, arg1)                   pion_new_object(ce, 1, arg1)
-#define pion_new_object_arg_2(ce, arg1, arg2)             _pion_new_object_arg_2(ce, arg1, arg2 TSRMLS_CC)
+zend_object * pion_new_object_arg_2(zend_class_entry * ce, zval * arg1, zval * arg2);
 #define pion_new_object_arg_3(ce, arg1, arg2, arg3)       _pion_new_object_arg_3(ce, arg1, arg2, arg3 TSRMLS_CC)
 
 //zend_object * _pion_new_object(zend_class_entry *ce, int num_args, zval *args TSRMLS_DC);

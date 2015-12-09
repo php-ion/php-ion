@@ -24,7 +24,6 @@ class ListenerTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @dataProvider providerHosts
      * @memcheck
      * @param string $address

@@ -6,6 +6,8 @@
 
 zend_object_handlers ion_oh_ION_Listener;
 zend_class_entry * ion_ce_ION_Listener;
+zend_object_handlers ion_oh_ION_ListenerException;
+zend_class_entry * ion_ce_ION_ListenerException;
 
 void ion_listener_release(zend_object * object) {
     ion_listener * listener = get_object_instance(object, ion_listener);
@@ -280,5 +282,8 @@ PHP_MINIT_FUNCTION(ION_Listener) {
     pion_init_std_object_handlers(ION_Listener);
     pion_set_object_handler(ION_Listener, free_obj, ion_listener_free);
     pion_set_object_handler(ION_Listener, clone_obj, NULL);
+
+    PION_REGISTER_VOID_EXTENDED_CLASS(ION_ListenerException, ion_ce_ION_RuntimeException, "ION\\ListenerException");
+
     return SUCCESS;
 }

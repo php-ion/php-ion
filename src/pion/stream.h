@@ -4,9 +4,12 @@
 #include "init.h"
 
 extern ZEND_API zend_class_entry * ion_ce_ION_Listener;
+extern ZEND_API zend_class_entry * ion_ce_ION_ListenerException;
 extern ZEND_API zend_class_entry * ion_ce_ION_Stream;
 extern ZEND_API zend_class_entry * ion_ce_ION_StreamException;
 extern ZEND_API zend_class_entry * ion_ce_ION_Stream_ConnectionException;
+extern ZEND_API zend_class_entry * ion_ce_ION_Server;
+extern ZEND_API zend_class_entry * ion_ce_ION_ServerException;
 
 // ** state flags begin **
 // stream types
@@ -88,6 +91,29 @@ typedef struct _ion_stream {
     zend_string      * name_self;
     zend_string      * name_remote;
 } ion_stream;
+
+typedef struct _ion_server {
+    zend_object     std;
+    zend_uint       flags;
+    zend_long       accepted;
+    zend_long       max_conns;
+    size_t          input_buffer_size;
+    int             priority;
+    ion_time        idle_timeout;
+    ion_time        use_timeout;
+    ion_time        tick_timeout;
+
+    zend_array    * listeners;
+    zend_array    * conns;
+
+    zend_object    * accept;
+    zend_object    * incoming;
+    zend_object    * timeout;
+    zend_object    * close;
+
+    ion_rate_limit * rlimits;
+
+} ion_server;
 
 //#ifdef ZTS
 //#define STREAM_BUFFER_DEFAULT_FLAGS BEV_OPT_DEFER_CALLBACKS | BEV_OPT_THREADSAFE

@@ -640,7 +640,8 @@ class StreamTest extends TestCase {
     }
 
     /**
-     * @memcheck
+     * @mem check
+     * @todo fix for tarvis (see jobs)
      */
     public function testEnableEncryption() {
         $this->promise(function () {

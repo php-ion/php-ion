@@ -84,6 +84,7 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_Listener);
     STARTUP_MODULE(ION_Stream);
     STARTUP_MODULE(ION_Process);
+    STARTUP_MODULE(ION_Server);
 
 
     long KB = 1000;

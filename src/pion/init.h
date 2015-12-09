@@ -31,6 +31,9 @@ typedef struct bufferevent    ion_buffer;
 typedef struct event_base     ion_event_base;
 typedef struct event_config   ion_event_config;
 typedef struct evdns_base     ion_evdns_base;
+typedef struct timeval        ion_time;
+typedef struct ev_token_bucket_cfg          ion_rate_limit_cfg;
+typedef struct bufferevent_rate_limit_group ion_rate_limit;
 
 #ifndef zend_uint
 # define zend_uint uint32_t

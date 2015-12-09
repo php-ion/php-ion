@@ -579,7 +579,7 @@ int pion_call_constructor(zend_class_entry * ce, zend_object * this_ptr, int arg
     return SUCCESS;
 }
 
-zend_object * pion_new_object(zend_class_entry *ce, int args_num, zval *args) {
+zend_object * pion_new_object(zend_class_entry *ce, int args_num, zval * args) {
     zval object;
 
     object_init_ex(&object, ce);
@@ -600,12 +600,12 @@ zend_object * pion_new_object(zend_class_entry *ce, int args_num, zval *args) {
 //    return pion_new_object(ce, 1, args);
 //}
 //
-//zend_object * _pion_new_object_arg_2(zend_class_entry *ce, zval *arg1, zval *arg2 TSRMLS_DC) {
-//    zval args[2];
-//    args[0] = *arg1;
-//    args[1] = *arg2;
-//    return pion_new_object(ce, 2, args);
-//}
+zend_object * pion_new_object_arg_2(zend_class_entry *ce, zval *arg1, zval *arg2) {
+    zval args[2];
+    args[0] = *arg1;
+    args[1] = *arg2;
+    return pion_new_object(ce, 2, args);
+}
 //
 //zend_object * _pion_new_object_arg_3(zend_class_entry *ce, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC) {
 //    zval args[3];
