@@ -212,7 +212,8 @@ void _ion_stream_input(ion_buffer * bev, void * ctx) {
 
             if(evbuffer_get_length(input) >= stream->length) {
                 data = ion_stream_read(stream, stream->length);
-                bufferevent_setwatermark(stream->buffer, EV_READ, 0, stream->input_size);
+                ion_stream_set_input_size(stream, stream->input_size);
+//                bufferevent_setwatermark(stream->buffer, EV_READ, 0, stream->input_size);
                 ion_promisor_done_string(stream->read, data, 0);
                 zend_string_release(data);
             }
@@ -808,7 +809,7 @@ CLASS_METHOD(ION_Stream, setPriority) {
         return;
     }
     // do not check result, non-socket buffers always returns FAILURE
-    bufferevent_priority_set(stream->buffer, (int)prio);
+    ion_stream_set_priority(stream, prio);
     stream->priority = (int)prio;
     RETURN_THIS();
 }

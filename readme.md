@@ -7,6 +7,7 @@ ION Extension [dev]
 * **Language:** C
 * **OS:** linux, osx, freebsd
 * **PHP version:** 7.0
+* **Stability:** develop
 * **State:** [![Build Status](https://travis-ci.org/php-ion/php-ion.png?branch=master)](https://travis-ci.org/php-ion/php-ion) [![Coverage Status](https://coveralls.io/repos/php-ion/php-ion/badge.svg?branch=master&service=github)](https://coveralls.io/github/php-ion/php-ion?branch=master)
 * **Version:** [![Latest Stable Version](https://poser.pugx.org/phpion/phpion/v/stable)](https://packagist.org/packages/phpion/phpion) [![Latest Unstable Version](https://poser.pugx.org/phpion/phpion/v/unstable)](https://packagist.org/packages/phpion/phpion)
 * **Versioning:** [semver2](http://semver.org/)
@@ -145,9 +146,15 @@ $sequence("two"); // run sequence again
 ```
 
 ```php
+ION\FS::watch('config.php')->then(function () {
+    // reconfigure application every time then the config file changed
+});
+```
+
+```php
 App::eventualAction()->then(function () {
     // ...
-    $result = yield App::someSequence(); // allow use sequence as promise
+    $result = yield ION\FS::watch('config.php'); // allow use sequence as promise
     // ...
 });
 ```
@@ -200,8 +207,8 @@ $stream = Stream::resource(STDIN);
 list($stream1, $stream2) = Stream::pair();
 $stream = Stream::connect("example.com:80");
 $stream = Stream::connect("/var/run/server.sock");
-$stream = Stream::connect("example.com:443", $ssl);
-$stream = Stream::connect(["93.184.216.34:0" => "example.com:443"]); // connecting from IP 93.184.216.34
+$stream = Stream::connect("example.com:443", Crypto::client());
+$stream = Stream::connect(["93.184.216.34:0" => "example.com:443"]); // connecting from IP 93.184.216.34 to example.com:443
 ```
 
 ```php
@@ -238,13 +245,18 @@ $listener->accept()->then(function (Stream $connect) {
 ### SSL/TLS encryption
 
 ```php
-$crypto = SSL::client()->allowSelfSigned();
-$stream = Stream::connect("example.com:443", $ssl);
+use ION\Crypto;
+use ION\Stream;
+```
+
+```php
+$crypto = Crypto::client()->allowSelfSigned();
+$stream = Stream::connect("example.com:443", $crypto);
 // ...
 ```
 
 ```php
-$crypto = SSL::server(SSL::METHOD_TLSv12)->loadCert('cacert.pem', 'cakey.pem')->allowSelfSigned();
+$crypto = Crypto::server(SSL::METHOD_TLSv12)->loadCert('cacert.pem', 'cakey.pem')->allowSelfSigned();
 $listener = new Listener("0.0.0.0:8080");
 $listener->encrypt($crypto);
 // ...

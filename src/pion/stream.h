@@ -46,6 +46,7 @@ extern ZEND_API zend_class_entry * ion_ce_ION_ServerException;
 
 #define ION_STREAM_ENCRYPTED       (1<<17)
 #define ION_STREAM_HAS_UNDERLYING  (1<<18)
+#define ION_STREAM_SUSPENDED       (1<<19)
 
 // ** state flags end **
 
@@ -57,6 +58,8 @@ extern ZEND_API zend_class_entry * ion_ce_ION_ServerException;
 #define ION_STREAM_TOKEN_MODE_MASK    (ION_STREAM_MODE_TRIM_TOKEN | ION_STREAM_MODE_WITH_TOKEN | ION_STREAM_MODE_WITHOUT_TOKEN)
 #define ION_STREAM_TOKEN_LIMIT        8
 
+typedef struct _ion_stream_storage ion_storage;
+
 typedef struct _ion_listener {
     zend_object      std;
     uint             flags;
@@ -64,6 +67,7 @@ typedef struct _ion_listener {
     zend_object    * encrypt;
     zend_string    * name;
     ion_evlistener * listener;
+    ion_storage    * storage; // storage's listener
 } ion_listener;
 
 typedef struct _ion_stream_token {
@@ -90,30 +94,44 @@ typedef struct _ion_stream {
     zend_object      * encrypt;
     zend_string      * name_self;
     zend_string      * name_remote;
+
+    zend_object      * error;
+    ion_storage      * storage; // stream from storage
 } ion_stream;
 
-typedef struct _ion_server {
-    zend_object     std;
-    zend_uint       flags;
-    zend_long       accepted;
-    zend_long       max_conns;
-    size_t          input_buffer_size;
-    int             priority;
-    ion_time        idle_timeout;
-    ion_time        use_timeout;
-    ion_time        tick_timeout;
+typedef struct _ion_stream_storage {
+    zend_object std;
+    zend_uint   flags;
+    zend_long   total_conns;
+    zend_long   total_read;
+    zend_long   total_written;
+    zend_long   total_resumed;
+    zend_long   current_conns;
 
-    zend_array    * listeners;
-    zend_array    * conns;
+    zend_long            max_conns;
+    size_t               input_buffer_size;
+    int                  priority;
+    zend_uint            idle_timeout;
+    ion_rate_limit     * group;
+    ion_rate_limit_cfg * group_cfg;
 
-    zend_object    * accept;
-    zend_object    * incoming;
-    zend_object    * timeout;
-    zend_object    * close;
+    zend_array  * listeners;
+    zend_array  * conns;
 
-    ion_rate_limit * rlimits;
+    zend_object * connect;
+    zend_object * incoming;
+    zend_object * timeout;
+    zend_object * close;
 
-} ion_server;
+    void  (* connect_handler)(zend_object * connect);
+    void  (* timeout_handler)(zend_object * connect);
+    void  (* incoming_handler)(zend_object * connect);
+    void  (* close_handler)(zend_object * connect);
+    void  (* ping_handler)(zend_object * connect);
+    void  (* free_handler)(zend_object * connect);
+} ;
+
+typedef ion_storage ion_server;
 
 //#ifdef ZTS
 //#define STREAM_BUFFER_DEFAULT_FLAGS BEV_OPT_DEFER_CALLBACKS | BEV_OPT_THREADSAFE
@@ -165,5 +183,15 @@ int    ion_stream_close_fd(ion_stream * stream TSRMLS_DC);
     CHECK_STREAM_BUFFER(stream);  \
     CHECK_STREAM_STATE(stream);
 
+#define ion_stream_set_input_size(stream, size) bufferevent_setwatermark(stream->buffer, EV_READ, 0, size)
+#define ion_stream_set_priority(stream, priority) bufferevent_priority_set(stream->buffer, (int)priority)
+#define ion_stream_set_group(stream, group) bufferevent_add_to_rate_limit_group(stream->buffer, group)
+#define ion_stream_suspend(stream) stream->state |= ION_STREAM_SUSPENDED
+#define ion_stream_resume(stream) stream->state &= ~ION_STREAM_SUSPENDED
+
+
+ION_API void ion_listener_enable(zend_object * listener_obj, zend_bool state);
+ION_API zend_bool ion_listener_default_handler(zend_object * listener, zend_object * connect);
+#define ion_listener_set_storage(listener, strg) get_object_instance(listener)->storage = strg
 
 #endif //PION_STREAM_H

@@ -19,9 +19,18 @@ void ion_listener_release(zend_object * object) {
     listener->flags &= ~ION_STREAM_STATE_ENABLED;
 }
 
+zend_bool ion_listener_default_handler(zend_object * listen, zend_object * connect) {
+    ion_listener * listener = get_object_instance(listen, ion_listener);
+    zval zstream;
+    ZVAL_OBJ(&zstream, connect);
+    ion_promisor_sequence_invoke(listener->accept, &zstream);
+    return true;
+}
+
 
 zend_object * ion_listener_init(zend_class_entry * ce) {
-    ion_promisor * listener = ecalloc(1, sizeof(ion_listener));
+    ion_listener * listener = ecalloc(1, sizeof(ion_listener));
+    listener->handler = ion_listener_default_handler;
     RETURN_INSTANCE(ION_Listener, listener);
 }
 
@@ -40,16 +49,32 @@ void ion_listener_free(zend_object * object) {
     }
 }
 
+void ion_listener_enable(zend_object * listener_obj, zend_bool state) {
+    ion_listener * listener = get_object_instance(listener_obj, ion_listener);
+    if(listener->listener) {
+        if(state) {
+            if(!(listener->flags & ION_STREAM_STATE_ENABLED)) {
+                evconnlistener_enable(listener->listener);
+                listener->flags |= ION_STREAM_STATE_ENABLED;
+            }
+        } else {
+            if((listener->flags & ION_STREAM_STATE_ENABLED)) {
+                evconnlistener_disable(listener->listener);
+                listener->flags &= ~ION_STREAM_STATE_ENABLED;
+            }
+        }
+    }
+}
+
 static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct sockaddr * addr, int addr_len, void * ctx) {
     ION_LOOP_CB_BEGIN();
     ion_listener * listener = get_object_instance(ctx, ion_listener);
     zend_object  * stream = NULL;
     ion_stream   * istream = NULL;
-    zval           zstream;
     ion_buffer   * buffer = NULL;
     int            state = ION_STREAM_STATE_ENABLED | ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_CONNECTED | ION_STREAM_FROM_PEER;
 
-    if(listener->accept) {
+    if(listener->storage || listener->accept) {
         if(listener->encrypt) {
             SSL * ssl_handler = ion_crypto_server_stream_handler(listener->encrypt);
             if(!ssl_handler) {
@@ -82,8 +107,14 @@ static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct 
                 pion_net_addr_to_name(addr, (socklen_t)addr_len, &istream->name_remote);
             }
             istream->state |= (listener->flags & ION_STREAM_NAME_MASK);
-            ZVAL_OBJ(&zstream, stream);
-            ion_promisor_sequence_invoke(listener->accept, &zstream);
+            if(listener->storage) {
+                listener->storage->connect_handler(stream);
+            }
+            if(listener->accept) {
+                zval zstream;
+                ZVAL_OBJ(&zstream, stream);
+                ion_promisor_sequence_invoke(listener->accept, &zstream);
+            }
             zend_object_release(stream);
         }
     } else {
@@ -222,7 +253,7 @@ CLASS_METHOD(ION_Listener, enable) {
     ion_listener * listener = get_this_instance(ion_listener);
     if(listener->listener && !(listener->flags & ION_STREAM_STATE_ENABLED)) {
         evconnlistener_enable(listener->listener);
-        listener->flags &= ~ION_STREAM_STATE_ENABLED;
+        listener->flags |= ION_STREAM_STATE_ENABLED;
     }
     RETURN_THIS();
 }
@@ -234,7 +265,7 @@ CLASS_METHOD(ION_Listener, disable) {
     ion_listener * listener = get_this_instance(ion_listener);
     if(listener->listener && (listener->flags & ION_STREAM_STATE_ENABLED)) {
         evconnlistener_disable(listener->listener);
-        listener->flags |= ION_STREAM_STATE_ENABLED;
+        listener->flags &= ~ION_STREAM_STATE_ENABLED;
     }
     RETURN_THIS();
 }

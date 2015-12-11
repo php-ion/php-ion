@@ -51,6 +51,8 @@ class Server {
 
     public function setInputBufferSize(int $size) : self {}
 
+    public function setPingTimeout(int $sec) : self {}
+
     /**
      * Sequence for new connection
      * @return Sequence
@@ -62,6 +64,8 @@ class Server {
     public function timeout() : Sequence {}
 
     public function close() : Sequence {}
+
+    public function ping() : Sequence {}
 
     public function getConnection($peer_name) : Stream {}
 
@@ -77,7 +81,7 @@ class Server {
 
     public function resetTotals() : self {}
 
-    public function shutdown($force = false) : self {}
+    public function shutdown($host) : self {}
 
     public function __debugInfo() : array {}
 }

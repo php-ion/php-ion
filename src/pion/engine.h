@@ -70,6 +70,8 @@
     Z_ADDREF_P(return_value); \
     return;
 
+#define zend_object_addref(obj) GC_REFCOUNT(obj)++
+
 #define OBJ_ADDREF(obj) \
     GC_REFCOUNT(obj)++;
 
