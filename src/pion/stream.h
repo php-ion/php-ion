@@ -99,7 +99,7 @@ typedef struct _ion_stream {
     ion_storage      * storage; // stream from storage
 } ion_stream;
 
-typedef struct _ion_stream_storage {
+struct _ion_stream_storage {
     zend_object std;
     zend_uint   flags;
     zend_long   total_conns;
@@ -122,6 +122,7 @@ typedef struct _ion_stream_storage {
     zend_object * incoming;
     zend_object * timeout;
     zend_object * close;
+    zend_object * ping;
 
     void  (* connect_handler)(zend_object * connect);
     void  (* timeout_handler)(zend_object * connect);

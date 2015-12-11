@@ -45,9 +45,6 @@ void ion_stream_free(zend_object * stream_object) {
         if(stream->state & ION_STREAM_STATE_ENABLED) {
             bufferevent_disable(stream->buffer, EV_READ | EV_WRITE);
         }
-//        if(stream->state & ION_STREAM_HAS_UNDERLYING) {
-//            bufferevent_free(bufferevent_get_underlying(stream->buffer));
-//        }
         if(stream->encrypt) {
             SSL *ctx = bufferevent_openssl_get_ssl(stream->buffer);
             SSL_set_shutdown(ctx, SSL_RECEIVED_SHUTDOWN);
@@ -55,6 +52,9 @@ void ion_stream_free(zend_object * stream_object) {
             zend_object_release(stream->encrypt);
         }
         bufferevent_free(stream->buffer);
+    }
+    if(stream->error) {
+        zend_object_release(stream->error);
     }
     if(stream->name_self) {
         zend_string_release(stream->name_self);
@@ -184,7 +184,7 @@ long ion_stream_search_token(struct evbuffer * buffer, ion_stream_token * token)
 }
 
 void _ion_stream_input(ion_buffer * bev, void * ctx) {
-
+    ION_LOOP_CB_BEGIN();
     ion_stream      * stream = get_object_instance(ctx, ion_stream);
     ion_evbuffer    * input;
     zend_string     * data = NULL;
@@ -235,10 +235,11 @@ void _ion_stream_input(ion_buffer * bev, void * ctx) {
     }
 
     zend_object_release(&stream->std);
-    ION_CHECK_LOOP();
+    ION_LOOP_CB_END();
 }
 
 void _ion_stream_output(ion_buffer * bev, void *ctx) {
+    ION_LOOP_CB_BEGIN();
     ion_stream *stream = get_object_instance(ctx, ion_stream);
 
     obj_add_ref(&stream->std);
@@ -251,10 +252,11 @@ void _ion_stream_output(ion_buffer * bev, void *ctx) {
         ion_stream_close_fd(stream);
     }
     zend_object_release(&stream->std);
-    ION_CHECK_LOOP();
+    ION_LOOP_CB_END();
 }
 
 void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
+    ION_LOOP_CB_BEGIN();
     ion_stream * stream = get_object_instance(ctx, ion_stream);
 
     obj_add_ref(&stream->std);
@@ -276,6 +278,9 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
                     zend_string_release(data);
                 }
             }
+        }
+        if(stream->storage) {
+            stream->storage->close_handler(ctx);
         }
         if(stream->shutdown) {
             ion_promisor_done_long(stream->shutdown, stream->state & ION_STREAM_STATE_CLOSED);
@@ -310,6 +315,7 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
                 "%s error: %s", desc->val, error_message
             );
             zend_string_release(desc);
+            stream->error = exception;
             ZVAL_OBJ(&zex, exception);
             if(stream->connect) {
                 ion_promisor_fail(stream->connect, &zex);
@@ -320,9 +326,12 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
             if(stream->flush) {
                 ion_promisor_fail(stream->flush, &zex);
             }
-            zval_ptr_dtor(&zex);
+//            zval_ptr_dtor(&zex);
         }
 
+        if(stream->storage) {
+            stream->storage->close_handler(ctx);
+        }
         if(stream->shutdown) {
             ion_promisor_done_object(stream->shutdown, &stream->std);
         }
@@ -359,7 +368,7 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
     }
     zend_object_release(&stream->std);
 
-    ION_CHECK_LOOP();
+    ION_LOOP_CB_END();
 }
 
 int ion_stream_pair(zend_object ** stream_one, zend_object ** stream_two, zend_class_entry * ce) {
@@ -515,6 +524,12 @@ int ion_stream_close_fd(ion_stream * stream) {
         close(socket);
     }
     bufferevent_setfd(stream->buffer, -1);
+    if(stream->storage) {
+        stream->storage->close_handler(&stream->std);
+    }
+    if(stream->shutdown) {
+        ion_promisor_done_long(stream->shutdown, stream->state & ION_STREAM_STATE_CLOSED);
+    }
     return SUCCESS;
 }
 

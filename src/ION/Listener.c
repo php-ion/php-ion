@@ -30,7 +30,6 @@ zend_bool ion_listener_default_handler(zend_object * listen, zend_object * conne
 
 zend_object * ion_listener_init(zend_class_entry * ce) {
     ion_listener * listener = ecalloc(1, sizeof(ion_listener));
-    listener->handler = ion_listener_default_handler;
     RETURN_INSTANCE(ION_Listener, listener);
 }
 
@@ -146,7 +145,7 @@ CLASS_METHOD(ION_Listener, __construct) {
         Z_PARAM_STR(listen)
         Z_PARAM_OPTIONAL
         Z_PARAM_LONG(back_log)
-    ZEND_PARSE_PARAMETERS_END();
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     if(listen->val[0] != '/') { // ipv4, ipv6, hostname
         struct sockaddr_storage sock;

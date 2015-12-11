@@ -1,4 +1,3 @@
-#include <ratelim-internal.h>
 #include "../pion.h"
 #include "Server.h"
 
@@ -26,7 +25,7 @@ static void ion_server_connect_handler(zend_object * connect) {
     if(server->group) {
         ion_stream_set_group(stream, server->group);
     }
-    if(server->input_buffer_size >= 0) {
+    if(server->input_buffer_size) {
         ion_stream_set_input_size(stream, stream->input_size);
     }
     name = ion_stream_get_name_remote(connect);
@@ -77,6 +76,39 @@ static void ion_server_free_handler(zend_object * connect) {
     }
 }
 
+static void ion_server_close_handler(zend_object * connect) {
+    ion_stream   * stream = get_object_instance(connect, ion_stream);
+    ion_server   * server = stream->storage;
+    zend_string  * name = ion_stream_get_name_remote(connect);
+    if(!name) {
+        return;
+    }
+    zend_hash_str_del(server->conns, name->val, name->len);
+    zend_string_release(name);
+}
+
+static void ion_server_timeout_handler(zend_object * connect) {
+    ion_stream   * stream = get_object_instance(connect, ion_stream);
+    ion_server   * server = stream->storage;
+    if(server->close) {
+        zval connect_container;
+        ZVAL_OBJ(&connect_container, connect);
+        ion_promisor_sequence_invoke(server->close, &connect_container);
+    } else {
+        ion_stream_close_fd(stream);
+    }
+}
+
+static void ion_server_ping_hanler(zend_object * connect) {
+    ion_stream   * stream = get_object_instance(connect, ion_stream);
+    ion_server   * server = stream->storage;
+    if(server->ping) {
+        zval connect_container;
+        ZVAL_OBJ(&connect_container, connect);
+        ion_promisor_sequence_invoke(server->ping, &connect_container);
+    }
+}
+
 zend_object * ion_server_init(zend_class_entry * ce) {
     ion_server * server = ecalloc(1, sizeof(ion_server));
 
@@ -85,8 +117,13 @@ zend_object * ion_server_init(zend_class_entry * ce) {
     ALLOC_HASHTABLE(server->conns);
     zend_hash_init(server->conns, 1024, NULL, _zval_dtor_wrapper, 0);
     server->connect = ion_promisor_sequence_new(NULL);
+
     server->connect_handler  = ion_server_connect_handler;
     server->incoming_handler = ion_server_incoming_handler;
+    server->free_handler     = ion_server_free_handler;
+    server->close_handler    = ion_server_close_handler;
+    server->timeout_handler  = ion_server_timeout_handler;
+    server->ping_handler     = ion_server_ping_hanler;
     RETURN_INSTANCE(ION_Server, server);
 }
 
