@@ -1,5 +1,5 @@
-ION Extension [dev]
-===================
+ION PHP Extension
+=================
 
 **ION** (regex `/^(I)nput(?:, |-)(O)utput,? (N)otifications$/i`) - PHP extension for asynchronous programming.
 
@@ -7,7 +7,7 @@ ION Extension [dev]
 * **Language:** C
 * **OS:** linux, osx, freebsd
 * **PHP version:** 7.0
-* **Stability:** develop
+* **Stage:** develop
 * **State:** [![Build Status](https://travis-ci.org/php-ion/php-ion.png?branch=master)](https://travis-ci.org/php-ion/php-ion) [![Coverage Status](https://coveralls.io/repos/php-ion/php-ion/badge.svg?branch=master&service=github)](https://coveralls.io/github/php-ion/php-ion?branch=master)
 * **Version:** [![Latest Stable Version](https://poser.pugx.org/phpion/phpion/v/stable)](https://packagist.org/packages/phpion/phpion) [![Latest Unstable Version](https://poser.pugx.org/phpion/phpion/v/unstable)](https://packagist.org/packages/phpion/phpion)
 * **Versioning:** [semver2](http://semver.org/)
