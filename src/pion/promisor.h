@@ -56,7 +56,7 @@ typedef void (* promisor_dtor_t)(zend_object * promisor);
 typedef struct _ion_promisor {
     zend_object         std;
     zend_string       * name;
-    uint                flags;
+    zend_uint           flags;
     pion_cb           * done;
     pion_cb           * fail;
     zend_object       * await;

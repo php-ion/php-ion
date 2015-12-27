@@ -4,7 +4,7 @@
 #include "init.h"
 
 /* PHP callback */
-typedef struct _pion_сb {
+typedef struct _pion_cb {
     zend_fcall_info * fci;
     zend_fcall_info_cache * fcc;
 } pion_cb;
