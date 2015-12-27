@@ -14,8 +14,6 @@ pion_cb * pion_cb_create(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_pt
     cb->fci->no_separation = 1;
     cb->fci->retval = NULL;
 
-    TSRMLS_SET_CTX(cb->thread_ctx);
-
     return cb;
 }
 
