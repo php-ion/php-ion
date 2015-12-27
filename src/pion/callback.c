@@ -2,7 +2,7 @@
 #include "exceptions.h"
 
 
-pion_cb * _pion_cb_create(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr TSRMLS_DC) {
+pion_cb * pion_cb_create(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr) {
     pion_cb *cb = emalloc(sizeof(pion_cb));
     cb->fci = emalloc(sizeof(zend_fcall_info));
     cb->fcc = emalloc(sizeof(zend_fcall_info_cache));
@@ -19,7 +19,7 @@ pion_cb * _pion_cb_create(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_p
     return cb;
 }
 
-pion_cb * _pion_cb_create_from_zval(zval * zcb TSRMLS_DC) {
+pion_cb * pion_cb_create_from_zval(zval * zcb) {
     pion_cb *cb = emalloc(sizeof(pion_cb));
     char *is_callable_error = NULL;
     memset(cb, 0, sizeof(pion_cb));
@@ -47,7 +47,7 @@ pion_cb * _pion_cb_create_from_zval(zval * zcb TSRMLS_DC) {
     }
 }
 
-pion_cb * _pion_cb_fetch_method(const char * class_name, const char * method_name TSRMLS_DC) {
+pion_cb * pion_cb_fetch_method(const char * class_name, const char * method_name) {
     pion_cb * cb;
     zend_function * fptr;
     zend_class_entry *ce;
@@ -94,7 +94,7 @@ pion_cb * _pion_cb_fetch_method(const char * class_name, const char * method_nam
     return cb;
 }
 
-void _pion_cb_free(pion_cb *cb) {
+void pion_cb_free(pion_cb *cb) {
     zval_ptr_dtor(&cb->fci->function_name);
 //    if(cb->fci->object) {
 //        OBJ_ADDREF(cb->fci->object);

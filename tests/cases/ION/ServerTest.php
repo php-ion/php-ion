@@ -11,19 +11,19 @@ class ServerTest extends TestCase {
      * @memcheck
      */
     public function testListeners() {
-        $server = new Server();
-
-        $this->assertInstanceOf(Listener::class, $server->listen(ION_TEST_SERVER_IPV4));
-        $this->assertInstanceOf(Listener::class, $server->listen(ION_TEST_SERVER_IPV6, 10));
-
-        $server->shutdown(ION_TEST_SERVER_IPV4);
-        $server->shutdown(ION_TEST_SERVER_IPV6);
+//        $server = new Server();
+//
+//        $this->assertInstanceOf(Listener::class, $server->listen(ION_TEST_SERVER_IPV4));
+//        $this->assertInstanceOf(Listener::class, $server->listen(ION_TEST_SERVER_IPV6, 10));
+//
+//        $server->shutdown(ION_TEST_SERVER_IPV4);
+//        $server->shutdown(ION_TEST_SERVER_IPV6);
     }
 
     /**
      * @group dev
      */
-    public function testAccept() {
+    public function _testAccept() {
 
         $server = new Server();
 

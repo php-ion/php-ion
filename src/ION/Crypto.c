@@ -166,7 +166,7 @@ static int ion_crypto_passwd_cb(char * buf, int num, int verify, void * data) {
 }
 
 zend_object * ion_crypto_init(zend_class_entry * ce) {
-    ion_crypto * ssl = ecalloc(1, sizeof(ion_stream));
+    ion_crypto * ssl = ecalloc(1, sizeof(ion_crypto));
     ssl->verify_depth = -1;
     RETURN_INSTANCE(ION_Crypto, ssl);
 }

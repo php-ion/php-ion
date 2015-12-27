@@ -132,7 +132,6 @@ if test "$PHP_ION" != "no"; then
     ION/Stream.c
     ION/Process.c
 
-    ION/Server.c
     "
 
     PHP_NEW_EXTENSION(ion, $ion_src, $ext_shared,, "$CFLAGS -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1")

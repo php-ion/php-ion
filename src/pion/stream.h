@@ -7,7 +7,6 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Listener;
 extern ZEND_API zend_class_entry * ion_ce_ION_ListenerException;
 extern ZEND_API zend_class_entry * ion_ce_ION_Stream;
 extern ZEND_API zend_class_entry * ion_ce_ION_StreamException;
-extern ZEND_API zend_class_entry * ion_ce_ION_Stream_ConnectionException;
 extern ZEND_API zend_class_entry * ion_ce_ION_Server;
 extern ZEND_API zend_class_entry * ion_ce_ION_ServerException;
 
@@ -58,8 +57,6 @@ extern ZEND_API zend_class_entry * ion_ce_ION_ServerException;
 #define ION_STREAM_TOKEN_MODE_MASK    (ION_STREAM_MODE_TRIM_TOKEN | ION_STREAM_MODE_WITH_TOKEN | ION_STREAM_MODE_WITHOUT_TOKEN)
 #define ION_STREAM_TOKEN_LIMIT        8
 
-typedef struct _ion_stream_storage ion_storage;
-
 typedef struct _ion_listener {
     zend_object      std;
     uint             flags;
@@ -67,7 +64,7 @@ typedef struct _ion_listener {
     zend_object    * encrypt;
     zend_string    * name;
     ion_evlistener * listener;
-    ion_storage    * storage; // storage's listener
+    zend_object    * storage; // storage's listener
 } ion_listener;
 
 typedef struct _ion_stream_token {
@@ -90,25 +87,26 @@ typedef struct _ion_stream {
     zend_object      * flush;
     zend_object      * connect;
     zend_object      * shutdown;
-    zend_object      * on_data;
+    zend_object      * incoming;
     zend_object      * encrypt;
     zend_string      * name_self;
     zend_string      * name_remote;
 
     zend_object      * error;
-    ion_storage      * storage; // stream from storage
+    zend_object      * storage; // stream from storage
 } ion_stream;
 
-struct _ion_stream_storage {
+typedef struct _ion_stream_storage {
     zend_object std;
     zend_uint   flags;
     zend_long   total_conns;
     zend_long   total_read;
     zend_long   total_written;
     zend_long   total_resumed;
-    zend_long   current_conns;
 
     zend_long            max_conns;
+    zend_uint            ping_interval;
+    zend_uint            ping_timeout;
     size_t               input_buffer_size;
     int                  priority;
     zend_uint            idle_timeout;
@@ -118,21 +116,42 @@ struct _ion_stream_storage {
     zend_array  * listeners;
     zend_array  * conns;
 
-    zend_object * connect;
+    zend_object * handshake;
     zend_object * incoming;
     zend_object * timeout;
     zend_object * close;
     zend_object * ping;
 
-    void  (* connect_handler)(zend_object * connect);
+    void  (* handshake_handler)(zend_object * connect);
     void  (* timeout_handler)(zend_object * connect);
     void  (* incoming_handler)(zend_object * connect);
     void  (* close_handler)(zend_object * connect);
     void  (* ping_handler)(zend_object * connect);
-    void  (* free_handler)(zend_object * connect);
-} ;
+    void  (* release_handler)(zend_object * connect);
+    void  (* enable)(zend_object * storage);
+    void  (* disable)(zend_object * storage);
+} ion_storage;
 
-typedef ion_storage ion_server;
+zend_object * ion_storage_init(zend_class_entry * ce);
+void ion_storage_free(zend_object * object);
+
+#define ion_storage_handler_handshake(storage_object, socket) \
+    get_object_instance(storage_object, ion_storage)->handshake_handler(socket)
+
+#define ion_storage_handler_release(storage_object, socket) \
+    get_object_instance(storage_object, ion_storage)->handshake_handler(socket)
+
+#define ion_storage_handler_incoming(storage_object, socket) \
+    get_object_instance(storage_object, ion_storage)->incoming_handler(socket)
+
+#define ion_storage_handler_timeout(storage_object, socket) \
+    get_object_instance(storage_object, ion_storage)->timeout_handler(socket)
+
+#define ion_storage_handler_close(storage_object, socket) \
+    get_object_instance(storage_object, ion_storage)->close_handler(socket)
+
+#define ion_storage_handler_ping(storage_object, socket) \
+    get_object_instance(storage_object, ion_storage)->ping_handler(socket)
 
 //#ifdef ZTS
 //#define STREAM_BUFFER_DEFAULT_FLAGS BEV_OPT_DEFER_CALLBACKS | BEV_OPT_THREADSAFE

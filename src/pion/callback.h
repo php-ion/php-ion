@@ -4,27 +4,18 @@
 #include "init.h"
 
 /* PHP callback */
-typedef struct _pionCb {
+typedef struct _pion_сb {
     zend_fcall_info * fci;
     zend_fcall_info_cache * fcc;
-    zval * zcb;
-#ifdef ZTS
-    void ***thread_ctx;
-#endif
 } pion_cb;
 
 /* Create native callback */
-pion_cb   * _pion_cb_create(zend_fcall_info * fci_ptr, zend_fcall_info_cache * fcc_ptr TSRMLS_DC);
-pion_cb   * _pion_cb_create_from_zval(zval * zcb TSRMLS_DC);
-pion_cb   * _pion_cb_fetch_method(const char * class_name, const char * method_name TSRMLS_DC);
-void        _pion_cb_free(pion_cb *cb TSRMLS_DC);
+pion_cb   * pion_cb_create(zend_fcall_info * fci_ptr, zend_fcall_info_cache * fcc_ptr);
+pion_cb   * pion_cb_create_from_zval(zval * zcb);
+pion_cb   * pion_cb_fetch_method(const char * class_name, const char * method_name);
+void        pion_cb_free(pion_cb *cb);
 zend_bool   pion_verify_arg_type(pion_cb * cb, zend_uint arg_num, zval * arg);
 pion_cb   * pion_cb_dup(pion_cb * proto);
-
-#define pion_cb_create(fci, fcc) _pion_cb_create(fci, fcc TSRMLS_CC)
-#define pion_cb_create_from_zval(zcb) _pion_cb_create_from_zval(zcb TSRMLS_CC)
-#define pion_cb_fetch_method(class, method) _pion_cb_fetch_method(class, method TSRMLS_CC)
-#define pion_cb_free(cb) _pion_cb_free(cb TSRMLS_CC)
 
 #define pion_cb_num_args(cb)          cb->fcc->function_handler->common.num_args
 #define pion_cb_required_num_args(cb) cb->fcc->function_handler->common.required_num_args

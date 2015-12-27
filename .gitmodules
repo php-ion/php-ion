@@ -1,0 +1,6 @@
+[submodule "src/external/http-parser"]
+	path = src/external/http-parser
+	url = https://github.com/nodejs/http-parser.git
+[submodule "src/external/skiplist"]
+	path = src/external/skiplist
+	url = https://github.com/silentbicycle/skiplist.git

@@ -3,23 +3,12 @@
 namespace ION;
 
 
+use ION\Stream\StorageAbstract;
+
 class Stream {
     const MODE_TRIM_TOKEN = 1;
     const MODE_WITH_TOKEN = 2;
     const MODE_WITHOUT_TOKEN = 4;
-
-    const TYPE_SOCKET = 1;
-    const TYPE_PAIR   = 2;
-    const TYPE_PIPE   = 4;
-
-    const STATE_FLUSHED    = 32;
-    const STATE_HAS_DATA   = 64;
-    const STATE_ENABLED    = 512;
-    const STATE_CONNECTED  = 1024;
-    const STATE_EOF        = 2048;
-    const STATE_ERROR      = 4096;
-    const STATE_SHUTDOWN   = 8192;
-    const STATE_CLOSED     = self::STATE_EOF | self::STATE_ERROR | self::STATE_SHUTDOWN;
 
     const INPUT  = 2;
     const OUTPUT = 4;
@@ -64,7 +53,11 @@ class Stream {
     /**
      *
      */
-    private function _notify() {}
+    private function _eof() {}
+
+    private function _error() {}
+
+    private function _open() {}
 
     /**
      * Activate stream for listening events
@@ -112,7 +105,7 @@ class Stream {
      * @param int $bytes
      * @return self
      */
-    public function setInputBufferSize(int $bytes) : self {}
+    public function setInputMaxSize(int $bytes) : self {}
 
     /**
      * Starts encryption for current stream.
@@ -236,44 +229,64 @@ class Stream {
      * @param bool $force close stream immediately
      * @return Stream
      */
-    public function close(bool $force = false) {}
+    public function shutdown(bool $force = false) : self {}
 
     /**
      * @return Sequence
      */
-    public function onData() {}
+    public function incoming() : Sequence {}
+
+	public function suspend() : self {}
+
+	public function resume() : self {}
+
+	public function hasStorage() : bool {}
+
+	public function getStorage() : StorageAbstract {}
+
+	public function release() : self {}
 
     /**
      * Deferred to be resolved when the stream is shutdown
      * @return Deferred|int $reason
      */
-    public function awaitShutdown() {}
+    public function closed() {}
 
     /**
      * @return int
      */
-    public function isClosed() {}
+    public function isClosed() : bool {}
 
     /**
      * @return bool
      */
-    public function isConnected() {}
+    public function isConnected() : bool {}
 
     /**
      * @return bool
      */
-    public function isEnabled() {}
+    public function isEnabled() : bool {}
+    public function hasEOF() : bool {}
+
+	public function hasError() : bool {}
+
+	/**
+	 * @return \Exception
+	 */
+	public function getError() : \Exception {}
+
+	public function getType() : string {}
 
 
     /**
      * @return string
      */
-    public function __toString() {}
+    public function __toString() : string {}
 
     /**
      * @return array
      */
-    public function __debugInfo() {}
+    public function __debugInfo() : array {}
 
     /**
      *
@@ -285,6 +298,6 @@ class Stream {
      * Available only in debug mode!
      * @param string $data
      */
-    public function appendToInput(string $data) {}
+    public function appendToInput(string $data) : self {}
 
 }

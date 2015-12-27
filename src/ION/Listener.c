@@ -107,7 +107,7 @@ static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct 
             }
             istream->state |= (listener->flags & ION_STREAM_NAME_MASK);
             if(listener->storage) {
-                listener->storage->connect_handler(stream);
+//                listener->storage->connect_handler(stream);
             }
             if(listener->accept) {
                 zval zstream;

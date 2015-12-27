@@ -15,7 +15,7 @@ class Printer extends \PHPUnit_TextUI_ResultPrinter {
      */
     public function addError(\PHPUnit_Framework_Test $test, \Exception $e, $time) {
         $this->writeProgressWithColor('fg-red, bold', sprintf(
-            "\rFail %d/%d %s",
+            "\rERR  %d/%d %s",
             $this->numTestsRun,
             $this->numTests,
             \PHPUnit_Util_Test::describe($test)
@@ -32,13 +32,33 @@ class Printer extends \PHPUnit_TextUI_ResultPrinter {
      */
     public function addFailure(\PHPUnit_Framework_Test $test, \PHPUnit_Framework_AssertionFailedError $e, $time) {
         $this->writeProgressWithColor('fg-red', sprintf(
-            "\rFail %d/%d %s",
+            "\rFAIL %d/%d %s",
             $this->numTestsRun,
             $this->numTests,
             \PHPUnit_Util_Test::describe($test)
         ));
         $this->lastTestFailed = true;
     }
+
+	/**
+	 * A warning occurred.
+	 *
+	 * @param \PHPUnit_Framework_Test    $test
+	 * @param \PHPUnit_Framework_Warning $e
+	 * @param float                     $time
+	 *
+	 * @since Method available since Release 5.1.0
+	 */
+	public function addWarning(\PHPUnit_Framework_Test $test, \PHPUnit_Framework_Warning $e, $time)
+	{
+		$this->writeProgressWithColor('fg-yellow, bold', sprintf(
+			"\rWARN %d/%d %s",
+			$this->numTestsRun,
+			$this->numTests,
+			\PHPUnit_Util_Test::describe($test)
+		));
+		$this->lastTestFailed = true;
+	}
 
     /**
      * Incomplete test.
@@ -49,7 +69,7 @@ class Printer extends \PHPUnit_TextUI_ResultPrinter {
      */
     public function addIncompleteTest(\PHPUnit_Framework_Test $test, \Exception $e, $time) {
         $this->writeProgressWithColor('fg-yellow, bold', sprintf(
-            "\rPart %d/%d %s",
+            "\rINC  %d/%d %s",
             $this->numTestsRun,
             $this->numTests,
             \PHPUnit_Util_Test::describe($test)
@@ -68,7 +88,7 @@ class Printer extends \PHPUnit_TextUI_ResultPrinter {
      */
     public function addRiskyTest(\PHPUnit_Framework_Test $test, \Exception $e, $time) {
         $this->writeProgressWithColor('fg-yellow, bold', sprintf(
-            "\nRisk %d/%d %s",
+            "\nRISK %d/%d %s",
             $this->numTestsRun,
             $this->numTests,
             \PHPUnit_Util_Test::describe($test)
@@ -87,7 +107,7 @@ class Printer extends \PHPUnit_TextUI_ResultPrinter {
      */
     public function addSkippedTest(\PHPUnit_Framework_Test $test, \Exception $e, $time) {
         $this->writeProgressWithColor('fg-cyan, bold', sprintf(
-            "\nSkip %d/%d %s",
+            "\nSKIP %d/%d %s",
             $this->numTestsRun,
             $this->numTests,
             \PHPUnit_Util_Test::describe($test)
@@ -134,7 +154,7 @@ class Printer extends \PHPUnit_TextUI_ResultPrinter {
     {
         if (!$this->lastTestFailed) {
             $this->writeProgress(sprintf(
-                "\rPass %d/%d %s",
+                "\rOk   %d/%d %s",
                 $this->numTestsRun,
                 $this->numTests,
                 \PHPUnit_Util_Test::describe($test)

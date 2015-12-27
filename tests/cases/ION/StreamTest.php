@@ -16,14 +16,20 @@ class StreamTest extends TestCase {
         $this->assertCount(2, $pair);
         $this->assertInstanceOf('ION\Stream', $pair[0]);
         $this->assertInstanceOf('ION\Stream', $pair[1]);
+	    $this->assertEquals('pair_socket', $pair[0]->getType());
+	    $this->assertEquals('pair_socket', $pair[1]->getType());
+
     }
 
     /**
      * @memcheck
+     * @group dev
      */
     public function testCreateFromResource() {
         $stream = Stream::resource(STDIN);
         $this->assertInstanceOf('ION\Stream', $stream);
+	    $this->assertEquals('socket', $stream->getType());
+
     }
 
     /**
@@ -33,6 +39,7 @@ class StreamTest extends TestCase {
         $listener = new Listener(ION_TEST_SERVER_IPV4);
         $stream = Stream::socket(ION_TEST_SERVER_IPV4);
         $this->assertInstanceOf('ION\Stream', $stream);
+	    $this->assertEquals('socket', $stream->getType());
     }
 
     public function providerSocketFailures() {
@@ -66,11 +73,9 @@ class StreamTest extends TestCase {
         /* @var Stream $b */
         $this->assertTrue($a->isEnabled());
         $this->assertTrue($a->isConnected());
-        $this->assertEquals(Stream::STATE_ENABLED, $a->getState() & Stream::STATE_ENABLED);
         $a->disable();
         $this->assertFalse($a->isEnabled());
         $this->assertTrue($a->isConnected());
-        $this->assertEquals(0, $a->getState() & Stream::STATE_ENABLED);
 
         $a->enable();
         $b->disable()->disable()->enable()->enable();
@@ -89,11 +94,11 @@ class StreamTest extends TestCase {
     /**
      * @memcheck
      */
-    public function testInputBufferSize() {
+    public function testInputMaxSize() {
         list($a, $b) = Stream::pair();
         /* @var Stream $a */
         /* @var Stream $b */
-        $a->setInputBufferSize(KiB);
+        $a->setInputMaxSize(KiB);
     }
 
     /**
@@ -232,7 +237,7 @@ class StreamTest extends TestCase {
                 yield ION::await(self::SERVER_CHUNK_INTERVAL);
             }
             yield ION::await(self::SERVER_AWAIT_AFTER_ALL);
-            $connect->close();
+            $connect->shutdown();
         };
     }
 
@@ -289,7 +294,7 @@ class StreamTest extends TestCase {
         $this->loop();
         $this->assertFalse($this->data['pre_connect']);
         $this->assertTrue(isset($this->data['error']));
-        $this->assertEquals('ION\Stream\ConnectionException', $this->data['error']['exception']);
+        $this->assertEquals('ION\StreamException', $this->data['error']['exception']);
         $this->assertEquals(0, $this->data['error']['code']);
         $this->assertStringMatchesFormat("Stream({$client_ip}:%i->{$server_ip}) error: Connection refused", $this->data['error']['message']);
     }
@@ -301,7 +306,7 @@ class StreamTest extends TestCase {
         $listener = $this->listener(ION_TEST_SERVER_IPV4, function (Stream $connect) {
             $connect->write("1234");
             yield ION::await(0.05);
-            $connect->close();
+            $connect->shutdown();
         });
         $this->promise(function () {
             $sock = Stream::socket(ION_TEST_SERVER_IPV4);
@@ -324,7 +329,7 @@ class StreamTest extends TestCase {
         $listener = $this->listener(ION_TEST_SERVER_IPV4, function (Stream $connect) {
             $connect->write("1234");
             yield $connect->flush();
-            $connect->close();
+            $connect->shutdown();
         });
         $this->promise(function () {
             $sock = Stream::socket(ION_TEST_SERVER_IPV4);
@@ -344,13 +349,14 @@ class StreamTest extends TestCase {
         $listener = $this->listener(ION_TEST_SERVER_IPV4, $this->chunkSender(["01234", "56789"]));
         $this->promise(function () {
             $sock = Stream::socket(ION_TEST_SERVER_IPV4);
-            $this->data["closed"] = yield $sock->awaitShutdown();
+	        yield $sock->closed();
+            $this->data["eof"] = $sock->hasEOF();
             return $sock->getAll();
         });
         $this->loop();
         $this->assertEquals([
             "result" => "0123456789",
-            "closed" => Stream::STATE_EOF
+            "eof" => true
         ], $this->data);
     }
 
@@ -411,7 +417,7 @@ class StreamTest extends TestCase {
             $sock->__debugInfo();
             $this->data["read"] = yield $sock->{$method}(...$args);
             $sock->__debugInfo();
-            yield $sock->awaitShutdown();
+            yield $sock->closed();
             $sock->__debugInfo();
             $this->data["tail"] = $sock->getAll();
             $sock->__debugInfo();
@@ -490,7 +496,7 @@ class StreamTest extends TestCase {
             yield $socket->connect();
             $socket->readLine("a");
             $socket->__debugInfo();
-            $socket->close();
+            $socket->shutdown();
             $socket->__debugInfo();
             yield ION::await(0.1);
         });
@@ -508,7 +514,7 @@ class StreamTest extends TestCase {
             $this->data["server.remote"] = $connect->getPeerName();
             $this->data["server.local"] = $connect->getName();
             yield $connect->flush();
-            $connect->close();
+            $connect->shutdown();
         });
         $this->promise(function () {
             $socket = Stream::socket(ION_TEST_SERVER_IPV4);
@@ -539,8 +545,8 @@ class StreamTest extends TestCase {
             $socket->readLine("z");
             $socket->flush();
             $socket->connect();
-            $socket->awaitShutdown();
-            $socket->onData()->then(function () {});
+            $socket->closed();
+            $socket->incoming()->then(function () {});
             $socket->getName();
             $socket->getPeerName();
             unset($socket);
@@ -558,7 +564,7 @@ class StreamTest extends TestCase {
             $connect->write("1234");
             $this->data["server.stream"] = strval($connect);
             yield $connect->flush();
-            $connect->close();
+            $connect->shutdown();
         });
         $this->promise(function () {
             $socket = Stream::socket(ION_TEST_SERVER_IPV4);
@@ -578,11 +584,11 @@ class StreamTest extends TestCase {
     /**
      * @memcheck
      */
-    public function testOnData() {
+    public function testIncoming() {
         $listener = $this->listener(ION_TEST_SERVER_IPV4, $this->chunkSender(["0123", "4567"]));
         $this->promise(function () {
             $socket = Stream::socket(ION_TEST_SERVER_IPV4);
-            $socket->onData()->then(function (Stream $stream) {
+            $socket->incoming()->then(function (Stream $stream) {
                 $this->data["data"] = $stream->getAll();
             });
             $this->data["read"] = yield $socket->read(5);
@@ -604,7 +610,7 @@ class StreamTest extends TestCase {
         $listener = $this->listener(ION_TEST_SERVER_IPV4, function (Stream $connect) {
             $this->data["sendfile"] = $connect->sendFile(__FILE__);
             yield $connect->flush();
-            $connect->close();
+            $connect->shutdown();
         });
         $this->promise(function () {
             $socket = Stream::socket(ION_TEST_SERVER_IPV4);
@@ -625,7 +631,7 @@ class StreamTest extends TestCase {
         $listener = $this->listener(ION_TEST_SERVER_IPV4, function (Stream $connect) {
             $this->data["sendfile"] = $connect->sendFile('/unexist');
             yield $connect->flush();
-            $connect->close();
+            $connect->shutdown();
         });
         $this->promise(function () {
             $socket = Stream::socket(ION_TEST_SERVER_IPV4);
