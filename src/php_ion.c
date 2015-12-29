@@ -11,6 +11,7 @@
 
 #include "pion.h"
 #include "php_ion.h"
+#include "external/http-parser/http_parser.h"
 
 ZEND_DECLARE_MODULE_GLOBALS(ion);
 
@@ -84,7 +85,7 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_Listener);
     STARTUP_MODULE(ION_Stream);
     STARTUP_MODULE(ION_Process);
-//    STARTUP_MODULE(ION_Server);
+    STARTUP_MODULE(ION_Stream_StorageAbstract);
 
 
     long KB = 1000;
@@ -167,6 +168,8 @@ PHP_MINFO_FUNCTION(ion) {
     struct event_base *base = event_base_new();
     event_set_mem_functions(php_emalloc_wrapper, php_realloc_wrapper, php_efree_wrapper);
     int features = event_base_get_features(base);
+    char * http_version;
+    spprintf(&http_version, 16, "%d.%d.%d", HTTP_PARSER_VERSION_MAJOR, HTTP_PARSER_VERSION_MINOR, HTTP_PARSER_VERSION_PATCH);
 
     php_info_print_table_start();
     php_info_print_table_header(2, "ion.support", "enabled");
@@ -200,9 +203,11 @@ PHP_MINFO_FUNCTION(ion) {
     }
     php_info_print_table_row(2, "ion.dns.support", "enabled");
     php_info_print_table_row(2, "ion.ssl.support", "enabled");
+    php_info_print_table_row(2, "ion.http.version", http_version);
     php_info_print_table_end();
 
     event_base_free(base);
+    efree(http_version);
 }
 
 

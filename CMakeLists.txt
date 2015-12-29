@@ -24,6 +24,9 @@ add_custom_target(
 
 set(ION_SOURCE_FILES
         src/config.h
+        src/ion_skiplist_config.h
+        src/external/skiplist/skiplist.c
+        src/external/http-parser/http_parser.c
         src/php_ion.c
         src/pion/init.h
         src/pion/zts.h
@@ -49,7 +52,8 @@ set(ION_SOURCE_FILES
         src/ION/Stream.c
         src/ION/Process.c
         src/ION/FS.c
-        src/ION/Crypto.c)
+        src/ION/Crypto.c
+        src/ION/Stream/StorageAbstract.c)
 
 #src/ION/Deferred.c
 #src/ION/Data/SkipList.c

@@ -2,6 +2,7 @@
 #define PION_STREAM_H
 
 #include "init.h"
+#include "../external/skiplist/skiplist.h"
 
 extern ZEND_API zend_class_entry * ion_ce_ION_Listener;
 extern ZEND_API zend_class_entry * ion_ce_ION_ListenerException;
@@ -67,6 +68,51 @@ typedef struct _ion_listener {
     zend_object    * storage; // storage's listener
 } ion_listener;
 
+typedef struct _ion_stream_storage {
+    zend_object std;
+    zend_uint   flags;
+    zend_long   total_conns;
+    zend_long   total_read;
+    zend_long   total_written;
+    zend_long   total_resumed;
+
+    struct skiplist  * heap;
+
+    zend_long            max_conns;
+    zend_uint            ping_interval;
+    zend_uint            ping_timeout;
+    size_t               input_buffer_size;
+    int                  priority;
+    zend_uint            idle_timeout;
+    ion_rate_limit     * group;
+    ion_rate_limit_cfg * group_cfg;
+
+    zend_array  * listeners;
+    zend_array  * conns;
+
+    zend_object * handshake;
+    zend_object * incoming;
+    zend_object * timeout;
+    zend_object * close;
+    zend_object * ping;
+
+    void  (* handshake_handler)(zend_object * stream);
+    void  (* timeout_handler)(zend_object * stream);
+    void  (* incoming_handler)(zend_object * stream);
+    void  (* close_handler)(zend_object * stream);
+    void  (* ping_handler)(zend_object * stream);
+    void  (* release_handler)(zend_object * stream);
+    void  (* enable)(zend_object * stream);
+    void  (* disable)(zend_object * stream);
+} ion_storage;
+
+typedef struct _ion_storage_stream_bucket {
+    zend_long    bucket_id; // aka timeout
+    zend_long    count;
+    zend_array * streams;
+} ion_storage_stream_bucket;
+
+
 typedef struct _ion_stream_token {
     zend_string    * token;
     zend_long        length;
@@ -94,43 +140,9 @@ typedef struct _ion_stream {
 
     zend_object      * error;
     zend_object      * storage; // stream from storage
+
+    ion_storage_stream_bucket * bucket;
 } ion_stream;
-
-typedef struct _ion_stream_storage {
-    zend_object std;
-    zend_uint   flags;
-    zend_long   total_conns;
-    zend_long   total_read;
-    zend_long   total_written;
-    zend_long   total_resumed;
-
-    zend_long            max_conns;
-    zend_uint            ping_interval;
-    zend_uint            ping_timeout;
-    size_t               input_buffer_size;
-    int                  priority;
-    zend_uint            idle_timeout;
-    ion_rate_limit     * group;
-    ion_rate_limit_cfg * group_cfg;
-
-    zend_array  * listeners;
-    zend_array  * conns;
-
-    zend_object * handshake;
-    zend_object * incoming;
-    zend_object * timeout;
-    zend_object * close;
-    zend_object * ping;
-
-    void  (* handshake_handler)(zend_object * connect);
-    void  (* timeout_handler)(zend_object * connect);
-    void  (* incoming_handler)(zend_object * connect);
-    void  (* close_handler)(zend_object * connect);
-    void  (* ping_handler)(zend_object * connect);
-    void  (* release_handler)(zend_object * connect);
-    void  (* enable)(zend_object * storage);
-    void  (* disable)(zend_object * storage);
-} ion_storage;
 
 zend_object * ion_storage_init(zend_class_entry * ce);
 void ion_storage_free(zend_object * object);
