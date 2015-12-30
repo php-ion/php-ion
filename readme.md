@@ -16,7 +16,7 @@ ION PHP Extension
 * **Extension:** [classes](./stubs/classes), [ini](./stubs/ION.ini), [constants](./stubs/constants.php)
 * **Testing system:** [phpunit](https://phpunit.de/) (+ memory leak detector)
 
-### [Install](./docs/install.md) :: [Develop](./docs/develop.md) :: [Testing](./docs/testing.md) :: [Segfault](./docs/segfault.md)
+### [Install](./docs/install.md) :: [Testing](./docs/testing.md) :: [Segfault](./docs/segfault.md)
 
 # Features
 
