@@ -121,13 +121,17 @@ class Stream {
      */
     public function getPeerName() : string {}
 
-    /**
-     * Queries the local side of the given socket which may either result in host:port or in a Unix filesystem path, dependent on its type
-     * @return string|false
-     */
-    public function getName() : string {}
+	/**
+	 * Queries the local side of the given socket which may either result in host:port or in a Unix filesystem path, dependent on its type
+	 * @return string|false
+	 */
+    public function getLocalName() : string {}
 
-    public function getState() : int {}
+	/**
+	 * Unique stream name
+	 * @return string
+	 */
+    public function getName() : string {}
 
     /**
      * Search for a string within an incoming buffer

@@ -295,6 +295,21 @@ METHOD_ARGS_BEGIN(ION_Stream_StorageAbstract, hasStream, 1)
     METHOD_ARG_STRING(peer_name, 0)
 METHOD_ARGS_END();
 
+/** public function ION\Stream\StorageAbstract::getStream($peer_name) : Sequence  */
+CLASS_METHOD(ION_Stream_StorageAbstract, getStream) {
+    ion_storage * storage = get_this_instance(ion_storage);
+    zend_string * peer_name = NULL;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+            Z_PARAM_STR(peer_name)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+}
+
+METHOD_ARGS_BEGIN(ION_Stream_StorageAbstract, getStream, 1)
+    METHOD_ARG_STRING(peer_name, 0)
+METHOD_ARGS_END();
+
 
 /** public function ION\Server::getStats() : array  */
 CLASS_METHOD(ION_Stream_StorageAbstract, getStats) {
@@ -326,6 +341,7 @@ CLASS_METHODS_START(ION_Stream_StorageAbstract)
     METHOD(ION_Stream_StorageAbstract, ping,             ZEND_ACC_PUBLIC)
 
     METHOD(ION_Stream_StorageAbstract, hasStream,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream_StorageAbstract, getStream,        ZEND_ACC_PUBLIC)
     METHOD(ION_Stream_StorageAbstract, getStats,         ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 

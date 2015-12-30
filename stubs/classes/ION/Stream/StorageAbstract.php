@@ -50,13 +50,5 @@ abstract class StorageAbstract {
 
 	public function hasStream(string $name) : bool {}
 
-	public function count() : int {}
-
-	public function getTotalRead() : int {}
-
-	public function getTotalWritten() : int {}
-
-	public function getTotalAccepted() : int {}
-
-	public function resetTotals() : self {}
+	public function getStats() : array {}
 }

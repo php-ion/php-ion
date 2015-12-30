@@ -53,7 +53,10 @@ set(ION_SOURCE_FILES
         src/ION/Process.c
         src/ION/FS.c
         src/ION/Crypto.c
-        src/ION/Stream/StorageAbstract.c)
+        src/ION/Stream/StorageAbstract.c
+        src/ION/Stream/Storage.c
+        src/ION/Stream/Server.c
+        src/ION/Stream/Client.c)
 
 #src/ION/Deferred.c
 #src/ION/Data/SkipList.c

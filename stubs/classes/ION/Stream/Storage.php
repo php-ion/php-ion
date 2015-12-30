@@ -18,8 +18,8 @@ class Storage extends StorageAbstract {
 
 
 	/**
-	 * @param string $name
+	 * @param string $stream_name
 	 * @return Storage
 	 */
-	public function removeStream(string $name) : self {}
+	public function removeStream(string $stream_name) : self {}
 }

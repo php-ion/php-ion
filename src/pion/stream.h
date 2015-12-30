@@ -8,8 +8,9 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Listener;
 extern ZEND_API zend_class_entry * ion_ce_ION_ListenerException;
 extern ZEND_API zend_class_entry * ion_ce_ION_Stream;
 extern ZEND_API zend_class_entry * ion_ce_ION_StreamException;
-extern ZEND_API zend_class_entry * ion_ce_ION_Server;
-extern ZEND_API zend_class_entry * ion_ce_ION_ServerException;
+extern ZEND_API zend_class_entry * ion_ce_ION_Stream_StorageAbstract;
+extern ZEND_API zend_class_entry * ion_ce_ION_Stream_Storage;
+extern ZEND_API zend_class_entry * ion_ce_ION_Stream_StorageException;
 
 // ** state flags begin **
 // stream types
