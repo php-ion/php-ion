@@ -1,4 +1,4 @@
-ION PHP Extension
+ION PHP Extension :santa:
 =================
 
 **ION** (regex `/^(I)nput(?:, |-)(O)utput,? (N)otifications$/i`) - PHP extension for asynchronous programming.
