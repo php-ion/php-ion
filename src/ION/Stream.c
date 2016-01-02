@@ -113,12 +113,25 @@ zend_string * ion_stream_get_name_remote(zend_object * stream_obj) {
 }
 
 zend_string * ion_stream_describe(zend_object * stream_object) {
-    ion_stream  * stream = get_object_instance(stream_object, ion_stream);
+    ion_stream * stream = get_object_instance(stream_object, ion_stream);
     zend_string * describe = NULL;
     zend_string * address_remote;
     zend_string * address_local;
+
     if(stream->buffer == NULL) {
         return zend_string_init(STRARGS("Stream(empty)"), 0);
+    }
+    if (stream->state & ION_STREAM_RESERVED) {
+        switch(bufferevent_getfd(stream->buffer)) {
+            case STDIN_FILENO:
+                return zend_string_init(STRARGS("Stream(stdin)"), 0);
+            case STDOUT_FILENO:
+                return zend_string_init(STRARGS("Stream(stdout)"), 0);
+            case STDERR_FILENO:
+                return zend_string_init(STRARGS("Stream(stderr)"), 0);
+            default:
+                ZEND_ASSERT(0);
+        }
     }
     if(stream->state & ION_STREAM_STATE_SOCKET) {
         if(ion_stream_is_valid_fd(stream)) {
@@ -409,7 +422,7 @@ zend_object * ion_stream_new_ex(ion_buffer * buffer, int flags, zend_class_entry
     }
     object_init_ex(&zstream, cls);
     stream = get_instance(&zstream, ion_stream);
-
+    stream->id = GION(stream_index)++;
     stream->buffer = buffer;
     stream->state |= flags;
     if(flags & ION_STREAM_FROM_PEER) {
@@ -502,6 +515,11 @@ zend_string * ion_stream_read_token(ion_stream * stream, ion_stream_token * toke
 
 int ion_stream_close_fd(ion_stream * stream) {
     evutil_socket_t socket;
+
+    if(stream->state & ION_STREAM_RESERVED) {
+        return SUCCESS;
+    }
+
     bufferevent_disable(stream->buffer, EV_READ | EV_WRITE);
 
     stream->state |= ION_STREAM_STATE_SHUTDOWN;
@@ -537,7 +555,6 @@ CLASS_METHOD(ION_Stream, resource) {
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_ZVAL(zfd)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
-//    PARSE_ARGS("r", &zfd);
 
     php_stream * stream_resource;
     php_stream_from_zval_no_verify(stream_resource, zfd);
@@ -549,23 +566,40 @@ CLASS_METHOD(ION_Stream, resource) {
             return;
         }
     }
+    if(fd >= 0 && fd <= 2) { // stdin, stdout, stderr
+        switch(fd) {
+            case 0:
+                stream = GION(input);
+                break;
+            case 1:
+                stream = GION(output);
+                break;
+            case 2:
+                stream = GION(error);
+                break;
+            default:
+                ZEND_ASSERT(0);
+        }
+        zend_object_addref(stream);
+    } else {
+        fd2 = dup(fd);
+        if (fd2 == -1) {
+            zend_throw_exception_ex(ion_ce_ION_StreamException, errno, "Failed to duplicate fd: %s", strerror(errno));
+            return;
+        }
 
-    fd2 = dup(fd);
-    if (fd2 == -1) {
-        zend_throw_exception_ex(ion_ce_ION_StreamException, errno, "Failed to duplicate fd: %s", strerror(errno));
-        return;
+        buffer = bufferevent_socket_new(GION(base), fd2, flags);
+        if(NULL == buffer) {
+            zend_throw_exception(ion_ce_ION_StreamException, "Failed to create Stream: buffer corrupted", 0);
+            return;
+        }
+        stream = ion_stream_new_ex(buffer, state | ION_STREAM_STATE_ENABLED, zend_get_called_scope(execute_data));
+        if(!stream) {
+            // todo check EG(exception)
+            return;
+        }
     }
 
-    buffer = bufferevent_socket_new(GION(base), fd2, flags);
-    if(NULL == buffer) {
-        zend_throw_exception(ion_ce_ION_StreamException, "Failed to create Stream: buffer corrupted", 0);
-        return;
-    }
-    stream = ion_stream_new_ex(buffer, state | ION_STREAM_STATE_ENABLED, zend_get_called_scope(execute_data));
-    if(!stream) {
-        // todo check EG(exception)
-        return;
-    }
     RETURN_OBJ(stream);
 }
 
@@ -1657,8 +1691,8 @@ CLASS_METHOD(ION_Stream, getPeerName) {
 
 METHOD_WITHOUT_ARGS(ION_Stream, getPeerName)
 
-/** public function ION\Stream::getName() : string */
-CLASS_METHOD(ION_Stream, getName) {
+/** public function ION\Stream::getLocalName() : string */
+CLASS_METHOD(ION_Stream, getLocalName) {
     ion_stream * stream = get_this_instance(ion_stream);
     zend_string * local_name;
     if(stream->buffer == NULL) {
@@ -1682,7 +1716,15 @@ CLASS_METHOD(ION_Stream, getName) {
     }
 }
 
-METHOD_WITHOUT_ARGS(ION_Stream, getName)
+METHOD_WITHOUT_ARGS(ION_Stream, getLocalName)
+
+/** public function ION\Stream::getID() : int */
+CLASS_METHOD(ION_Stream, getID) {
+    ion_stream * stream = get_this_instance(ion_stream);
+    RETURN_LONG(bufferevent_getfd(stream->buffer));
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, getID)
 
 /** public function ION\Stream::hasError() : string */
 CLASS_METHOD(ION_Stream, hasError) {
@@ -1839,7 +1881,8 @@ CLASS_METHODS_START(ION_Stream)
     METHOD(ION_Stream, search,             ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, getSize,            ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, getPeerName,        ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, getName,            ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getLocalName,       ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, getID,              ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, getError,           ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, __debugInfo,        ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, getType,            ZEND_ACC_PUBLIC)
@@ -1902,19 +1945,44 @@ PHP_MINIT_FUNCTION(ION_Stream) {
 
     PION_REGISTER_VOID_EXTENDED_CLASS(ION_StreamException, ion_ce_ION_RuntimeException, "ION\\StreamException");
 
-//    pion_cb * stream_input   = pion_cb_fetch_method("ION\\Stream", "_input");
-//    pion_cb * stream_output  = pion_cb_fetch_method("ION\\Stream", "_output");
-//    pion_cb * stream_eof     = pion_cb_fetch_method("ION\\Stream", "_eof");
-//    pion_cb * stream_error   = pion_cb_fetch_method("ION\\Stream", "_error");
-//    pion_cb * stream_connect = pion_cb_fetch_method("ION\\Stream", "_connect");
+    return SUCCESS;
+}
+
+PHP_RINIT_FUNCTION(ION_Stream) {
+    ion_buffer * buffer = NULL;
+
+    buffer = bufferevent_socket_new(GION(base), STDIN_FILENO, STREAM_BUFFER_DEFAULT_FLAGS);
+    GION(input) = ion_stream_new_ex(buffer, ION_STREAM_STATE_CONNECTED | ION_STREAM_RESERVED, ion_ce_ION_Stream);
+
+    buffer = bufferevent_socket_new(GION(base), STDOUT_FILENO, STREAM_BUFFER_DEFAULT_FLAGS);
+    GION(output) = ion_stream_new_ex(buffer, ION_STREAM_STATE_CONNECTED | ION_STREAM_RESERVED, ion_ce_ION_Stream);
+
+    buffer = bufferevent_socket_new(GION(base), STDERR_FILENO, STREAM_BUFFER_DEFAULT_FLAGS);
+    GION(error) = ion_stream_new_ex(buffer, ION_STREAM_STATE_CONNECTED | ION_STREAM_RESERVED, ion_ce_ION_Stream);
+
+    stream_input   = pion_cb_fetch_method("ION\\Stream", "_input");
+    stream_output  = pion_cb_fetch_method("ION\\Stream", "_output");
+    stream_eof     = pion_cb_fetch_method("ION\\Stream", "_eof");
+    stream_error   = pion_cb_fetch_method("ION\\Stream", "_error");
+    stream_connect = pion_cb_fetch_method("ION\\Stream", "_connect");
+
+    return SUCCESS;
+}
+
+PHP_RSHUTDOWN_FUNCTION(ION_Stream) {
+    zend_object_release(GION(input));
+    zend_object_release(GION(output));
+    zend_object_release(GION(error));
+
+    pion_cb_free(stream_input);
+    pion_cb_free(stream_output);
+    pion_cb_free(stream_eof);
+    pion_cb_free(stream_error);
+    pion_cb_free(stream_connect);
+
     return SUCCESS;
 }
 
 PHP_MSHUTDOWN_FUNCTION(ION_Stream) {
-//    pion_cb_free(stream_input);
-//    pion_cb_free(stream_output);
-//    pion_cb_free(stream_eof);
-//    pion_cb_free(stream_error);
-//    pion_cb_free(stream_connect);
     return SUCCESS;
 }

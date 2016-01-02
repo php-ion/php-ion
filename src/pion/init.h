@@ -34,6 +34,7 @@ typedef struct evdns_base     ion_evdns_base;
 typedef struct timeval        ion_time;
 typedef struct ev_token_bucket_cfg          ion_rate_limit_cfg;
 typedef struct bufferevent_rate_limit_group ion_rate_limit;
+typedef struct skiplist       ion_skiplist;
 
 #ifndef zend_uint
 # define zend_uint uint32_t
@@ -71,6 +72,12 @@ ZEND_BEGIN_MODULE_GLOBALS(ion)
     ion_event_config * config;  // event config
     uint               flags;
     HashTable        * timers;  // array of timers
+
+    // Stream
+    zend_ulong    stream_index;
+    zend_object * input;
+    zend_object * output;
+    zend_object * error;
 
     // DNS
     ion_evdns_base * evdns;      // event dns base

@@ -28,7 +28,7 @@ class StreamTest extends TestCase {
     public function testCreateFromResource() {
         $stream = Stream::resource(STDIN);
         $this->assertInstanceOf('ION\Stream', $stream);
-	    $this->assertEquals('socket', $stream->getType());
+	    $this->assertEquals('stream', $stream->getType());
 
     }
 
@@ -512,7 +512,7 @@ class StreamTest extends TestCase {
         $listener = $this->listener(ION_TEST_SERVER_IPV4, function (Stream $connect) {
             $connect->write("1234");
             $this->data["server.remote"] = $connect->getPeerName();
-            $this->data["server.local"] = $connect->getName();
+            $this->data["server.local"] = $connect->getLocalName();
             yield $connect->flush();
             $connect->shutdown();
         });
@@ -521,7 +521,7 @@ class StreamTest extends TestCase {
             $this->data["client.remote.before"] = $socket->getPeerName();
             yield $socket->connect();
             $this->data["client.remote.after"] = $socket->getPeerName();
-            $this->data["client.local"] = $socket->getName();
+            $this->data["client.local"] = $socket->getLocalName();
             yield ION::await(0.1);
         });
 
@@ -547,7 +547,7 @@ class StreamTest extends TestCase {
             $socket->connect();
             $socket->closed();
             $socket->incoming()->then(function () {});
-            $socket->getName();
+            $socket->getLocalName();
             $socket->getPeerName();
             unset($socket);
             yield ION::await(0.1);

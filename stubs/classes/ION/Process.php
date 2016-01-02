@@ -8,6 +8,9 @@ use ION\Process\ExecResult;
 use ION\Process\Message;
 
 class Process {
+	public static function stdin() : Stream {}
+	public static function stdout() : Stream {}
+	public static function stderr() : Stream {}
 	/**
 	 * Create a child process and restore event loop.
 	 *

@@ -9,7 +9,7 @@ git clone https://github.com/php-ion/php-ion.git
 cd php-ion
 curl -sS https://getcomposer.org/installer | php
 ./composer.phar install
-bin/build.php -pmiIct --use-gdb
+bin/ionizer.php -pmiIct --use-gdb
 ```
 
 If segfault occurred or tests failed:

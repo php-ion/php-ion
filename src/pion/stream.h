@@ -48,6 +48,7 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Stream_StorageException;
 #define ION_STREAM_ENCRYPTED       (1<<17)
 #define ION_STREAM_HAS_UNDERLYING  (1<<18)
 #define ION_STREAM_SUSPENDED       (1<<19)
+#define ION_STREAM_RESERVED        (1<<20)
 
 // ** state flags end **
 
@@ -77,7 +78,7 @@ typedef struct _ion_stream_storage {
     zend_long   total_written;
     zend_long   total_resumed;
 
-    struct skiplist  * heap;
+    ion_skiplist  * queue;
 
     zend_long            max_conns;
     zend_uint            ping_interval;
@@ -124,6 +125,7 @@ typedef struct _ion_stream_token {
 
 typedef struct _ion_stream {
     zend_object        std;
+    zend_ulong         id;
     zend_uint          state;   // flags
     ion_buffer       * buffer;  // input/output buffer
     size_t             length;  // bytes for reading
@@ -219,12 +221,13 @@ int    ion_stream_close_fd(ion_stream * stream TSRMLS_DC);
 #define ion_stream_set_input_size(stream, size) bufferevent_setwatermark(stream->buffer, EV_READ, 0, size)
 #define ion_stream_set_priority(stream, priority) bufferevent_priority_set(stream->buffer, (int)priority)
 #define ion_stream_set_group(stream, group) bufferevent_add_to_rate_limit_group(stream->buffer, group)
+#define ion_stream_storage(stream) get_object_instance(get_object_instance(stream, ion_stream)->storage, ion_storage)
 #define ion_stream_suspend(stream) stream->state |= ION_STREAM_SUSPENDED
 #define ion_stream_resume(stream) stream->state &= ~ION_STREAM_SUSPENDED
 
 
 ION_API void ion_listener_enable(zend_object * listener_obj, zend_bool state);
 ION_API zend_bool ion_listener_default_handler(zend_object * listener, zend_object * connect);
-#define ion_listener_set_storage(listener, strg) get_object_instance(listener)->storage = strg
+#define ion_listener_set_storage(listener, strg) get_object_instance(listener, ion_listener)->storage = strg
 
 #endif //PION_STREAM_H

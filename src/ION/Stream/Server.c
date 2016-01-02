@@ -13,7 +13,7 @@ CLASS_METHOD(ION_Stream_Server, listen) {
     ZEND_PARSE_PARAMETERS_START(1, 2)
         Z_PARAM_STR(host)
         Z_PARAM_OPTIONAL
-        Z_PARAM_STR(backlog)
+        Z_PARAM_LONG(backlog)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     // TODO

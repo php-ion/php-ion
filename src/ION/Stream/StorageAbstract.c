@@ -7,6 +7,16 @@ zend_class_entry * ion_ce_ION_Stream_StorageAbstract;
 zend_object_handlers ion_oh_ION_Net_Socket_StorageException;
 zend_class_entry * ion_ce_ION_Net_Socket_StorageException;
 
+static int ion_skiplist_cmp(void * keyA, void * keyB) {
+    if(keyA < keyB) {
+        return -1;
+    } else if (keyA > keyB) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 static void ion_storage_incoming_handler(zend_object * connect) {
     ion_stream   * stream = get_object_instance(connect, ion_stream);
     ion_storage  * server = get_object_instance(stream->storage, ion_storage);
@@ -71,6 +81,8 @@ zend_object * ion_storage_init(zend_class_entry * ce) {
     server->close_handler     = ion_storage_close_handler;
     server->timeout_handler   = ion_storage_timeout_handler;
     server->ping_handler      = ion_storage_ping_handler;
+
+    server->queue = skiplist_new(ion_skiplist_cmp);
     RETURN_INSTANCE(ION_Stream_StorageAbstract, server);
 }
 
@@ -100,8 +112,59 @@ void ion_storage_free(zend_object * object) {
     }
 }
 
+void ion_storage_dequeue(ion_stream * stream) {
+    ion_storage * storage = ion_stream_storage(stream);
+    if(stream->bucket) {
+        zend_hash_index_del(stream->bucket->streams, stream->id);
+        if(zend_hash_num_elements(stream->bucket->streams) == 0) {
+            zend_hash_clean(stream->bucket->streams);
+            zend_hash_destroy(stream->bucket->streams);
+            FREE_HASHTABLE(stream->bucket->streams);
+            skiplist_delete(storage->queue, (void *)stream->bucket->bucket_id);
+            efree(stream->bucket);
+        }
+        stream->bucket = NULL;
+    }
+}
 
-/** public function ION\Server::setMaxPoolSize(int $max) : self  */
+void ion_storage_enqueue(ion_stream * stream, zend_long timestamp) {
+    ion_storage * storage = ion_stream_storage(stream);
+    ion_storage_stream_bucket * bucket = skiplist_get(storage->queue, (void *)timestamp);
+    if(bucket) {
+        if(stream->bucket) {
+            if(stream->bucket->bucket_id == timestamp) {
+                return;
+            }
+            ion_storage_dequeue(stream);
+        }
+    } else {
+        bucket = ecalloc(1, sizeof(ion_storage_stream_bucket));
+        bucket->bucket_id = timestamp;
+        ALLOC_HASHTABLE(bucket->streams);
+        zend_hash_init(bucket->streams, 128, NULL, NULL, 0);
+        skiplist_add(storage->queue, (void *)timestamp, bucket);
+    }
+    zend_hash_index_add_ptr(bucket->streams, stream->id, &stream->std);
+}
+
+ion_storage_stream_bucket * ion_storage_queue_top(ion_storage * storage, zend_object * sequence) {
+    zend_long       current = (zend_long)time(NULL);
+    zend_long       timestamp = 0;
+    zval          * zstream = NULL;
+    ion_storage_stream_bucket * bucket = NULL;
+    if(skiplist_first(storage->queue, (void **)&timestamp, (void **)&bucket) == SUCCESS) {
+        if(current > timestamp) {
+            ZEND_HASH_FOREACH_VAL(bucket->streams, zstream) {
+                get_object_instance(Z_OBJ_P(zstream), ion_stream)->bucket = NULL;
+                ion_promisor_sequence_invoke(sequence, zstream);
+            } ZEND_HASH_FOREACH_END();
+        }
+    }
+    return NULL;
+}
+
+
+/** public function ION\Stream\StorageAbstract::setMaxPoolSize(int $max) : self  */
 CLASS_METHOD(ION_Stream_StorageAbstract, setMaxPoolSize) {
     zend_long max = -1;
     ion_storage * server = get_this_instance(ion_storage);

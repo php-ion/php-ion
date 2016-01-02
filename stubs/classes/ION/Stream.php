@@ -129,9 +129,9 @@ class Stream {
 
 	/**
 	 * Unique stream name
-	 * @return string
+	 * @return int
 	 */
-    public function getName() : string {}
+    public function getID() : int {}
 
     /**
      * Search for a string within an incoming buffer
@@ -155,13 +155,13 @@ class Stream {
      * Get N bytes
      *
      * @param int $bytes
-     * @return string
+     * @return string|false
      */
     public function get(int $bytes) : string {}
 
     /**
      * Reads remainder of a stream into a string
-     * @return string
+     * @return string|false
      */
     public function getAll() : string {}
 
@@ -171,14 +171,14 @@ class Stream {
      * @param int $flag
      * @param int $max_length
      *
-     * @return string
+     * @return string|false
      */
     public function getLine(string $token, int $flag = self::MODE_TRIM_TOKEN, int $max_length = 0) : string {}
 
     /**
      * @param int $count
      *
-     * @return Deferred|string
+     * @return Deferred|string|false
      */
     public function read(int $count = 0) {}
 
@@ -187,14 +187,14 @@ class Stream {
      * @param int $flag
      * @param int $max_length
      *
-     * @return Deferred|string
+     * @return Deferred|string|false
      */
     public function readLine(string $token, int $flag = self::MODE_TRIM_TOKEN, int $max_length = 8192) {}
 
     /**
      * Invoke callback when EOF received and read all data
      *
-     * @return Deferred|string
+     * @return Deferred|string|false
      */
     public function readAll() {}
 
@@ -205,7 +205,7 @@ class Stream {
      * @param string $data
      * @return Stream
      */
-    public function write(string $data) {}
+    public function write(string $data) : self {}
 
     /**
      * Copy data from a file into the output buffer for writing to a socket.
@@ -219,7 +219,7 @@ class Stream {
      *
      * @return self
      */
-    public function sendFile(string $filename, int $offset = 0, int $limit = -1) {}
+    public function sendFile(string $filename, int $offset = 0, int $limit = -1) : self {}
 
     /**
      * Done deferred object when outgoing buffer is empty

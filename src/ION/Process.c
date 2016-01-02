@@ -515,11 +515,39 @@ CLASS_METHOD(ION_Process, exec) {
     }
 }
 
-
 METHOD_ARGS_BEGIN(ION_Process, exec, 1)
     METHOD_ARG(command, 0)
     METHOD_ARG_ARRAY(options, 0, 0)
 METHOD_ARGS_END()
+
+#undef stdin
+#undef stdout
+#undef stderr
+
+
+/** public function ION\Process::stdin() : Stream */
+CLASS_METHOD(ION_Process, stdin) {
+    zend_object_addref(GION(input));
+    RETURN_OBJ(GION(input));
+}
+
+METHOD_WITHOUT_ARGS(ION_Process, stdin);
+
+/** public function ION\Process::stdout() : Stream */
+CLASS_METHOD(ION_Process, stdout) {
+    zend_object_addref(GION(output));
+    RETURN_OBJ(GION(output));
+}
+
+METHOD_WITHOUT_ARGS(ION_Process, stdout);
+
+/** public function ION\Process::stderr() : Stream */
+CLASS_METHOD(ION_Process, stderr) {
+    zend_object_addref(GION(error));
+    RETURN_OBJ(GION(error));
+}
+
+METHOD_WITHOUT_ARGS(ION_Process, stderr);
 
 CLASS_METHODS_START(ION_Process)
     METHOD(ION_Process, fork,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
@@ -533,6 +561,9 @@ CLASS_METHODS_START(ION_Process)
     METHOD(ION_Process, getPriority,  ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, setPriority,  ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, exec,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, stdin,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, stdout,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, stderr,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 CLASS_METHODS_END;
 
 CLASS_METHODS_START(ION_Process_ExecResult)

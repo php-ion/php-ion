@@ -2,7 +2,7 @@ Testing
 =======
 
 ```
-bin/build.php -bit
+bin/ionizer.php -bit
 ```
 or 
 ```
