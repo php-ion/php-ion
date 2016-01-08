@@ -68,12 +68,6 @@ class Promise {
     public function getFlags() : int {}
 
     /**
-     * @param float $sec
-     * @return Promise
-     */
-    public function timeout(float $sec) : Promise {}
-
-    /**
      * @return mixed
      */
     public function getResult() {}

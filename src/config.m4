@@ -138,6 +138,7 @@ if test "$PHP_ION" != "no"; then
     ION/Stream/Storage.c
     ION/Stream/Server.c
     ION/Stream/Client.c
+    ION/URI.c
     "
 
     PHP_NEW_EXTENSION(ion, $ion_src, $ext_shared,, "$CFLAGS -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1 -DSKIPLIST_LOCAL_INCLUDE=\"<../../ion_skiplist_config.h>\" ")

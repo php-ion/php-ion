@@ -17,7 +17,14 @@ class Deferred extends ResolvablePromise {
 	 * Cancel deferred object
 	 * @param string $reason
 	 */
-	public function cancel($reason) {}
+	public function cancel($reason) : self {}
+
+
+	/**
+	 * @param float $sec
+	 * @return Promise
+	 */
+	public function timeout(float $sec) : self {}
 
 
     public function __clone() {}

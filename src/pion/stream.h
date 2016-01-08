@@ -230,4 +230,11 @@ ION_API void ion_listener_enable(zend_object * listener_obj, zend_bool state);
 ION_API zend_bool ion_listener_default_handler(zend_object * listener, zend_object * connect);
 #define ion_listener_set_storage(listener, strg) get_object_instance(listener, ion_listener)->storage = strg
 
+
+void ion_storage_add_stream(zend_object * storage_object, zend_object * stream_object);
+void ion_storage_remove_stream(zend_object * stream_object);
+void ion_storage_dequeue(ion_stream * stream);
+void ion_storage_enqueue(ion_stream * stream, zend_long timestamp);
+ion_storage_stream_bucket * ion_storage_queue_top(ion_storage * storage, zend_object * sequence);
+
 #endif //PION_STREAM_H

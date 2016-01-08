@@ -1782,7 +1782,6 @@ CLASS_METHOD(ION_Stream, appendToInput) {
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_STR(data)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
-//    PARSE_ARGS("s", &data, &data_len);
 
     if(!data->len) {
         RETURN_THIS();

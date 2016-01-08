@@ -17,6 +17,40 @@ static int ion_skiplist_cmp(void * keyA, void * keyB) {
     }
 }
 
+void ion_storage_add_stream(zend_object * storage_object, zend_object * stream_object) {
+    ion_stream  * stream  = get_object_instance(stream_object, ion_stream);
+    ion_storage * storage = get_object_instance(storage_object, ion_storage);
+
+    if(stream->storage) {
+        return;
+    }
+
+    zend_hash_index_add_ptr(storage->conns, stream->id, stream);
+    stream->storage = storage_object;
+    zend_object_addref(stream_object);
+
+    if(storage->input_buffer_size) {
+        ion_stream_set_input_size(stream, storage->input_buffer_size);
+    }
+    if(storage->priority != -1) {
+        ion_stream_set_priority(stream, storage->priority);
+    }
+    if(storage->group) {
+        // TODO
+    }
+}
+
+void ion_storage_remove_stream(zend_object * stream_object) {
+    ion_stream  * stream  = get_object_instance(stream_object, ion_stream);
+    ion_storage * storage = ion_stream_storage(stream_object);
+
+    zend_hash_index_del(storage->conns, stream->id);
+    if(stream->bucket) {
+        ion_storage_dequeue(stream);
+    }
+    zend_object_release(stream_object);
+}
+
 static void ion_storage_incoming_handler(zend_object * connect) {
     ion_stream   * stream = get_object_instance(connect, ion_stream);
     ion_storage  * server = get_object_instance(stream->storage, ion_storage);

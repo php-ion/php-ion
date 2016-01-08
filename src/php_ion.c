@@ -85,6 +85,7 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_Listener);
     STARTUP_MODULE(ION_Stream);
     STARTUP_MODULE(ION_Process);
+    STARTUP_MODULE(ION_URI);
     STARTUP_MODULE(ION_Stream_StorageAbstract);
     STARTUP_MODULE(ION_Stream_Storage);
     STARTUP_MODULE(ION_Stream_Server);

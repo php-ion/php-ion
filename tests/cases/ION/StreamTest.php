@@ -23,7 +23,6 @@ class StreamTest extends TestCase {
 
     /**
      * @memcheck
-     * @group dev
      */
     public function testCreateFromResource() {
         $stream = Stream::resource(STDIN);

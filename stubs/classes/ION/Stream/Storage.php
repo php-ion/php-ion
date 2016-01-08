@@ -3,6 +3,7 @@
 namespace ION\Stream;
 
 
+use ION\Deferred;
 use ION\Stream;
 
 class Storage extends StorageAbstract {
@@ -22,4 +23,11 @@ class Storage extends StorageAbstract {
 	 * @return Storage
 	 */
 	public function removeStream(string $stream_name) : self {}
+
+	/**
+	 * @param string $host
+	 * @return Deferred
+	 */
+	public function fetchStream(string $host) : Deferred {}
+
 }

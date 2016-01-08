@@ -123,7 +123,7 @@ class Stream {
 
 	/**
 	 * Queries the local side of the given socket which may either result in host:port or in a Unix filesystem path, dependent on its type
-	 * @return string|false
+	 * @return string
 	 */
     public function getLocalName() : string {}
 
@@ -131,7 +131,7 @@ class Stream {
 	 * Unique stream name
 	 * @return int
 	 */
-    public function getID() : int {}
+    final public function getName() : int {}
 
     /**
      * Search for a string within an incoming buffer
@@ -171,7 +171,7 @@ class Stream {
      * @param int $flag
      * @param int $max_length
      *
-     * @return string|false
+     * @return string
      */
     public function getLine(string $token, int $flag = self::MODE_TRIM_TOKEN, int $max_length = 0) : string {}
 

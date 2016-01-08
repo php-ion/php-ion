@@ -5,7 +5,7 @@ namespace ION\Stream;
 
 use ION\Listener;
 
-class Server {
+class Server extends StorageAbstract {
 
 	public function listen(string $host, int $backlog = -1) : Listener {}
 

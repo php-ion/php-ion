@@ -37,11 +37,11 @@ set(ION_SOURCE_FILES
         src/pion/engine.c
         src/pion/linkedlist.c
         src/pion/net.c
+        src/pion/promisor.c
         src/pion/stream.c
         src/pion.c
 
         src/ION/Debug.c
-        src/pion/promisor.c
         src/ION/Promise.c
         src/ION/ResolvablePromise.c
         src/ION/Deferred.c
@@ -53,10 +53,15 @@ set(ION_SOURCE_FILES
         src/ION/Process.c
         src/ION/FS.c
         src/ION/Crypto.c
+
         src/ION/Stream/StorageAbstract.c
         src/ION/Stream/Storage.c
         src/ION/Stream/Server.c
-        src/ION/Stream/Client.c)
+        src/ION/Stream/Client.c
+
+        src/ION/HTTP/Message.c
+        src/ION/HTTP.c
+        src/ION/URI.c)
 
 #src/ION/Deferred.c
 #src/ION/Data/SkipList.c

@@ -229,6 +229,17 @@
 
 #define PION_ZPP_THROW return;
 
+#define _ARGUMENT_HINT_MASK  0x1F
+#define ARG_IS_REF           0x20
+#define ARG_ALLOW_NULL       0x40
+#define ARG_IS_VARIADIC      0x80
+#define ARGUMENT(name, flags)  { #name, \
+                                 NULL, \
+                                 flags & _ARGUMENT_HINT_MASK, \
+                                 (flags & ARG_IS_REF) ? 1 : 0, \
+                                 (flags & ARG_ALLOW_NULL) ? 1 : 0, \
+                                 (flags & ARG_IS_VARIADIC) ? 1 : 0 \
+                               },
 #define METHOD_ARG(name, pass_by_ref)             ZEND_ARG_INFO(pass_by_ref, name)
 #define METHOD_ARG_LONG(name, pass_by_ref)        ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_LONG, 0)
 #define METHOD_ARG_STRING(name, pass_by_ref)      ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_STRING, 0)

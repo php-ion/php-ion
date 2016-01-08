@@ -1,5 +1,7 @@
 #include "../../pion.h"
 
+#define ION_STORAGE_RELEASED  (1<<0)
+#define ION_STORAGE_HANDSHAKE (1<<1)
 
 zend_object_handlers ion_oh_ION_Stream_Storage;
 zend_class_entry * ion_ce_ION_Stream_Storage;
@@ -7,13 +9,22 @@ zend_class_entry * ion_ce_ION_Stream_Storage;
 /** public function ION\Stream\Storage::addStream(ION\Stream $stream) : Sequence  */
 CLASS_METHOD(ION_Stream_Storage, addStream) {
     ion_storage * storage = get_this_instance(ion_storage);
-    zval * zstream = NULL;
+    zend_long     flags   = ION_STORAGE_HANDSHAKE;
+    zval        * zstream = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_ZVAL(zstream)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_ZVAL(flags)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    // TODO
+    ion_storage_add_stream(Z_OBJ_P(getThis()), Z_OBJ_P(zstream));
+
+    if((flags & ION_STORAGE_HANDSHAKE) && storage->handshake_handler && storage->handshake) {
+        ion_promisor_sequence_invoke(storage->handshake, zstream);
+    } else if((flags & ION_STORAGE_RELEASED)) {
+
+    }
 }
 
 METHOD_ARGS_BEGIN(ION_Stream_Storage, addStream, 1)
