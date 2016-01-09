@@ -40,7 +40,7 @@ ION PHP Extension :santa:
 
 * Server socket pool
 * Client socket pool
-* HTTP
+* HTTP supported (with chunked-encoding, multiparted, websocket)
 * HTTP server
 * HTTP client
 
