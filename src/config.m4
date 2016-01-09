@@ -113,6 +113,7 @@ if test "$PHP_ION" != "no"; then
     ion_src="php_ion.c
     external/skiplist/skiplist.c
     external/http-parser/http_parser.c
+    external/multipart-parser-c/multipart_parser.c
     pion/debug.c
     pion/exceptions.c
     pion/callback.c

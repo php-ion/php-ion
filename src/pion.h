@@ -12,6 +12,7 @@
 #include "pion/net.h"
 #include "pion/crypto.h"
 #include "pion/stream.h"
+#include "pion/http.h"
 
 //typedef struct event event;
 

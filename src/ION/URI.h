@@ -27,5 +27,6 @@ typedef struct _ion_uri {
 } ion_uri;
 
 extern ION_API zend_string * ion_uri_stringify(zend_object * uri, unsigned short parts);
+extern ION_API zend_object * ion_uri_parse(zend_string * uri_string);
 
 #endif //ION_URI_H

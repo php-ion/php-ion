@@ -15,7 +15,7 @@ CLASS_METHOD(ION_Stream_Storage, addStream) {
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_ZVAL(zstream)
         Z_PARAM_OPTIONAL
-        Z_PARAM_ZVAL(flags)
+        Z_PARAM_LONG(flags)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     ion_storage_add_stream(Z_OBJ_P(getThis()), Z_OBJ_P(zstream));

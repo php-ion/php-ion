@@ -129,6 +129,48 @@ zend_string * ion_uri_stringify(zend_object * uri, unsigned short parts) {
     return buf;
 }
 
+zend_object * ion_uri_parse(zend_string * uri_string) {
+    zend_object * uri_object = NULL;
+    ion_uri     * uri = NULL;
+    php_url     * parsed_url = NULL;
+
+    parsed_url = php_url_parse_ex(uri_string->val, uri_string->len);
+    if(!parsed_url) {
+        zend_throw_exception(ion_ce_InvalidArgumentException, "URI could not be parsed", 0);
+        return NULL;
+    }
+    uri_object = pion_new_object_arg_0(ion_ce_ION_URI);
+    uri = get_object_instance(uri_object, ion_uri);
+    if(parsed_url->scheme) {
+        uri->scheme = zend_string_init(parsed_url->scheme, strlen(parsed_url->scheme), 0);
+    }
+    if(parsed_url->user) {
+        uri->user = zend_string_init(parsed_url->user, strlen(parsed_url->user), 0);
+    }
+    if(parsed_url->pass) {
+        uri->pass = zend_string_init(parsed_url->pass, strlen(parsed_url->pass), 0);
+    }
+    if(parsed_url->user) {
+        uri->host = zend_string_init(parsed_url->host, strlen(parsed_url->host), 0);
+    }
+    if(parsed_url->port) {
+        uri->port = parsed_url->port;
+    }
+    if(parsed_url->path) {
+        uri->path = zend_string_init(parsed_url->path, strlen(parsed_url->path), 0);
+    }
+    if(parsed_url->query) {
+        uri->query = zend_string_init(parsed_url->query, strlen(parsed_url->query), 0);
+    }
+    if(parsed_url->fragment) {
+        uri->fragment = zend_string_init(parsed_url->fragment, strlen(parsed_url->fragment), 0);
+    }
+
+    php_url_free(parsed_url);
+
+    return uri_object;
+}
+
 zend_object * ion_uri_clone(zend_object * proto_obj) {
     ion_uri * proto = get_object_instance(proto_obj, ion_uri);
     ion_uri * clone = ecalloc(1, sizeof(ion_uri));
@@ -173,45 +215,16 @@ zend_object * ion_uri_clone_handler(zval * object) {
 
 CLASS_METHOD(ION_URI, parse) {
     zend_object * uri_object = NULL;
-    ion_uri     * uri = NULL;
-    php_url     * parsed_url = NULL;
     zend_string * uri_string = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_STR(uri_string)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    parsed_url = php_url_parse_ex(uri_string->val, uri_string->len);
-    uri_object = pion_new_object_arg_0(ion_ce_ION_URI);
-    uri = get_object_instance(uri_object, ion_uri);
-    if(parsed_url->scheme) {
-        uri->scheme = zend_string_init(parsed_url->scheme, strlen(parsed_url->scheme), 0);
+    uri_object = ion_uri_parse(uri_string);
+    if(uri_object) {
+        RETURN_OBJ(uri_object);
     }
-    if(parsed_url->user) {
-        uri->user = zend_string_init(parsed_url->user, strlen(parsed_url->user), 0);
-    }
-    if(parsed_url->pass) {
-        uri->pass = zend_string_init(parsed_url->pass, strlen(parsed_url->pass), 0);
-    }
-    if(parsed_url->user) {
-        uri->host = zend_string_init(parsed_url->host, strlen(parsed_url->host), 0);
-    }
-    if(parsed_url->port) {
-        uri->port = parsed_url->port;
-    }
-    if(parsed_url->path) {
-        uri->path = zend_string_init(parsed_url->path, strlen(parsed_url->path), 0);
-    }
-    if(parsed_url->query) {
-        uri->query = zend_string_init(parsed_url->query, strlen(parsed_url->query), 0);
-    }
-    if(parsed_url->fragment) {
-        uri->fragment = zend_string_init(parsed_url->fragment, strlen(parsed_url->fragment), 0);
-    }
-
-    php_url_free(parsed_url);
-
-    RETURN_OBJ(uri_object);
 }
 
 METHOD_ARGS_BEGIN(ION_URI, parse, 1)

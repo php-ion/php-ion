@@ -27,6 +27,7 @@ set(ION_SOURCE_FILES
         src/ion_skiplist_config.h
         src/external/skiplist/skiplist.c
         src/external/http-parser/http_parser.c
+        src/external/multipart-parser-c/multipart_parser.c
         src/php_ion.c
         src/pion/init.h
         src/pion/zts.h
@@ -39,6 +40,7 @@ set(ION_SOURCE_FILES
         src/pion/net.c
         src/pion/promisor.c
         src/pion/stream.c
+        src/pion/http.c
         src/pion.c
 
         src/ION/Debug.c

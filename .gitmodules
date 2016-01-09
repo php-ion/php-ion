@@ -4,3 +4,6 @@
 [submodule "src/external/skiplist"]
 	path = src/external/skiplist
 	url = https://github.com/silentbicycle/skiplist.git
+[submodule "src/external/multipart-parser-c"]
+	path = src/external/multipart-parser-c
+	url = https://github.com/iafonov/multipart-parser-c.git

@@ -63,11 +63,8 @@ class Request extends Message {
 	/**
 	 * Retrieves the URI instance.
 	 *
-	 * This method MUST return a UriInterface instance.
-	 *
 	 * @link http://tools.ietf.org/html/rfc3986#section-4.3
-	 * @return Uri Returns a UriInterface instance
-	 *     representing the URI of the request.
+	 * @return URI
 	 */
 	public function getUri() : URI {}
 	/**

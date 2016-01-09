@@ -26,6 +26,8 @@ namespace ION;
 
 class URI {
 	public static function parse(string $uri) : self {}
+
+	public function relative() : self {}
 	/**
 	 * Retrieve the scheme component of the URI.
 	 *
@@ -97,6 +99,16 @@ class URI {
 	public function getHost() : string {}
 
 	/**
+	 * Retrieve host and port components of the URI for opening connection.
+	 *
+	 * <pre>
+	 * host:port
+	 * </pre>
+	 *
+	 * @return string
+	 */
+	public function getNetHost() : string {}
+	/**
 	 * Retrieve the port component of the URI.
 	 *
 	 * If a port is present, and it is non-standard for the current scheme,
@@ -112,6 +124,10 @@ class URI {
 	 * @return null|int The URI port.
 	 */
 	public function getPort() {}
+
+	/**
+	 * @return bool
+	 */
 	public function hasPort() : bool {}
 
 	/**
