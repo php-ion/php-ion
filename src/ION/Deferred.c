@@ -54,7 +54,7 @@ CLASS_METHODS_START(ION_Deferred)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Deferred) {
-    pion_register_extended_class(ION_Deferred, ion_class_entry(ION_ResolvablePromise), "ION\\Deferred", ion_deferred_init, CLASS_METHODS(ION_Deferred));
+    pion_register_extended_class(ION_Deferred, ion_ce_ION_ResolvablePromise, "ION\\Deferred", ion_deferred_init, CLASS_METHODS(ION_Deferred));
     pion_init_std_object_handlers(ION_Deferred);
     pion_set_object_handler(ION_Deferred, free_obj, ion_promisor_free);
     pion_set_object_handler(ION_Deferred, clone_obj, ion_promisor_clone_obj);

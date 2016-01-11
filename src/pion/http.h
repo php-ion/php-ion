@@ -16,8 +16,7 @@ extern ION_API zend_class_entry * ion_ce_ION_HTTP_MultiParted_Part;
 extern ION_API zend_class_entry * ion_ce_ION_HTTP_WebSocket;
 extern ION_API zend_class_entry * ion_ce_ION_HTTP_WebSocket_Frame;
 
-#define ION_HTTP_MSG_REQUEST 1
-#define ION_HTTP_MSG_RESPOSE 2
+#define ION_HTTP_VERSION_DEFAULT "1.1"
 
 typedef struct _ion_http_message {
     zend_object   std;
@@ -36,6 +35,11 @@ typedef struct _ion_http_multi_parted_parser {
     multipart_parser * parser;
 } ion_http_mp_parser;
 
+zend_object * ion_http_message_init(zend_class_entry * ce);
+void ion_http_message_free(zend_object * zo_message);
+
+
+extern ION_API const char * pion_http_reason(uint16_t response_code);
 
 extern ION_API zend_object * pion_http_parse_request(zend_string * request_string);
 extern ION_API zend_object * pion_http_parse_respose(zend_string * response_string);

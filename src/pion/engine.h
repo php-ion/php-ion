@@ -154,6 +154,8 @@
     spl_register_sub_class(&ion_ce_ ## class, parent_class, class_name, NULL, NULL); \
     memcpy(&ion_oh_ ## class, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 
+#define PION_CLASS_CONST_ZVAL(class, const_name, value) \
+    zend_declare_class_constant(ion_ce_ ## class, const_name, sizeof(const_name)-1, value);
 
 #define PION_CLASS_CONST_LONG(class, const_name, value) \
     zend_declare_class_constant_long(ion_ce_ ## class, const_name, sizeof(const_name)-1, (long)value);

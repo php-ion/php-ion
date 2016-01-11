@@ -25,9 +25,9 @@ class Message {
 	 * new protocol version.
 	 *
 	 * @param string $version HTTP protocol version
-	 * @return self
+	 * @return Message
 	 */
-	public function withProtocolVersion(string $version) : self {}
+	public function withProtocolVersion(string $version) : static {}
 
 	/**
 	 * Retrieves all message header values.
@@ -114,7 +114,7 @@ class Message {
 	 * @return self
 	 * @throws \InvalidArgumentException for invalid header names or values.
 	 */
-	public function withHeader(string $name, $value) : self {}
+	public function withHeader(string $name, $value) : static {}
 
 	/**
 	 * Return an instance with the specified header appended with the given value.
@@ -128,7 +128,7 @@ class Message {
 	 * @return self
 	 * @throws \InvalidArgumentException for invalid header names or values.
 	 */
-	public function withAddedHeader(string $name, $value) : self {}
+	public function withAddedHeader(string $name, $value) : static {}
 
 	/**
 	 * Return an instance without the specified header.
@@ -142,7 +142,7 @@ class Message {
 	 * @param string $name Case-insensitive header field name to remove.
 	 * @return self
 	 */
-	public function withoutHeader(string $name) : self {}
+	public function withoutHeader(string $name) : static {}
 
 	/**
 	 * Gets the body of the message.

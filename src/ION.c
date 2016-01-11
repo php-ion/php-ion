@@ -281,7 +281,12 @@ CLASS_METHODS_START(ION)
     METHOD(ION, promise,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 CLASS_METHODS_END;
 
+ZEND_INI_BEGIN()
+    STD_PHP_INI_BOOLEAN("ion.consts.metrics", "On", PHP_INI_SYSTEM, OnUpdateBool, define_metrics, zend_ion_globals, ion_globals)
+ZEND_INI_END()
+
 PHP_MINIT_FUNCTION(ION) {
+    REGISTER_INI_ENTRIES();
     PION_REGISTER_STATIC_CLASS(ION, "ION");
     PION_CLASS_CONST_STRING(ION, "VERSION",        ION_VERSION);
     PION_CLASS_CONST_STRING(ION, "ENGINE",         ION_EVENT_ENGINE);
@@ -321,5 +326,6 @@ PHP_RSHUTDOWN_FUNCTION(ION) {
     zend_hash_clean(GION(timers));
     zend_hash_destroy(GION(timers));
     FREE_HASHTABLE(GION(timers));
+    UNREGISTER_INI_ENTRIES();
     return SUCCESS;
 }

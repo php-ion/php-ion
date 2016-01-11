@@ -25,9 +25,13 @@ namespace ION;
  */
 
 class URI {
-	public static function parse(string $uri) : self {}
+	/**
+	 * @param string $uri
+	 * @return URI
+	 */
+	public static function parse(string $uri) : static {}
 
-	public function relative() : self {}
+	public function relative() : static {}
 	/**
 	 * Retrieve the scheme component of the URI.
 	 *

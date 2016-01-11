@@ -6,6 +6,18 @@ namespace ION\HTTP;
 use ION\URI;
 
 class Request extends Message {
+
+	/**
+	 * @param string $request
+	 * @return Request
+	 */
+	public static function parse(string $request) : self {}
+
+	/**
+	 * @param array $options
+	 * @return Request
+	 */
+	public static function factory(array $options = []) : self {}
 	/**
 	 * Retrieves the message's request target.
 	 *
@@ -98,4 +110,6 @@ class Request extends Message {
 	 * @return self
 	 */
 	public function withUri(URI $uri, $preserveHost = false) : self {}
+
+
 }
