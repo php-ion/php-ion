@@ -8,9 +8,9 @@ use ION\Stream;
 
 class WebSocket {
 
-	public function __construct(Stream $connect) {}
+    public function __construct(Stream $connect) { }
 
-	public function frame() : Sequence {}
+    public function frame() : Sequence { }
 
-	public function sendFrame() : self {}
+    public function sendFrame() : self { }
 }

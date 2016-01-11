@@ -3,4 +3,5 @@
 namespace ION;
 
 
-class StreamException extends RuntimeException {}
+class StreamException extends RuntimeException {
+}

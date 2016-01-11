@@ -13,53 +13,55 @@ class Listener {
      * Listens for a connection on a socket
      *
      * @param string $listen socket name HOST:PORT or unix domain socket
-     * @param int $backlog Set the maximum number of pending connections that the network stack should allow to wait in a not-yet-accepted
-     * state at any time; see documentation for your system’s listen() function for more details.
-     * If backlog is negative, Libevent tries to pick a good value for the backlog.
+     * @param int $backlog   Set the maximum number of pending connections that the network stack should allow to wait
+     *                       in a not-yet-accepted state at any time; see documentation for your system’s listen()
+     *                       function for more details. If backlog is negative, Libevent tries to pick a good value for
+     *                       the backlog.
      */
-	public function __construct(string $listen, int $backlog = -1) {}
+    public function __construct(string $listen, int $backlog = -1) { }
 
     /**
      * @param Crypto $ssl
+     *
      * @return Listener
      */
-    public function encrypt(Crypto $ssl) : self {}
+    public function encrypt(Crypto $ssl) : self { }
 
     /**
      * When a new connection is received, the sequence is invoked with new connection.
      *
      * @return Sequence
      */
-	public function accept() : Sequence {}
+    public function accept() : Sequence { }
 
     /**
      * Reenable listener for new connections.
      *
      * @return self
      */
-	public function enable() : self {}
+    public function enable() : self { }
 
     /**
      * Temporarily disable listener for new connections.
      *
      * @return self
      */
-	public function disable() : self {}
+    public function disable() : self { }
 
     /**
      * @return self
      */
-	public function shutdown() : self {}
+    public function shutdown() : self { }
 
     /**
      *
      */
-    public function getName() : string {}
+    public function getName() : string { }
 
-	/**
-	 * @return string
-	 */
-	public function __toString() : string {}
+    /**
+     * @return string
+     */
+    public function __toString() : string { }
 
-	public function __destruct() {}
+    public function __destruct() { }
 }

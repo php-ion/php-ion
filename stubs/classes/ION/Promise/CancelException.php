@@ -3,4 +3,5 @@
 namespace ION\Promise;
 
 
-class CancelException extends \Exception {}
+class CancelException extends \Exception {
+}

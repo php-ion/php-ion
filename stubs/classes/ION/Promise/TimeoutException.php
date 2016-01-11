@@ -3,4 +3,5 @@
 namespace ION\Promise;
 
 
-class TimeoutException extends CancelException {}
+class TimeoutException extends CancelException {
+}

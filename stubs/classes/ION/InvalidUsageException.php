@@ -3,4 +3,5 @@
 namespace ION;
 
 
-class InvalidUsageException extends \LogicException {}
+class InvalidUsageException extends \LogicException {
+}

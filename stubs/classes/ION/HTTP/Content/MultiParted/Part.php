@@ -9,7 +9,7 @@ use ION\Stream;
 
 class Part extends Message {
 
-	public function __construct(Stream $connect) {}
+    public function __construct(Stream $connect) { }
 
-	public function readContent(int $max_size = 0) : Deferred {}
+    public function readContent(int $max_size = 0) : Deferred { }
 }

@@ -8,10 +8,10 @@ use ION\Stream;
 
 class Chunked {
 
-	public function __construct(Stream $connect) {}
+    public function __construct(Stream $connect) { }
 
-	public function readChunk(int $max_size = 0) : Deferred {}
+    public function readChunk(int $max_size = 0) : Deferred { }
 
-	public function writeChunk(string $data) : self {}
+    public function writeChunk(string $data) : self { }
 
 }
