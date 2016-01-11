@@ -21,7 +21,7 @@ ION::promise(function () {
 	echo "Headers: \n\n";
 	var_dump($response->getHeaders());
 	echo "Content: \n\n";
-	var_dump(yield $response->getBody());
+	var_dump(yield $response->readBody());
 	echo "\n\n";
 });
 

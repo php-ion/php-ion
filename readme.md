@@ -155,7 +155,7 @@ ION\FS::watch('config.php')->then(function () {
 ```php
 App::eventualAction()->then(function () {
     // ...
-    $result = yield ION\FS::watch('config.php'); // allow use sequence as promise
+    $result = yield ION\FS::watch('config.php'); // use sequence as promise (one-shot event)
     // ...
 });
 ```
@@ -263,22 +263,7 @@ $listener->encrypt($crypto);
 // ...
 ```
 
-### Groups
-
-```php
-use ION\Stream;
-use ION\Listener;
-use ION\Stream\Group;
-```
-
-```php
-$group = new Group();
-$group->setRateLimit(/* ... */);
-// ...
-$stream->setGroup($group);
-```
-
-### Streams storages
+### Streams storage
 
 #### Server
 
@@ -293,14 +278,14 @@ $server  = new Server();
 $server->listen("0.0.0.0:8080");
 $server->listen("0.0.0.0:8443")->encrypt($ssl);
 $server->setIdleTimeout(30);
-$server->setMaxConnections(1000);
+$server->setMaxPoolSize(1000);
 $server->accept()->then(function (Stream $connect) {
     // ...
 }) // ...
 
 // ...
 
-$stream = $server->getConnection("127.0.0.1:43762");
+$stream = $server->getStream("127.0.0.1:43762");
 ```
 
 #### Client
@@ -332,6 +317,7 @@ use ION\Deferred;
 
 ```php
 $info = yield DNS::resolve("example.com");
+/* @var array $info */
 // [
 //     'CNAME' => "example.com",
 //     'A'     => ["93.184.216.34"],
@@ -343,6 +329,7 @@ $info = yield DNS::resolve("example.com");
 
 ```php
 $data = yield FS::readFile($filename = "/path/to/file", $offset = 0, $limit = 1000);
+/* @var string $data */
 ```
 
 ### FS events
@@ -383,6 +370,7 @@ use ION\Process;
 
 ```php
 $result = yield Process::exec("vendor/bin/phpunit --tap");
+/* @var ION\Process\ExecResult $result */
 ```
 
 ```php
@@ -392,10 +380,30 @@ $result = yield Process::exec("vendor/bin/phpunit --tap", [
     "group" => "nobody",
     "pid" => &$pid  // get the PID by reference
 ]);
-
+/* @var ION\Process\ExecResult $result */
 var_dump($result->stdout);
 var_dump($result->stderr);
 ```
+
+## HTTP
+
+### HTTP Client
+
+```php
+$request = ION\HTTP\Request::factory()
+    ->withMethod("GET")
+    ->withUri(ION\URI::parse("http://example.com/?iddqd=on"))
+    ->withHeader("user-agent", "ION HTTP Client Example");
+
+$respose = yield ION\HTTP::request($request);
+/* @var ION\HTTP\Response $respose */
+$headers = $response->getHeaders();
+$body = yield $response->readBody();
+```
+
+### HTTP Server
+
+todo
 
 ### IPC
 
