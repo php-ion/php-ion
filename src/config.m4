@@ -120,6 +120,7 @@ if test "$PHP_ION" != "no"; then
     pion/engine.c
     pion/promisor.c
     pion/net.c
+    pion/http.c
     pion.c
 
     ION/Debug.c

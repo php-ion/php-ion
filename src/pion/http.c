@@ -1,19 +1,52 @@
 #include "../pion.h"
 
+int pion_http_message_begin(http_parser * parser) {
+    return 0;
+}
+
+int pion_http_url(http_parser * parser, const char * at, size_t length) {
+    ion_http_message * message = parser->data;
+    return 0;
+}
+
 int pion_http_header_name(http_parser * parser, const char * at, size_t length) {
     ion_http_message * message = parser->data;
-    return 1;
+    return 0;
 }
 
 int pion_http_header_value(http_parser * parser, const char * at, size_t length) {
-    return 1;
+    return 0;
+}
+
+int pion_http_message_complete(http_parser * parser) {
+    ion_http_message * message = parser->data;
+    message->flags |= ION_HTTP_MESSAGE_COMPLATE;
+    return 0;
 }
 
 
-zend_object * pion_http_parse_request(zend_string * request_string) {
-    zend_object      * request = pion_new_object_arg_0(ion_ce_ION_HTTP_Message);
-    ion_http_message * message = get_object_instance(request, ion_http_message);
+zend_object * pion_http_parse_request(zend_string * request_string, zend_class_entry * ce) {
+    zend_object          * request = pion_new_object_arg_0(ce ? ce : ion_ce_ION_HTTP_Request);
+    ion_http_message     * message = get_object_instance(request, ion_http_message);
+    http_parser_settings   settings;
+    size_t                 nparsed;
 
+
+    message->parser = ecalloc(1, sizeof(http_parser));
+    http_parser_init(message->parser, HTTP_REQUEST);
+
+    message->parser->data = message;
+    memset(&settings, 0, sizeof(settings));
+    settings.on_message_complete = pion_http_message_begin;
+    settings.on_url = pion_http_url;
+    settings.on_header_field = pion_http_header_name;
+    settings.on_header_value = pion_http_header_value;
+    settings.on_message_complete = pion_http_message_complete;
+
+    nparsed = http_parser_execute(message->parser, &settings, request_string->val, request_string->len);
+    if(nparsed < request_string->len) {
+        zend_error(E_NOTICE, "has unparsed data");
+    }
     return request;
 }
 

@@ -1,7 +1,6 @@
 #include <php.h>
 #include "../pion.h"
 #include <ext/standard/url.h>
-#include "URI.h"
 
 zend_object_handlers ion_oh_ION_URI;
 zend_class_entry * ion_ce_ION_URI;

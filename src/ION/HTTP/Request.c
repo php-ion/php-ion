@@ -4,6 +4,21 @@
 zend_object_handlers ion_oh_ION_HTTP_Request;
 zend_class_entry * ion_ce_ION_HTTP_Request;
 
+
+CLASS_METHOD(ION_HTTP_Request, parse) {
+    zend_string * request_string = NULL;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_STR(request_string)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    RETURN_OBJ(pion_http_parse_request(request_string, zend_get_called_scope(execute_data)));
+}
+
+METHOD_ARGS_BEGIN(ION_HTTP_Request, parse, 1)
+    METHOD_ARG_STRING(request, 0)
+METHOD_ARGS_END();
+
 /** public function ION\HTTP\Request::getURI() : ION\URI */
 CLASS_METHOD(ION_HTTP_Request, getURI) {
     ion_http_message * message = get_this_instance(ion_http_message);
@@ -14,8 +29,18 @@ CLASS_METHOD(ION_HTTP_Request, getURI) {
 
 METHOD_WITHOUT_ARGS(ION_HTTP_Request, getURI)
 
+/** public function ION\HTTP\Request::__toString() : ION\URI */
+CLASS_METHOD(ION_HTTP_Request, __toString) {
+//    ion_http_message * message = get_this_instance(ion_http_message);
+
+}
+
+METHOD_WITHOUT_ARGS(ION_HTTP_Request, __toString)
+
 CLASS_METHODS_START(ION_HTTP_Request)
-    METHOD(ION_HTTP_Request, getURI,  ZEND_ACC_PUBLIC)
+    METHOD(ION_HTTP_Request, parse,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_HTTP_Request, getURI,      ZEND_ACC_PUBLIC)
+    METHOD(ION_HTTP_Request, __toString,  ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 
 
