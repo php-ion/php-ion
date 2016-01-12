@@ -48,12 +48,9 @@ class Message {
      *         }
      *     }
      *
-     * While header names are not case-sensitive, getHeaders() will preserve the
-     * exact case in which headers were originally specified.
+     * While header names are not case-sensitive, getHeaders() will normalize headers' name
      *
-     * @return array Returns an associative array of the message's headers. Each
-     *     key MUST be a header name, and each value MUST be an array of strings
-     *     for that header.
+     * @return array Returns an associative array of the message's headers.
      */
     public function getHeaders() : array { }
 
@@ -92,10 +89,6 @@ class Message {
      * case-insensitive header name as a string concatenated together using
      * a comma.
      *
-     * NOTE: Not all header values may be appropriately represented using
-     * comma concatenation. For such headers, use getHeader() instead
-     * and supply your own delimiter when concatenating.
-     *
      * If the header does not appear in the message, this method MUST return
      * an empty string.
      *
@@ -103,7 +96,7 @@ class Message {
      *
      * @return string A string of values as provided for the given header
      *    concatenated together using a comma. If the header does not appear in
-     *    the message, this method MUST return an empty string.
+     * the message, this method MUST return an empty string.
      */
     public function getHeaderLine($name) { }
 

@@ -1,4 +1,5 @@
 #include "../../pion.h"
+#include <ext/standard/php_string.h>
 
 zend_object_handlers ion_oh_ION_HTTP_Message;
 zend_class_entry * ion_ce_ION_HTTP_Message;
@@ -121,14 +122,10 @@ METHOD_ARGS_END();
 CLASS_METHOD(ION_HTTP_Message, getHeaderLine) {
     ion_http_message * message = get_this_instance(ion_http_message);
     zend_string      * name = NULL;
-    zend_long          pos = 0;
     zval             * header = NULL;
-    zval             * entry = NULL;
 
-    ZEND_PARSE_PARAMETERS_START(1, 2)
+    ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_STR(name)
-        Z_PARAM_OPTIONAL
-        Z_PARAM_LONG(pos)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     name = zend_string_tolower(name);
@@ -136,8 +133,13 @@ CLASS_METHOD(ION_HTTP_Message, getHeaderLine) {
     zend_string_release(name);
 
     if(header) {
-        entry = zend_hash_index_find(Z_ARR_P(header), (zend_ulong)pos);
-        RETURN_ZVAL(entry, 1, 0);
+        if(CG(one_char_string)[',']) {
+            php_implode(CG(one_char_string)[','], header, return_value);
+        } else {
+            zend_string * delim = zend_string_init(STRARGS(","), 0);
+            php_implode(delim, header, return_value);
+            zend_string_release(delim);
+        }
     } else {
         RETURN_EMPTY_STRING();
     }
@@ -145,7 +147,6 @@ CLASS_METHOD(ION_HTTP_Message, getHeaderLine) {
 
 METHOD_ARGS_BEGIN(ION_HTTP_Message, getHeaderLine, 1)
     METHOD_ARG_STRING(name, 0)
-    METHOD_ARG_LONG(pos, 0)
 METHOD_ARGS_END();
 
 void ion_http_message_store_header_value(zend_array * header, zval * value) {
@@ -254,11 +255,9 @@ METHOD_ARGS_END();
 CLASS_METHOD(ION_HTTP_Message, withoutHeader) {
     ion_http_message * message = get_this_instance(ion_http_message);
     zend_string      * name = NULL;
-    zval             * value = NULL;
 
-    ZEND_PARSE_PARAMETERS_START(2, 2)
+    ZEND_PARSE_PARAMETERS_START(1, 1)
             Z_PARAM_STR(name)
-            Z_PARAM_ZVAL(value)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     name = zend_string_tolower(name);

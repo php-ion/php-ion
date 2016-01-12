@@ -70,4 +70,40 @@ class MessageTest extends TestCase {
             "user-agent" => ["unit test 2", "unit test 3", "unit test 4"]
         ], $message->getHeaders());
     }
+
+    /**
+     * @memcheck
+     */
+    public function testGet() {
+        $message = new Message();
+        $message->withHeader("User-Agent", ["unit test 2", "unit test 3"]);
+        $message->withHeader("X-Tra", "lookup");
+
+        $this->assertEquals(["unit test 2", "unit test 3"], $message->getHeader("User-Agent"));
+        $this->assertEquals(["lookup"], $message->getHeader("X-Tra"));
+
+        $this->assertEquals("unit test 2,unit test 3", $message->getHeaderLine("User-Agent"));
+        $this->assertEquals("lookup", $message->getHeaderLine("X-Tra"));
+    }
+
+    /**
+     * @memcheck
+     */
+    public function testWithout() {
+        $message = new Message();
+        $message->withHeader("User-Agent", ["unit test 2", "unit test 3"]);
+        $message->withHeader("X-Tra", "lookup");
+        $message->withHeader("X", "xxx");
+
+        $this->assertTrue($message->hasHeader("User-Agent"));
+        $this->assertTrue($message->hasHeader("X-Tra"));
+        $this->assertTrue($message->hasHeader("X"));
+
+        $message->withoutHeader("X-Tra");
+        $message->withoutHeader("X");
+
+        $this->assertTrue($message->hasHeader("User-Agent"));
+        $this->assertFalse($message->hasHeader("X-Tra"));
+        $this->assertFalse($message->hasHeader("X"));
+    }
 }
