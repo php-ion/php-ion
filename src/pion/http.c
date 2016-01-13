@@ -6,15 +6,79 @@ int pion_http_message_begin(http_parser * parser) {
 
 int pion_http_url(http_parser * parser, const char * at, size_t length) {
     ion_http_message * message = parser->data;
+    if(length == 1 && at[0] == '/') {
+        message->uri = ion_uri_parse(ION_STR(ION_STR_SLASH));
+    } else {
+        zend_string * uri = zend_string_init(at, length, 0);
+        message->uri = ion_uri_parse(uri);
+        zend_string_release(uri);
+    }
+    message->method = ION_HTTP_METHOD_STR(parser->method);
     return 0;
 }
+//
+//void pion_http_header_commit(ion_http_message * message) {
+//    zval        * header = NULL;
+//    zval          value;
+//    zend_string * name_lower = zend_string_tolower(message->parser->buffer1);
+//
+//    header = zend_hash_find(message->headers, name_lower);
+//    if(!message->parser->value) {
+//        zval h;
+//        array_init(&h);
+//        header = message->parser->value = zend_hash_add(message->headers, name_lower, &h);
+//    }
+//    ZVAL_STR(&value, message->parser->buffer2);
+//    zend_hash_next_index_insert(Z_ARR_P(header), &value);
+//
+//    zend_string_release(name_lower);
+//    zend_string_release(message->parser->buffer);
+//    message->parser->buffer = NULL;
+//    message->parser->buffer2 = NULL;
+//}
+//
+//zend_string * pion_http_buffering(zend_string * buffer, const char * at, size_t length) {
+//    if(buffer) {
+//        zend_string * new_buffer = zend_string_realloc(buffer, buffer->len + length, 0);
+//        memcpy(&new_buffer[buffer->len], at, length);
+//        zend_string_release(buffer);
+//        return new_buffer;
+//    } else {
+//        return zend_string_init(at, length, 0);
+//    }
+//}
 
 int pion_http_header_name(http_parser * parser, const char * at, size_t length) {
     ion_http_message * message = parser->data;
+    message->parser->buffer = zend_string_init(at, length, 0);
     return 0;
 }
 
 int pion_http_header_value(http_parser * parser, const char * at, size_t length) {
+    ion_http_message * message = parser->data;
+    zval             * header = NULL;
+    zval               value;
+    zend_string      * name_lower;
+    if(!message->parser->buffer) {
+        zend_error(E_NOTICE, "Unexpected HTTP parser behavior: header value without header name");
+        return 1;
+    }
+
+    name_lower = zend_string_tolower(message->parser->buffer);
+
+    header = zend_hash_find(message->headers, name_lower);
+    if(!header) {
+        zval h;
+        array_init(&h);
+        header = zend_hash_add(message->headers, name_lower, &h);
+    }
+    ZVAL_STR(&value, zend_string_init(at, length, 0));
+    zend_hash_next_index_insert(Z_ARR_P(header), &value);
+
+    zend_string_release(name_lower);
+    zend_string_release(message->parser->buffer);
+    message->parser->buffer = NULL;
+
     return 0;
 }
 
@@ -30,12 +94,15 @@ zend_object * pion_http_parse_request(zend_string * request_string, zend_class_e
     ion_http_message     * message = get_object_instance(request, ion_http_message);
     http_parser_settings   settings;
     size_t                 nparsed;
+    http_parser          * parser;
 
 
-    message->parser = ecalloc(1, sizeof(http_parser));
-    http_parser_init(message->parser, HTTP_REQUEST);
+    message->parser = ecalloc(1, sizeof(ion_http_parser));
+    parser = ecalloc(1, sizeof(http_parser));
+    http_parser_init(parser, HTTP_REQUEST);
+    message->parser->parser = parser;
 
-    message->parser->data = message;
+    parser->data = message;
     memset(&settings, 0, sizeof(settings));
     settings.on_message_complete = pion_http_message_begin;
     settings.on_url = pion_http_url;
@@ -43,10 +110,23 @@ zend_object * pion_http_parse_request(zend_string * request_string, zend_class_e
     settings.on_header_value = pion_http_header_value;
     settings.on_message_complete = pion_http_message_complete;
 
-    nparsed = http_parser_execute(message->parser, &settings, request_string->val, request_string->len);
+    nparsed = http_parser_execute(parser, &settings, request_string->val, request_string->len);
     if(nparsed < request_string->len) {
         zend_error(E_NOTICE, "has unparsed data");
     }
+    if(parser->http_major == 1 && parser->http_minor == 1) {
+        message->version = ION_STR(ION_STR_V11);
+    } else if (parser->http_major == 1 && parser->http_minor == 0) {
+        message->version = ION_STR(ION_STR_V10);
+    } else if (parser->http_major == 2 && parser->http_minor == 0) {
+        message->version = ION_STR(ION_STR_V20);
+    } else if (parser->http_major == 0 && parser->http_minor == 9) {
+        message->version = ION_STR(ION_STR_V09);
+    } else {
+        message->version = strpprintf(10, "%d.%d", parser->http_major, parser->http_minor);
+    }
+    efree(parser);
+    efree(message->parser);
     return request;
 }
 

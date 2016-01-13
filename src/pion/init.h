@@ -67,8 +67,6 @@ typedef struct skiplist       ion_skiplist;
 #define STRARGS(str) str, sizeof(str) - 1
 
 ZEND_BEGIN_MODULE_GLOBALS(ion)
-    // Misc.
-    zend_bool          define_metrics;
     // base
     ion_event_base   * base;    // event base
     ion_event_config * config;  // event config
@@ -99,6 +97,10 @@ ZEND_BEGIN_MODULE_GLOBALS(ion)
 
     // SSL
     int         ssl_index;
+
+    // Misc.
+    zend_bool          define_metrics;
+    zend_string     *  interned_strings[64];
 ZEND_END_MODULE_GLOBALS(ion)
 
 ZEND_EXTERN_MODULE_GLOBALS(ion);

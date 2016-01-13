@@ -3,7 +3,8 @@
 #define ION_FRAMEWORK_H
 
 #include "pion/init.h"
-#include "pion/zts.h"
+#include "pion/strings.h"
+//#include "pion/zts.h"
 #include "pion/exceptions.h"
 #include "pion/debug.h"
 #include "pion/callback.h"

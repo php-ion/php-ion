@@ -19,9 +19,8 @@ extern ION_API zend_class_entry * ion_ce_ION_HTTP_WebSocket;
 extern ION_API zend_class_entry * ion_ce_ION_HTTP_WebSocket_Frame;
 
 #define ION_HTTP_VERSION_DEFAULT "1.1"
-
 #define ION_HTTP_MESSAGE_COMPLATE 1
-
+#define ION_HTTP_METHOD_STR(method_num) ION_STR(method_num + ION_HTTP_METHOD_STRINGS_OFFSET)
 
 #define URI_SCHEME   (1<<0)
 #define URI_USER     (1<<1)
@@ -46,18 +45,23 @@ typedef struct _ion_uri {
     zend_string * fragment;
 } ion_uri;
 
+typedef struct _ion_http_parser {
+    http_parser * parser;
+    zend_string * buffer;
+} ion_http_parser;
 
 typedef struct _ion_http_message {
-    zend_object   std;
-    uint8_t       flags;
-    zend_array  * headers;
-    zend_object * uri;
-    uint32_t      code;
-    zend_string * reason;
-    zend_string * version;
-    zend_string * body;
-    zend_object * stream;
-    http_parser * parser;
+    zend_object       std;
+    uint8_t           flags;
+    zend_array      * headers;
+    zend_object     * uri;
+    uint32_t          code;
+    zend_string     * method;
+    zend_string     * reason;
+    zend_string     * version;
+    zend_string     * body;
+    zend_object     * stream;
+    ion_http_parser * parser;
 } ion_http_message;
 
 typedef struct _ion_http_multi_parted_parser {

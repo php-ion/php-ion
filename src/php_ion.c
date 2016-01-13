@@ -71,6 +71,8 @@ PHP_MINIT_FUNCTION(ion) {
 
     event_base_priority_init(GION(base), ION_MAX_PRIORITY);
 
+    ion_interned_strings_ctor();
+
     STARTUP_MODULE(exceptions);
     STARTUP_MODULE(ION_Debug);
     STARTUP_MODULE(promisor);
@@ -141,6 +143,8 @@ PHP_MSHUTDOWN_FUNCTION(ion) {
     SHUTDOWN_MODULE(ION_Crypto);
     SHUTDOWN_MODULE(ION_Stream);
     SHUTDOWN_MODULE(ION);
+
+    ion_interned_strings_dtor();
 
     event_base_free( GION(base) );
 

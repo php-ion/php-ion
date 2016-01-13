@@ -30,6 +30,7 @@ set(ION_SOURCE_FILES
         src/external/multipart-parser-c/multipart_parser.c
         src/php_ion.c
         src/pion/init.h
+        src/pion/strings.c
         src/pion/zts.h
         src/pion/crypto.h
         src/pion/exceptions.c
@@ -63,7 +64,8 @@ set(ION_SOURCE_FILES
 
         src/ION/HTTP/Message.c
         src/ION/HTTP.c
-        src/ION/URI.c src/ION/HTTP/Request.c)
+        src/ION/URI.c
+        src/ION/HTTP/Request.c)
 
 #src/ION/Deferred.c
 #src/ION/Data/SkipList.c

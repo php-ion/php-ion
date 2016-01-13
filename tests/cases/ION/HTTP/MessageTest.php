@@ -82,7 +82,7 @@ class MessageTest extends TestCase {
         $this->assertEquals(["unit test 2", "unit test 3"], $message->getHeader("User-Agent"));
         $this->assertEquals(["lookup"], $message->getHeader("X-Tra"));
 
-        $this->assertEquals("unit test 2,unit test 3", $message->getHeaderLine("User-Agent"));
+        $this->assertEquals("unit test 2, unit test 3", $message->getHeaderLine("User-Agent"));
         $this->assertEquals("lookup", $message->getHeaderLine("X-Tra"));
     }
 

@@ -133,13 +133,7 @@ CLASS_METHOD(ION_HTTP_Message, getHeaderLine) {
     zend_string_release(name);
 
     if(header) {
-        if(CG(one_char_string)[',']) {
-            php_implode(CG(one_char_string)[','], header, return_value);
-        } else {
-            zend_string * delim = zend_string_init(STRARGS(","), 0);
-            php_implode(delim, header, return_value);
-            zend_string_release(delim);
-        }
+        php_implode(ION_STR(ION_STR_COMA_SP), header, return_value);
     } else {
         RETURN_EMPTY_STRING();
     }

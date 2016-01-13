@@ -29,6 +29,20 @@ CLASS_METHOD(ION_HTTP_Request, getURI) {
 
 METHOD_WITHOUT_ARGS(ION_HTTP_Request, getURI)
 
+/** public function ION\HTTP\Request::getMethod() : ION\URI */
+CLASS_METHOD(ION_HTTP_Request, getMethod) {
+    ion_http_message * message = get_this_instance(ion_http_message);
+
+    if(message->method) {
+        zend_string_addref(message->method);
+        RETURN_STR(message->method);
+    } else {
+        RETURN_STR(ION_STR(ION_STR_UP_GET));
+    }
+}
+
+METHOD_WITHOUT_ARGS(ION_HTTP_Request, getMethod)
+
 /** public function ION\HTTP\Request::__toString() : ION\URI */
 CLASS_METHOD(ION_HTTP_Request, __toString) {
 //    ion_http_message * message = get_this_instance(ion_http_message);
@@ -40,6 +54,7 @@ METHOD_WITHOUT_ARGS(ION_HTTP_Request, __toString)
 CLASS_METHODS_START(ION_HTTP_Request)
     METHOD(ION_HTTP_Request, parse,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_HTTP_Request, getURI,      ZEND_ACC_PUBLIC)
+    METHOD(ION_HTTP_Request, getMethod,   ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_Request, __toString,  ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 

@@ -131,15 +131,15 @@ CLASS_METHOD(ION_Promise, getState) {
     ion_promisor * promise = get_this_instance(ion_promisor);
     zend_string * state;
     if(promise->flags & ION_PROMISOR_DONE) {
-        state = zend_string_init(STRARGS("done"), 0);
+        state = ION_STR(ION_STR_DONE);
     } else if(promise->flags & ION_PROMISOR_CANCELED) {
-        state = zend_string_init(STRARGS("canceled"), 0);
+        state = ION_STR(ION_STR_CANCELED);
     } else if(promise->flags & ION_PROMISOR_FAILED) {
-        state = zend_string_init(STRARGS("failed"), 0);
+        state = ION_STR(ION_STR_FAILED);
     } else if(promise->flags & ION_PROMISOR_PROCESSING) {
-        state = zend_string_init(STRARGS("in_progress"), 0);
+        state = ION_STR(ION_STR_IN_PROGRESS);
     } else {
-        state = zend_string_init(STRARGS("pending"), 0);
+        state = ION_STR(ION_STR_PENDING);
     }
 
     RETURN_STR(state);

@@ -115,6 +115,7 @@ if test "$PHP_ION" != "no"; then
     external/http-parser/http_parser.c
     external/multipart-parser-c/multipart_parser.c
     pion/debug.c
+    pion/strings.c
     pion/exceptions.c
     pion/callback.c
     pion/engine.c
