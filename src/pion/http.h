@@ -46,22 +46,25 @@ typedef struct _ion_uri {
 } ion_uri;
 
 typedef struct _ion_http_parser {
-    http_parser * parser;
-    zend_string * buffer;
+    http_parser      * parser;
+    multipart_parser * mp_parser;
+    zend_string      * buffer;
 } ion_http_parser;
 
 typedef struct _ion_http_message {
     zend_object       std;
     uint8_t           flags;
     zend_array      * headers;
+    zend_string     * version;
+    zend_object     * stream;
+    ion_http_parser * parser;
+    zend_string     * body;
+
     zend_object     * uri;
     uint32_t          code;
     zend_string     * method;
     zend_string     * reason;
-    zend_string     * version;
-    zend_string     * body;
-    zend_object     * stream;
-    ion_http_parser * parser;
+    zend_string     * target;
 } ion_http_message;
 
 typedef struct _ion_http_multi_parted_parser {

@@ -30,6 +30,7 @@ set(ION_SOURCE_FILES
         src/external/multipart-parser-c/multipart_parser.c
         src/php_ion.c
         src/pion/init.h
+        src/pion/errors.h
         src/pion/strings.c
         src/pion/zts.h
         src/pion/crypto.h

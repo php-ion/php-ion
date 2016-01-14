@@ -27,6 +27,15 @@ void ion_http_message_free(zend_object * zo_message) {
     if(message->version) {
         zend_string_release(message->version);
     }
+    if(message->body) {
+        zend_string_release(message->body);
+    }
+    if(message->method) {
+        zend_string_release(message->method);
+    }
+    if(message->target) {
+        zend_string_release(message->target);
+    }
 }
 
 /** public function ION\HTTP\Message::getProtocolVersion() : string */
@@ -265,6 +274,40 @@ METHOD_ARGS_BEGIN(ION_HTTP_Message, withoutHeader, 1)
     METHOD_ARG_STRING(name, 0)
 METHOD_ARGS_END();
 
+/** public function ION\HTTP\Message::withBody(string $body) : self */
+CLASS_METHOD(ION_HTTP_Message, withBody) {
+    ion_http_message * message = get_this_instance(ion_http_message);
+    zend_string      * body = NULL;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_STR(body)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    if(message->body) {
+        zend_string_release(message->body);
+    }
+    message->body = zend_string_copy(body);
+    RETURN_THIS();
+}
+
+METHOD_ARGS_BEGIN(ION_HTTP_Message, withBody, 1)
+    METHOD_ARG_STRING(body, 0)
+METHOD_ARGS_END();
+
+/** public function ION\HTTP\Message::getBody() : string */
+CLASS_METHOD(ION_HTTP_Message, getBody) {
+    ion_http_message * message = get_this_instance(ion_http_message);
+
+    if(message->body) {
+        zend_string_addref(message->body);
+        RETURN_STR(message->body);
+    } else {
+        RETURN_EMPTY_STRING();
+    }
+}
+
+METHOD_WITHOUT_ARGS(ION_HTTP_Message, getBody);
+
 CLASS_METHODS_START(ION_HTTP_Message)
     METHOD(ION_HTTP_Message, getProtocolVersion,  ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_Message, withProtocolVersion, ZEND_ACC_PUBLIC)
@@ -276,6 +319,9 @@ CLASS_METHODS_START(ION_HTTP_Message)
     METHOD(ION_HTTP_Message, withHeader,      ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_Message, withAddedHeader, ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_Message, withoutHeader,   ZEND_ACC_PUBLIC)
+
+    METHOD(ION_HTTP_Message, withBody,        ZEND_ACC_PUBLIC)
+    METHOD(ION_HTTP_Message, getBody,         ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 
 

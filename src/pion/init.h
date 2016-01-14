@@ -48,8 +48,18 @@ typedef struct skiplist       ion_skiplist;
 # define false 0
 #endif
 
-#define ION_LOOP_CB_BEGIN()
-#define ION_LOOP_CB_END() ION_CHECK_LOOP()
+#define ION_LOOP_CB_BEGIN()                     \
+    ion_time __begin_time;                      \
+    zend_bool __stats = GION(stats);            \
+    if(__stats) {                               \
+        evutil_gettimeofday(&__begin_time, NULL);\
+    }                                           \
+
+#define ION_LOOP_CB_END()   \
+    if(__stats) {           \
+                            \
+    }                       \
+    ION_CHECK_LOOP()
 
 #define ION_CHECK_LOOP()                 \
     if(EG(exception)) {                  \
@@ -72,6 +82,12 @@ ZEND_BEGIN_MODULE_GLOBALS(ion)
     ion_event_config * config;  // event config
     uint               flags;
     HashTable        * timers;  // array of timers
+
+    // Stats
+    zend_bool  stats;
+    ion_time   last_flush;
+    ion_time   delta;
+    zend_ulong handeled_events;
 
     // Stream
     zend_ulong    stream_index;
@@ -96,11 +112,11 @@ ZEND_BEGIN_MODULE_GLOBALS(ion)
     HashTable * watchers;    // list of listened filenames
 
     // SSL
-    int         ssl_index;
+    int ssl_index;
 
     // Misc.
-    zend_bool          define_metrics;
-    zend_string     *  interned_strings[64];
+    zend_bool     define_metrics;
+    zend_string * interned_strings[128];
 ZEND_END_MODULE_GLOBALS(ion)
 
 ZEND_EXTERN_MODULE_GLOBALS(ion);

@@ -147,9 +147,9 @@ class Message {
     /**
      * Gets the body of the message.
      *
-     * @return StreamInterface Returns the body as a stream.
+     * @return string Returns the body as a stream.
      */
-//	public function getBody() {}
+	public function getBody() : string {}
 
     /**
      * Return an instance with the specified message body.
@@ -160,10 +160,10 @@ class Message {
      * immutability of the message, and MUST return a new instance that has the
      * new body stream.
      *
-     * @param StreamInterface $body Body.
+     * @param string $body Body.
      *
      * @return self
      * @throws \InvalidArgumentException When the body is not valid.
      */
-//	public function withBody(StreamInterface $body) {}
+	public function withBody(string $body) : static {}
 }

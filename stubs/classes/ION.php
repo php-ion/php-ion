@@ -131,7 +131,7 @@ class ION {
      *
      * @return bool
      */
-    public static function cancelInterval(string $name) { }
+    public static function cancelInterval(string $name) : bool { }
 
     /**
      * To promise anything
@@ -140,6 +140,14 @@ class ION {
      *
      * @return Promise
      */
-    public static function promise($resolver) { }
+    public static function promise($resolver) : Promise { }
+
+    /**
+     * - load: double
+     * - events: int
+     * - last_get: double
+     * @return array
+     */
+    public static function getStats() : array { }
 
 }

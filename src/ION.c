@@ -24,7 +24,7 @@ CLASS_METHOD(ION, dispatch) {
     int ret;
 
     if(GION(flags) & ION_LOOP_STARTED) {
-        zend_throw_error(NULL, "Dispatching in progress", 1);
+        zend_throw_error(NULL, ERR_ION_DISPATCH_IN_LOOP, 1);
         return;
     }
 
@@ -39,7 +39,7 @@ CLASS_METHOD(ION, dispatch) {
     GION(flags) &= ~ION_LOOP_STARTED;
 
     if(ret == -1) {
-        zend_throw_error(NULL, "Dispatching runtime error", 1);
+        zend_throw_error(NULL, ERR_ION_DISPATCH_FAILED, 1);
         return;
     }
 
@@ -79,12 +79,13 @@ METHOD_ARGS_BEGIN(ION, stop, 0)
 METHOD_ARGS_END()
 
 static void _timer_done(evutil_socket_t fd, short flags, void * arg) {
+    ION_LOOP_CB_BEGIN();
     ion_promisor * deferred = get_object_instance(arg, ion_promisor);
 //    zval * zdeferred = (zval * )arg;
     ion_promisor_done_true(&deferred->std);
 
-    ION_CHECK_LOOP();
 //    zval_ptr_dtor(&zdeferred);
+    ION_LOOP_CB_END();
 }
 
 static void _timer_dtor(zend_object * object) {
@@ -107,7 +108,7 @@ CLASS_METHOD(ION, await) {
         Z_PARAM_DOUBLE(timeout)
     ZEND_PARSE_PARAMETERS_END();
     if(timeout < 0) {
-        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Timeout sould be unsigned", 0);
+        zend_throw_exception(ion_class_entry(InvalidArgumentException), ERR_ION_AWAIT_INVALID_TIME, 0);
         return;
     }
     tv.tv_usec = ((int)(timeout*1000000) % 1000000);
@@ -118,7 +119,7 @@ CLASS_METHOD(ION, await) {
         event_del(timer);
         event_free(timer);
         obj_ptr_dtor(deferred);
-        zend_throw_exception(ion_class_entry(ION_RuntimeException), "Unable to add event to queue", 0);
+        zend_throw_exception(ion_class_entry(ION_RuntimeException), ERR_ION_AWAIT_FAILED, 0);
         return;
     } else {
         ion_promisor_store(deferred, timer);
@@ -152,6 +153,7 @@ static void _ion_interval_free(ion_interval * interval) {
 }
 
 static void _ion_interval_invoke(evutil_socket_t fd, short flags, void * arg) {
+    ION_LOOP_CB_BEGIN();
     ion_interval * interval = (ion_interval *) arg;
     zval data;
 
@@ -159,9 +161,9 @@ static void _ion_interval_invoke(evutil_socket_t fd, short flags, void * arg) {
     ion_promisor_sequence_invoke(interval->promisor, &data);
     if(event_add(interval->timer, &interval->tv) == FAILURE) {
         _ion_interval_free(interval);
-        zend_throw_exception(ion_class_entry(ION_RuntimeException), "Unable to add event to queue", 0);
+        zend_throw_exception(ion_class_entry(ION_RuntimeException), ERR_ION_AWAIT_FAILED, 0);
     }
-    ION_CHECK_LOOP();
+    ION_LOOP_CB_END();
 }
 
 static void _ion_interval_dtor(zend_object * sequence) {
@@ -205,7 +207,7 @@ CLASS_METHOD(ION, interval) {
 
     if(event_add(interval->timer, &interval->tv) == FAILURE) {
         _ion_interval_free(interval);
-        zend_throw_exception(ion_class_entry(ION_RuntimeException), "Unable to add event to queue", 0);
+        zend_throw_exception(ion_class_entry(ION_RuntimeException), ERR_ION_AWAIT_FAILED, 0);
         return;
     } else {
         ion_promisor_store(interval->promisor, interval);
@@ -271,6 +273,20 @@ METHOD_ARGS_BEGIN(ION, promise, 1)
     METHOD_ARG(resolver, 0)
 METHOD_ARGS_END()
 
+/** public function ION::getStats() : array */
+CLASS_METHOD(ION, getStats) {
+//    double time = 0.0;
+    zval   v;
+
+    array_init(return_value);
+//    ZVAL_DOUBLE(&v, GION(last_flush).tv_sec + GION(last_flush).tv_usec/1e6);
+//    zend_hash_str_add(return_value, STRARGS("last_fetch"), &v);
+//    ZVAL_DOUBLE(&v, GION(last_flush).tv_sec + GION(last_flush).tv_usec/1e6);
+
+}
+
+METHOD_WITHOUT_ARGS(ION, getStats);
+
 CLASS_METHODS_START(ION)
     METHOD(ION, reinit,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION, dispatch,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
@@ -279,10 +295,12 @@ CLASS_METHODS_START(ION)
     METHOD(ION, interval,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION, cancelInterval, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION, promise,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION, getStats,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 CLASS_METHODS_END;
 
 ZEND_INI_BEGIN()
-    STD_PHP_INI_BOOLEAN("ion.consts.metrics", "On", PHP_INI_SYSTEM, OnUpdateBool, define_metrics, zend_ion_globals, ion_globals)
+    STD_PHP_INI_BOOLEAN("ion.metrics", "On", PHP_INI_SYSTEM, OnUpdateBool, define_metrics, zend_ion_globals, ion_globals)
+    STD_PHP_INI_BOOLEAN("ion.stats",   "On", PHP_INI_USER, OnUpdateBool, stats, zend_ion_globals, ion_globals)
 ZEND_INI_END()
 
 PHP_MINIT_FUNCTION(ION) {

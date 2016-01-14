@@ -8,7 +8,6 @@ use ION\Test\TestCase;
 class RequestTest extends TestCase {
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testParseHeaders() {
@@ -33,4 +32,68 @@ class RequestTest extends TestCase {
         $this->assertEquals("GET", $req->getMethod());
         $this->assertEquals("1.1", $req->getProtocolVersion());
     }
+
+    /**
+     * @memcheck
+     */
+    public function testParseBodyWithLength() {
+        $body = str_pad("body:", 1000, ".");
+        $req = Request::parse(implode("\r\n", [
+            "PUT / HTTP/1.1",
+            "Host: example.com",
+            "Content-Length: ".strlen($body),
+            "",
+            $body
+        ]));
+
+        $this->assertEquals("example.com", $req->getHeaderLine("Host"));
+
+        $this->assertEquals("/", $req->getUri()->getPath());
+
+        $this->assertEquals("PUT", $req->getMethod());
+        $this->assertEquals("1.1", $req->getProtocolVersion());
+        $this->assertEquals($body, $req->getBody());
+    }
+
+    /**
+     * @memcheck
+     */
+    public function testParseBodyChunked() {
+        $chunk1 = str_pad("chunk1:", 11, ".");
+        $chunk2 = str_pad("chunk2:", 12, ".");
+        $chunk3 = str_pad("chunk3:", 13, ".");
+        $req = Request::parse(implode("\r\n", [
+            "PUT / HTTP/1.1",
+            "Host: example.com",
+            "Transfer-Encoding: chunked",
+            "",
+            dechex(strlen($chunk1)),
+            $chunk1,
+            dechex(strlen($chunk2)),
+            $chunk2,
+            dechex(strlen($chunk3)),
+            $chunk3,
+            "0",
+            "",
+        ]));
+
+        $this->assertEquals("example.com", $req->getHeaderLine("Host"));
+
+        $this->assertEquals("/", $req->getUri()->getPath());
+
+        $this->assertEquals("PUT", $req->getMethod());
+        $this->assertEquals("1.1", $req->getProtocolVersion());
+        $this->assertEquals($chunk1.$chunk2.$chunk3, $req->getBody());
+    }
+
+    /**
+     * @memcheck
+     */
+    public function testTarget() {
+        $req = new Request();
+        $this->assertEquals("", $req->getRequestTarget());
+        $req->withRequestTarget("*");
+        $this->assertEquals("*", $req->getRequestTarget());
+    }
+
 }

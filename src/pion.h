@@ -4,7 +4,7 @@
 
 #include "pion/init.h"
 #include "pion/strings.h"
-//#include "pion/zts.h"
+#include "pion/errors.h"
 #include "pion/exceptions.h"
 #include "pion/debug.h"
 #include "pion/callback.h"

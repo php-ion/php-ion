@@ -7,6 +7,7 @@ void ion_interned_strings_ctor(void) {
     str = zend_string_init(string, sizeof(string) - 1, 1);  \
     GC_REFCOUNT(str) = 1;                                   \
     GC_FLAGS(str) |= IS_STR_INTERNED;                       \
+    zend_string_hash_val(str);                              \
     GION(interned_strings)[num] = str;                      \
 
     ION_INTERNED_STRINGS_MAP(XX)
@@ -14,7 +15,7 @@ void ion_interned_strings_ctor(void) {
 }
 
 void ion_interned_strings_dtor(void) {
-#define XX(num, name, string) zend_string_free(GION(interned_strings)[num]);
+#define XX(num, name, string) pefree((GION(interned_strings)[num]), 1);
     ION_INTERNED_STRINGS_MAP(XX)
 #undef XX
 }

@@ -48,6 +48,11 @@ void ion_interned_strings_dtor(void);
     XX(37, SEMICOLON     , ";"              ) \
     XX(38, SEMICOLON_SP  , "; "             ) \
     XX(39, SLASH         , "/"              ) \
+    XX(40, SLASH_SP      , "/ "             ) \
+    XX(41, COLON         , ":"              ) \
+    XX(42, COLON_SP      , ": "             ) \
+    XX(43, SPACE         , " "              ) \
+    XX(44, CRLF          , "\r\n"           ) \
                                               \
     XX(45, DONE          , "done"           ) \
     XX(46, CANCELED      , "canceled"       ) \
@@ -63,6 +68,9 @@ void ion_interned_strings_dtor(void);
     XX(60, STREAM_STDIN  , "Stream(stdin)"  ) \
     XX(61, STREAM_STDOUT , "Stream(stdout)" ) \
     XX(62, STREAM_STDERR , "Stream(stderr)" ) \
+                                              \
+    XX(70, UP_HTTP       , "HTTP"           ) \
+    XX(71, CONTENT_TYPE  , "content-type"   ) \
 
 #endif //ION_STRINGS_H
 
