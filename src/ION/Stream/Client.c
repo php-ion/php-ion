@@ -6,7 +6,7 @@ zend_class_entry * ion_ce_ION_Stream_Client;
 
 /** public function ION\Stream\Client::addTarget(string $target, string $host, ION\Crypto $encrypt = null) : self  */
 CLASS_METHOD(ION_Stream_Client, addTarget) {
-    ion_storage * storage = get_this_instance(ion_storage);
+//    ion_storage * storage = get_this_instance(ion_storage);
     zend_string * target = NULL;
     zend_string * host = NULL;
     zval        * encrypt = NULL;
@@ -29,7 +29,7 @@ METHOD_ARGS_END();
 
 /** public function ION\Stream\Server::fetchStream(string $target = null) : Deferred  */
 CLASS_METHOD(ION_Stream_Client, fetchStream) {
-    ion_storage * storage = get_this_instance(ion_storage);
+//    ion_storage * storage = get_this_instance(ion_storage);
     zend_string * target = NULL;
 
     ZEND_PARSE_PARAMETERS_START(0, 0)
@@ -44,7 +44,6 @@ METHOD_ARGS_BEGIN(ION_Stream_Client, fetchStream, 1)
     METHOD_ARG_STRING(target, 0)
 METHOD_ARGS_END();
 
-METHOD_WITHOUT_ARGS(ION_Stream_Client, disable)
 
 CLASS_METHODS_START(ION_Stream_Client)
     METHOD(ION_Stream_Client, addTarget,   ZEND_ACC_PUBLIC)

@@ -33,7 +33,7 @@ METHOD_ARGS_END();
 /** public function ION\HTTP::getResponseReason(int $response_code) : ION\HTTP\Request */
 CLASS_METHOD(ION_HTTP, getResponseReason) {
     zend_long code = 0;
-    const char * reason;
+    zend_string * reason;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_LONG(code)
@@ -41,7 +41,7 @@ CLASS_METHOD(ION_HTTP, getResponseReason) {
 
     reason = pion_http_reason((uint16_t)code);
     if(reason) {
-        RETURN_STRING(reason);
+        RETURN_STR(reason);
     } else {
         RETURN_NULL();
     }

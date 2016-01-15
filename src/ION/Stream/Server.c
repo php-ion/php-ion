@@ -6,7 +6,7 @@ zend_class_entry * ion_ce_ION_Stream_Server;
 
 /** public function ION\Stream\Server::listen(string $host, int $backlog = -1) : ION\Listener  */
 CLASS_METHOD(ION_Stream_Server, listen) {
-    ion_storage * storage = get_this_instance(ion_storage);
+//    ion_storage * storage = get_this_instance(ion_storage);
     zend_string * host = NULL;
     zend_long     backlog = -1;
 
@@ -26,7 +26,7 @@ METHOD_ARGS_END();
 
 /** public function ION\Stream\Server::shutdownListener(string $host) : ION\Listener  */
 CLASS_METHOD(ION_Stream_Server, shutdownListener) {
-    ion_storage * storage = get_this_instance(ion_storage);
+//    ion_storage * storage = get_this_instance(ion_storage);
     zend_string * host = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
@@ -43,7 +43,7 @@ METHOD_ARGS_END();
 
 /** public function ION\Stream\Server::enable() : self  */
 CLASS_METHOD(ION_Stream_Server, enable) {
-    ion_storage * storage = get_this_instance(ion_storage);
+//    ion_storage * storage = get_this_instance(ion_storage);
 
     // TODO
 
@@ -54,7 +54,7 @@ METHOD_WITHOUT_ARGS(ION_Stream_Server, enable)
 
 /** public function ION\Stream\Server::disable() : self  */
 CLASS_METHOD(ION_Stream_Server, disable) {
-    ion_storage * storage = get_this_instance(ion_storage);
+//    ion_storage * storage = get_this_instance(ion_storage);
 
     // TODO
 

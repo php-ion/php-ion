@@ -9,74 +9,136 @@ void ion_interned_strings_ctor(void);
 void ion_interned_strings_dtor(void);
 
 #define ION_INTERNED_STRINGS_MAP(XX) \
-    XX(0, UP_DELETE      , "DELETE"         ) \
-    XX(1, UP_GET         , "GET"            ) \
-    XX(2, UP_HEAD        , "HEAD"           ) \
-    XX(3, UP_POST        , "POST"           ) \
-    XX(4, UP_PUT         , "PUT"            ) \
-    XX(5, UP_CONNECT     , "CONNECT"        ) \
-    XX(6, UP_OPTIONS     , "OPTIONS"        ) \
-    XX(7, UP_TRACE       , "TRACE"          ) \
-    XX(8, UP_COPY        , "COPY"           ) \
-    XX(9, UP_LOCK        , "LOCK"           ) \
-    XX(10, UP_MKCOL      , "MKCOL"          ) \
-    XX(11, UP_MOVE       , "MOVE"           ) \
-    XX(12, UP_PROPFIND   , "PROPFIND"       ) \
-    XX(13, UP_PROPPATCH  , "PROPPATCH"      ) \
-    XX(14, UP_SEARCH     , "SEARCH"         ) \
-    XX(15, UP_UNLOCK     , "UNLOCK"         ) \
-    XX(16, UP_BIND       , "BIND"           ) \
-    XX(17, UP_REBIND     , "REBIND"         ) \
-    XX(18, UP_UNBIND     , "UNBIND"         ) \
-    XX(19, UP_ACL        , "ACL"            ) \
-    XX(20, UP_REPORT     , "REPORT"         ) \
-    XX(21, UP_MKACTIVITY , "MKACTIVITY"     ) \
-    XX(22, UP_CHECKOUT   , "CHECKOUT"       ) \
-    XX(23, UP_MERGE      , "MERGE"          ) \
-    XX(24, UP_MSEARCH    , "M-SEARCH"       ) \
-    XX(25, UP_NOTIFY     , "NOTIFY"         ) \
-    XX(26, UP_SUBSCRIBE  , "SUBSCRIBE"      ) \
-    XX(27, UP_UNSUBSCRIBE, "UNSUBSCRIBE"    ) \
-    XX(28, UP_PATCH      , "PATCH"          ) \
-    XX(29, UP_PURGE      , "PURGE"          ) \
-    XX(30, UP_MKCALENDAR , "MKCALENDAR"     ) \
-    XX(31, UP_LINK       , "LINK"           ) \
-    XX(32, UP_UNLINK     , "UNLINK"         ) \
-                                              \
-    XX(35, COMA          , ","              ) \
-    XX(36, COMA_SP       , ", "             ) \
-    XX(37, SEMICOLON     , ";"              ) \
-    XX(38, SEMICOLON_SP  , "; "             ) \
-    XX(39, SLASH         , "/"              ) \
-    XX(40, SLASH_SP      , "/ "             ) \
-    XX(41, COLON         , ":"              ) \
-    XX(42, COLON_SP      , ": "             ) \
-    XX(43, SPACE         , " "              ) \
-    XX(44, CRLF          , "\r\n"           ) \
-                                              \
-    XX(45, DONE          , "done"           ) \
-    XX(46, CANCELED      , "canceled"       ) \
-    XX(47, FAILED        , "failed"         ) \
-    XX(48, IN_PROGRESS   , "in_progress"    ) \
-    XX(49, PENDING       , "pending"        ) \
-                                              \
-    XX(50, V09           , "0.9"            ) \
-    XX(51, V10           , "1.0"            ) \
-    XX(52, V11           , "1.1"            ) \
-    XX(53, V20           , "2.0"            ) \
-                                              \
-    XX(60, STREAM_STDIN  , "Stream(stdin)"  ) \
-    XX(61, STREAM_STDOUT , "Stream(stdout)" ) \
-    XX(62, STREAM_STDERR , "Stream(stderr)" ) \
-                                              \
-    XX(70, UP_HTTP       , "HTTP"           ) \
-    XX(71, CONTENT_TYPE  , "content-type"   ) \
+    XX(UP_DELETE     , "DELETE"         ) \
+    XX(UP_GET        , "GET"            ) \
+    XX(UP_HEAD       , "HEAD"           ) \
+    XX(UP_POST       , "POST"           ) \
+    XX(UP_PUT        , "PUT"            ) \
+    XX(UP_CONNECT    , "CONNECT"        ) \
+    XX(UP_OPTIONS    , "OPTIONS"        ) \
+    XX(UP_TRACE      , "TRACE"          ) \
+    XX(UP_COPY       , "COPY"           ) \
+    XX(UP_LOCK       , "LOCK"           ) \
+    XX(UP_MKCOL      , "MKCOL"          ) \
+    XX(UP_MOVE       , "MOVE"           ) \
+    XX(UP_PROPFIND   , "PROPFIND"       ) \
+    XX(UP_PROPPATCH  , "PROPPATCH"      ) \
+    XX(UP_SEARCH     , "SEARCH"         ) \
+    XX(UP_UNLOCK     , "UNLOCK"         ) \
+    XX(UP_BIND       , "BIND"           ) \
+    XX(UP_REBIND     , "REBIND"         ) \
+    XX(UP_UNBIND     , "UNBIND"         ) \
+    XX(UP_ACL        , "ACL"            ) \
+    XX(UP_REPORT     , "REPORT"         ) \
+    XX(UP_MKACTIVITY , "MKACTIVITY"     ) \
+    XX(UP_CHECKOUT   , "CHECKOUT"       ) \
+    XX(UP_MERGE      , "MERGE"          ) \
+    XX(UP_MSEARCH    , "M-SEARCH"       ) \
+    XX(UP_NOTIFY     , "NOTIFY"         ) \
+    XX(UP_SUBSCRIBE  , "SUBSCRIBE"      ) \
+    XX(UP_UNSUBSCRIBE, "UNSUBSCRIBE"    ) \
+    XX(UP_PATCH      , "PATCH"          ) \
+    XX(UP_PURGE      , "PURGE"          ) \
+    XX(UP_MKCALENDAR , "MKCALENDAR"     ) \
+    XX(UP_LINK       , "LINK"           ) \
+    XX(UP_UNLINK     , "UNLINK"         ) \
+                                          \
+    XX(COMA          , ","              ) \
+    XX(COMA_SP       , ", "             ) \
+    XX(SEMICOLON     , ";"              ) \
+    XX(SEMICOLON_SP  , "; "             ) \
+    XX(SLASH         , "/"              ) \
+    XX(SLASH_SP      , "/ "             ) \
+    XX(COLON         , ":"              ) \
+    XX(COLON_SP      , ": "             ) \
+    XX(SPACE         , " "              ) \
+    XX(CRLF          , "\r\n"           ) \
+                                          \
+    XX(DONE          , "done"           ) \
+    XX(CANCELED      , "canceled"       ) \
+    XX(FAILED        , "failed"         ) \
+    XX(IN_PROGRESS   , "in_progress"    ) \
+    XX(PENDING       , "pending"        ) \
+                                          \
+    XX(V09           , "0.9"            ) \
+    XX(V10           , "1.0"            ) \
+    XX(V11           , "1.1"            ) \
+    XX(V20           , "2.0"            ) \
+                                          \
+    XX(STREAM_STDIN  , "Stream(stdin)"  ) \
+    XX(STREAM_STDOUT , "Stream(stdout)" ) \
+    XX(STREAM_STDERR , "Stream(stderr)" ) \
+                                          \
+    XX(UP_HTTP       , "HTTP"           ) \
+    XX(CONTENT_TYPE  , "content-type"   ) \
+                                          \
+    XX(HTTP_100, "Continue")                        \
+    XX(HTTP_101, "Switching Protocols")             \
+    XX(HTTP_102, "Processing")                      \
+    XX(HTTP_200, "OK")                              \
+    XX(HTTP_201, "Created")                         \
+    XX(HTTP_202, "Accepted")                        \
+    XX(HTTP_203, "Non-Authoritative Information")   \
+    XX(HTTP_204, "No Content")                      \
+    XX(HTTP_205, "Reset Content")                   \
+    XX(HTTP_206, "Partial Content")                 \
+    XX(HTTP_207, "Multi-Status")                    \
+    XX(HTTP_226, "IM Used")                         \
+    XX(HTTP_300, "Multiple Choices")                \
+    XX(HTTP_301, "Moved Permanently")               \
+    XX(HTTP_302, "Moved Temporarily")               \
+    XX(HTTP_303, "See Other")                       \
+    XX(HTTP_304, "Not Modified")                    \
+    XX(HTTP_305, "Use Proxy")                       \
+    XX(HTTP_307, "Temporary Redirect")              \
+    XX(HTTP_400, "Bad Request")                     \
+    XX(HTTP_401, "Unauthorized")                    \
+    XX(HTTP_402, "Payment Required")                \
+    XX(HTTP_403, "Forbidden")                       \
+    XX(HTTP_404, "Not Found")                       \
+    XX(HTTP_405, "Method Not Allowed")              \
+    XX(HTTP_406, "Not Acceptable")                  \
+    XX(HTTP_407, "Proxy Authentication Required")   \
+    XX(HTTP_408, "Request Timeout")                 \
+    XX(HTTP_409, "Conflict")                        \
+    XX(HTTP_410, "Gone")                            \
+    XX(HTTP_411, "Length Required")                 \
+    XX(HTTP_412, "Precondition Failed")             \
+    XX(HTTP_413, "Request Entity Too Large")        \
+    XX(HTTP_414, "Request-URI Too Large")           \
+    XX(HTTP_415, "Unsupported Media Type")          \
+    XX(HTTP_416, "Requested Range Not Satisfiable") \
+    XX(HTTP_417, "Expectation Failed")              \
+    XX(HTTP_418, "I'm a teapot")                    \
+    XX(HTTP_422, "Unprocessable Entity")            \
+    XX(HTTP_423, "Locked")                          \
+    XX(HTTP_424, "Failed Dependency")               \
+    XX(HTTP_425, "Unordered Collection")            \
+    XX(HTTP_426, "Upgrade Required")                \
+    XX(HTTP_428, "Precondition Required")           \
+    XX(HTTP_429, "Too Many Requests")               \
+    XX(HTTP_431, "Request Header Fields Too Large") \
+    XX(HTTP_434, "Requested host unavailable")      \
+    XX(HTTP_449, "Retry With")                      \
+    XX(HTTP_451, "Unavailable For Legal Reasons")   \
+    XX(HTTP_500, "Internal Server Error")           \
+    XX(HTTP_501, "Not Implemented")                 \
+    XX(HTTP_502, "Bad Gateway")                     \
+    XX(HTTP_503, "Service Unavailable")             \
+    XX(HTTP_504, "Gateway Timeout")                 \
+    XX(HTTP_505, "HTTP Version Not Supported")      \
+    XX(HTTP_506, "Variant Also Negotiates")         \
+    XX(HTTP_507, "Insufficient Storage")            \
+    XX(HTTP_508, "Loop Detected")                   \
+    XX(HTTP_509, "Bandwidth Limit Exceeded")        \
+    XX(HTTP_510, "Not Extended")                    \
+    XX(HTTP_511, "Network Authentication Required") \
 
 #endif //ION_STRINGS_H
 
 
 enum ion_strings {
-#define XX(num, name, string) ION_STR_##name = num,
+#define XX(name, string) ION_STR_##name,
     ION_INTERNED_STRINGS_MAP(XX)
 #undef XX
 };

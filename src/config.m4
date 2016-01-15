@@ -145,6 +145,7 @@ if test "$PHP_ION" != "no"; then
     ION/URI.c
     ION/HTTP/Message.c
     ION/HTTP/Request.c
+    ION/HTTP/Response.c
     ION/HTTP.c
     "
 

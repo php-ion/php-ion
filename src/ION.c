@@ -276,7 +276,7 @@ METHOD_ARGS_END()
 /** public function ION::getStats() : array */
 CLASS_METHOD(ION, getStats) {
 //    double time = 0.0;
-    zval   v;
+//    zval   v;
 
     array_init(return_value);
 //    ZVAL_DOUBLE(&v, GION(last_flush).tv_sec + GION(last_flush).tv_usec/1e6);
