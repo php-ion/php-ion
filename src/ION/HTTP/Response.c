@@ -90,10 +90,11 @@ CLASS_METHOD(ION_HTTP_Response, __toString) {
 METHOD_WITHOUT_ARGS(ION_HTTP_Response, __toString)
 
 CLASS_METHODS_START(ION_HTTP_Response)
-    METHOD(ION_HTTP_Response, parse,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_HTTP_Response, withStatus,    ZEND_ACC_PUBLIC)
-    METHOD(ION_HTTP_Response, getStatusCode, ZEND_ACC_PUBLIC)
-    METHOD(ION_HTTP_Response, __toString,    ZEND_ACC_PUBLIC)
+    METHOD(ION_HTTP_Response, parse,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_HTTP_Response, withStatus,      ZEND_ACC_PUBLIC)
+    METHOD(ION_HTTP_Response, getStatusCode,   ZEND_ACC_PUBLIC)
+    METHOD(ION_HTTP_Response, getReasonPhrase, ZEND_ACC_PUBLIC)
+    METHOD(ION_HTTP_Response, __toString,      ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 
 
