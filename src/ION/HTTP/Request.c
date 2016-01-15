@@ -170,11 +170,11 @@ CLASS_METHOD(ION_HTTP_Request, __toString) {
     pipe[0] = message->method ? message->method : str_up_get;
     pipe[1] = str_space;
     message_size += pipe[0]->len + 1;
-    pipe[2] = target;
+    pipe[2] = target ? target : str_slash;
     pipe[3] = str_space;
     pipe[4] = str_http;
     pipe[5] = str_slash;
-    message_size += target->len + 6;
+    message_size += pipe[2]->len + 6;
     pipe[6] = message->version ? message->version : str_v11;
     pipe[7] = str_crlf;
     message_size += pipe[6]->len + 2;
