@@ -72,67 +72,68 @@ void ion_interned_strings_dtor(void);
     XX(UP_HTTP       , "HTTP"           ) \
     XX(CONTENT_TYPE  , "content-type"   ) \
                                           \
-    XX(HTTP_100, "Continue")                        \
-    XX(HTTP_101, "Switching Protocols")             \
-    XX(HTTP_102, "Processing")                      \
-    XX(HTTP_200, "OK")                              \
-    XX(HTTP_201, "Created")                         \
-    XX(HTTP_202, "Accepted")                        \
-    XX(HTTP_203, "Non-Authoritative Information")   \
-    XX(HTTP_204, "No Content")                      \
-    XX(HTTP_205, "Reset Content")                   \
-    XX(HTTP_206, "Partial Content")                 \
-    XX(HTTP_207, "Multi-Status")                    \
-    XX(HTTP_226, "IM Used")                         \
-    XX(HTTP_300, "Multiple Choices")                \
-    XX(HTTP_301, "Moved Permanently")               \
-    XX(HTTP_302, "Moved Temporarily")               \
-    XX(HTTP_303, "See Other")                       \
-    XX(HTTP_304, "Not Modified")                    \
-    XX(HTTP_305, "Use Proxy")                       \
-    XX(HTTP_307, "Temporary Redirect")              \
-    XX(HTTP_400, "Bad Request")                     \
-    XX(HTTP_401, "Unauthorized")                    \
-    XX(HTTP_402, "Payment Required")                \
-    XX(HTTP_403, "Forbidden")                       \
-    XX(HTTP_404, "Not Found")                       \
-    XX(HTTP_405, "Method Not Allowed")              \
-    XX(HTTP_406, "Not Acceptable")                  \
-    XX(HTTP_407, "Proxy Authentication Required")   \
-    XX(HTTP_408, "Request Timeout")                 \
-    XX(HTTP_409, "Conflict")                        \
-    XX(HTTP_410, "Gone")                            \
-    XX(HTTP_411, "Length Required")                 \
-    XX(HTTP_412, "Precondition Failed")             \
-    XX(HTTP_413, "Request Entity Too Large")        \
-    XX(HTTP_414, "Request-URI Too Large")           \
-    XX(HTTP_415, "Unsupported Media Type")          \
-    XX(HTTP_416, "Requested Range Not Satisfiable") \
-    XX(HTTP_417, "Expectation Failed")              \
-    XX(HTTP_418, "I'm a teapot")                    \
-    XX(HTTP_422, "Unprocessable Entity")            \
-    XX(HTTP_423, "Locked")                          \
-    XX(HTTP_424, "Failed Dependency")               \
-    XX(HTTP_425, "Unordered Collection")            \
-    XX(HTTP_426, "Upgrade Required")                \
-    XX(HTTP_428, "Precondition Required")           \
-    XX(HTTP_429, "Too Many Requests")               \
-    XX(HTTP_431, "Request Header Fields Too Large") \
-    XX(HTTP_434, "Requested host unavailable")      \
-    XX(HTTP_449, "Retry With")                      \
-    XX(HTTP_451, "Unavailable For Legal Reasons")   \
-    XX(HTTP_500, "Internal Server Error")           \
-    XX(HTTP_501, "Not Implemented")                 \
-    XX(HTTP_502, "Bad Gateway")                     \
-    XX(HTTP_503, "Service Unavailable")             \
-    XX(HTTP_504, "Gateway Timeout")                 \
-    XX(HTTP_505, "HTTP Version Not Supported")      \
-    XX(HTTP_506, "Variant Also Negotiates")         \
-    XX(HTTP_507, "Insufficient Storage")            \
-    XX(HTTP_508, "Loop Detected")                   \
-    XX(HTTP_509, "Bandwidth Limit Exceeded")        \
-    XX(HTTP_510, "Not Extended")                    \
-    XX(HTTP_511, "Network Authentication Required") \
+    XX(HTTP_100,  "Continue")                        \
+    XX(HTTP_101,  "Switching Protocols")             \
+    XX(HTTP_102,  "Processing")                      \
+    XX(HTTP_200,  "OK")                              \
+    XX(HTTP_201,  "Created")                         \
+    XX(HTTP_202,  "Accepted")                        \
+    XX(HTTP_203,  "Non-Authoritative Information")   \
+    XX(HTTP_204,  "No Content")                      \
+    XX(HTTP_205,  "Reset Content")                   \
+    XX(HTTP_206,  "Partial Content")                 \
+    XX(HTTP_207,  "Multi-Status")                    \
+    XX(HTTP_226,  "IM Used")                         \
+    XX(HTTP_300,  "Multiple Choices")                \
+    XX(HTTP_301,  "Moved Permanently")               \
+    XX(HTTP_302,  "Moved Temporarily")               \
+    XX(HTTP_303,  "See Other")                       \
+    XX(HTTP_304,  "Not Modified")                    \
+    XX(HTTP_305,  "Use Proxy")                       \
+    XX(HTTP_307,  "Temporary Redirect")              \
+    XX(HTTP_400,  "Bad Request")                     \
+    XX(HTTP_401,  "Unauthorized")                    \
+    XX(HTTP_402,  "Payment Required")                \
+    XX(HTTP_403,  "Forbidden")                       \
+    XX(HTTP_404,  "Not Found")                       \
+    XX(HTTP_405,  "Method Not Allowed")              \
+    XX(HTTP_406,  "Not Acceptable")                  \
+    XX(HTTP_407,  "Proxy Authentication Required")   \
+    XX(HTTP_408,  "Request Timeout")                 \
+    XX(HTTP_409,  "Conflict")                        \
+    XX(HTTP_410,  "Gone")                            \
+    XX(HTTP_411,  "Length Required")                 \
+    XX(HTTP_412,  "Precondition Failed")             \
+    XX(HTTP_413,  "Request Entity Too Large")        \
+    XX(HTTP_414,  "Request-URI Too Large")           \
+    XX(HTTP_415,  "Unsupported Media Type")          \
+    XX(HTTP_416,  "Requested Range Not Satisfiable") \
+    XX(HTTP_417,  "Expectation Failed")              \
+    XX(HTTP_418,  "I'm a teapot")                    \
+    XX(HTTP_422,  "Unprocessable Entity")            \
+    XX(HTTP_423,  "Locked")                          \
+    XX(HTTP_424,  "Failed Dependency")               \
+    XX(HTTP_425,  "Unordered Collection")            \
+    XX(HTTP_426,  "Upgrade Required")                \
+    XX(HTTP_428,  "Precondition Required")           \
+    XX(HTTP_429,  "Too Many Requests")               \
+    XX(HTTP_431,  "Request Header Fields Too Large") \
+    XX(HTTP_434,  "Requested host unavailable")      \
+    XX(HTTP_449,  "Retry With")                      \
+    XX(HTTP_451,  "Unavailable For Legal Reasons")   \
+    XX(HTTP_500,  "Internal Server Error")           \
+    XX(HTTP_501,  "Not Implemented")                 \
+    XX(HTTP_502,  "Bad Gateway")                     \
+    XX(HTTP_503,  "Service Unavailable")             \
+    XX(HTTP_504,  "Gateway Timeout")                 \
+    XX(HTTP_505,  "HTTP Version Not Supported")      \
+    XX(HTTP_506,  "Variant Also Negotiates")         \
+    XX(HTTP_507,  "Insufficient Storage")            \
+    XX(HTTP_508,  "Loop Detected")                   \
+    XX(HTTP_509,  "Bandwidth Limit Exceeded")        \
+    XX(HTTP_510,  "Not Extended")                    \
+    XX(HTTP_511,  "Network Authentication Required") \
+    XX(HTTP_NONE, "No Reason") \
 
 #endif //ION_STRINGS_H
 
