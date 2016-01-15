@@ -10,28 +10,36 @@ $server->listen("0.0.0.0:8443")->encrypt(\ION\Crypto::server());
 $server->incoming()->then(function (\ION\HTTP\Request $proxy_req) use ($client) {
 
 	$uri = $proxy_req->getUri();
-	$proxy_req->getBody(function(\ION\Stream $stream) {
+    $body = new \ION\HTTP\Body($proxy_req);
+    $body = new \ION\HTTP\Body\MultiParted($proxy_req);
+    while($part = yield $body->readPart(2 * MiB)) {
+        if($part->isComplete()) {
 
-	});
+        } else {
+            while($chunk = yield $part->read(2 * MiB)) {
+
+            }
+        }
+    }
 	$target_host = $uri->getHost().":".$uri->getPort();
 	$stream = yield $client->fetchStream($target_host)->timeout(10);
 
 	$request = $proxy_req->withUri($uri->relative());
 
-	$response_out = yield $stream->write($request)->flush();
-
-	if(!$proxy_req->getHeaderLine("transfer-encoding") == "Chunked") {
-		$proxy_content = new \ION\HTTP\Content\Chunked($stream);
-		$content = new \ION\HTTP\Content\Chunked($stream);
-	} else if($proxy_req->getHeaderLine("content-length") > 2 * MiB) {
-		$reader = $proxy_req->getContentReader();
-	} else {
-
-	}
-
-	if($proxy_req->isKeepAlive()) {
-
-	}
+//	$response_out = yield $stream->write($request)->flush();
+//
+//	if(!$proxy_req->getHeaderLine("transfer-encoding") == "Chunked") {
+//		$proxy_content = new \ION\HTTP\Content\Chunked($stream);
+//		$content = new \ION\HTTP\Content\Chunked($stream);
+//	} else if($proxy_req->getHeaderLine("content-length") > 2 * MiB) {
+//		$reader = $proxy_req->getContentReader();
+//	} else {
+//
+//	}
+//
+//	if($proxy_req->isKeepAlive()) {
+//
+//	}
 
 });
 

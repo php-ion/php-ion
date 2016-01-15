@@ -48,12 +48,12 @@ typedef struct skiplist       ion_skiplist;
 # define false 0
 #endif
 
-#define ION_LOOP_CB_BEGIN()                     \
-    ion_time __begin_time;                      \
-    zend_bool __stats = GION(stats);            \
-    if(__stats) {                               \
-        evutil_gettimeofday(&__begin_time, NULL);\
-    }                                           \
+#define ION_LOOP_CB_BEGIN()                         \
+    ion_time __begin_time;                          \
+    zend_bool __stats = GION(stats);                \
+    if(__stats) {                                   \
+        evutil_gettimeofday(&__begin_time, NULL);   \
+    }                                               \
 
 #define ION_LOOP_CB_END()   \
     if(__stats) {           \

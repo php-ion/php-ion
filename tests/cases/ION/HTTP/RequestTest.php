@@ -96,4 +96,37 @@ class RequestTest extends TestCase {
         $this->assertEquals("*", $req->getRequestTarget());
     }
 
+    /**
+     * @group dev
+     * @memcheck
+     */
+    public function testToString() {
+        $body = "...body content...";
+        $request_str = implode("\r\n", [
+            "GET /iddqd?cheat=1 HTTP/1.1",
+            "Host: example.com",
+            "User-agent: nobody",
+            "Expires: -1",
+            "Cookie: one=1",
+            "cookie: two=2",
+            "Content-Length: ".strlen($body),
+            "",
+            $body
+        ]);
+        $req = Request::parse($request_str);
+
+        $expected = implode("\r\n", [
+            "GET /iddqd?cheat=1 HTTP/1.1",
+            "Host: example.com",
+            "User-Agent: nobody",
+            "Expires: -1",
+            "Cookie: one=1,two=2",
+            "Content-Length: ".strlen($body),
+            "",
+            $body
+        ]);
+
+        $this->assertEquals($expected, strval($req));
+    }
+
 }
