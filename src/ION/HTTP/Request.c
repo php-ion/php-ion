@@ -65,9 +65,8 @@ CLASS_METHOD(ION_HTTP_Request, factory) {
                 message->uri = Z_OBJ_P(option);
                 break;
             case ION_HTTP_REQUEST_TARGET:
-                if(Z_TYPE_P(option) == IS_STRING) {
-                    zval_add_ref(option);
-                } else {
+                zval_add_ref(option);
+                if(Z_TYPE_P(option) != IS_STRING) {
                     convert_to_string(option);
                 }
                 if(message->target) {
@@ -76,9 +75,8 @@ CLASS_METHOD(ION_HTTP_Request, factory) {
                 message->target = Z_STR_P(option);
                 break;
             case ION_HTTP_REQUEST_VERSION:
-                if(Z_TYPE_P(option) == IS_STRING) {
-                    zval_add_ref(option);
-                } else {
+                zval_add_ref(option);
+                if(Z_TYPE_P(option) != IS_STRING) {
                     convert_to_string(option);
                 }
                 if(message->version) {
@@ -111,9 +109,8 @@ CLASS_METHOD(ION_HTTP_Request, factory) {
                 } ZEND_HASH_FOREACH_END();
                 break;
             case ION_HTTP_REQUEST_BODY:
-                if(Z_TYPE_P(option) == IS_STRING) {
-                    zval_add_ref(option);
-                } else {
+                zval_add_ref(option);
+                if(Z_TYPE_P(option) != IS_STRING) {
                     convert_to_string(option);
                 }
                 if(message->body) {
