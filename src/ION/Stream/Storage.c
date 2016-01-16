@@ -33,7 +33,7 @@ METHOD_ARGS_END();
 
 /** public function ION\Stream\Storage::removeStream($peer_name) : Sequence  */
 CLASS_METHOD(ION_Stream_Storage, removeStream) {
-    ion_storage * storage = get_this_instance(ion_storage);
+//    ion_storage * storage = get_this_instance(ion_storage);
     zend_string * peer_name = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)

@@ -4,6 +4,7 @@ namespace ION\HTTP;
 
 
 use ION\Test\TestCase;
+use ION\URI;
 
 class RequestTest extends TestCase {
 
@@ -97,7 +98,6 @@ class RequestTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testToString() {
@@ -126,6 +126,40 @@ class RequestTest extends TestCase {
             $body
         ]);
 
+        $this->assertEquals($expected, strval($req));
+    }
+
+    /**
+     * @group dev
+     * @mem check
+     */
+    public function _testFactory() {
+        $body = "...body content...";
+
+        $req = Request::factory([
+            Request::METHOD  => "GET",
+            Request::URI     => URI::parse("/iddqd?cheat=1"),
+            Request::VERSION => "1.1",
+            Request::HEADERS => [
+                "Host" => "example.com",
+                "User-Agent" => ["nobody"],
+                "Cookie" => [
+                    "one=1",
+                    "two=2"
+                ]
+            ],
+            Request::BODY    => $body
+        ]);
+
+        $expected = implode("\r\n", [
+            "GET /iddqd?cheat=1 HTTP/1.1",
+            "Host: example.com",
+            "User-Agent: nobody",
+            "Expires: -1",
+            "Cookie: one=1,two=2",
+            "",
+            $body
+        ]);
         $this->assertEquals($expected, strval($req));
     }
 

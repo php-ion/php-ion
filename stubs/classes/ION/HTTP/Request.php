@@ -6,6 +6,12 @@ namespace ION\HTTP;
 use ION\URI;
 
 class Request extends Message {
+    const URI     = 1;
+    const TARGET  = 2;
+    const VERSION = 3;
+    const METHOD  = 4;
+    const HEADERS = 5;
+    const BODY    = 6;
 
     /**
      * @param string $request

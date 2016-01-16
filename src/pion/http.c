@@ -300,10 +300,10 @@ zend_string * pion_http_message_build(zend_object * message_object) {
             pipe[pipe_pos++] = str_colon_sp;
             message_size += header->len + 3;
             ZEND_HASH_FOREACH_VAL(Z_ARR_P(value), v) {
-                        pipe[pipe_pos++] = Z_STR_P(v);
-                        pipe[pipe_pos++] = str_coma;
-                        message_size += Z_STRLEN_P(v) + 1;
-                    } ZEND_HASH_FOREACH_END();
+                pipe[pipe_pos++] = Z_STR_P(v);
+                pipe[pipe_pos++] = str_coma;
+                message_size += Z_STRLEN_P(v) + 1;
+            } ZEND_HASH_FOREACH_END();
             pipe[pipe_pos-1] = str_crlf;
         }
     } ZEND_HASH_FOREACH_END();
