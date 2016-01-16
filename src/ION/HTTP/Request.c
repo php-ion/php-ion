@@ -39,8 +39,8 @@ CLASS_METHOD(ION_HTTP_Request, factory) {
     zend_array       * options = NULL;
     zend_object      * request;
     ion_http_message * message;
-    zend_long          option;
-    zval             * value = NULL;
+    zend_long          opt;
+    zval             * option = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_ARRAY_HT(options)
@@ -51,94 +51,78 @@ CLASS_METHOD(ION_HTTP_Request, factory) {
         return;
     }
     message = get_object_instance(request, ion_http_message);
-    ZEND_HASH_FOREACH_NUM_KEY_VAL(options, option, value) {
-        switch(option) {
+    ZEND_HASH_FOREACH_NUM_KEY_VAL(options, opt, option) {
+        switch(opt) {
             case ION_HTTP_REQUEST_URI:
-                if(Z_TYPE_P(value) != IS_OBJECT || !instanceof_function(Z_CE_P(value), ion_ce_ION_URI)) {
+                if(Z_TYPE_P(option) != IS_OBJECT || !instanceof_function(Z_CE_P(option), ion_ce_ION_URI)) {
                     zend_throw_exception(ion_ce_InvalidArgumentException, ERR_ION_HTTP_REQUEST_FACTORY_URI, 0);
                     return;
                 }
                 if(message->uri) {
                     zend_object_release(message->uri);
                 }
-                zval_add_ref(value);
-                message->uri = Z_OBJ_P(value);
+                zval_add_ref(option);
+                message->uri = Z_OBJ_P(option);
                 break;
             case ION_HTTP_REQUEST_TARGET:
-                if(Z_TYPE_P(value) == IS_STRING) {
-                    zval_add_ref(value);
+                if(Z_TYPE_P(option) == IS_STRING) {
+                    zval_add_ref(option);
                 } else {
-                    convert_to_string(value);
+                    convert_to_string(option);
                 }
                 if(message->target) {
                     zend_string_release(message->target);
                 }
-                message->target = Z_STR_P(value);
+                message->target = Z_STR_P(option);
                 break;
             case ION_HTTP_REQUEST_VERSION:
-                if(Z_TYPE_P(value) == IS_STRING) {
-                    zval_add_ref(value);
+                if(Z_TYPE_P(option) == IS_STRING) {
+                    zval_add_ref(option);
                 } else {
-                    convert_to_string(value);
+                    convert_to_string(option);
                 }
                 if(message->version) {
                     zend_string_release(message->version);
                 }
-                message->version = Z_STR_P(value);
+                message->version = Z_STR_P(option);
                 break;
             case ION_HTTP_REQUEST_METHOD:
-                if(Z_TYPE_P(value) != IS_STRING) {
+                if(Z_TYPE_P(option) != IS_STRING) {
                     zend_throw_exception(ion_ce_InvalidArgumentException, ERR_ION_HTTP_REQUEST_FACTORY_METHOD, 0);
                     return;
                 }
                 if(message->method) {
                     zend_string_release(message->method);
                 }
-                message->method = Z_STR_P(value);
+                message->method = Z_STR_P(option);
                 break;
             case ION_HTTP_REQUEST_HEADERS:
-                if(Z_TYPE_P(value) != IS_ARRAY) {
+                if(Z_TYPE_P(option) != IS_ARRAY) {
                     zend_throw_exception(ion_ce_InvalidArgumentException, ERR_ION_HTTP_REQUEST_FACTORY_HEADERS, 0);
                     return;
                 }
                 if(message->headers) {
                     zend_hash_clean(message->headers);
                 }
-                zend_array  * headers = zend_array_dup(Z_ARR_P(value));
                 zend_string * header;
-                zval          copy;
-                zval        * v;
-                zval        * vv;
-                ZEND_HASH_FOREACH_STR_KEY_VAL(headers, header, vv) {
-                            ZVAL_COPY(&copy, vv);
-                    v = zend_hash_add(message->headers, zend_string_tolower(header), &copy);
-                    if(Z_TYPE_P(v) == IS_STRING) {
-                        convert_to_array(v);
-                    } else if(Z_TYPE_P(v) == IS_ARRAY) {
-                        zval * hv;
-                        ZEND_HASH_FOREACH_VAL(Z_ARR_P(v), hv) {
-                            if(Z_TYPE_P(hv) != IS_STRING) {
-                                convert_to_string(hv);
-                            }
-                        } ZEND_HASH_FOREACH_END();
-                    }
+                zval        * value;
+                ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARR_P(option), header, value) {
+                    ion_http_message_with_added_header(message->headers, header, value);
                 } ZEND_HASH_FOREACH_END();
-
-                message->headers = headers;
                 break;
             case ION_HTTP_REQUEST_BODY:
-                if(Z_TYPE_P(value) == IS_STRING) {
-                    zval_add_ref(value);
+                if(Z_TYPE_P(option) == IS_STRING) {
+                    zval_add_ref(option);
                 } else {
-                    convert_to_string(value);
+                    convert_to_string(option);
                 }
                 if(message->body) {
                     zend_string_release(message->body);
                 }
-                message->body = Z_STR_P(value);
+                message->body = Z_STR_P(option);
                 break;
             default:
-                zend_throw_exception_ex(ion_ce_InvalidArgumentException, 0, ERR_ION_HTTP_REQUEST_FACTORY_UNKNOWN, option);
+                zend_throw_exception_ex(ion_ce_InvalidArgumentException, 0, ERR_ION_HTTP_REQUEST_FACTORY_UNKNOWN, opt);
                 return;
         }
     } ZEND_HASH_FOREACH_END();

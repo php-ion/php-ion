@@ -117,8 +117,11 @@ typedef struct _ion_http_multi_parted_parser {
 extern ION_API zend_string * ion_uri_stringify(zend_object * uri, unsigned short parts);
 extern ION_API zend_object * ion_uri_parse(zend_string * uri_string);
 
-zend_object * ion_http_message_init(zend_class_entry * ce);
-void ion_http_message_free(zend_object * zo_message);
+extern ION_API zend_object * ion_http_message_init(zend_class_entry * ce);
+extern ION_API void ion_http_message_free(zend_object * zo_message);
+extern ION_API void ion_http_message_store_header_value(zend_array * header, zval * value);
+extern ION_API void ion_http_message_with_header(zend_array * headers, zend_string * name, zval * value);
+extern ION_API void ion_http_message_with_added_header(zend_array * headers, zend_string * name, zval * value);
 
 
 extern ION_API zend_string * pion_http_reason(uint16_t response_code);

@@ -131,9 +131,9 @@ class RequestTest extends TestCase {
 
     /**
      * @group dev
-     * @mem check
+     * @memcheck
      */
-    public function _testFactory() {
+    public function testFactory() {
         $body = "...body content...";
 
         $req = Request::factory([
@@ -155,7 +155,6 @@ class RequestTest extends TestCase {
             "GET /iddqd?cheat=1 HTTP/1.1",
             "Host: example.com",
             "User-Agent: nobody",
-            "Expires: -1",
             "Cookie: one=1,two=2",
             "",
             $body
