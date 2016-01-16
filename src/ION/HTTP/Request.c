@@ -89,6 +89,7 @@ CLASS_METHOD(ION_HTTP_Request, factory) {
                     zend_throw_exception(ion_ce_InvalidArgumentException, ERR_ION_HTTP_REQUEST_FACTORY_METHOD, 0);
                     return;
                 }
+                zval_add_ref(option);
                 if(message->method) {
                     zend_string_release(message->method);
                 }
