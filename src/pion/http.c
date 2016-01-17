@@ -71,7 +71,7 @@ int pion_http_url(http_parser * parser, const char * at, size_t length) {
 
 int pion_http_message_status(http_parser * parser, const char * at, size_t length) {
     ion_http_message * message = parser->data;
-    message->code = parser->status_code;
+    message->status = parser->status_code;
     message->reason = zend_string_init(at, length, 0);
     return 0;
 }
@@ -191,9 +191,9 @@ zend_object * pion_http_parse_request(zend_string * request_string, zend_class_e
     return request;
 }
 
-zend_object * pion_http_parse_response(zend_string * request_string, zend_class_entry * ce) {
-    zend_object          * request = pion_new_object_arg_0(ce ? ce : ion_ce_ION_HTTP_Response);
-    ion_http_message     * message = get_object_instance(request, ion_http_message);
+zend_object * pion_http_parse_response(zend_string * response_string, zend_class_entry * ce) {
+    zend_object          * response = pion_new_object_arg_0(ce ? ce : ion_ce_ION_HTTP_Response);
+    ion_http_message     * message = get_object_instance(response, ion_http_message);
     http_parser_settings   settings;
     size_t                 nparsed;
     http_parser          * parser;
@@ -201,7 +201,7 @@ zend_object * pion_http_parse_response(zend_string * request_string, zend_class_
 
     message->parser = ecalloc(1, sizeof(ion_http_parser));
     parser = ecalloc(1, sizeof(http_parser));
-    http_parser_init(parser, HTTP_REQUEST);
+    http_parser_init(parser, HTTP_RESPONSE);
     message->parser->parser = parser;
 
     parser->data = message;
@@ -214,13 +214,13 @@ zend_object * pion_http_parse_response(zend_string * request_string, zend_class_
     settings.on_headers_complete = pion_http_headers_complete;
     settings.on_status           = pion_http_message_status;
 
-    nparsed = http_parser_execute(parser, &settings, request_string->val, request_string->len);
-    if(nparsed < request_string->len) {
+    nparsed = http_parser_execute(parser, &settings, response_string->val, response_string->len);
+    if(nparsed < response_string->len) {
         zend_error(E_NOTICE, "has unparsed data");
     }
     efree(parser);
     efree(message->parser);
-    return request;
+    return response;
 }
 
 zend_string * pion_http_message_build(zend_object * message_object) {
@@ -238,43 +238,39 @@ zend_string * pion_http_message_build(zend_object * message_object) {
     zend_string      * str_up_get    = ION_STR(ION_STR_UP_GET);
     zend_string      * str_v11       = ION_STR(ION_STR_V11);
     zend_string      * str_coma      = ION_STR(ION_STR_COMA);
-    zend_string      * target        = NULL;
+    zend_string      * buffer        = NULL;
     zend_string      * header = NULL;
     zval             * value = NULL;
     zval             * v = NULL;
 
-    if(message->target) {
-        target = zend_string_copy(message->target);
-    } else if(message->uri) {
-        target = ion_uri_stringify(message->uri, URI_ALL);
-    }
 
     // begin head
     if(message->type == ion_http_type_response) {
-        pipe[0] = str_http;
-        pipe[1] = str_slash;
+        pipe[0] = str_http;     // 4 bytes
+        pipe[1] = str_slash;    // 1 bytes
         pipe[2] = message->version ? message->version : str_v11;
-        pipe[3] = str_space;
-        message_size += pipe[2]->len + 2 + pipe[2]->len;
-        pipe[4] = str_space;
-        pipe[5] = strpprintf(4, "%d", message->code);
-        pipe[6] = str_space;
-        pipe[7] = message->reason;
-        pipe[8] = str_crlf;
-        message_size += pipe[5]->len + pipe[7]->len + 4;
-        pipe_pos = 9;
+        pipe[3] = str_space;    // 1 bytes
+        pipe[4] = buffer = strpprintf(4, "%d", message->status);
+        pipe[5] = str_space;    // 1 bytes
+        pipe[6] = message->reason ? message->reason : pion_http_reason(message->status);
+        pipe[7] = str_crlf;     // 2 bytes
+        message_size = pipe[2]->len + buffer->len + pipe[6]->len + 9;
+        pipe_pos = 8;
     } else if(message->type == ion_http_type_request) {
+        if(message->target) {
+            buffer = zend_string_copy(message->target);
+        } else if(message->uri) {
+            buffer = ion_uri_stringify(message->uri, URI_ALL);
+        }
         pipe[0] = message->method ? message->method : str_up_get;
-        pipe[1] = str_space;
-        message_size += pipe[0]->len + 1;
-        pipe[2] = target ? target : str_slash;
-        pipe[3] = str_space;
-        pipe[4] = str_http;
-        pipe[5] = str_slash;
-        message_size += pipe[2]->len + 6;
+        pipe[1] = str_space;    // 1 bytes
+        pipe[2] = buffer ? buffer : str_slash;
+        pipe[3] = str_space;    // 1 bytes
+        pipe[4] = str_http;     // 4 bytes
+        pipe[5] = str_slash;    // 1 bytes
         pipe[6] = message->version ? message->version : str_v11;
-        pipe[7] = str_crlf;
-        message_size += pipe[6]->len + 2;
+        pipe[7] = str_crlf;     // 2 bytes
+        message_size = pipe[0]->len + pipe[2]->len + pipe[6]->len + 9;
         pipe_pos = 8;
     }
     // end head
@@ -347,7 +343,9 @@ zend_string * pion_http_message_build(zend_object * message_object) {
     }
 
     efree(pipe);
-    zend_string_release(target);
+    if(buffer) {
+        zend_string_release(buffer);
+    }
     msg->val[msg->len] = '\000';
 
     return msg;

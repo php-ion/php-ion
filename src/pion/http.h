@@ -73,7 +73,7 @@ typedef struct _ion_http_message {
     zend_string     * body;
 
     zend_object     * uri;
-    uint32_t          code;
+    uint16_t          status;
     zend_string     * method;
     zend_string     * reason;
     zend_string     * target;

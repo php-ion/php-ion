@@ -13,5 +13,9 @@
 #define ERR_ION_HTTP_REQUEST_FACTORY_HEADERS "Headers should be an array"
 #define ERR_ION_HTTP_REQUEST_FACTORY_UNKNOWN "Unknown option %d"
 
+// class ION\HTTP\Response
+#define ERR_ION_HTTP_RESPONSE_UNKNOWN_STATUS "Unknown status %d"
+#define ERR_ION_HTTP_RESPONSE_FACTORY_STATUS "Method should be an integer"
+
 
 #endif //PION_ERRORS_H

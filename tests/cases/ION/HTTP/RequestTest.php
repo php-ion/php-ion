@@ -130,7 +130,6 @@ class RequestTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testFactory() {
