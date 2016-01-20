@@ -207,7 +207,7 @@ void _ion_stream_input(ion_buffer * bev, void * ctx) {
     ion_evbuffer    * input;
     zend_string     * data = NULL;
 
-    obj_add_ref(&stream->std);
+    zend_object_addref(&stream->std);
     if(stream->read) {
         input = bufferevent_get_input(stream->buffer);
         if(stream->token) { // readLine()

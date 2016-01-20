@@ -12,6 +12,29 @@ ION::promise(function () {
 		]
 	]);
 
+
+    $parser = new \ION\HTTP\WebSocketParser;
+    $request->onBody($parser)->then(function (\ION\HTTP\WebSocket\Frame $frame) {
+
+    });
+    while(!$parser->isFinished()) {
+        $frame = yield $request->onBody($parser);
+    }
+    $parser = new \ION\HTTP\MultiPartParser("iddqd", 1000);
+    $request->onBody($parser)->then(function (\ION\HTTP\MultiPart\Part $part) {
+
+    });
+    while(!$parser->isFinished()) {
+        $part = yield $request->onBody($parser);
+    }
+    $parser = new \ION\HTTP\ChunkedParser;
+    $request->onBody($parser)->then(function (string $chunk) {
+
+    });
+    while(!$parser->isFinished()) {
+        $chunk = yield $request->onBody($parser);
+    }
+
 	$response = yield \ION\HTTP::request($request);
 	/* @var \ION\HTTP\Response $response */
 	echo "Code: ".$response->getStatusCode() . " (" . $response->getReasonPhrase() . ")\n\n";

@@ -117,7 +117,7 @@ CLASS_METHOD(ION_HTTP_Response, factory) {
                     break;
                 default:
                     zend_throw_exception_ex(ion_ce_InvalidArgumentException, 0,
-                                            ERR_ION_HTTP_REQUEST_FACTORY_UNKNOWN, opt);
+                                            ERR_ION_HTTP_RESPONSE_FACTORY_UNKNOWN, opt);
                     return;
             }
         } ZEND_HASH_FOREACH_END();

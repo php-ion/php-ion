@@ -53,6 +53,7 @@ void ion_interned_strings_dtor(void);
     XX(COLON_SP      , ": "             ) \
     XX(SPACE         , " "              ) \
     XX(CRLF          , "\r\n"           ) \
+    XX(CRLFCRLF      , "\r\n\r\n"       ) \
                                           \
     XX(DONE          , "done"           ) \
     XX(CANCELED      , "canceled"       ) \

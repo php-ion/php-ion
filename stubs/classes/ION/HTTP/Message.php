@@ -3,6 +3,8 @@
 namespace ION\HTTP;
 
 
+use ION\Stream;
+
 class Message {
 
     /**
@@ -166,4 +168,8 @@ class Message {
      * @throws \InvalidArgumentException When the body is not valid.
      */
 	public function withBody(string $body) : static {}
+
+    public function hasStream() : bool {}
+    public function getStream() : Stream {}
+    public function detach() : self {}
 }

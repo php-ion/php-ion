@@ -3,6 +3,7 @@
 namespace ION\HTTP;
 
 
+use ION\Sequence;
 use ION\URI;
 
 class Request extends Message {
@@ -129,5 +130,8 @@ class Request extends Message {
      */
     public function withUri(URI $uri, $preserveHost = false) : self { }
 
+    public function withBodyParser($filter) : self { }
+
+    public function onBody(callable $filter = null) : Sequence { }
 
 }

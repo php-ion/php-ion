@@ -5,7 +5,6 @@
 zend_object_handlers ion_oh_ION_URI;
 zend_class_entry * ion_ce_ION_URI;
 
-
 zend_object * ion_uri_init(zend_class_entry * ce) {
     ion_uri * theuri = ecalloc(1, sizeof(ion_uri));
     RETURN_INSTANCE(ION_URI, theuri);
@@ -46,9 +45,9 @@ zend_string * ion_uri_stringify(zend_object * uri, unsigned short parts) {
     if(theuri->scheme && (parts & URI_SCHEME)) {
         length += theuri->scheme->len + 3; // scheme + "://"
     }
-    if(theuri->user && (parts & URI_USER)) {
+    if(theuri->user && (parts & URI_USER_NAME)) {
         length += theuri->user->len + 1;  // user + "@"
-        if(theuri->pass && (parts & URI_PASS)) {
+        if(theuri->pass && (parts & URI_USER_PASS)) {
             length += theuri->pass->len + 1; // ":" + pass
         }
     }
@@ -87,10 +86,10 @@ zend_string * ion_uri_stringify(zend_object * uri, unsigned short parts) {
         memcpy(&buf->val[pos], "://", sizeof("://") - 1);
         pos += 3;
     }
-    if(theuri->user && (parts & URI_USER)) {
+    if(theuri->user && (parts & URI_USER_NAME)) {
         memcpy(&buf->val[pos], theuri->user->val, theuri->user->len);
         pos += theuri->user->len;
-        if(theuri->pass && (parts & URI_PASS)) {
+        if(theuri->pass && (parts & URI_USER_PASS)) {
             buf->val[pos] = ':';
             pos++;
             memcpy(&buf->val[pos], theuri->pass->val, theuri->pass->len);
@@ -237,6 +236,76 @@ METHOD_ARGS_BEGIN(ION_URI, parse, 1)
     METHOD_ARG_STRING(uri, 0)
 METHOD_ARGS_END();
 
+#define ION_UPDATE_OPTION(uri, option, value) \
+    zval_add_ref(value);                     \
+    if (Z_TYPE_P(value) != IS_STRING) {      \
+        convert_to_string(value);            \
+    }                                        \
+    if (uri->option) {                       \
+        zend_string_release(uri->option);    \
+    }                                        \
+    uri->option = Z_STR_P(value);            \
+
+/** public static function ION\URI::factory(array $options = []) : static */
+CLASS_METHOD(ION_URI, factory) {
+    zend_array       * options = NULL;
+    zend_object      * uri;
+    ion_uri          * theuri;
+    zend_long          opt;
+    zval             * option = NULL;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_ARRAY_HT(options)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    uri = pion_new_object_arg_0(zend_get_called_scope(execute_data));
+    if(!uri) {
+        return;
+    }
+    theuri = get_object_instance(uri, ion_uri);
+    if(options) {
+        ZEND_HASH_FOREACH_NUM_KEY_VAL(options, opt, option) {
+            switch (opt) {
+                case URI_SCHEME:
+                    ION_UPDATE_OPTION(theuri, scheme, option);
+                    break;
+                case URI_USER_NAME:
+                    ION_UPDATE_OPTION(theuri, user, option);
+                    break;
+                case URI_USER_PASS:
+                    ION_UPDATE_OPTION(theuri, pass, option);
+                    break;
+                case URI_HOST:
+                    ION_UPDATE_OPTION(theuri, host, option);
+                    break;
+                case URI_PORT:
+                    theuri->port = (unsigned short)Z_LVAL_P(option);
+                    break;
+                case URI_PATH:
+                    ION_UPDATE_OPTION(theuri, path, option);
+                    break;
+                case URI_QUERY:
+                    ION_UPDATE_OPTION(theuri, query, option);
+                    break;
+                case URI_FRAGMENT:
+                    ION_UPDATE_OPTION(theuri, fragment, option);
+                    break;
+                default:
+                    zend_throw_exception_ex(ion_ce_InvalidArgumentException, 0,
+                                            ERR_ION_HTTP_URI_FACTORY_UNKNOWN, opt);
+                    return;
+            }
+        } ZEND_HASH_FOREACH_END();
+    }
+
+    RETURN_OBJ(uri);
+}
+
+METHOD_ARGS_BEGIN(ION_URI, factory, 1)
+    METHOD_ARG_ARRAY(options, 0, 0)
+METHOD_ARGS_END();
+
+
 CLASS_METHOD(ION_URI, hasScheme) {
     ion_uri * uri = get_this_instance(ion_uri);
     if(uri->scheme) {
@@ -286,7 +355,7 @@ METHOD_ARGS_END();
 CLASS_METHOD(ION_URI, getAuthority) {
     ion_uri * theuri = get_this_instance(ion_uri);
     if(theuri->host) {
-        RETURN_STR(ion_uri_stringify(Z_OBJ_P(getThis()), URI_USER | URI_PASS | URI_HOST | URI_PORT));
+        RETURN_STR(ion_uri_stringify(Z_OBJ_P(getThis()), URI_USER_NAME | URI_USER_PASS | URI_HOST | URI_PORT));
     } else {
         RETURN_EMPTY_STRING();
     }
@@ -680,6 +749,16 @@ CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_URI) {
     pion_register_class(ION_URI, "ION\\URI", ion_uri_init, CLASS_METHODS(ION_URI));
+
+    PION_CLASS_CONST_LONG(ION_URI, "SCHEME",    URI_SCHEME);
+    PION_CLASS_CONST_LONG(ION_URI, "USER_NAME", URI_USER_NAME);
+    PION_CLASS_CONST_LONG(ION_URI, "USER_PASS", URI_USER_PASS);
+    PION_CLASS_CONST_LONG(ION_URI, "HOST",      URI_HOST);
+    PION_CLASS_CONST_LONG(ION_URI, "PORT",      URI_PORT);
+    PION_CLASS_CONST_LONG(ION_URI, "PATH",      URI_PATH);
+    PION_CLASS_CONST_LONG(ION_URI, "QUERY",     URI_QUERY);
+    PION_CLASS_CONST_LONG(ION_URI, "FRAGMENT",  URI_FRAGMENT);
+
     pion_init_std_object_handlers(ION_URI);
     pion_set_object_handler(ION_URI, free_obj, ion_uri_free);
     pion_set_object_handler(ION_URI, clone_obj, ion_uri_clone_handler);

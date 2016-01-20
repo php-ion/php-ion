@@ -43,6 +43,7 @@ set(ION_SOURCE_FILES
         src/pion/promisor.c
         src/pion/stream.c
         src/pion/http.c
+        src/pion/websocket.c
         src/pion.c
 
         src/ION/Debug.c
@@ -68,6 +69,7 @@ set(ION_SOURCE_FILES
         src/ION/URI.c
         src/ION/HTTP/Request.c
         src/ION/HTTP/Response.c
+        src/ION/HTTP/WebSocket/Frame.c
         )
 
 #src/ION/Deferred.c

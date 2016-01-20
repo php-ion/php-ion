@@ -4,6 +4,7 @@
 #include "init.h"
 #include "../external/http-parser/http_parser.h"
 #include "../external/multipart-parser-c/multipart_parser.h"
+#include "websocket.h"
 
 extern ION_API zend_class_entry * ion_ce_ION_URI;
 
@@ -33,16 +34,16 @@ enum ion_http_msg_type {
 
 #define ION_HTTP_METHOD_STR(method_num) ION_STR(method_num + ION_HTTP_METHOD_STRINGS_OFFSET)
 
-#define URI_SCHEME   (1<<0)
-#define URI_USER     (1<<1)
-#define URI_PASS     (1<<2)
-#define URI_HOST     (1<<3)
-#define URI_PORT     (1<<4)
-#define URI_PATH     (1<<5)
-#define URI_QUERY    (1<<6)
-#define URI_FRAGMENT (1<<7)
+#define URI_SCHEME    (1<<0)
+#define URI_USER_NAME (1<<1)
+#define URI_USER_PASS (1<<2)
+#define URI_HOST      (1<<3)
+#define URI_PORT      (1<<4)
+#define URI_PATH      (1<<5)
+#define URI_QUERY     (1<<6)
+#define URI_FRAGMENT  (1<<7)
 
-#define URI_ALL (URI_SCHEME | URI_USER | URI_PASS | URI_HOST | URI_PORT | URI_PATH | URI_QUERY | URI_FRAGMENT)
+#define URI_ALL (URI_SCHEME | URI_USER_NAME | URI_USER_PASS | URI_HOST | URI_PORT | URI_PATH | URI_QUERY | URI_FRAGMENT)
 
 typedef struct _ion_uri {
     zend_object   std;

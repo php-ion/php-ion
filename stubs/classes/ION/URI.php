@@ -25,12 +25,22 @@ namespace ION;
  */
 
 class URI {
+    const SCHEME    = 1;
+    const USER_NAME = 2;
+    const USER_PASS = 3;
+    const HOST      = 4;
+    const PORT      = 5;
+    const PATH      = 6;
+    const QUERY     = 7;
+    const FRAGMENT  = 8;
     /**
      * @param string $uri
      *
      * @return URI
      */
     public static function parse(string $uri) : static { }
+
+    public static function factory(string $options = []) : static { }
 
     public function relative() : static { }
 

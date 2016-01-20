@@ -7,6 +7,9 @@
 #define ERR_ION_AWAIT_INVALID_TIME  "Timeout should be unsigned"
 #define ERR_ION_AWAIT_FAILED        "Unable to add event to queue"
 
+// class URI
+#define ERR_ION_HTTP_URI_FACTORY_UNKNOWN "Unknown option %d"
+
 // class ION\HTTP\Request
 #define ERR_ION_HTTP_REQUEST_FACTORY_URI    "URI should be instance of ION\\URI"
 #define ERR_ION_HTTP_REQUEST_FACTORY_METHOD "Method should be a string"
@@ -16,6 +19,6 @@
 // class ION\HTTP\Response
 #define ERR_ION_HTTP_RESPONSE_UNKNOWN_STATUS "Unknown status %d"
 #define ERR_ION_HTTP_RESPONSE_FACTORY_STATUS "Method should be an integer"
-
+#define ERR_ION_HTTP_RESPONSE_FACTORY_UNKNOWN "Unknown option %d"
 
 #endif //PION_ERRORS_H

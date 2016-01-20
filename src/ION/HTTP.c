@@ -3,31 +3,36 @@
 zend_class_entry * ion_ce_ION_HTTP;
 zend_object_handlers ion_oh_ION_HTTP;
 
-
-int _ion_http_header_name(http_parser * parser, const char * at, size_t length) {
-    return 1;
-}
-
-int _ion_http_header_value(http_parser * parser, const char * at, size_t length) {
-    return 1;
-}
-
-
-/** public function ION\HTTP::request(ION\HTTP\Request $request, ION\Stream $stream = null) : ION\HTTP\Request */
+/** public function ION\HTTP::request(ION\HTTP\Request $request, ION\Stream $stream, array $options = null) : ION\HTTP\Response */
 CLASS_METHOD(ION_HTTP, request) {
     zval          * request = NULL;
     zval          * connect = NULL;
+    zend_array    * options = NULL;
+    zend_string   * req     = NULL;
+    ion_stream    * stream  = NULL;
+    ion_stream_token token;
 
-    ZEND_PARSE_PARAMETERS_START(1, 2)
+    ZEND_PARSE_PARAMETERS_START(2, 3)
         Z_PARAM_ZVAL(request)
-        Z_PARAM_OPTIONAL
         Z_PARAM_ZVAL(connect)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_ARRAY_HT(options)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+
+    stream = get_object_instance(connect, ion_stream);
+    // todo: check stream
+    req = pion_http_message_build(Z_OBJ_P(connect));
+    // todo: check req
+    bufferevent_write(stream->buffer, req->val, req->len);
+    stream->state &= ~ION_STREAM_STATE_FLUSHED;
+    token.token = ION_STR(ION_STR_CRLFCRLF);
 }
 
-METHOD_ARGS_BEGIN(ION_HTTP, request, 1)
+METHOD_ARGS_BEGIN(ION_HTTP, request, 2)
     METHOD_ARG_OBJECT(request, ION\\HTTP\\Request, 0, 0)
-    METHOD_ARG_OBJECT(connect, ION\\Stream, 1, 0)
+    METHOD_ARG_OBJECT(connect, ION\\Stream, 0, 0)
+    METHOD_ARG_ARRAY(options, 0, 1)
 METHOD_ARGS_END();
 
 /** public function ION\HTTP::getResponseReason(int $response_code) : ION\HTTP\Request */

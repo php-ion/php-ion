@@ -19,6 +19,11 @@ use ION\Deferred;
  * message and return an instance that contains the changed state.
  */
 class Response extends Message {
+    const VERSION = 1;
+    const STATUS  = 2;
+    const REASON  = 3;
+    const HEADERS = 4;
+    const BODY    = 5;
 
     public static function parse(string $response) : self { }
 

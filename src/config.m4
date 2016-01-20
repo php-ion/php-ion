@@ -114,6 +114,7 @@ if test "$PHP_ION" != "no"; then
     external/skiplist/skiplist.c
     external/http-parser/http_parser.c
     external/multipart-parser-c/multipart_parser.c
+    pion/websocket.c
     pion/debug.c
     pion/strings.c
     pion/exceptions.c
@@ -146,6 +147,7 @@ if test "$PHP_ION" != "no"; then
     ION/HTTP/Message.c
     ION/HTTP/Request.c
     ION/HTTP/Response.c
+    ION/HTTP/WebSocket/Frame.c
     ION/HTTP.c
     "
 
