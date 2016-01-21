@@ -3,18 +3,21 @@
 zend_object_handlers ion_oh_ION_HTTP_WebSocket_Frame;
 zend_class_entry * ion_ce_ION_HTTP_WebSocket_Frame;
 
-//#define WS_OPCODE_MASK  0x0F
-//#define WS_FLAG_FIN     0x10
-//#define WS_FLAG_MASKED  0x20
-
 int ion_websocket_frame_header(websocket_parser * parser) {
+    if(parser->data) {
+        return 1;
+    }
     zend_string * s = parser->data = zend_string_alloc(parser->length, 0);
     s->val[s->len] = '\000';
     return 0;
 }
 
 int ion_websocket_frame_body(websocket_parser * parser, const char *at, size_t size) {
-    websocket_parser_apply_mask(at, ((zend_string*)parser->data)->val, size, parser);
+    if(parser->flags & WS_HAS_MASK) {
+        websocket_parser_copy_masked(((zend_string*)parser->data)->val, at, size, parser);
+    } else {
+        memcpy(((zend_string*)parser->data)->val, at, size);
+    }
     return 0;
 }
 
@@ -93,7 +96,7 @@ PHP_MINIT_FUNCTION(ION_HTTP_WebSocket_Frame) {
 
     PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "OP_FLAGS", WS_OP_MASK);
     PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "MASKED",   WS_FIN);
-    PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "FIN",      WS_MASKED);
+    PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "FIN",      WS_HAS_MASK);
 
     return SUCCESS;
 }

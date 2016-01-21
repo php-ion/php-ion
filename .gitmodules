@@ -7,3 +7,6 @@
 [submodule "src/external/multipart-parser-c"]
 	path = src/external/multipart-parser-c
 	url = https://github.com/iafonov/multipart-parser-c.git
+[submodule "src/external/websocket-parser"]
+	path = src/external/websocket-parser
+	url = https://github.com/php-ion/websocket-parser.git

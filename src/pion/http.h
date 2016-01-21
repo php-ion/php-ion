@@ -4,7 +4,7 @@
 #include "init.h"
 #include "../external/http-parser/http_parser.h"
 #include "../external/multipart-parser-c/multipart_parser.h"
-#include "websocket.h"
+#include "../external/websocket-parser/websocket_parser.h"
 
 extern ION_API zend_class_entry * ion_ce_ION_URI;
 

@@ -28,6 +28,7 @@ set(ION_SOURCE_FILES
         src/external/skiplist/skiplist.c
         src/external/http-parser/http_parser.c
         src/external/multipart-parser-c/multipart_parser.c
+        src/external/websocket-parser/websocket_parser.c
         src/php_ion.c
         src/pion/init.h
         src/pion/errors.h
@@ -43,7 +44,6 @@ set(ION_SOURCE_FILES
         src/pion/promisor.c
         src/pion/stream.c
         src/pion/http.c
-        src/pion/websocket.c
         src/pion.c
 
         src/ION/Debug.c
