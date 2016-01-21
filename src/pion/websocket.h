@@ -35,18 +35,17 @@ enum websocket_ops {
     WS_OP_PONG     = 0xA,
 };
 
+#define WS_OP_MASK 0xF
+
 enum websocket_errors {
     ERR_OK,
     ERR_UNKNOWN_STATE,
 };
 
 enum websocket_flags {
-    WS_FIN      = 1<<0,
-    WS_MASKED   = 1<<1,
-    WS_LEN7     = 1<<2,
-    WS_LEN16    = 1<<3,
-    WS_LEN64    = 1<<4,
-    WS_COMPLETE = 1<<5,
+    WS_FIN      = 0x10,
+    WS_MASKED   = 0x20,
+    WS_COMPLETE = 0x40,
 };
 
 typedef int (*websocket_data_cb) (websocket_parser*, const char *at, size_t length);
@@ -57,10 +56,8 @@ struct websocket_parser {
     uint32_t flags;
     uint32_t index;
     uint32_t error;
-    uint32_t mask;
-
-    uint8_t opcode;
-    uint8_t length_size;
+    char     mask[4];
+    uint8_t  mask_offset;
 
     uint32_t nread;
     size_t length;
@@ -83,7 +80,7 @@ size_t websocket_parser_execute(websocket_parser *parser,
                            const websocket_parser_settings *settings,
                            const char *data,
                            size_t len);
-
+void websocket_parser_apply_mask(const char * src, char * dst, size_t len, websocket_parser * parser);
 #ifdef __cplusplus
 }
 #endif

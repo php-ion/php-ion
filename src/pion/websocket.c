@@ -57,13 +57,15 @@ void websocket_parser_settings_init(websocket_parser_settings *settings) {
 
 size_t websocket_parser_execute(websocket_parser *parser, const websocket_parser_settings *settings, const char *data, size_t len) {
     size_t i = 0;
+    size_t r = 0;
     char c;
 
     while(i < len) {
         c = data[i];
         switch(parser->state) {
             case s_start:
-                parser->opcode |= c & OPCODE_MASK;
+                parser->length = 0;
+                parser->flags  = (uint32_t) (c & WS_OP_MASK);
                 c >>= 7;
                 if(c & 1) {
                     parser->flags |= WS_FIN;
@@ -75,10 +77,9 @@ size_t websocket_parser_execute(websocket_parser *parser, const websocket_parser
                 if(c & 0x80) {
                     parser->flags |= WS_MASKED;
                 }
-                if(parser->length >= 126) {
-                    if(parser->length == 127) {
-                        parser->flags |= WS_LEN64;
-                        if(len - i > 8) {
+                if(EXPECTED(parser->length >= 126)) {
+                    if(EXPECTED(parser->length == 127)) {
+                        if(EXPECTED(len - i > 8)) {
                             parser->length = (uint16_t)data[i+1];
                             i += 8;
                         } else {
@@ -86,8 +87,7 @@ size_t websocket_parser_execute(websocket_parser *parser, const websocket_parser
                             parser->state = s_length;
                         }
                     } else {
-                        parser->flags |= WS_LEN16;
-                        if(len - i >= 2) {
+                        if(EXPECTED(len - i >= 2)) {
                             parser->length = (uint16_t)data[i+1];
                             i += 2;
                         } else {
@@ -95,17 +95,21 @@ size_t websocket_parser_execute(websocket_parser *parser, const websocket_parser
                         }
                     }
                 } else {
-                    parser->flags |= WS_LEN7;
                 }
-                if(parser->require) {
+                if(EXPECTED(parser->require)) {
                     parser->state = s_length;
                 } else {
-                    if(parser->flags & WS_MASKED) {
+                    if(EXPECTED(parser->flags & WS_MASKED)) {
                         parser->state = s_mask;
                         parser->require = 4;
-                    } else {
-                        parser->state = s_body;
+                    } else if(parser->require) {
                         parser->require = parser->length;
+                        NOTIFY_CB(frame_header);
+                        parser->state = s_body;
+                    } else {
+                        NOTIFY_CB(frame_header);
+                        NOTIFY_CB(frame_end);
+                        parser->state = s_start;
                     }
                 }
                 break;
@@ -114,35 +118,39 @@ size_t websocket_parser_execute(websocket_parser *parser, const websocket_parser
                     parser->length <<= 8;
                     parser->length |= (unsigned char)data[i];
                 }
-                if(!parser->require) {
+                if(!UNEXPECTED(parser->require)) {
                     parser->require = parser->length;
+                    NOTIFY_CB(frame_header);
                     parser->state = s_body;
                 }
                 break;
             case s_mask:
                 for(; i < len, parser->require; i++, parser->require--) {
-                    parser->mask <<= 8;
-                    parser->mask |= (unsigned char)data[i];
+                    parser->mask[4 - parser->require] = data[i];
                 }
-                if(!parser->require) {
-                    parser->state = s_body;
+                i--;
+                if(!UNEXPECTED(parser->require)) {
                     parser->require = parser->length;
+                    NOTIFY_CB(frame_header);
+                    parser->state = s_body;
                 }
                 break;
             case s_body:
                 if(parser->require) {
-                    parser->require -= len - i + 1;
-                    EMIT_DATA_CB(frame_body, &data[i], len - i + 1);
+                    r = parser->require;
+                    parser->require -= len - i;
+                    EMIT_DATA_CB(frame_body, &data[i], len - i);
+                    i+=r;
                 }
-                if(!parser->require) {
+                if(!UNEXPECTED(parser->require)) {
+                    NOTIFY_CB(frame_end);
+//                    parser->flags |= WS_COMPLETE;
                     parser->state = s_start;
-                    parser->length = 0;
-                    parser->opcode = 0;
-                    parser->flags  = 0;
                 }
                 break;
             default:
                 parser->error = ERR_UNKNOWN_STATE;
+                return i;
         }
         i++;
     }
@@ -150,6 +158,11 @@ size_t websocket_parser_execute(websocket_parser *parser, const websocket_parser
     return i;
 }
 
-void websocket_parser_apply_mask(char * body, uint32_t mask, uint8_t offset) {
+void websocket_parser_apply_mask(const char * src, char * dst, size_t len, websocket_parser * parser) {
+    size_t i = 0;
+    for(; i < len; i++) {
+        dst[i] = src[i] ^ parser->mask[(i + parser->mask_offset) % 4];
+    }
 
+    parser->mask_offset = (uint8_t) ((i + parser->mask_offset + 1) % 4);
 }
