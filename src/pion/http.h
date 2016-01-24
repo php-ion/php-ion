@@ -110,6 +110,12 @@ typedef struct _ion_http_response {
     zend_string     * reason;
 } ion_http_response;
 
+typedef struct _ion_http_websocket_frame {
+    zend_object   std;
+    uint32_t      flags;
+    zend_string * body;
+} ion_http_websocket_frame;
+
 typedef struct _ion_http_multi_parted_parser {
     zend_object   std;
     multipart_parser * parser;

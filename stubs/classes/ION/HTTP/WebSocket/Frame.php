@@ -16,11 +16,16 @@ class Frame {
     const MASKED     = 0x10;
     const FIN        = 0x20;
 
-    public $flags = 0;
-
-    public $body = "";
-
     public static function parse(string $frame) : static { }
+
+    public function getOpcode() : int { }
+    public function withOpcode(int $opcode) : static { }
+
+    public function getBody() : string {}
+    public function withBody(string $body) {}
+
+    public function getFinalFlag() : bool {}
+    public function withFinalFlag(bool $fin_flag) {}
 
     public function build() : string {}
 }
