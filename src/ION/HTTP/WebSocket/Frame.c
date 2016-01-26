@@ -68,6 +68,9 @@ CLASS_METHOD(ION_HTTP_WebSocket_Frame, parse) {
     if(parser->data) {
         frame->body = parser->data;
     }
+    if(frame->flags & WS_HAS_MASK) {
+        frame->mask[0] = (unsigned char *)(uint32_t)parser->mask;
+    }
 
     efree(parser);
 }
@@ -121,7 +124,7 @@ CLASS_METHOD(ION_HTTP_WebSocket_Frame, withBody) {
     if(frame->body) {
         zend_string_release(frame->body);
     }
-    frame->body = zend_string_copy(frame->body);
+    frame->body = zend_string_copy(body);
 
     RETURN_THIS();
 }
@@ -178,8 +181,56 @@ CLASS_METHOD(ION_HTTP_WebSocket_Frame, getFinalFlag) {
 
 METHOD_WITHOUT_ARGS(ION_HTTP_WebSocket_Frame, getFinalFlag);
 
+/** public function ION\HTTP\Message::hasMasking() : bool */
+CLASS_METHOD(ION_HTTP_WebSocket_Frame, hasMasking) {
+    ion_http_websocket_frame * frame = get_this_instance(ion_http_websocket_frame);
 
-void ion_websocket_parser_copy_masked(char * dst, const char * src, size_t len, char mask[]) {
+    if(frame->flags & WS_HAS_MASK) {
+        RETURN_TRUE;
+    } else {
+        RETURN_FALSE;
+    }
+}
+
+METHOD_WITHOUT_ARGS(ION_HTTP_WebSocket_Frame, hasMasking);
+
+/** public function ION\HTTP\Message::getMasking() : int */
+CLASS_METHOD(ION_HTTP_WebSocket_Frame, getMasking) {
+    ion_http_websocket_frame * frame = get_this_instance(ion_http_websocket_frame);
+
+    if(frame->flags & WS_HAS_MASK) {
+        RETURN_LONG((zend_long)frame->mask);
+    } else {
+        RETURN_LONG(0);
+    }
+}
+
+METHOD_WITHOUT_ARGS(ION_HTTP_WebSocket_Frame, getMasking);
+
+/** public function ION\HTTP\Message::withMasking() : bool */
+CLASS_METHOD(ION_HTTP_WebSocket_Frame, withMasking) {
+    zend_long mask = 0;
+    ion_http_websocket_frame * frame = get_this_instance(ion_http_websocket_frame);
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_LONG(mask)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    if(mask) {
+        frame->flags |= WS_HAS_MASK;
+        frame->mask[0] = (char *)((uint32_t)mask);
+    } else {
+        frame->flags &= ~WS_HAS_MASK;
+    }
+
+    RETURN_THIS();
+}
+
+METHOD_ARGS_BEGIN(ION_HTTP_WebSocket_Frame, withMasking, 1)
+    METHOD_ARG_LONG(mask, 0)
+METHOD_ARGS_END();
+
+void ion_websocket_parser_copy_masked(char * dst, const char * src, size_t len, char * mask) {
     size_t i = 0;
     for(; i < len; i++) {
         dst[i] = src[i] ^ mask[i % 4];
@@ -190,49 +241,38 @@ void ion_websocket_parser_copy_masked(char * dst, const char * src, size_t len, 
 
 /** public function ION\HTTP\WebSocket\Frame::parse(string $raw) */
 CLASS_METHOD(ION_HTTP_WebSocket_Frame, build) {
+    ion_http_websocket_frame * frame = get_this_instance(ion_http_websocket_frame);
     zend_string * raw;
-    zval        * prop;
     size_t        len = 2;
-    zval          rv;
-    zend_long     flags;
-    zend_string * body;
-    char          mask[4];
 
-    prop = zend_read_property(ion_ce_ION_HTTP_WebSocket_Frame, getThis(), STRARGS("flags"), 1, &rv);
-    convert_to_long(prop);
-    flags = Z_LVAL_P(prop);
 
-    prop = zend_read_property(ion_ce_ION_HTTP_WebSocket_Frame, getThis(), STRARGS("body"), 1, &rv);
-    convert_to_string(prop);
-    body = Z_STR_P(prop);
-
-    if(flags & WS_HAS_MASK) {
+    if(frame->flags & WS_HAS_MASK) {
         len += 4;
     }
-    if(body->len > 125) {
-        if(body->len > 0xFFFF) {
+    if(frame->body->len > 125) {
+        if(frame->body->len > 0xFFFF) {
             len += 8;
         } else {
             len += 2;
         }
     }
-    len += body->len;
+    len += frame->body->len;
     raw = zend_string_alloc(len, 0);
 
     raw->val[0] = 0;
     raw->val[1] = 0;
-    if(flags & WS_FIN) {
+    if(frame->flags & WS_FIN) {
         raw->val[0] = (char) (1 << 7);
     }
-    raw->val[0] |= flags & WS_OP_MASK;
-    if(flags & WS_HAS_MASK) {
+    raw->val[0] |= frame->flags & WS_OP_MASK;
+    if(frame->flags & WS_HAS_MASK) {
         raw->val[1] = (char) (1 << 7);
     }
-    if(body->len < 126) {
-        raw->val[1] |= body->len;
-        COPY_DATA(&raw->val[2], body->val, body->len, mask);
+    if(frame->body->len < 126) {
+        raw->val[1] |= frame->body->len;
+        COPY_DATA(&raw->val[2], frame->body->val, frame->body->len, frame->mask);
     } else {
-        raw->val[2] = (unsigned char *) body->len;
+        raw->val[2] = (unsigned char *) frame->body->len;
     }
 
 }
@@ -248,6 +288,9 @@ CLASS_METHODS_START(ION_HTTP_WebSocket_Frame)
     METHOD(ION_HTTP_WebSocket_Frame, getBody,       ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_WebSocket_Frame, withFinalFlag, ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_WebSocket_Frame, getFinalFlag,  ZEND_ACC_PUBLIC)
+    METHOD(ION_HTTP_WebSocket_Frame, hasMasking,    ZEND_ACC_PUBLIC)
+    METHOD(ION_HTTP_WebSocket_Frame, getMasking,    ZEND_ACC_PUBLIC)
+    METHOD(ION_HTTP_WebSocket_Frame, withMasking,   ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_WebSocket_Frame, build,         ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 
@@ -257,10 +300,6 @@ PHP_MINIT_FUNCTION(ION_HTTP_WebSocket_Frame) {
     pion_init_std_object_handlers(ION_HTTP_WebSocket_Frame);
     pion_set_object_handler(ION_HTTP_WebSocket_Frame, free_obj, ion_http_websocket_frame_free);
 
-
-    PION_CLASS_PROP_LONG(ION_HTTP_WebSocket_Frame, "flags", 0, ZEND_ACC_PUBLIC);
-    PION_CLASS_PROP_STRING(ION_HTTP_WebSocket_Frame, "body", "", ZEND_ACC_PUBLIC);
-
     PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "OP_CONT",  WS_OP_CONTINUE);
     PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "OP_TEXT",  WS_OP_TEXT);
     PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "OP_BIN",   WS_OP_BINARY);
@@ -268,9 +307,9 @@ PHP_MINIT_FUNCTION(ION_HTTP_WebSocket_Frame) {
     PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "OP_PING",  WS_OP_PING);
     PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "OP_PONG",  WS_OP_PONG);
 
-    PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "OP_FLAGS", WS_OP_MASK);
-    PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "MASKED",   WS_FIN);
-    PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "FIN",      WS_HAS_MASK);
+    PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "FLAG_OPCODE",  WS_OP_MASK);
+    PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "FLAG_MASKING", WS_FIN);
+    PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "FLAG_FINAL",   WS_HAS_MASK);
 
     return SUCCESS;
 }

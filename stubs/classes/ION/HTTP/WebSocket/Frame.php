@@ -12,20 +12,25 @@ class Frame {
     const OP_PING     = 0x9;
     const OP_PONG     = 0xA;
 
-    const OP_FLAGS   = 0x0F;
-    const MASKED     = 0x10;
-    const FIN        = 0x20;
+    const FLAG_OPCODE  = 0x0F;
+    const FLAG_MASKING = 0x10;
+    const FLAG_FINAL   = 0x20;
 
     public static function parse(string $frame) : static { }
+    public static function factory(string $body, int $opcode = self::OP_TEXT, int $flags = self::FLAG_FINAL) : static { }
 
     public function getOpcode() : int { }
     public function withOpcode(int $opcode) : static { }
 
     public function getBody() : string {}
-    public function withBody(string $body) {}
+    public function withBody(string $body) : static {}
 
     public function getFinalFlag() : bool {}
-    public function withFinalFlag(bool $fin_flag) {}
+    public function withFinalFlag(bool $fin_flag) : static {}
+
+    public function hasMasking() : bool {}
+    public function getMasking() : int {}
+    public function withMasking(int $mask) : static {}
 
     public function build() : string {}
 }
