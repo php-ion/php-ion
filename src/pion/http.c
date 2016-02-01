@@ -1,4 +1,5 @@
 #include "../pion.h"
+#include "http.h"
 
 
 static const char transform_map[256] = {
@@ -78,7 +79,7 @@ int pion_http_message_status(http_parser * parser, const char * at, size_t lengt
 
 int pion_http_header_name(http_parser * parser, const char * at, size_t length) {
     ion_http_message * message = parser->data;
-    message->parser->buffer = zend_string_init(at, length, 0);
+    message->parser.http->buffer = zend_string_init(at, length, 0);
     return 0;
 }
 
@@ -87,12 +88,12 @@ int pion_http_header_value(http_parser * parser, const char * at, size_t length)
     zval             * header = NULL;
     zval               value;
     zend_string      * name_lower;
-    if(!message->parser->buffer) {
+    if(!message->parser.http->buffer) {
         zend_error(E_NOTICE, "Unexpected HTTP parser behavior: header value without header name");
         return 1;
     }
 
-    name_lower = zend_string_tolower(message->parser->buffer);
+    name_lower = zend_string_tolower(message->parser.http->buffer);
 
     header = zend_hash_find(message->headers, name_lower);
     if(!header) {
@@ -104,8 +105,8 @@ int pion_http_header_value(http_parser * parser, const char * at, size_t length)
     zend_hash_next_index_insert(Z_ARR_P(header), &value);
 
     zend_string_release(name_lower);
-    zend_string_release(message->parser->buffer);
-    message->parser->buffer = NULL;
+    zend_string_release(message->parser.http->buffer);
+    message->parser.http->buffer = NULL;
 
     return 0;
 }
@@ -113,30 +114,6 @@ int pion_http_header_value(http_parser * parser, const char * at, size_t length)
 int pion_http_message_body(http_parser * parser, const char * at, size_t length) {
     ion_http_message * message = parser->data;
     message->body = pion_http_buffering(message->body, at, length);
-    return 0;
-}
-
-int pion_http_headers_complete(http_parser * parser) {
-    ion_http_message * message = parser->data;
-    zval             * header = NULL;
-
-    header = zend_hash_find(message->headers, ION_STR(ION_STR_CONTENT_TYPE));
-    if(header) {
-        zval * value = zend_hash_get_current_data(message->headers);
-        zend_string * v = Z_STR_P(value);
-        if(strstr(v->val, "multipart/form-data")) {
-            char * boundary_ptr = strstr(v->val, "boundary=");
-            if(boundary_ptr) {
-                boundary_ptr += sizeof("boundary=") - 1;
-                size_t start = boundary_ptr - v->val;
-                for(size_t end = start; end < v->len; end++) {
-                    if(isalpha(v->val[end]) || isdigit(v->val[end]) || v->val[end]=='_' || v->val[end] == '-') {
-
-                    }
-                }
-            }
-        }
-    }
     return 0;
 }
 
@@ -156,10 +133,10 @@ zend_object * pion_http_parse_request(zend_string * request_string, zend_class_e
     http_parser          * parser;
 
 
-    message->parser = ecalloc(1, sizeof(ion_http_parser));
+    message->parser.http = ecalloc(1, sizeof(ion_http_parser));
     parser = ecalloc(1, sizeof(http_parser));
     http_parser_init(parser, HTTP_REQUEST);
-    message->parser->parser = parser;
+    message->parser.http->parser = parser;
 
     parser->data = message;
     memset(&settings, 0, sizeof(settings));
@@ -169,7 +146,6 @@ zend_object * pion_http_parse_request(zend_string * request_string, zend_class_e
     settings.on_header_value     = pion_http_header_value;
     settings.on_message_complete = pion_http_message_complete;
     settings.on_body             = pion_http_message_body;
-    settings.on_headers_complete = pion_http_headers_complete;
 
     nparsed = http_parser_execute(parser, &settings, request_string->val, request_string->len);
     if(nparsed < request_string->len) {
@@ -187,7 +163,7 @@ zend_object * pion_http_parse_request(zend_string * request_string, zend_class_e
         message->version = strpprintf(10, "%d.%d", parser->http_major, parser->http_minor);
     }
     efree(parser);
-    efree(message->parser);
+    efree(message->parser.http);
     return request;
 }
 
@@ -199,10 +175,10 @@ zend_object * pion_http_parse_response(zend_string * response_string, zend_class
     http_parser          * parser;
 
 
-    message->parser = ecalloc(1, sizeof(ion_http_parser));
+    message->parser.http = ecalloc(1, sizeof(ion_http_parser));
     parser = ecalloc(1, sizeof(http_parser));
     http_parser_init(parser, HTTP_RESPONSE);
-    message->parser->parser = parser;
+    message->parser.http->parser = parser;
 
     parser->data = message;
     memset(&settings, 0, sizeof(settings));
@@ -211,7 +187,6 @@ zend_object * pion_http_parse_response(zend_string * response_string, zend_class
     settings.on_header_value     = pion_http_header_value;
     settings.on_message_complete = pion_http_message_complete;
     settings.on_body             = pion_http_message_body;
-    settings.on_headers_complete = pion_http_headers_complete;
     settings.on_status           = pion_http_message_status;
 
     nparsed = http_parser_execute(parser, &settings, response_string->val, response_string->len);
@@ -219,25 +194,27 @@ zend_object * pion_http_parse_response(zend_string * response_string, zend_class
         zend_error(E_NOTICE, "has unparsed data");
     }
     efree(parser);
-    efree(message->parser);
+    efree(message->parser.http);
     return response;
 }
 
 zend_string * pion_http_message_build(zend_object * message_object) {
+    USE_ION_CACHE;
+
     ion_http_message * message = get_object_instance(message_object, ion_http_message);
     zend_string     ** pipe = emalloc(sizeof(zend_string *) * 32);
     size_t             pipe_size = 32;
     size_t             pipe_pos  = 0;
     size_t             message_size = 0;
     zend_string      * msg = NULL;
-    zend_string      * str_space     = ION_STR(ION_STR_SPACE);
-    zend_string      * str_http      = ION_STR(ION_STR_UP_HTTP);
-    zend_string      * str_slash     = ION_STR(ION_STR_SLASH);
-    zend_string      * str_crlf      = ION_STR(ION_STR_CRLF);
-    zend_string      * str_colon_sp  = ION_STR(ION_STR_COLON_SP);
-    zend_string      * str_up_get    = ION_STR(ION_STR_UP_GET);
-    zend_string      * str_v11       = ION_STR(ION_STR_V11);
-    zend_string      * str_coma      = ION_STR(ION_STR_COMA);
+//    zend_string      * str_space     = ION_STR(ION_STR_SPACE);
+//    zend_string      * str_http      = ION_STR(ION_STR_UP_HTTP);
+//    zend_string      * str_slash     = ION_STR(ION_STR_SLASH);
+//    zend_string      * str_crlf      = ION_STR(ION_STR_CRLF);
+//    zend_string      * str_colon_sp  = ION_STR(ION_STR_COLON_SP);
+//    zend_string      * str_up_get    = ION_STR(ION_STR_UP_GET);
+//    zend_string      * str_v11       = ION_STR(ION_STR_V11);
+//    zend_string      * str_coma      = ION_STR(ION_STR_COMA);
     zend_string      * buffer        = NULL;
     zend_string      * header = NULL;
     zval             * value = NULL;
@@ -246,14 +223,14 @@ zend_string * pion_http_message_build(zend_object * message_object) {
 
     // begin head
     if(message->type == ion_http_type_response) {
-        pipe[0] = str_http;     // 4 bytes
-        pipe[1] = str_slash;    // 1 bytes
-        pipe[2] = message->version ? message->version : str_v11;
-        pipe[3] = str_space;    // 1 bytes
+        pipe[0] = ION_STR_CACHE(ION_STR_UP_HTTP);     // 4 bytes
+        pipe[1] = ION_STR_CACHE(ION_STR_SLASH);    // 1 bytes
+        pipe[2] = message->version ? message->version : ION_STR_CACHE(ION_STR_V11);
+        pipe[3] = ION_STR_CACHE(ION_STR_SPACE);    // 1 bytes
         pipe[4] = buffer = strpprintf(4, "%d", message->status);
-        pipe[5] = str_space;    // 1 bytes
+        pipe[5] = ION_STR_CACHE(ION_STR_SPACE);    // 1 bytes
         pipe[6] = message->reason ? message->reason : pion_http_reason(message->status);
-        pipe[7] = str_crlf;     // 2 bytes
+        pipe[7] = ION_STR_CACHE(ION_STR_CRLF);     // 2 bytes
         message_size = pipe[2]->len + buffer->len + pipe[6]->len + 9;
         pipe_pos = 8;
     } else if(message->type == ion_http_type_request) {
@@ -262,14 +239,14 @@ zend_string * pion_http_message_build(zend_object * message_object) {
         } else if(message->uri) {
             buffer = ion_uri_stringify(message->uri, URI_ALL);
         }
-        pipe[0] = message->method ? message->method : str_up_get;
-        pipe[1] = str_space;    // 1 bytes
-        pipe[2] = buffer ? buffer : str_slash;
-        pipe[3] = str_space;    // 1 bytes
-        pipe[4] = str_http;     // 4 bytes
-        pipe[5] = str_slash;    // 1 bytes
-        pipe[6] = message->version ? message->version : str_v11;
-        pipe[7] = str_crlf;     // 2 bytes
+        pipe[0] = message->method ? message->method : ION_STR_CACHE(ION_STR_UP_GET);
+        pipe[1] = ION_STR_CACHE(ION_STR_SPACE);    // 1 bytes
+        pipe[2] = buffer ? buffer : ION_STR_CACHE(ION_STR_SLASH);
+        pipe[3] = ION_STR_CACHE(ION_STR_SPACE);       // 1 bytes
+        pipe[4] = ION_STR_CACHE(ION_STR_UP_HTTP);     // 4 bytes
+        pipe[5] = ION_STR_CACHE(ION_STR_SLASH);    // 1 bytes
+        pipe[6] = message->version ? message->version : ION_STR_CACHE(ION_STR_V11);
+        pipe[7] = ION_STR_CACHE(ION_STR_CRLF);     // 2 bytes
         message_size = pipe[0]->len + pipe[2]->len + pipe[6]->len + 9;
         pipe_pos = 8;
     }
@@ -282,25 +259,25 @@ zend_string * pion_http_message_build(zend_object * message_object) {
                 pipe_size *= 2;
             }
             pipe[pipe_pos++] = header;
-            pipe[pipe_pos++] = str_colon_sp;
+            pipe[pipe_pos++] = ION_STR_CACHE(ION_STR_COLON_SP);
             pipe[pipe_pos] = Z_STR_P(zend_hash_get_current_data(Z_ARR_P(value)));
             message_size += header->len + 4 + pipe[pipe_pos]->len;
             pipe_pos++;
-            pipe[pipe_pos++] = str_crlf;
+            pipe[pipe_pos++] = ION_STR_CACHE(ION_STR_CRLF);
         } else {
             if(pipe_pos + 2 + zend_hash_num_elements(Z_ARR_P(value)) * 2 > pipe_size) {
                 pipe = erealloc(pipe, sizeof(zend_string *) * pipe_size * 2);
                 pipe_size *= 2;
             }
             pipe[pipe_pos++] = header;
-            pipe[pipe_pos++] = str_colon_sp;
+            pipe[pipe_pos++] = ION_STR_CACHE(ION_STR_COLON_SP);
             message_size += header->len + 3;
             ZEND_HASH_FOREACH_VAL(Z_ARR_P(value), v) {
                 pipe[pipe_pos++] = Z_STR_P(v);
-                pipe[pipe_pos++] = str_coma;
+                pipe[pipe_pos++] = ION_STR_CACHE(ION_STR_COMA);
                 message_size += Z_STRLEN_P(v) + 1;
             } ZEND_HASH_FOREACH_END();
-            pipe[pipe_pos-1] = str_crlf;
+            pipe[pipe_pos-1] = ION_STR_CACHE(ION_STR_CRLF);
         }
     } ZEND_HASH_FOREACH_END();
     // end headers
@@ -332,7 +309,7 @@ zend_string * pion_http_message_build(zend_object * message_object) {
             is_header = false;
         }
         offset += pipe[p]->len;
-        if(pipe[p] == str_crlf) {
+        if(pipe[p] == ION_STR_CACHE(ION_STR_CRLF)) {
             is_header = true;
             to_up = true;
         }

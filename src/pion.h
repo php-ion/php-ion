@@ -2,8 +2,8 @@
 #ifndef ION_FRAMEWORK_H
 #define ION_FRAMEWORK_H
 
-#include "pion/init.h"
 #include "pion/strings.h"
+#include "pion/init.h"
 #include "pion/errors.h"
 #include "pion/exceptions.h"
 #include "pion/debug.h"

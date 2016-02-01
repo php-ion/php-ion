@@ -34,10 +34,12 @@
 #define ION_PROMISOR_HAS_FAIL        (1<<12)
 #define ION_PROMISOR_HAS_PROGRESS    (1<<13)
 #define ION_PROMISOR_YIELDED         (1<<14)
+#define ION_PROMISOR_MULTI_ARGS      (1<<14)
 
-#define ION_PROMISOR_AUTOCLEAN       (1<<15)
+#define ION_PROMISOR_AUTOCLEAN       (1<<16)
 
 #define ION_PROMISOR_NESTED_FLAGS  ION_PROMISOR_PROTOTYPE
+#define ION_PROMISOR_ARGS_NUM_SHIFT  24
 
 extern ZEND_API zend_class_entry * ion_ce_ION_Promise;
 extern ZEND_API zend_class_entry * ion_ce_ION_ResolvablePromise;
@@ -45,6 +47,7 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Deferred;
 extern ZEND_API zend_class_entry * ion_ce_ION_Sequence;
 extern ZEND_API zend_class_entry * ion_ce_ION_Promise_CancelException;
 extern ZEND_API zend_class_entry * ion_ce_ION_Promise_TimeoutException;
+extern ZEND_API zend_class_entry * ion_ce_ION_Sequence_Quit;
 
 #define ion_ce_Generator zend_ce_generator
 #define ion_ce_Closure   zend_ce_closure
@@ -56,7 +59,7 @@ typedef void (* promisor_dtor_t)(zend_object * promisor);
 typedef struct _ion_promisor {
     zend_object         std;
     zend_string       * name;
-    zend_uint           flags;
+    uint32_t            flags;
     pion_cb           * done;
     pion_cb           * fail;
     zend_object       * await;
@@ -95,9 +98,10 @@ void ion_promisor_set_autoclean(zend_object * container, promisor_canceler_t aut
 #define ion_promisor_dtor(promisor, dtor_cb)   get_object_instance(promisor, ion_promisor)->dtor = dtor_cb
 
 // Resolvers
-void ion_promisor_resolve(zend_object * promisor, zval * result, int type);
+void ion_promisor_resolve(zend_object * promisor, zval * result, uint32_t type);
 void ion_promisor_cancel(zend_object * promisor, const char *message);
-void ion_promisor_sequence_invoke(zend_object * promisor, zval * args);
+void ion_promisor_sequence_invoke(zend_object * promisor, zval * arg);
+void ion_promisor_sequence_invoke_args(zend_object * promise, zval * args, int count);
 // Notify
 void ion_promisor_notify(zend_object * promisor, zval * info);
 
@@ -106,6 +110,7 @@ void ion_promisor_notify(zend_object * promisor, zval * info);
 
 // Callbacks
 int ion_promisor_set_callbacks(zend_object * promisor, zval * done, zval * fail);
+int ion_promisor_set_initial_callback(zend_object * sequence, zval * initial);
 zend_object * ion_promisor_push_callbacks(zend_object * promisor, zval * done, zval * fail);
 
 // Instance
@@ -128,26 +133,12 @@ zend_object * ion_sequence_init(zend_class_entry * ce);
         counter = 1;                                          \
     }
 
-#define PION_ARRAY_POP(array, counter, elem)                   \
-    if(counter) {                                              \
-        elem = array[counter - 1];                             \
-        if(counter == 1)  {                                    \
-            efree(array);                                      \
-            array = NULL;                                      \
-            counter = 0;                                       \
-        } else {                                               \
-            array = erealloc(array, sizeof(elem) * --counter); \
-        }                                                      \
-    } else {                                                   \
-        elem = NULL;                                           \
-    }
-
-#define Z_ISPROMISE_P(pz) Z_TYPE_P(pz) == IS_OBJECT && (  \
-          Z_OBJCE_P(pz) == ion_class_entry(ION_Promise)   \
-          || Z_OBJCE_P(pz) == ion_class_entry(ION_ResolvablePromise)  \
-          || Z_OBJCE_P(pz) == ion_class_entry(ION_Deferred)   \
-          || Z_OBJCE_P(pz) == ion_class_entry(ION_Sequence)   \
-          || instanceof_function(Z_OBJCE_P(pz), ion_class_entry(ION_Promise)))
+#define Z_ISPROMISE_P(pz) Z_TYPE_P(pz) == IS_OBJECT && (    \
+          Z_OBJCE_P(pz) == ion_ce_ION_Promise               \
+          || Z_OBJCE_P(pz) == ion_ce_ION_ResolvablePromise  \
+          || Z_OBJCE_P(pz) == ion_ce_ION_Deferred           \
+          || Z_OBJCE_P(pz) == ion_ce_ION_Sequence           \
+          || instanceof_function(Z_OBJCE_P(pz), ion_ce_ION_Promise))
 
 #define Z_ISPROMISE(zv) Z_ISPROMISE_P(&zv)
 

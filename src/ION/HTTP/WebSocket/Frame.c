@@ -218,7 +218,7 @@ CLASS_METHOD(ION_HTTP_WebSocket_Frame, withMasking) {
 
     if(mask) {
         frame->flags |= WS_HAS_MASK;
-        frame->mask[0] = (char *)((uint32_t)mask);
+        frame->mask[0] = (unsigned char *)((uint32_t)mask);
     } else {
         frame->flags &= ~WS_HAS_MASK;
     }

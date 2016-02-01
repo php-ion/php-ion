@@ -154,7 +154,7 @@ class Printer extends \PHPUnit_TextUI_ResultPrinter {
     {
         if (!$this->lastTestFailed) {
             $this->writeProgress(sprintf(
-                "\rOk   %d/%d %s",
+                "\rOK   %d/%d %s",
                 $this->numTestsRun,
                 $this->numTests,
                 \PHPUnit_Util_Test::describe($test)

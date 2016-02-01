@@ -46,5 +46,11 @@ ION::promise(function () {
 });
 
 
+$init = function ($request) {
+
+    throw \ION\Sequence::quit();
+};
+
+
 ION::dispatch();
 

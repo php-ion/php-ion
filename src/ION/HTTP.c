@@ -65,5 +65,25 @@ CLASS_METHODS_END;
 PHP_MINIT_FUNCTION(ION_HTTP) {
 
     PION_REGISTER_STATIC_CLASS(ION_HTTP, "ION\\HTTP");
+//    ALLOC_HASHTABLE(GION(cache)->headers);
+    GION(cache)->headers = (HashTable *) pemalloc(sizeof(HashTable), 1);
+    zend_hash_init(GION(cache)->headers, ION_STRINGS_SIZE, NULL, NULL, 1);
+    ion_interned_strings_to_array(
+            GION(cache)->headers,
+            ION_HTTP_HEADERS_STRINGS_OFFSET,
+            ION_HTTP_HEADERS_STRINGS_OFFSET + ION_HTTP_HEADERS_STRINGS_LENGTH
+    );
+    ion_interned_strings_to_array(
+            GION(cache)->headers,
+            ION_HTTP_HEADERS_LOW_STRINGS_LENGTH,
+            ION_HTTP_HEADERS_LOW_STRINGS_OFFSET + ION_HTTP_HEADERS_LOW_STRINGS_LENGTH
+    );
+    return SUCCESS;
+}
+
+PHP_MSHUTDOWN_FUNCTION(ION_HTTP) {
+    zend_hash_destroy(GION(cache)->headers);
+    pefree_size(GION(cache)->headers, sizeof(HashTable), 1);
+
     return SUCCESS;
 }

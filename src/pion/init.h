@@ -76,6 +76,11 @@ typedef struct skiplist       ion_skiplist;
 
 #define STRARGS(str) str, sizeof(str) - 1
 
+typedef struct _zend_ion_global_cache {
+    zend_array  * headers;
+    zend_string * interned_strings[512];
+} zend_ion_global_cache;
+
 ZEND_BEGIN_MODULE_GLOBALS(ion)
     // base
     ion_event_base   * base;    // event base
@@ -116,7 +121,9 @@ ZEND_BEGIN_MODULE_GLOBALS(ion)
 
     // Misc.
     zend_bool     define_metrics;
-    zend_string * interned_strings[256];
+    zend_object * quit_marker;
+    zend_ion_global_cache * cache;
+//    zend_string * interned_strings[256];
 ZEND_END_MODULE_GLOBALS(ion)
 
 ZEND_EXTERN_MODULE_GLOBALS(ion);

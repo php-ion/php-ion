@@ -70,7 +70,12 @@ typedef struct _ion_http_message {
     zend_array      * headers;
     zend_string     * version;
     zend_object     * stream;
-    ion_http_parser * parser;
+    union {
+        ion_http_parser  * http;
+        multipart_parser * multipart;
+        websocket_parser * websocket;
+        zend_object      * custom;
+    } parser;
     zend_string     * body;
 
     zend_object     * uri;

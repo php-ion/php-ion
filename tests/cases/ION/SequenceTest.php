@@ -155,4 +155,23 @@ class SequenceTest extends TestCase {
             "x" => 111,
         ], $this->data);
     }
+
+    /**
+     * @memcheck
+     */
+    public function _testMultiArgs() {
+        $seq = new Sequence(function (int $x, int $y, float $z) {
+            return $x + $y + $z;
+        });
+
+        $seq->then(function ($result) {
+            $this->data["result"] = $result;
+        });
+
+        $seq(1, 2, 0.3);
+
+        $this->assertEquals([
+            "result" => 3.3,
+        ], $this->data);
+    }
 }

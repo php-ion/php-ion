@@ -3,10 +3,14 @@
 namespace ION;
 
 
+use ION\Sequence\Quit;
+
 class Sequence extends Promise {
 
+    public static function quit() : Quit {}
+
     /**
-     * Set initial callback: function ($arg) {}
+     * Set initial callback: function (...$arg) {}
      *
      * @param callable $initial
      */

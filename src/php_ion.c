@@ -58,7 +58,18 @@ static PHP_GINIT_FUNCTION(ion) {
 #if defined(COMPILE_DL_ION) && defined(ZTS)
     ZEND_TSRMLS_CACHE_UPDATE();
 #endif
-    memset(&ion_globals, 0, sizeof(ion_globals));
+    memset(ion_globals, 0, sizeof(ion_globals));
+    ion_globals->cache = pecalloc(1, sizeof(zend_ion_global_cache), 1);
+    ion_interned_strings_ctor();
+
+}
+
+static PHP_GSHUTDOWN_FUNCTION(ion) {
+#if defined(COMPILE_DL_ION) && defined(ZTS)
+    ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+    pefree(ion_globals->cache, 1);
+    ion_interned_strings_dtor();
 }
 
 /* Init module callback */
@@ -71,7 +82,6 @@ PHP_MINIT_FUNCTION(ion) {
 
     event_base_priority_init(GION(base), ION_MAX_PRIORITY);
 
-    ion_interned_strings_ctor();
 
     STARTUP_MODULE(exceptions);
     STARTUP_MODULE(ION_Debug);
@@ -137,6 +147,7 @@ PHP_MINIT_FUNCTION(ion) {
 }
 
 PHP_MSHUTDOWN_FUNCTION(ion) {
+    SHUTDOWN_MODULE(ION_HTTP);
     SHUTDOWN_MODULE(ION_Process);
     SHUTDOWN_MODULE(ION_FS);
     SHUTDOWN_MODULE(ION_DNS);
@@ -146,7 +157,6 @@ PHP_MSHUTDOWN_FUNCTION(ion) {
     SHUTDOWN_MODULE(ION_Stream);
     SHUTDOWN_MODULE(ION);
 
-    ion_interned_strings_dtor();
 
     event_base_free( GION(base) );
 
