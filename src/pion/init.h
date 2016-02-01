@@ -77,7 +77,7 @@ typedef struct skiplist       ion_skiplist;
 #define STRARGS(str) str, sizeof(str) - 1
 
 typedef struct _zend_ion_global_cache {
-    zend_array  * headers;
+    HashTable   * index;
     zend_string * interned_strings[512];
 } zend_ion_global_cache;
 

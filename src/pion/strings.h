@@ -3,8 +3,6 @@
 
 #include <php.h>
 
-#define ION_STRINGS_SIZE 512
-
 #define ION_HTTP_METHOD_STRINGS_OFFSET 0
 
 #define ION_HTTP_HEADERS_STRINGS_OFFSET ION_STR_HTTP_ACCEPT
@@ -22,7 +20,6 @@
 
 void ion_interned_strings_ctor(void);
 void ion_interned_strings_dtor(void);
-void ion_interned_strings_to_array(zend_array * array, size_t from, size_t to);
 
 #define ION_INTERNED_STRINGS_MAP(XX) \
     XX(UP_DELETE     , "DELETE"         ) \
@@ -304,6 +301,8 @@ void ion_interned_strings_to_array(zend_array * array, size_t from, size_t to);
     XX(HTTP_LOW_X_POWERED_BY                    , "x-powered-by"                  )  \
     XX(HTTP_LOW_X_WAP_PROFILE                   , "x-wap-profile"                 )  \
     XX(HTTP_LOW_X_WEBKIT_CSP                    , "x-webkit-csp"                  )  \
+                   \
+    XX(LAST , "" ) \
 
 #endif //ION_STRINGS_H
 
