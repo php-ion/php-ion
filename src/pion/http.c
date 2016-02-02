@@ -207,23 +207,16 @@ zend_string * pion_http_message_build(zend_object * message_object) {
     size_t             pipe_pos  = 0;
     size_t             message_size = 0;
     zend_string      * msg = NULL;
-//    zend_string      * str_space     = ION_STR(ION_STR_SPACE);
-//    zend_string      * str_http      = ION_STR(ION_STR_UP_HTTP);
-//    zend_string      * str_slash     = ION_STR(ION_STR_SLASH);
-//    zend_string      * str_crlf      = ION_STR(ION_STR_CRLF);
-//    zend_string      * str_colon_sp  = ION_STR(ION_STR_COLON_SP);
-//    zend_string      * str_up_get    = ION_STR(ION_STR_UP_GET);
-//    zend_string      * str_v11       = ION_STR(ION_STR_V11);
-//    zend_string      * str_coma      = ION_STR(ION_STR_COMA);
     zend_string      * buffer        = NULL;
     zend_string      * header = NULL;
+    zend_ulong         header_id;
     zval             * value = NULL;
     zval             * v = NULL;
 
 
     // begin head
     if(message->type == ion_http_type_response) {
-        pipe[0] = ION_STR_CACHE(ION_STR_UP_HTTP);     // 4 bytes
+        pipe[0] = ION_STR_CACHE(ION_STR_UP_HTTP);  // 4 bytes
         pipe[1] = ION_STR_CACHE(ION_STR_SLASH);    // 1 bytes
         pipe[2] = message->version ? message->version : ION_STR_CACHE(ION_STR_V11);
         pipe[3] = ION_STR_CACHE(ION_STR_SPACE);    // 1 bytes
@@ -242,8 +235,8 @@ zend_string * pion_http_message_build(zend_object * message_object) {
         pipe[0] = message->method ? message->method : ION_STR_CACHE(ION_STR_UP_GET);
         pipe[1] = ION_STR_CACHE(ION_STR_SPACE);    // 1 bytes
         pipe[2] = buffer ? buffer : ION_STR_CACHE(ION_STR_SLASH);
-        pipe[3] = ION_STR_CACHE(ION_STR_SPACE);       // 1 bytes
-        pipe[4] = ION_STR_CACHE(ION_STR_UP_HTTP);     // 4 bytes
+        pipe[3] = ION_STR_CACHE(ION_STR_SPACE);    // 1 bytes
+        pipe[4] = ION_STR_CACHE(ION_STR_UP_HTTP);  // 4 bytes
         pipe[5] = ION_STR_CACHE(ION_STR_SLASH);    // 1 bytes
         pipe[6] = message->version ? message->version : ION_STR_CACHE(ION_STR_V11);
         pipe[7] = ION_STR_CACHE(ION_STR_CRLF);     // 2 bytes
@@ -252,7 +245,10 @@ zend_string * pion_http_message_build(zend_object * message_object) {
     }
     // end head
     // begin headers
-    ZEND_HASH_FOREACH_STR_KEY_VAL(message->headers, header, value) {
+    ZEND_HASH_FOREACH_KEY_VAL(message->headers, header_id, header, value) {
+        if(!header) {
+            header = ion_cache->interned_strings[header_id - ION_HTTP_HEADERS_STRINGS_OFFSET_TO_LOW];
+        }
         if(zend_hash_num_elements(Z_ARR_P(value)) == 1) {
             if(pipe_pos + 4 > pipe_size) {
                 pipe = erealloc(pipe, sizeof(zend_string *) * pipe_size * 2);

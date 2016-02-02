@@ -25,7 +25,7 @@ void ion_interned_strings_dtor(void) {
     zend_ion_global_cache * cache = GION(cache);
 
     zend_hash_destroy(cache->index);
-    pefree_size(cache->index, sizeof(HashTable), 1);
+    pefree(cache->index, 1);
 
 #define XX(name, string) pefree((cache->interned_strings[ION_STR_##name]), 1);
     ION_INTERNED_STRINGS_MAP(XX)

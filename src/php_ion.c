@@ -58,7 +58,7 @@ static PHP_GINIT_FUNCTION(ion) {
 #if defined(COMPILE_DL_ION) && defined(ZTS)
     ZEND_TSRMLS_CACHE_UPDATE();
 #endif
-    memset(ion_globals, 0, sizeof(ion_globals));
+    memset(ion_globals, 0, sizeof(*ion_globals));
     ion_globals->cache = pecalloc(1, sizeof(zend_ion_global_cache), 1);
     ion_interned_strings_ctor();
 
@@ -68,8 +68,8 @@ static PHP_GSHUTDOWN_FUNCTION(ion) {
 #if defined(COMPILE_DL_ION) && defined(ZTS)
     ZEND_TSRMLS_CACHE_UPDATE();
 #endif
-    pefree(ion_globals->cache, 1);
     ion_interned_strings_dtor();
+    pefree(ion_globals->cache, 1);
 }
 
 /* Init module callback */
@@ -198,7 +198,7 @@ PHP_MINFO_FUNCTION(ion) {
     spprintf(&http_version, 16, "%d.%d.%d", HTTP_PARSER_VERSION_MAJOR, HTTP_PARSER_VERSION_MINOR, HTTP_PARSER_VERSION_PATCH);
 
     php_info_print_table_start();
-    php_info_print_table_header(2, "ion.support", "enabled");
+    php_info_print_table_header(2, "ion", "enabled");
     php_info_print_table_row(2, "ion.version", ION_VERSION);
     php_info_print_table_row(2, "ion.engine", ION_EVENT_ENGINE);
     php_info_print_table_row(2, "ion.engine.version", event_get_version());
@@ -227,8 +227,8 @@ PHP_MINFO_FUNCTION(ion) {
     } else {
         php_info_print_table_row(2, "ion.engine.fd_allowed", "no");
     }
-    php_info_print_table_row(2, "ion.dns.support", "enabled");
-    php_info_print_table_row(2, "ion.ssl.support", "enabled");
+    php_info_print_table_row(2, "ion.dns.support", "yes");
+    php_info_print_table_row(2, "ion.ssl.support", "yes");
     php_info_print_table_row(2, "ion.http.version", http_version);
     php_info_print_table_end();
 
@@ -252,7 +252,7 @@ zend_module_entry ion_module_entry = {
         ION_VERSION, // module version
         PHP_MODULE_GLOBALS(ion),
         PHP_GINIT(ion),
-        NULL,
+        PHP_GSHUTDOWN(ion),
         NULL,
         STANDARD_MODULE_PROPERTIES_EX
 };
