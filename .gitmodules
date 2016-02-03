@@ -1,12 +1,12 @@
-[submodule "src/external/http-parser"]
-	path = src/external/http-parser
+[submodule "src/deps/http-parser"]
+	path = src/deps/http-parser
 	url = https://github.com/nodejs/http-parser.git
-[submodule "src/external/skiplist"]
-	path = src/external/skiplist
+[submodule "src/deps/skiplist"]
+	path = src/deps/skiplist
 	url = https://github.com/silentbicycle/skiplist.git
-[submodule "src/external/multipart-parser-c"]
-	path = src/external/multipart-parser-c
+[submodule "src/deps/multipart-parser-c"]
+	path = src/deps/multipart-parser-c
 	url = https://github.com/iafonov/multipart-parser-c.git
-[submodule "src/external/websocket-parser"]
-	path = src/external/websocket-parser
+[submodule "src/deps/websocket-parser"]
+	path = src/deps/websocket-parser
 	url = https://github.com/php-ion/websocket-parser.git

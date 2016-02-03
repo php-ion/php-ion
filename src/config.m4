@@ -110,45 +110,46 @@ if test "$PHP_ION" != "no"; then
     AC_CHECK_FUNCS(waitpid, [ AC_DEFINE(HAVE_WAITPID,1,[ ]) ],)
     AC_CHECK_FUNCS(inotify_init, [ AC_DEFINE(HAVE_INOTIFY,1, [ ]) ],)
     AC_CHECK_FUNCS(kqueue, [ AC_DEFINE(HAVE_KQUEUE,1, [ ]) ],)
+
     ion_src="php_ion.c
-    external/skiplist/skiplist.c
-    external/http-parser/http_parser.c
-    external/multipart-parser-c/multipart_parser.c
-    external/websocket-parser/websocket_parser.c
-    pion/debug.c
-    pion/strings.c
-    pion/exceptions.c
-    pion/callback.c
-    pion/engine.c
-    pion/promisor.c
-    pion/net.c
-    pion/http.c
-    pion.c
+    deps/skiplist/skiplist.c
+    deps/http-parser/http_parser.c
+    deps/multipart-parser-c/multipart_parser.c
+    deps/websocket-parser/websocket_parser.c
+    core/debug.c
+    core/strings.c
+    core/memory.c
+    core/exceptions.c
+    core/callback.c
+    core/engine.c
+    core/promisor.c
+    core/net.c
+    core/http.c
 
-    ION/Debug.c
-    ION/Promise.c
-    ION/ResolvablePromise.c
-    ION/Deferred.c
-    ION/Sequence.c
-    ION.c
-    ION/Crypto.c
-    ION/DNS.c
-    ION/FS.c
-    ION/Listener.c
-    ION/Stream.c
-    ION/Process.c
+    classes/ION/Debug.c
+    classes/ION/Promise.c
+    classes/ION/ResolvablePromise.c
+    classes/ION/Deferred.c
+    classes/ION/Sequence.c
+    classes/ION.c
+    classes/ION/Crypto.c
+    classes/ION/DNS.c
+    classes/ION/FS.c
+    classes/ION/Listener.c
+    classes/ION/Stream.c
+    classes/ION/Process.c
 
-    ION/Stream/StorageAbstract.c
-    ION/Stream/Storage.c
-    ION/Stream/Server.c
-    ION/Stream/Client.c
+    classes/ION/Stream/StorageAbstract.c
+    classes/ION/Stream/Storage.c
+    classes/ION/Stream/Server.c
+    classes/ION/Stream/Client.c
 
-    ION/URI.c
-    ION/HTTP/Message.c
-    ION/HTTP/Request.c
-    ION/HTTP/Response.c
-    ION/HTTP/WebSocket/Frame.c
-    ION/HTTP.c
+    classes/ION/URI.c
+    classes/ION/HTTP/Message.c
+    classes/ION/HTTP/Request.c
+    classes/ION/HTTP/Response.c
+    classes/ION/HTTP/WebSocket/Frame.c
+    classes/ION/HTTP.c
     "
 
     PHP_NEW_EXTENSION(ion, $ion_src, $ext_shared,, "$CFLAGS -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1 -DSKIPLIST_LOCAL_INCLUDE=\"<../../ion_skiplist_config.h>\" ")

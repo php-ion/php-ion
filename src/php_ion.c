@@ -1,21 +1,9 @@
-#ifdef ZTS
-#  include "TSRM.h"
-#endif
+#include <ion_core.h>
 
-/*  */
-#include "php.h"
-#include "ext/standard/info.h"
-
-/* Libevent */
-#include <event.h>
-
-#include "pion.h"
 #include "php_ion.h"
-#include "external/http-parser/http_parser.h"
+#include <ext/standard/info.h>
 
 ZEND_DECLARE_MODULE_GLOBALS(ion);
-
-//extern ion_base *ionBase;
 
 #ifdef COMPILE_DL_ION
 #ifdef ZTS

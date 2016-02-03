@@ -30,7 +30,8 @@ class Frame {
 
     public function hasMasking() : bool {}
     public function getMasking() : int {}
-    public function withMasking(int $mask) : static {}
+    public function withMasking(int $mask = null) : static {}
+    public function withoutMasking() : static {}
 
     public function build() : string {}
 }
