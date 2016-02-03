@@ -10,3 +10,6 @@
 [submodule "src/deps/websocket-parser"]
 	path = src/deps/websocket-parser
 	url = https://github.com/php-ion/websocket-parser.git
+[submodule "src/deps/libevent"]
+	path = src/deps/libevent
+	url = https://github.com/libevent/libevent.git
