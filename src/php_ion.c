@@ -1,4 +1,4 @@
-#include <ion_core.h>
+#include "ion.h"
 
 #include "php_ion.h"
 #include <ext/standard/info.h>

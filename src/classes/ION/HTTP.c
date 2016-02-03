@@ -1,4 +1,4 @@
-#include <ion_core.h>
+#include "ion.h"
 
 zend_class_entry * ion_ce_ION_HTTP;
 zend_object_handlers ion_oh_ION_HTTP;

@@ -1,4 +1,4 @@
-#include <ion_core.h>
+#include "ion.h"
 #include <openssl/rand.h>
 
 zend_class_entry     * ion_ce_ION_Crypto;

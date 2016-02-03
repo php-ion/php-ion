@@ -1,5 +1,5 @@
-#ifndef ION_ION_H
-#define ION_ION_H
+#ifndef ION_TIMERS_H
+#define ION_TIMERS_H
 
 typedef struct _ion_interval {
     struct timeval tv;
@@ -9,4 +9,5 @@ typedef struct _ion_interval {
 } ion_interval;
 
 
-#endif //ION_ION_H
+
+#endif //ION_TIMERS_H

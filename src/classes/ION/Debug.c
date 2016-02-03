@@ -1,4 +1,4 @@
-#include <ion_core.h>
+#include "ion.h"
 
 pion_cb * global_cb;
 zend_class_entry * ion_ce_ION_Debug;

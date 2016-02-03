@@ -3,6 +3,8 @@
 
 BEGIN_EXTERN_C();
 
+extern ION_API zend_class_entry * ion_ce_ION_DNSException;
+
 #define ION_DNS_RESOLV_CONF_DEFAULT "/etc/resolv.conf"
 #define ION_DNS_HOSTS_FILE_DEFAULT "/etc/hosts"
 
@@ -23,4 +25,3 @@ typedef struct _ion_dns_addr_request {
 END_EXTERN_C();
 
 #endif //ION_DNS_H
-

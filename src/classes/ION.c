@@ -1,5 +1,4 @@
-#include <ion_core.h>
-#include "ION.h"
+#include "ion.h"
 
 zend_class_entry * ion_ce_ION;
 zend_object_handlers ion_oh_ION;
@@ -185,7 +184,7 @@ CLASS_METHOD(ION, interval) {
         Z_PARAM_DOUBLE(timeout)
         Z_PARAM_OPTIONAL
         Z_PARAM_STR(name)
-    ZEND_PARSE_PARAMETERS_END();
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     // todo: check existing interval by name
 

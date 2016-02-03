@@ -1,7 +1,15 @@
-#ifndef ION_FS_H
-#define ION_FS_H
+#ifndef ION_CORE_FS_H
+#define ION_CORE_FS_H
 
-#endif //ION_FS_H
+#include <sys/fcntl.h>
+
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
+#endif
+
+extern ION_API zend_class_entry * ion_ce_ION_FS;
+extern ION_API zend_class_entry * ion_ce_ION_FSException;
+
 
 // inotify: http://man7.org/linux/man-pages/man7/inotify.7.html
 // kqueue: https://www.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2
@@ -40,3 +48,5 @@ void ion_fs_watcher_remove(ion_fs_watcher * watcher);
 
 void ion_fs_watcher_dtor(zend_object * sequence);
 void ion_fs_watcher_clean(zval * zr);
+
+#endif //ION_CORE_FS_H

@@ -1,4 +1,4 @@
-#include <ion_core.h>
+#include "ion.h"
 #include <ext/standard/url.h>
 
 zend_object_handlers ion_oh_ION_URI;

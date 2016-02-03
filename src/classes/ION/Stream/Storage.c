@@ -1,4 +1,4 @@
-#include <ion_core.h>
+#include "ion.h"
 
 #define ION_STORAGE_RELEASED  (1<<0)
 #define ION_STORAGE_HANDSHAKE (1<<1)

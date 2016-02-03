@@ -2,12 +2,9 @@
 #define PION_ENGINE_H
 
 #include <ext/spl/spl_functions.h>
-//#include <Zend/zend_generators.h>
 
 #define ion_get_class(class_name) ion_ce_ ## class_name
 
-#define CE2(class) class ## _info.ce
-#define CE(class) c ## class
 #define ion_class_entry(class_name) ion_ce_ ## class_name
 #define ion_object_handlers(class_name) ion_oh_ ## class_name
 
@@ -248,7 +245,6 @@
 #define METHOD_ARG_DOUBLE(name, pass_by_ref)      ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_DOUBLE, 0)
 #define METHOD_ARG_FLOAT(name, pass_by_ref)       METHOD_ARG_DOUBLE(name, pass_by_ref)
 #define METHOD_ARG_BOOL(name, pass_by_ref)        ZEND_ARG_TYPE_INFO(pass_by_ref, name, _IS_BOOL, 0)
-#define METHOD_ARG_RESOURCE(name, pass_by_ref)    ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_RESOURCE, 0)
 #define METHOD_ARG_ARRAY(name, pass_by_ref, allow_null)       ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_ARRAY, allow_null)
 #define METHOD_ARG_CALLBACK(name, pass_by_ref, allow_null)            ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_CALLABLE, allow_null)
 #define METHOD_ARG_TYPE(name, type_hint, allow_null, pass_by_ref)     ZEND_ARG_TYPE_INFO(pass_by_ref, name, type_hint, allow_null)

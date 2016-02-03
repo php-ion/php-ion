@@ -1,8 +1,5 @@
-#include <ion_core.h>
-#include "Process.h"
-#include <sys/resource.h>
+#include "ion.h"
 #include <signal.h>
-#include <event.h>
 
 
 zend_class_entry * ion_ce_ION_Process;
@@ -173,7 +170,6 @@ CLASS_METHOD(ION_Process, getParentPid) {
 }
 
 METHOD_WITHOUT_ARGS(ION_Process, getParentPid);
-
 
 
 struct passwd * ion_get_pw_by_zval(zval * zuser) {

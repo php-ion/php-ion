@@ -116,15 +116,17 @@ if test "$PHP_ION" != "no"; then
     deps/http-parser/http_parser.c
     deps/multipart-parser-c/multipart_parser.c
     deps/websocket-parser/websocket_parser.c
-    core/debug.c
-    core/strings.c
-    core/memory.c
-    core/exceptions.c
-    core/callback.c
-    core/engine.c
-    core/promisor.c
-    core/net.c
-    core/http.c
+    ion/debug.c
+    ion/strings.c
+    ion/memory.c
+    ion/exceptions.c
+    ion/callback.c
+    ion/engine.c
+    ion/promisor.c
+    ion/net.c
+    ion/process.c
+    ion/fs.c
+    ion/http.c
 
     classes/ION/Debug.c
     classes/ION/Promise.c

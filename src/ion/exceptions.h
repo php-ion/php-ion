@@ -2,7 +2,7 @@
 #define PION_EXCEPTIONS_H
 
 #include <php.h>
-#include "zts.h"
+#include "init.h"
 #include <zend_exceptions.h>
 #include <ext/spl/spl_exceptions.h>
 #include "engine.h"

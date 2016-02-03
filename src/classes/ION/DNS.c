@@ -1,5 +1,4 @@
-#include <ion_core.h>
-#include "DNS.h"
+#include "ion.h"
 #include <event2/dns.h>
 
 zend_class_entry * ion_ce_ION_DNS;
