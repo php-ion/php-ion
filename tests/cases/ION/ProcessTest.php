@@ -46,6 +46,9 @@ class ProcessTest extends TestCase {
     public function testGetUser() {
         $actual = Process::getUser();
         $expected = posix_getpwnam(posix_getlogin());
+        if(!$expected) {
+            $this->markTestSkipped("posix_getpwnam() failed (root?)");
+        }
         $this->assertSame($expected['name'], $actual['name']);
         $this->assertSame($expected['uid'], $actual['uid']);
         $this->assertSame($expected['gid'], $actual['gid']);

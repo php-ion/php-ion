@@ -29,14 +29,12 @@ class DNSTest extends TestCase {
     /**
      * @memcheck
      */
-    public function testResolveFiled() {
+    public function testResolveFailed() {
         $this->promise(function () {
             $this->data['addr'] = yield DNS::resolve("unexist.example.com", DNS::RECORD_A | DNS::RECORD_AAAA  | DNS::RECORD_CNAME);
         });
         $this->loop();
-        $this->assertEquals(
-            $this->describe(new RuntimeException("DNS request failed: nodename nor servname provided, or not known", 0)),
-            $this->data['error']
-        );
+        $this->assertTrue(isset($this->data['error']));
+        $this->assertEquals('ION\RuntimeException', $this->data['error']["exception"]);
     }
 }
