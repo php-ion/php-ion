@@ -2,6 +2,8 @@
 #define ION_CORE_FS_H
 
 #include <sys/fcntl.h>
+#include <sys/resource.h>
+#include <sys/wait.h>
 
 #ifndef O_CLOEXEC
 #define O_CLOEXEC 0

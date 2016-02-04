@@ -307,7 +307,7 @@ CLASS_METHOD(ION_Process, setPriority) {
     int prev_priority = getpriority(PRIO_PROCESS, (id_t)pid);
 
     if(priority < -20 || priority > 20) {
-        zend_throw_exception(ion_class_entry(InvalidArgumentException), "InvInvalid priority value", 0);
+        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Invalid priority value", 0);
         return;
     }
 
