@@ -390,7 +390,7 @@ int _pion_fcall_void(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr, i
 }
 
 
-int _pion_cb_void(pion_cb *cb, int num, zval *args) {
+int pion_cb_void(pion_cb *cb, int num, zval *args) {
     zval retval;
 //    zval *pretval = NULL;
     if (ZEND_FCI_INITIALIZED(*cb->fci)) {
@@ -407,38 +407,38 @@ int _pion_cb_void(pion_cb *cb, int num, zval *args) {
     }
 }
 
-int _pion_cb_void_with_1_arg(pion_cb * cb, zval* arg1) {
+int pion_cb_void_with_1_arg(pion_cb * cb, zval* arg1) {
     zval args[1];
     args[0] = *arg1;
-    return _pion_cb_void(cb, 1, args);
+    return pion_cb_void(cb, 1, args);
 }
 
-int _pion_cb_void_with_2_args(pion_cb *cb, zval *arg1, zval *arg2) {
+int pion_cb_void_with_2_args(pion_cb *cb, zval *arg1, zval *arg2) {
     zval args[2];
     args[0] = *arg1;
     args[1] = *arg2;
-    return _pion_cb_void(cb, 2, args);
+    return pion_cb_void(cb, 2, args);
 }
 
-int _pion_cb_void_with_3_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3) {
+int pion_cb_void_with_3_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3) {
     zval args[3];
     args[0] = *arg1;
     args[1] = *arg2;
     args[2] = *arg3;
-    return _pion_cb_void(cb, 3, args);
+    return pion_cb_void(cb, 3, args);
 }
 
-//int _pion_cb_void_with_4_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3, zval *arg4) {
+//int pion_cb_void_with_4_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3, zval *arg4) {
 //    zval args[4];
 //    args[0] = *arg1;
 //    args[1] = *arg2;
 //    args[2] = *arg3;
 //    args[3] = *arg4;
-//    return _pion_cb_void(cb, 4, args);
+//    return pion_cb_void(cb, 4, args);
 //}
 
 
-zval _pion_cb_call(pion_cb *cb, int num, zval *args) {
+zval pion_cb_call(pion_cb *cb, int num, zval *args) {
     zval retval;
     ZVAL_UNDEF(&retval);
     if (ZEND_FCI_INITIALIZED(*cb->fci)) {
@@ -452,20 +452,20 @@ zval _pion_cb_call(pion_cb *cb, int num, zval *args) {
     return retval;
 }
 
-zval _pion_cb_call_with_1_arg(pion_cb * cb, zval* arg1) {
+zval pion_cb_call_with_1_arg(pion_cb * cb, zval* arg1) {
     zval args[1];
     args[0] = *arg1;
     return pion_cb_call(cb, 1, args);
 }
 
-zval _pion_cb_call_with_2_args(pion_cb *cb, zval *arg1, zval *arg2) {
+zval pion_cb_call_with_2_args(pion_cb *cb, zval *arg1, zval *arg2) {
     zval args[2];
     args[0] = *arg1;
     args[1] = *arg2;
     return pion_cb_call(cb, 2, args);
 }
 
-zval _pion_cb_call_with_3_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3) {
+zval pion_cb_call_with_3_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3) {
     zval args[3];
     args[0] = *arg1;
     args[1] = *arg2;
@@ -473,7 +473,7 @@ zval _pion_cb_call_with_3_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3) 
     return pion_cb_call(cb, 3, args);
 }
 
-//zval _pion_cb_call_with_4_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3, zval *arg4) {
+//zval pion_cb_call_with_4_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3, zval *arg4) {
 //    zval args[4];
 //    args[0] = *arg1;
 //    args[1] = *arg2;
@@ -482,7 +482,7 @@ zval _pion_cb_call_with_3_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3) 
 //    return pion_cb_call(cb, 4, args);
 //}
 
-zval _pion_cb_obj_call(pion_cb *cb, zend_object * obj, int num, zval *args) {
+zval pion_cb_obj_call(pion_cb *cb, zend_object * obj, int num, zval *args) {
     zval retval;
     zval object;
     ZVAL_UNDEF(&retval);
@@ -510,20 +510,20 @@ zval _pion_cb_obj_call(pion_cb *cb, zend_object * obj, int num, zval *args) {
     return retval;
 }
 
-zval _pion_cb_obj_call_with_1_arg(pion_cb * cb, zend_object * obj, zval* arg1) {
+zval pion_cb_obj_call_with_1_arg(pion_cb * cb, zend_object * obj, zval* arg1) {
     zval args[1];
     args[0] = *arg1;
     return pion_cb_obj_call(cb, obj, 1, args);
 }
 
-zval _pion_cb_obj_call_with_2_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2) {
+zval pion_cb_obj_call_with_2_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2) {
     zval args[2];
     args[0] = *arg1;
     args[1] = *arg2;
     return pion_cb_obj_call(cb, obj, 2, args);
 }
 
-zval _pion_cb_obj_call_with_3_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2, zval *arg3) {
+zval pion_cb_obj_call_with_3_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2, zval *arg3) {
     zval args[3];
     args[0] = *arg1;
     args[1] = *arg2;
@@ -531,7 +531,7 @@ zval _pion_cb_obj_call_with_3_args(pion_cb *cb, zend_object * obj, zval *arg1, z
     return pion_cb_obj_call(cb, obj, 3, args);
 }
 
-//zval _pion_cb_obj_call_with_4_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2, zval *arg3, zval *arg4) {
+//zval pion_cb_obj_call_with_4_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2, zval *arg3, zval *arg4) {
 //    zval args[4];
 //    args[0] = *arg1;
 //    args[1] = *arg2;
