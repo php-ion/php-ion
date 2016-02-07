@@ -45,18 +45,20 @@ PHP_RSHUTDOWN_FUNCTION(promisor) {
 static zend_always_inline void ion_promisor_release(zend_object * promisor_obj) {
     ion_promisor * promisor = get_object_instance(promisor_obj, ion_promisor);
     if(promisor->dtor) {
-        promisor->dtor(promisor_obj);
+        promisor->dtor(promisor);
         promisor->dtor = NULL;
     }
-    if(promisor->done.cb) {
-        if(!(promisor->flags & ION_PROMISOR_DONE_C_FUNC)) {
-            pion_cb_free(promisor->done.phpcb);
-        }
-        promisor->done = NULL;
+    if(promisor->done.type == ION_PROMISOR_CB_PHP) {
+        pion_cb_free(promisor->done.cb.php);
+        promisor->done.type = ION_PROMISOR_CB_UNSET;
     }
-    if(promisor->fail.cb) {
-        pion_cb_free(promisor->fail.phpcb);
-        promisor->fail = NULL;
+    if(promisor->fail.type == ION_PROMISOR_CB_PHP) {
+        pion_cb_free(promisor->fail.cb.php);
+        promisor->fail.type = ION_PROMISOR_CB_UNSET;
+    }
+    if(promisor->canceler.type == ION_PROMISOR_CB_PHP) {
+        pion_cb_free(promisor->canceler.cb.php);
+        promisor->canceler.type = ION_PROMISOR_CB_UNSET;
     }
 }
 
@@ -69,7 +71,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, uint32_t type)
     uint32_t       result_type = 0;
     zend_bool      resolved;
     zend_bool      skip_generator = 0;
-    pion_cb      * callback = NULL;
+    ion_promisor_action_cb * callback = NULL;
 
     if(promise->flags & ION_PROMISOR_FINISHED) {
         return;
@@ -78,6 +80,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, uint32_t type)
     ZVAL_OBJ(&zpromise, promise_obj);
     Z_ADDREF(zpromise);
     ZVAL_UNDEF(&retval);
+    ZVAL_UNDEF(&result);
     if(promise->await) {
         result_type = type & ION_PROMISOR_FINISHED;
         ZVAL_COPY(&result, data);
@@ -91,17 +94,19 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, uint32_t type)
     } else {
         promise->flags |= ION_PROMISOR_PROCESSING;
         if(type & ION_PROMISOR_DONE) {
-            callback = promise->done;
+            if(promise->done.type) {
+                callback = &promise->done;
+            }
         } else if(type & ION_PROMISOR_CANCELED) {
-            if(promise->flags & ION_PROMISOR_TYPE_DEFERRED) {
-                callback = promise->fail;
+            if((promise->flags & ION_PROMISOR_TYPE_DEFERRED) && promise->fail.type) {
+                callback = &promise->fail;
             }
         } else if(type & ION_PROMISOR_FAILED) {
-            if(!(promise->flags & ION_PROMISOR_TYPE_DEFERRED)) {
-                callback = promise->fail;
+            if(!(promise->flags & ION_PROMISOR_TYPE_DEFERRED) && promise->fail.type) {
+                callback = &promise->fail;
             }
         }
-        if(callback) {
+        if(callback && callback->type == ION_PROMISOR_CB_PHP) {
 //            if(promise->flags & ION_PROMISOR_MULTI_ARGS) {
 //                if(type & ION_PROMISOR_MULTI_ARGS) {
 //                    uint8_t count = (uint8_t) (type >> ION_PROMISOR_ARGS_NUM_SHIFT);
@@ -112,16 +117,20 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, uint32_t type)
 //                    }
 //                }
 //            } else {
-                if(pion_cb_required_num_args(callback) > 1) {
+                if(pion_cb_required_num_args(callback->cb.php) > 1) {
                     callback = NULL;
-                } else if(pion_cb_num_args(callback) && pion_verify_arg_type(callback, 0, data) == false) {
+                } else if(pion_cb_num_args(callback->cb.php) && pion_verify_arg_type(callback->cb.php, 0, data) == false) {
                     callback = NULL;
                 }
 //            }
         }
         if(callback) {
             zval_add_ref(data);
-            retval = pion_cb_call_with_1_arg(callback, data);
+            if(callback->type == ION_PROMISOR_CB_PHP) {
+                retval = pion_cb_call_with_1_arg(callback->cb.php, data);
+            } else {
+                retval = callback->cb.internal(promise, data);
+            }
             zval_ptr_dtor(data);
             if(EG(exception)) {
                 ZEND_ASSERT(Z_ISUNDEF(retval));
@@ -130,12 +139,16 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, uint32_t type)
                 zend_clear_exception();
                 result_type = ION_PROMISOR_FAILED;
                 resolved = 1;
-            } else {
+            } else if(!Z_ISUNDEF(retval)) {
                 result = retval;
-                if(Z_ISGENERATOR(result) && !pion_cb_is_generator(callback)) { // generator returned
+                if(Z_ISGENERATOR(result)
+                   && callback->type == ION_PROMISOR_CB_PHP
+                   && !pion_cb_is_generator(callback->cb.php)) { // generator returned
                     skip_generator = 1;
                 }
                 result_type = ION_PROMISOR_DONE;
+                resolved = 0;
+            } else {
                 resolved = 0;
             }
         } else {
@@ -273,31 +286,31 @@ void ion_promisor_sequence_invoke_args(zend_object * promise, zval * args, int c
 zend_object * ion_promisor_promise_new(zval * done, zval * fail) {
     ion_promisor * promise = ion_promisor_promise();
 
-    if(ion_promisor_set_callbacks(&promise->std, done, fail) == FAILURE) {
+    if(ion_promisor_set_callbacks(ION_OBJ(promise), done, fail) == FAILURE) {
         zend_throw_exception(ion_ce_ION_RuntimeException, "Promise expects a valid callbacks", 0);
         return NULL;
     }
-    return &promise->std;
+    return ION_OBJ(promise);
 }
 
 
 zend_object * ion_promisor_sequence_new(zval * init) {
     ion_promisor * sequence = ion_promisor_sequence();
 
-    if(ion_promisor_set_callbacks(&sequence->std, init, NULL) == FAILURE) {
+    if(ion_promisor_set_callbacks(ION_OBJ(sequence), init, NULL) == FAILURE) {
         zend_throw_exception(ion_ce_ION_RuntimeException, "Sequence expects a valid callbacks", 0);
 
     }
-    return &sequence->std;
+    return ION_OBJ(sequence);
 }
 
-zend_object * ion_promisor_deferred_new_ex(promisor_canceler_t canceler) {
+zend_object * ion_promisor_deferred_new_ex(promisor_action_t canceler) {
     ion_promisor * deferred = ion_promisor_deferred();
 
     if(canceler) {
-        ion_promisor_set_canceler_cb(deferred, canceler);
+        ion_promisor_set_internal_cb(&deferred->canceler, canceler);
     }
-    return &deferred->std;
+    return ION_OBJ(deferred);
 }
 
 
@@ -305,24 +318,24 @@ zend_object * ion_promisor_deferred_new_ex(promisor_canceler_t canceler) {
 int ion_promisor_set_callbacks(zend_object * promise_obj, zval * done, zval * fail) {
     ion_promisor * promise = get_object_instance(promise_obj, ion_promisor);
     if(done) {
-        ion_promisor_set_done_phpcb(promise, pion_cb_create_from_zval(done));
-        if(!promise->done.phpcb) {
+        ion_promisor_set_php_cb(&promise->done, pion_cb_create_from_zval(done));
+        if(!promise->done.cb.php) {
             return FAILURE;
         }
         promise->flags |= ION_PROMISOR_HAS_DONE;
 
-        if(pion_cb_required_num_args(promise->done.phpcb) > 1) {
+        if(pion_cb_required_num_args(promise->done.cb.php) > 1) {
             return FAILURE;
         }
     }
     if(fail) {
-        ion_promisor_set_fail_phpcb(promise, pion_cb_create_from_zval(fail));
-        if(!promise->fail.phpcb) {
+        ion_promisor_set_php_cb(&promise->fail, pion_cb_create_from_zval(fail));
+        if(!promise->fail.cb.php) {
             return FAILURE;
         }
         promise->flags |= ION_PROMISOR_HAS_FAIL;
 
-        if(pion_cb_required_num_args(promise->fail.phpcb) > 1) {
+        if(pion_cb_required_num_args(promise->fail.cb.php) > 1) {
             return FAILURE;
         }
     }
@@ -332,13 +345,13 @@ int ion_promisor_set_callbacks(zend_object * promise_obj, zval * done, zval * fa
 int ion_promisor_set_initial_callback(zend_object * sequence, zval * initial) {
     ion_promisor * promisor = get_object_instance(sequence, ion_promisor);
     if(initial) {
-        ion_promisor_set_done_phpcb(promisor, pion_cb_create_from_zval(initial));
-        if(!promisor->done.phpcb) {
+        ion_promisor_set_php_cb(&promisor->done, pion_cb_create_from_zval(initial));
+        if(!promisor->done.cb.php) {
             return FAILURE;
         }
         promisor->flags |= ION_PROMISOR_HAS_DONE;
 
-        if(pion_cb_required_num_args(promisor->done.phpcb) > 1) {
+        if(pion_cb_required_num_args(promisor->done.cb.php) > 1) {
             return FAILURE;
         }
     }
@@ -372,19 +385,21 @@ void ion_promisor_cancel(zend_object * promisor_obj, const char *message) {
     zend_object  * error = pion_exception_new(ion_class_entry(ION_Promise_CancelException), message, 0);
     zend_object_addref(promisor_obj);
     promisor->flags |= ION_PROMISOR_CANCELED;
-    if(promisor->canceler.cb) {
-        if(promisor->flags & ION_PROMISOR_CANCELER_C_FUNC) {
-            promisor->canceler.cb(promisor_obj);
+    ZVAL_OBJ(&value, error);
+
+    if(promisor->canceler.type) {
+        if(promisor->canceler.type == ION_PROMISOR_CB_INTERNAL) {
+            promisor->canceler.cb.internal(promisor, &value);
         } else {
-            pion_cb_void_without_args(promisor->canceler.phpcb);
+            pion_cb_void_with_1_arg(promisor->canceler.cb.php, &value);
         }
         if(EG(exception)) {
-            zend_exception_set_previous(EG(exception), error);
-            error = EG(exception);
-            EG(exception) = NULL;
+            zend_exception_set_previous(EG(exception), Z_OBJ(value));
+            zend_object_addref(EG(exception));
+            ZVAL_OBJ(&value, EG(exception));
+            zend_clear_exception();
         }
     }
-    ZVAL_OBJ(&value, error);
     ion_promisor_resolve(promisor_obj, &value, ION_PROMISOR_FAILED | ION_PROMISOR_CANCELED);
     zval_ptr_dtor(&value);
     zend_object_release(promisor_obj);
@@ -414,20 +429,20 @@ zend_object * ion_promisor_clone(zend_object * proto_obj) {
     if(proto->dtor) {
         clone->dtor = proto->dtor;
     }
-    if(proto->done.cb) {
-        if(proto->flags & ION_PROMISOR_DONE_C_FUNC) {
-            clone->done.cb = proto->done.cb;
-            clone->flags |= ION_PROMISOR_DONE_C_FUNC;
+    if(proto->done.type) {
+        clone->done.type = proto->done.type;
+        if(proto->done.type == ION_PROMISOR_CB_INTERNAL) {
+            clone->done.cb.internal = proto->done.cb.internal;
         } else {
-            clone->done.phpcb = pion_cb_dup(proto->done.phpcb);
+            clone->done.cb.php = pion_cb_dup(proto->done.cb.php);
         }
     }
-    if(proto->fail.cb) {
-        if(proto->flags & ION_PROMISOR_FAIL_C_FUNC) {
-            clone->fail.cb = proto->fail.cb;
-            clone->flags |= ION_PROMISOR_FAIL_C_FUNC;
+    if(proto->fail.type) {
+        clone->fail.type = proto->fail.type;
+        if(proto->fail.type == ION_PROMISOR_CB_INTERNAL) {
+            clone->fail.cb.internal = proto->fail.cb.internal;
         } else {
-            clone->fail.phpcb = pion_cb_dup(proto->fail.phpcb);
+            clone->fail.cb.php = pion_cb_dup(proto->fail.cb.php);
         }
     }
     if(proto->handler_count) {
@@ -506,12 +521,6 @@ int ion_promisor_append(zend_object * container, zend_object * handler) {
     PION_ARRAY_PUSH(promisor->handlers, promisor->handler_count, handler);
     obj_add_ref(handler);
     return SUCCESS;
-}
-
-void ion_promisor_set_autoclean(zend_object * object, promisor_canceler_t autocleaner) {
-    ion_promisor * promisor = get_object_instance(object, ion_promisor);
-    ion_promisor_set_canceler_cb(promisor, autocleaner);
-    promisor->flags |= ION_PROMISOR_AUTOCLEAN;
 }
 
 void ion_promisor_cleanup(ion_promisor * promisor, ushort removed) {

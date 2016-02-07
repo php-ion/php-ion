@@ -62,8 +62,7 @@ METHOD_ARGS_BEGIN(ION_Process, kill, 2)
     METHOD_ARG_BOOL(to_group, 0)
 METHOD_ARGS_END()
 
-void ion_process_signal_dtor(zend_object * sequence) {
-    ion_promisor * promisor = get_object_instance(sequence, ion_promisor);
+void ion_process_signal_dtor(ion_promisor * promisor) {
     if(promisor->object) {
         ion_event * event = promisor->object;
         event_del(event);
@@ -75,13 +74,12 @@ void ion_process_signal_dtor(zend_object * sequence) {
 
 void ion_process_clean_signal(zval * zs) {
     zend_object  * sequence = Z_PTR_P(zs);
-    ion_process_signal_dtor(sequence);
+    ion_process_signal_dtor(get_object_instance(sequence, ion_promisor));
     zend_object_release(sequence);
 }
 
-void ion_process_autoclean_signal(zend_object * sequence) {
-    ion_promisor * promisor = get_object_instance(sequence, ion_promisor);
-    ion_event    * event = ion_promisor_store_get(promisor);
+void ion_process_autoclean_signal(ion_promisor * promisor) {
+    ion_event    * event = promisor->object;
     int            signo = event_get_fd(event);
     zend_hash_index_del(GION(signals), (zend_ulong)signo);
 }
@@ -387,8 +385,8 @@ void ion_exec_callback(ion_buffer * bev, short what, void * arg) {
     ION_LOOP_CB_END();
 }
 
-void ion_exec_cancel(zend_object * deferred) {
-
+void ion_exec_cancel(ion_promisor * promisor, zval * reason) {
+    // todo
 }
 
 /** public function ION\Process::exec($priority, $pid = null) : int */

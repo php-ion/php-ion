@@ -795,8 +795,8 @@ CLASS_METHOD(ION_Stream, disable) {
 
 METHOD_WITHOUT_ARGS(ION_Stream, disable)
 
-void _ion_stream_connect_dtor(zend_object * deferred) {
-    ion_stream * stream = ion_promisor_store_get(deferred);
+void _ion_stream_connect_dtor(ion_promisor * deferred) {
+    ion_stream * stream = deferred->object;
     if(stream->connect) {
         zend_object_release(stream->connect);
         stream->connect = NULL;
@@ -974,8 +974,8 @@ METHOD_ARGS_BEGIN(ION_Stream, sendFile, 1)
     METHOD_ARG_LONG(length, 0)
 METHOD_ARGS_END()
 
-void _ion_stream_flush_dtor(zend_object * object) {
-    ion_stream * stream = ion_promisor_store_get(object);
+void _ion_stream_flush_dtor(ion_promisor * promisor) {
+    ion_stream * stream = promisor->object;
     if(stream->flush) {
         zend_object_release(stream->flush);
         stream->flush = NULL;
@@ -988,7 +988,7 @@ CLASS_METHOD(ION_Stream, flush) {
 
 //    CHECK_STREAM(stream);
     if(stream->flush) {
-        obj_add_ref(stream->flush);
+        zend_object_addref(stream->flush);
         RETURN_OBJ(stream->flush);
     }
 
@@ -1157,9 +1157,8 @@ METHOD_ARGS_BEGIN(ION_Stream, getLine, 1)
     METHOD_ARG_LONG(max_length, 0)
 METHOD_ARGS_END()
 
-void _ion_stream_read_dtor(zend_object * object) {
-    ion_stream * stream = ion_promisor_store_get(object);
-//    bufferevent_setwatermark(stream->buffer, EV_READ, 0, stream->input_size);
+void _ion_stream_read_dtor(ion_promisor * promisor) {
+    ion_stream * stream = promisor->object;
     if(stream->read) {
         if(stream->token) {
             zend_string_release(stream->token->token);
@@ -1388,11 +1387,10 @@ CLASS_METHOD(ION_Stream, resume) {
 
 METHOD_WITHOUT_ARGS(ION_Stream, resume)
 
-void _deferred_stream_closing_dtor(zend_object * deferred) {
-    ion_stream * stream = ion_promisor_store_get(deferred);
+void _deferred_stream_closing_dtor(ion_promisor * deferred) {
+    ion_stream * stream = deferred->object;
     if(stream->shutdown) {
         zend_object_release(stream->shutdown);
-//        zval_ptr_dtor(&stream->closing);
         stream->shutdown = NULL;
     }
 }

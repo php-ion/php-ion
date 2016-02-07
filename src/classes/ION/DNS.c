@@ -50,8 +50,8 @@ void _ion_dns_getaddrinfo_callback(int errcode, struct evutil_addrinfo * addr, v
     }
 }
 
-void _ion_dns_getaddrinfo_cancel(zend_object * object) {
-    ion_dns_addr_request *req = ion_promisor_store_get(object);
+zval _ion_dns_getaddrinfo_cancel(ion_promisor * promisor, zval * reason) {
+    ion_dns_addr_request *req = promisor->object;
     if(req->request) {
         evdns_getaddrinfo_cancel(req->request);
     }
@@ -61,6 +61,8 @@ void _ion_dns_getaddrinfo_cancel(zend_object * object) {
     if(zend_hash_del(GION(resolvers), req->domain) == FAILURE) {
         zend_error(E_ERROR, "Failed to remove a addrinfo request");
     }
+
+
 }
 
 void _ion_dns_clean_requests(zval * zr) {

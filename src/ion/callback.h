@@ -86,14 +86,14 @@ zval pion_cb_obj_call_with_3_args(pion_cb *cb, zend_object * obj, zval *arg1, zv
 
 /* Call callbacks */
 int pion_cb_void(pion_cb *cb, int num, zval *args);
-int pion_cb_void_without_args(pion_cb * cb);
+//int pion_cb_void_without_args(pion_cb * cb);
 int pion_cb_void_with_1_arg(pion_cb * cb, zval* arg1);
 int pion_cb_void_with_2_args(pion_cb *cb, zval *arg1, zval *arg2);
 int pion_cb_void_with_3_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3);
 int pion_cb_void_with_4_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3, zval *arg4);
 
 //#define pion_cb_void(cb, num_args, args)                     pion_cb_void(cb, num_args, args)
-//#define pion_cb_void_without_args(cb)                        pion_cb_void(cb, 0, NULL)
+#define pion_cb_void_without_args(cb)                        pion_cb_void(cb, 0, NULL)
 //#define pion_cb_void_with_1_arg(cb, arg1)                    pion_cb_void_with_1_arg(cb, arg1)
 //#define pion_cb_void_with_2_args(cb, arg1, arg2)             pion_cb_void_with_2_args(cb, arg1, arg2)
 //#define pion_cb_void_with_3_args(cb, arg1, arg2, arg3)       pion_cb_void_with_3_args(cb, arg1, arg2, arg3)

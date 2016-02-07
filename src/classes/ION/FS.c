@@ -35,9 +35,13 @@ void ion_fs_pair_close_two(ion_buffer * two, short what, void * ctx) {
 
 }
 
-void ion_fs_read_file_dtor(zend_object * deferred) {
-    ion_buffer   * two = ion_promisor_store_get(deferred);
+void ion_fs_read_file_dtor(ion_promisor * deferred) {
+    ion_buffer   * two = deferred->object;
     bufferevent_free(two);
+}
+
+void ion_dns_request_deferred_cancel(ion_promisor * deferred, zval * reason) {
+    zend_object_release(&deferred->std);
 }
 
 /** public static function ION\FS::readFile(string $filename, int $offset = 0, int $length = -1) : Deferred */
@@ -81,7 +85,7 @@ CLASS_METHOD(ION_FS, readFile) {
     bufferevent_enable(one, EV_WRITE);
     bufferevent_enable(two, EV_READ);
 //    bufferevent_setwatermark(two, EV_READ, (size_t)length + 1, (size_t)length + 10);
-    deferred = ion_promisor_deferred_new_ex(zend_object_release);
+    deferred = ion_promisor_deferred_new_ex(ion_dns_request_deferred_cancel);
     ion_promisor_store(deferred, two);
     ion_promisor_dtor(deferred, ion_fs_read_file_dtor);
 

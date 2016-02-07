@@ -1,6 +1,6 @@
 #include "init.h"
-#include "fs.h"
 #include "promisor.h"
+#include "fs.h"
 
 
 #if defined(HAVE_INOTIFY)
@@ -170,8 +170,8 @@ void ion_fs_watcher_remove(ion_fs_watcher * watcher) {
 
 #endif
 
-void ion_fs_watcher_dtor(zend_object * sequence) {
-    ion_fs_watcher * watcher = ion_promisor_store_get(sequence);
+void ion_fs_watcher_dtor(ion_promisor * sequence) {
+    ion_fs_watcher * watcher = sequence->object;
     if(watcher) {
         ion_fs_watcher_remove(watcher);
     }
