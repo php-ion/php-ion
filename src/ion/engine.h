@@ -37,6 +37,8 @@
 #define get_this_instance(type) \
     get_instance(getThis(), type)
 
+#define ION_OBJ(p) &(p)->std
+
 #define Z_ISTRUE(zval)				(Z_TYPE(zval) == IS_TRUE)
 #define Z_ISTRUE_P(zval_p)			Z_ISTRUE(*(zval_p))
 

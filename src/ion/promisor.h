@@ -1,9 +1,9 @@
 #ifndef PION_PROMISOR_H
 #define PION_PROMISOR_H
 
-#include <php.h>
+//#include <php.h>
 #include "init.h"
-#include "../config.h"
+//#include "../config.h"
 #include "callback.h"
 #include "exceptions.h"
 #include <Zend/zend_generators.h>
@@ -33,8 +33,8 @@
 #define ION_PROMISOR_HAS_DONE        (1<<11)
 #define ION_PROMISOR_HAS_FAIL        (1<<12)
 #define ION_PROMISOR_HAS_PROGRESS    (1<<13)
-#define ION_PROMISOR_YIELDED         (1<<14)
-#define ION_PROMISOR_MULTI_ARGS      (1<<14)
+#define ION_PROMISOR_SUSPENDED       (1<<14)
+#define ION_PROMISOR_MULTI_ARGS      (1<<15)
 
 #define ION_PROMISOR_AUTOCLEAN       (1<<16)
 
@@ -52,33 +52,56 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Sequence_Quit;
 #define ion_ce_Generator zend_ce_generator
 #define ion_ce_Closure   zend_ce_closure
 
-typedef void (* promisor_canceler_t)(zend_object * promisor);
-typedef void (* promisor_dtor_t)(zend_object * promisor);
+typedef struct _ion_promisor ion_promisor;
+
+typedef void (* promisor_dtor_t)(ion_promisor * promisor);
+typedef zval (* promisor_action_t)(ion_promisor * promisor, zval * data);
+
+enum ion_promisor_cb_type {
+    ION_PROMISOR_CB_UNSET,
+    ION_PROMISOR_CB_PHP,
+    ION_PROMISOR_CB_INTERNAL,
+};
 
 
-typedef struct _ion_promisor {
+typedef struct _ion_promisor_action_cb {
+    zend_uchar type;
+    union {
+        pion_cb * php;
+        promisor_action_t internal;
+    } cb;
+} ion_promisor_action_cb;
+
+struct _ion_promisor {
     zend_object         std;
-    zend_string       * name;
     uint32_t            flags;
-    pion_cb           * done;
-    pion_cb           * fail;
-    zend_object       * await;
+
+    ion_promisor_action_cb done;     // done callback for promises or init callback for sequences
+    ion_promisor_action_cb fail;     // fail callback for promises
+    ion_promisor_action_cb canceler; // cancel callback for deterred and clean callback for sequences
+
+    zend_object       * await;     // yield-promisor
     zval                result;
-    zend_object       * generator;
-    void              * timer; // todo
-    zend_object      ** handlers;
-    ushort              handler_count;
-    zend_class_entry  * scope;
+    zend_object       * generator; // currently running generator
+    zend_object      ** handlers;  // next promisors (then)
+    ushort              handler_count; // next promisors count
+    zend_class_entry  * scope;     //
     void              * object;
-    promisor_canceler_t canceler;
-    promisor_dtor_t     dtor;
-} ion_promisor;
+    promisor_dtor_t     dtor;      // internal custom destructor
+    zend_string       * name;
+};
 
 // Creating
+#define ion_promisor_promise() ion_promisor_new(ion_ce_ION_Promise, ION_PROMISOR_INTERNAL)
+#define ion_promisor_deferred() ion_promisor_new(ion_ce_ION_Deferred, ION_PROMISOR_INTERNAL)
+#define ion_promisor_sequence() ion_promisor_new(ion_ce_ION_Sequence, ION_PROMISOR_INTERNAL)
+#define ion_promisor_promise_ex(flags) ion_promisor_new(ion_ce_ION_Promise, flags)
+#define ion_promisor_deferred_ex(flags) ion_promisor_new(ion_ce_ION_Deferred, flags)
+#define ion_promisor_sequence_ex(flags) ion_promisor_new(ion_ce_ION_Sequence, flags)
 zend_object * ion_promisor_promise_new(zval * done, zval * fail);
 zend_object * ion_promisor_sequence_new(zval * init);
 zend_object * ion_promisor_deferred_new(zval * cancelable);
-zend_object * ion_promisor_deferred_new_ex(promisor_canceler_t canceler);
+zend_object * ion_promisor_deferred_new_ex(promisor_action_t canceler);
 
 // Manipulations
 zend_object * ion_promisor_clone(zend_object * proto_obj);
@@ -88,7 +111,6 @@ int ion_promisor_append(zend_object * container, zend_object * handler);
 void ion_promisor_remove(zend_object * container, zend_object * handler);
 void ion_promisor_remove_named(zend_object * container, zend_string * name);
 void ion_promisor_cleanup(ion_promisor * promisor, ushort removed);  // realloc promisor->handlers, remove NULL elements
-void ion_promisor_set_autoclean(zend_object * container, promisor_canceler_t autocleaner);
 
 // Stores and destructors
 #define ion_promisor_store(promisor, pobject)  get_object_instance(promisor, ion_promisor)->object = (void *) pobject
@@ -97,13 +119,50 @@ void ion_promisor_set_autoclean(zend_object * container, promisor_canceler_t aut
 #define ion_promisor_add_flags(promisor, bits) get_object_instance(promisor, ion_promisor)->flags |= (bits)
 #define ion_promisor_dtor(promisor, dtor_cb)   get_object_instance(promisor, ion_promisor)->dtor = dtor_cb
 
+static zend_always_inline ion_promisor * ion_promisor_new(zend_class_entry * ce, uint32_t flags) {
+    zval object;
+    ion_promisor * promisor;
+
+    object_init_ex(&object, ce);
+    promisor = get_instance(&object, ion_promisor);
+    promisor->flags |= flags;
+    return promisor;
+}
+
+static zend_always_inline void ion_promisor_set_php_cb(ion_promisor_action_cb * pcb, pion_cb * cb) {
+    if(pcb->type == ION_PROMISOR_CB_PHP) {
+        pion_cb_free(pcb->cb.php);
+    } else {
+        pcb->type = ION_PROMISOR_CB_PHP;
+    }
+    if(cb) {
+        pcb->cb.php = cb;
+    } else {
+        pcb->type = ION_PROMISOR_CB_UNSET;
+        pcb->cb.php = NULL;
+    }
+}
+
+static zend_always_inline void ion_promisor_set_internal_cb(ion_promisor_action_cb * pcb, promisor_action_t cb) {
+    if(pcb->type == ION_PROMISOR_CB_PHP) {
+        pion_cb_free(pcb->cb.php);
+    }
+    pcb->type = ION_PROMISOR_CB_INTERNAL;
+    pcb->cb.internal = cb;
+}
+
+static zend_always_inline void obj_promisor_set_dtor(zend_object * promisor, promisor_dtor_t dtor) {
+    get_object_instance(promisor, ion_promisor)->dtor = dtor;
+}
+
+#define ion_promisor_set_autoclean(promisor, cb) \
+    ion_promisor_set_internal_cb(&get_object_instance(promisor, ion_promisor)->canceler, cb)
+
 // Resolvers
 void ion_promisor_resolve(zend_object * promisor, zval * result, uint32_t type);
 void ion_promisor_cancel(zend_object * promisor, const char *message);
 void ion_promisor_sequence_invoke(zend_object * promisor, zval * arg);
 void ion_promisor_sequence_invoke_args(zend_object * promise, zval * args, int count);
-// Notify
-void ion_promisor_notify(zend_object * promisor, zval * info);
 
 #define ion_promisor_done(promisor, result)  ion_promisor_resolve(promisor, result, ION_PROMISOR_DONE)
 #define ion_promisor_fail(promisor, error)   ion_promisor_resolve(promisor, error, ION_PROMISOR_FAILED)
@@ -142,10 +201,19 @@ zend_object * ion_sequence_init(zend_class_entry * ce);
 
 #define Z_ISPROMISE(zv) Z_ISPROMISE_P(&zv)
 
-#define ion_promisor_autoclean(promisor)                    \
-    if((promisor->flags & ION_PROMISOR_AUTOCLEAN) && !promisor->handler_count && promisor->canceler) {    \
-        promisor->canceler(&promisor->std);     \
+static zend_always_inline void ion_promisor_try_clean(ion_promisor * promisor) {
+    if((promisor->flags & ION_PROMISOR_AUTOCLEAN) && !promisor->handler_count && promisor->canceler.type) {
+        if(promisor->canceler.type == ION_PROMISOR_CB_INTERNAL) {
+            promisor->canceler.cb.internal(promisor, NULL);
+        } else {
+            zend_object_addref(ION_OBJ(promisor));
+            pion_cb_void_without_args(promisor->canceler.cb.php);
+            zend_object_release(ION_OBJ(promisor));
+        }
     }
+}
+
+#define ion_promisor_autoclean(promisor) ion_promisor_try_clean(promisor)
 
 #define ion_promisor_should_cancel(promisor) \
     ((promisor->flags & ION_PROMISOR_CANCEL_ON_EMPTY) && !promisor->handler_count && promisor->canceler)

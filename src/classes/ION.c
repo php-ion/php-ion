@@ -84,13 +84,11 @@ static void _timer_done(evutil_socket_t fd, short flags, void * arg) {
     ION_LOOP_CB_END();
 }
 
-static void _timer_dtor(zend_object * object) {
-    ion_promisor * deferred = get_object_instance(object, ion_promisor);
+static void _timer_dtor(ion_promisor * deferred) {
     ion_event * timer = (ion_event *) deferred->object;
     event_del(timer);
     event_free(timer);
-    obj_ptr_dtor(object);
-//    zval_ptr_dtor(&zdeferred);
+    zend_object_release(&deferred->std);
 }
 
 /** public function ION::await(double $time) : ION\Deferred */
@@ -162,8 +160,7 @@ static void _ion_interval_invoke(evutil_socket_t fd, short flags, void * arg) {
     ION_LOOP_CB_END();
 }
 
-static void _ion_interval_dtor(zend_object * sequence) {
-    ion_promisor * promisor = get_object_instance(sequence, ion_promisor);
+static void _ion_interval_dtor(ion_promisor * promisor) {
     if(promisor->object) {
         _ion_interval_free((ion_interval *) promisor->object);
     }
@@ -208,7 +205,7 @@ CLASS_METHOD(ION, interval) {
     } else {
         ion_promisor_store(interval->promisor, interval);
         ion_promisor_dtor(interval->promisor, _ion_interval_dtor);
-        obj_add_ref(interval->promisor);
+        zend_object_addref(interval->promisor);
         RETURN_OBJ(interval->promisor);
     }
 }

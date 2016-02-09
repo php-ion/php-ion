@@ -4,7 +4,7 @@
 #include "init.h"
 
 /* PHP callback */
-typedef struct _pion_cb {
+typedef struct pion_cb {
     zend_fcall_info * fci;
     zend_fcall_info_cache * fcc;
 } pion_cb;
@@ -36,67 +36,67 @@ int _pion_fcall_void(zend_fcall_info *fci_ptr, zend_fcall_info_cache *fcc_ptr, i
 #define pion_fcall_void_3_args(fci, fcc, arg1, arg2, arg3)    \
     _pion_fcall_void(fci, fcc, 3, arg1, arg2, arg3)
 
-#define pion_call_fci(retval, fci, fcc, num, args)  \
-    _pion_call_fci(retval, fci, fcc, num, args)
-#define pion_call_void_fci_with_1_arg(fci, fcc, arg1) \
-    _pion_call_void_fci_with_1_arg(fci, fcc, arg1)
-#define pion_call_void_fci_with_2_args(fci, fcc, arg1, arg2) \
-    _pion_call_void_fci_with_2_args(fci, fcc, arg1, arg2)
-#define pion_call_void_fci_with_3_args(fci, fcc, arg1, arg2, arg3) \
-    _pion_call_void_fci_with_3_args(fci, fcc, arg1, arg2, arg3)
-#define pion_call_void_fci_with_4_args(fci, fcc, arg1, arg2, arg3, arg4) \
-    _pion_call_void_fci_with_4_args(fci, fcc, arg1, arg2, arg3, arg4)
+//#define pion_call_fci(retval, fci, fcc, num, args)  \
+//    _pion_call_fci(retval, fci, fcc, num, args)
+//#define pion_call_void_fci_with_1_arg(fci, fcc, arg1) \
+//    _pion_call_void_fci_with_1_arg(fci, fcc, arg1)
+//#define pion_call_void_fci_with_2_args(fci, fcc, arg1, arg2) \
+//    _pion_call_void_fci_with_2_args(fci, fcc, arg1, arg2)
+//#define pion_call_void_fci_with_3_args(fci, fcc, arg1, arg2, arg3) \
+//    _pion_call_void_fci_with_3_args(fci, fcc, arg1, arg2, arg3)
+//#define pion_call_void_fci_with_4_args(fci, fcc, arg1, arg2, arg3, arg4) \
+//    _pion_call_void_fci_with_4_args(fci, fcc, arg1, arg2, arg3, arg4)
 
 
-zval _pion_cb_call(pion_cb *cb, int num, zval *args);
-zval _pion_cb_call_with_1_arg(pion_cb * cb, zval* arg1);
-zval _pion_cb_call_with_2_args(pion_cb *cb, zval *arg1, zval *arg2);
-zval _pion_cb_call_with_3_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3);
-zval _pion_cb_call_with_4_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3, zval *arg4);
+zval pion_cb_call(pion_cb *cb, int num, zval *args);
+zval pion_cb_call_with_1_arg(pion_cb * cb, zval* arg1);
+zval pion_cb_call_with_2_args(pion_cb *cb, zval *arg1, zval *arg2);
+zval pion_cb_call_with_3_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3);
+zval pion_cb_call_with_4_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3, zval *arg4);
 
-zval _pion_cb_obj_call(pion_cb *cb, zend_object * obj, int num, zval *args);
-zval _pion_cb_obj_call_with_1_arg(pion_cb * cb, zend_object * obj, zval* arg1);
-zval _pion_cb_obj_call_with_2_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2);
-zval _pion_cb_obj_call_with_3_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2, zval *arg3);
+zval pion_cb_obj_call(pion_cb *cb, zend_object * obj, int num, zval *args);
+zval pion_cb_obj_call_with_1_arg(pion_cb * cb, zend_object * obj, zval* arg1);
+zval pion_cb_obj_call_with_2_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2);
+zval pion_cb_obj_call_with_3_args(pion_cb *cb, zend_object * obj, zval *arg1, zval *arg2, zval *arg3);
 
-#define pion_cb_call(cb, num_args, args) \
-    _pion_cb_call(cb, num_args, args)
+//#define pion_cb_call(cb, num_args, args) \
+//    pion_cb_call(cb, num_args, args)
 #define pion_cb_call_without_args(cb) \
-    _pion_cb_call(cb, 0, NULL)
-#define pion_cb_call_with_1_arg(cb, arg) \
-    _pion_cb_call_with_1_arg(cb, arg)
-#define pion_cb_call_with_2_args(cb, arg1, arg2) \
-    _pion_cb_call_with_2_args(cb, arg1, arg2)
-#define pion_cb_call_with_3_args(cb, arg1, arg2, arg3) \
-    _pion_cb_call_with_3_args(cb, arg1, arg2, arg3)
+    pion_cb_call(cb, 0, NULL)
+//#define pion_cb_call_with_1_arg(cb, arg) \
+//    pion_cb_call_with_1_arg(cb, arg)
+//#define pion_cb_call_with_2_args(cb, arg1, arg2) \
+//    pion_cb_call_with_2_args(cb, arg1, arg2)
+//#define pion_cb_call_with_3_args(cb, arg1, arg2, arg3) \
+//    pion_cb_call_with_3_args(cb, arg1, arg2, arg3)
 
-#define pion_cb_obj_call(cb, obj, num_args, args) \
-    _pion_cb_obj_call(cb, obj, num_args, args)
+//#define pion_cb_obj_call(cb, obj, num_args, args) \
+//    pion_cb_obj_call(cb, obj, num_args, args)
 #define pion_cb_obj_call_without_args(cb, obj) \
-    _pion_cb_obj_call(cb, obj, 0, NULL)
-#define pion_cb_obj_call_with_1_arg(cb, obj, arg) \
-    _pion_cb_obj_call_with_1_arg(cb, obj, arg)
-#define pion_cb_obj_call_with_2_args(cb, obj, arg1, arg2) \
-    _pion_cb_obj_call_with_2_args(cb, obj, arg1, arg2)
-#define pion_cb_obj_call_with_3_args(cb, obj, arg1, arg2, arg3) \
-    _pion_cb_obj_call_with_3_args(cb, obj, arg1, arg2, arg3)
-#define pion_cb_obj_call_with_4_args(cb, obj, arg1, arg2, arg3, arg4) \
-    _pion_cb_obj_call_with_4_args(cb, obj, arg1, arg2, arg3, arg4)
+    pion_cb_obj_call(cb, obj, 0, NULL)
+//#define pion_cb_obj_call_with_1_arg(cb, obj, arg) \
+//    pion_cb_obj_call_with_1_arg(cb, obj, arg)
+//#define pion_cb_obj_call_with_2_args(cb, obj, arg1, arg2) \
+//    pion_cb_obj_call_with_2_args(cb, obj, arg1, arg2)
+//#define pion_cb_obj_call_with_3_args(cb, obj, arg1, arg2, arg3) \
+//    pion_cb_obj_call_with_3_args(cb, obj, arg1, arg2, arg3)
+//#define pion_cb_obj_call_with_4_args(cb, obj, arg1, arg2, arg3, arg4) \
+//    pion_cb_obj_call_with_4_args(cb, obj, arg1, arg2, arg3, arg4)
 
 
 /* Call callbacks */
-int _pion_cb_void(pion_cb *cb, int num, zval *args);
-int _pion_cb_void_without_args(pion_cb * cb);
-int _pion_cb_void_with_1_arg(pion_cb * cb, zval* arg1);
-int _pion_cb_void_with_2_args(pion_cb *cb, zval *arg1, zval *arg2);
-int _pion_cb_void_with_3_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3);
-int _pion_cb_void_with_4_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3, zval *arg4);
+int pion_cb_void(pion_cb *cb, int num, zval *args);
+//int pion_cb_void_without_args(pion_cb * cb);
+int pion_cb_void_with_1_arg(pion_cb * cb, zval* arg1);
+int pion_cb_void_with_2_args(pion_cb *cb, zval *arg1, zval *arg2);
+int pion_cb_void_with_3_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3);
+int pion_cb_void_with_4_args(pion_cb *cb, zval *arg1, zval *arg2, zval *arg3, zval *arg4);
 
-#define pion_cb_void(cb, num_args, args)                     _pion_cb_void(cb, num_args, args)
-#define pion_cb_void_without_args(cb)                        _pion_cb_void(cb, 0, NULL)
-#define pion_cb_void_with_1_arg(cb, arg1)                    _pion_cb_void_with_1_arg(cb, arg1)
-#define pion_cb_void_with_2_args(cb, arg1, arg2)             _pion_cb_void_with_2_args(cb, arg1, arg2)
-#define pion_cb_void_with_3_args(cb, arg1, arg2, arg3)       _pion_cb_void_with_3_args(cb, arg1, arg2, arg3)
+//#define pion_cb_void(cb, num_args, args)                     pion_cb_void(cb, num_args, args)
+#define pion_cb_void_without_args(cb)                        pion_cb_void(cb, 0, NULL)
+//#define pion_cb_void_with_1_arg(cb, arg1)                    pion_cb_void_with_1_arg(cb, arg1)
+//#define pion_cb_void_with_2_args(cb, arg1, arg2)             pion_cb_void_with_2_args(cb, arg1, arg2)
+//#define pion_cb_void_with_3_args(cb, arg1, arg2, arg3)       pion_cb_void_with_3_args(cb, arg1, arg2, arg3)
 
 int     pion_call_constructor(zend_class_entry * ce, zend_object * object, int num_args, zval * args);
 #define pion_call_constructor_without_args(cls, object)  pion_call_constructor(cls, object, 0, NULL)

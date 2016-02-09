@@ -17,9 +17,8 @@ CLASS_METHOD(ION_Deferred, __construct) {
     zend_fcall_info_cache  fcc = empty_fcall_info_cache;
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_FUNC(fci, fcc)
-    ZEND_PARSE_PARAMETERS_END();
-//    deferred->canceler = _ion_deferred_reject_php;
-    deferred->fail = pion_cb_create(&fci, &fcc);
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+    ion_promisor_set_php_cb(&deferred->canceler, pion_cb_create(&fci, &fcc));
 }
 
 METHOD_ARGS_BEGIN(ION_Deferred, __construct, 1)
@@ -38,7 +37,7 @@ CLASS_METHOD(ION_Deferred, cancel) {
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_STR(message)
-    ZEND_PARSE_PARAMETERS_END();
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
     ion_promisor_cancel(Z_OBJ_P(getThis()), message->val);
     RETURN_THIS();
 }
