@@ -328,7 +328,7 @@ zend_string * ion_buffer_read_all(ion_buffer * buffer) {
     zend_string * data;
 
     if(!incoming_length) {
-        return zend_string_init("", 0, 0);
+        return ZSTR_EMPTY_ALLOC();
     }
 
     data = zend_string_alloc(incoming_length, 0);
