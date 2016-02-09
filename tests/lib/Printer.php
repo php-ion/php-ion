@@ -88,7 +88,7 @@ class Printer extends \PHPUnit_TextUI_ResultPrinter {
      */
     public function addRiskyTest(\PHPUnit_Framework_Test $test, \Exception $e, $time) {
         $this->writeProgressWithColor('fg-yellow, bold', sprintf(
-            "\nRISK %d/%d %s",
+            "\rRISK %d/%d %s",
             $this->numTestsRun,
             $this->numTests,
             \PHPUnit_Util_Test::describe($test)
@@ -107,7 +107,7 @@ class Printer extends \PHPUnit_TextUI_ResultPrinter {
      */
     public function addSkippedTest(\PHPUnit_Framework_Test $test, \Exception $e, $time) {
         $this->writeProgressWithColor('fg-cyan, bold', sprintf(
-            "\nSKIP %d/%d %s",
+            "\rSKIP %d/%d %s",
             $this->numTestsRun,
             $this->numTests,
             \PHPUnit_Util_Test::describe($test)
