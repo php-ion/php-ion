@@ -18,7 +18,7 @@ CLASS_METHOD(ION_Deferred, __construct) {
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_FUNC(fci, fcc)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
-    ion_promisor_set_cancel_php_cb(&deferred->canceler, pion_cb_create(&fci, &fcc));
+    ion_promisor_set_php_cb(&deferred->canceler, pion_cb_create(&fci, &fcc));
 }
 
 METHOD_ARGS_BEGIN(ION_Deferred, __construct, 1)

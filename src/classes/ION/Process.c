@@ -128,7 +128,7 @@ CLASS_METHOD(ION_Process, signal) {
         return;
     }
 
-    obj_add_ref(sequence);
+    zend_object_addref(sequence);
     RETURN_OBJ(sequence);
 }
 
@@ -385,10 +385,6 @@ void ion_exec_callback(ion_buffer * bev, short what, void * arg) {
     ION_LOOP_CB_END();
 }
 
-void ion_exec_cancel(ion_promisor * promisor, zval * reason) {
-    // todo
-}
-
 /** public function ION\Process::exec($priority, $pid = null) : int */
 CLASS_METHOD(ION_Process, exec) {
     zend_string   * command = NULL;
@@ -415,11 +411,11 @@ CLASS_METHOD(ION_Process, exec) {
     env[0] = line;
     env[1] = NULL;
     if(options) {
-        zuser = zend_hash_str_find(Z_ARRVAL_P(options), "user", sizeof("user")-1);
+        zuser = zend_hash_str_find(Z_ARRVAL_P(options), STRARGS("user"));
         if(zuser) {
             pw = ion_get_pw_by_zval(zuser);
-            zgroup = zend_hash_str_find(Z_ARRVAL_P(options), "set_group", sizeof("set_group")-1);
-            if(zend_hash_str_exists(Z_ARRVAL_P(options), "set_group", sizeof("set_group")-1)) {
+            zgroup = zend_hash_str_find(Z_ARRVAL_P(options), STRARGS("set_group"));
+            if(zend_hash_str_exists(Z_ARRVAL_P(options), STRARGS("set_group"))) {
                 zval zgroup_bool;
                 ZVAL_COPY_VALUE(&zgroup_bool, zgroup);
                 convert_to_boolean_ex(&zgroup_bool);
@@ -481,9 +477,9 @@ CLASS_METHOD(ION_Process, exec) {
         }
         bufferevent_enable(exec->out, EV_READ);
         bufferevent_enable(exec->err, EV_READ);
-        exec->deferred = ion_promisor_deferred_new_ex(ion_exec_cancel);
+        exec->deferred = ion_promisor_deferred_new_ex(NULL);
         ion_promisor_store(exec->deferred, exec);
-        obj_add_ref(exec->deferred);
+        zend_object_addref(exec->deferred);
         RETURN_OBJ(exec->deferred);
     } else {  // child
         if (dup2( out_pipes[1], 1 ) < 0 ) {

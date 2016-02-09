@@ -26,7 +26,7 @@ typedef struct _ion_fs_watcher {
     ion_event   * event;
 } ion_fs_watcher;
 
-#if defined(HAVE_INOTIFY)
+#ifdef HAVE_INOTIFY
 # include <sys/inotify.h>
 # include <sys/ioctl.h>
 # define INOTIFY_EVENT_SIZE (sizeof(struct inotify_event))

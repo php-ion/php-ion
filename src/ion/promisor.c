@@ -98,11 +98,11 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, uint32_t type)
                 callback = &promise->done;
             }
         } else if(type & ION_PROMISOR_CANCELED) {
-            if((promise->flags & ION_PROMISOR_TYPE_DEFERRED) && promise->fail.type) {
-                callback = &promise->fail;
+            if(promise->canceler.type) {
+                callback = &promise->canceler;
             }
         } else if(type & ION_PROMISOR_FAILED) {
-            if(!(promise->flags & ION_PROMISOR_TYPE_DEFERRED) && promise->fail.type) {
+            if(promise->fail.type) {
                 callback = &promise->fail;
             }
         }
@@ -284,7 +284,7 @@ void ion_promisor_sequence_invoke_args(zend_object * promise, zval * args, int c
 }
 
 zend_object * ion_promisor_promise_new(zval * done, zval * fail) {
-    ion_promisor * promise = ion_promisor_promise();
+    ion_promisor * promise = ion_promisor_promise_ex(0);
 
     if(ion_promisor_set_callbacks(ION_OBJ(promise), done, fail) == FAILURE) {
         zend_throw_exception(ion_ce_ION_RuntimeException, "Promise expects a valid callbacks", 0);
@@ -295,7 +295,7 @@ zend_object * ion_promisor_promise_new(zval * done, zval * fail) {
 
 
 zend_object * ion_promisor_sequence_new(zval * init) {
-    ion_promisor * sequence = ion_promisor_sequence();
+    ion_promisor * sequence = ion_promisor_sequence_ex(0);
 
     if(ion_promisor_set_callbacks(ION_OBJ(sequence), init, NULL) == FAILURE) {
         zend_throw_exception(ion_ce_ION_RuntimeException, "Sequence expects a valid callbacks", 0);
@@ -303,6 +303,16 @@ zend_object * ion_promisor_sequence_new(zval * init) {
     }
     return ION_OBJ(sequence);
 }
+
+zend_object * ion_promisor_deferred_new(zval * canceller) {
+    ion_promisor * deferred = ion_promisor_deferred_ex(0);
+
+    if(canceller) {
+        ion_promisor_set_php_cb(&deferred->canceler, pion_cb_create_from_zval(canceller));
+    }
+    return ION_OBJ(deferred);
+}
+
 
 zend_object * ion_promisor_deferred_new_ex(promisor_action_t canceler) {
     ion_promisor * deferred = ion_promisor_deferred();
@@ -361,19 +371,17 @@ int ion_promisor_set_initial_callback(zend_object * sequence, zval * initial) {
 zend_object * ion_promisor_push_callbacks(zend_object * promise_obj, zval * on_done, zval * on_fail) {
     ion_promisor * promisor = get_object_instance(promise_obj, ion_promisor);
     zend_object  * handler;
-    zval           zpromisor;
 
     if(promisor->flags & ION_PROMISOR_FINISHED) {
         handler = ion_promisor_promise_new(on_done, on_fail);
         ion_promisor_resolve(handler, &promisor->result, promisor->flags & ION_PROMISOR_FINISHED);
     } else {
-        handler = &ion_promisor_promise()->std;
-        if(ion_promisor_set_callbacks(handler, on_done, on_fail) == FAILURE) {
-            zval_ptr_dtor(&zpromisor);
+        handler = ion_promisor_promise_new(on_done, on_fail);
+        if(!handler) {
             return NULL;
         }
         PION_ARRAY_PUSH(promisor->handlers, promisor->handler_count, handler);
-        obj_add_ref(handler);
+        zend_object_addref(handler);
     }
     ion_promisor_add_flags(handler, promisor->flags & ION_PROMISOR_NESTED_FLAGS);
     return handler;
@@ -383,23 +391,10 @@ void ion_promisor_cancel(zend_object * promisor_obj, const char *message) {
     zval           value;
     ion_promisor * promisor = get_object_instance(promisor_obj, ion_promisor);
     zend_object  * error = pion_exception_new(ion_class_entry(ION_Promise_CancelException), message, 0);
+
     zend_object_addref(promisor_obj);
     promisor->flags |= ION_PROMISOR_CANCELED;
     ZVAL_OBJ(&value, error);
-
-    if(promisor->canceler.type) {
-        if(promisor->canceler.type == ION_PROMISOR_CB_INTERNAL) {
-            promisor->canceler.cb.internal(promisor, &value);
-        } else {
-            pion_cb_void_with_1_arg(promisor->canceler.cb.php, &value);
-        }
-        if(EG(exception)) {
-            zend_exception_set_previous(EG(exception), Z_OBJ(value));
-            zend_object_addref(EG(exception));
-            ZVAL_OBJ(&value, EG(exception));
-            zend_clear_exception();
-        }
-    }
     ion_promisor_resolve(promisor_obj, &value, ION_PROMISOR_FAILED | ION_PROMISOR_CANCELED);
     zval_ptr_dtor(&value);
     zend_object_release(promisor_obj);

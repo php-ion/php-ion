@@ -9,7 +9,7 @@ class FSTest extends TestCase {
 
 	/**
      *
-	 * @mem check
+	 * @memcheck
 	 */
 	public function testReadFile() {
 		$this->promise(function () {

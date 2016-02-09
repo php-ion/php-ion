@@ -44,12 +44,12 @@ class DeferredTest extends TestCase {
 
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testCancel() {
         $defer = new Deferred(function ($reason) {
             $this->data["cancel"] = $this->exception2array($reason);
+            return 5;
         });
         $defer->then(function ($data) {
             $this->data["result"] = $data;
@@ -58,7 +58,7 @@ class DeferredTest extends TestCase {
         });
         $defer->cancel("just reject");
         $this->assertEquals([
-            "result" => null,
+            "result" => 5,
             "cancel" => [
                 "exception" => 'ION\Promise\CancelException',
                 "message" => "just reject",

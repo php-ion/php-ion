@@ -1,6 +1,7 @@
 #include "init.h"
 #include "promisor.h"
 #include "fs.h"
+#include "errors.h"
 
 
 #if defined(HAVE_INOTIFY)
@@ -134,7 +135,7 @@ ion_fs_watcher * ion_fs_watcher_add(const char * pathname, zend_long flags) {
 
     fd = open(pathname, OPEN_FLAGS);
     if (fd <= 0) {
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0 , "Failed to open file %s for events: %s", pathname, strerror(errno));
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0 , ERR_ION_FS_READ_CANT_LISTEN_EVENTS, pathname, strerror(errno));
         return NULL;
     }
 

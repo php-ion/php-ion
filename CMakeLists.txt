@@ -45,6 +45,7 @@ set(ION_SOURCE_FILES
     src/ion/promisor.c
     src/ion/stream.c
     src/ion/process.c
+    src/ion/fs.h
     src/ion/fs.c
     src/ion/http.c
     src/ion.h

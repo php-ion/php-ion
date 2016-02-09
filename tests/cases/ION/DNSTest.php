@@ -2,17 +2,14 @@
 
 namespace ION;
 
-
-use ION\DNS;
-use ION\RuntimeException;
 use ION\Test\TestCase;
 
 class DNSTest extends TestCase {
 
     public static $example_com = [
-        'CNAME' => "example.com",
-        'A'     => ["93.184.216.34"],
-        'AAAA'  => ["2606:2800:220:1:248:1893:25c8:1946"]
+        'domain' => "example.com",
+        'ipv4'   => ["93.184.216.34"],
+        'ipv6'   => ["2606:2800:220:1:248:1893:25c8:1946"]
     ];
 
     /**
