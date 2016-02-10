@@ -49,7 +49,7 @@ ION PHP Extension
 * DNS server
 * IPC
 
-# What you can do
+# What can you do
 
 * Asynchronous servers
 * Asynchronous clients
