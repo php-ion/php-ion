@@ -49,6 +49,13 @@ ION PHP Extension
 * DNS server
 * IPC
 
+# What you can do
+
+* Asynchronous servers
+* Asynchronous clients
+* PHP daemons
+* PHP clusters
+* that you wish
 
 ## Promisors
 
