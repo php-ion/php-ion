@@ -120,7 +120,7 @@ CLASS_METHOD(ION_FS, watch) {
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     if(!VCWD_REALPATH(filename->val, realpath)) {
-        zend_throw_exception_ex(ion_ce_ION_FSException, 0, ERR_ION_FS_READ_FILE_NOT_FOUND, filename->val);
+        zend_throw_exception_ex(ion_ce_ION_FSException, 0, ERR_ION_FS_EVENT_FILE_NOT_FOUND, filename->val);
         return;
     }
 
@@ -136,7 +136,7 @@ CLASS_METHOD(ION_FS, watch) {
     }
     if(!zend_hash_str_add_ptr(GION(watchers), realpath, strlen(realpath), watcher)) {
         zend_object_release(watcher->sequence);
-        zend_throw_exception(ion_ce_ION_FSException, ERR_ION_FS_READ_CANT_STORE_WATCHER, 0);
+        zend_throw_exception(ion_ce_ION_FSException, ERR_ION_FS_EVENT_CANT_STORE_WATCHER, 0);
         return;
     }
     zend_object_addref(watcher->sequence);

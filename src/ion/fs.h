@@ -4,6 +4,7 @@
 #include <sys/fcntl.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
+#include "config.h"
 
 #ifndef O_CLOEXEC
 #define O_CLOEXEC 0

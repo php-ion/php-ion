@@ -8,12 +8,17 @@ ION::promise(function () {
         Request::URI     => ION\URI::parse("http://example.com/"),
         Request::VERSION => "1.1",
         Request::HEADERS => [
-			"user-agent" => "ION HTTP Client example"
+			"User-Agent" => "ION HTTP Client example",
+            "X-Client"   => "PHP"
 		]
 	]);
 
+    $respose = \ION\HTTP::request($request, \ION\Stream::socket("example.com:80"));
 
     $parser = new \ION\HTTP\WebSocketParser;
+    if($frame = $parser($chunk)) {
+
+    }
     $request->onBody($parser)->then(function (\ION\HTTP\WebSocket\Frame $frame) {
 
     });

@@ -78,11 +78,11 @@ void ion_process_clean_signal(zval * zs) {
     zend_object_release(sequence);
 }
 
-void ion_process_autoclean_signal(ion_promisor * promisor) {
-    ion_event    * event = promisor->object;
-    int            signo = event_get_fd(event);
-    zend_hash_index_del(GION(signals), (zend_ulong)signo);
-}
+//void ion_process_autoclean_signal(ion_promisor * promisor) {
+//    ion_event    * event = promisor->object;
+//    int            signo = event_get_fd(event);
+//    zend_hash_index_del(GION(signals), (zend_ulong)signo);
+//}
 
 void ion_process_signal(int signo, short flags, void * ctx) {
     ION_LOOP_CB_BEGIN();
@@ -111,11 +111,11 @@ CLASS_METHOD(ION_Process, signal) {
         RETURN_OBJ(sequence);
     }
     sequence = ion_promisor_sequence_new(NULL);
-    ion_promisor_set_autoclean(sequence, ion_process_autoclean_signal);
+//    ion_promisor_set_autoclean(sequence, ion_process_autoclean_signal);
     event = evsignal_new(GION(base), (int)signo, ion_process_signal, sequence);
     if(evsignal_add(event, NULL) == FAILURE) {
         zend_object_release(sequence);
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to listening signal %d", signo);
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_SIGNAL_EVENT_FAIL, signo);
         return;
     }
     ion_promisor_store(sequence, event);
@@ -124,7 +124,7 @@ CLASS_METHOD(ION_Process, signal) {
     pz = zend_hash_index_add_ptr(GION(signals), (zend_ulong)signo, (void *)sequence);
     if(!pz) {
         zend_object_release(sequence);
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to store signal (%d) handler", signo);
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_SIGNAL_STORE_FAIL, signo);
         return;
     }
 
@@ -178,15 +178,15 @@ struct passwd * ion_get_pw_by_zval(zval * zuser) {
     } else if(Z_TYPE_P(zuser) == IS_LONG) {
         pw = getpwuid((uid_t)Z_LVAL_P(zuser));
     } else {
-        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Invalid user identifier", 0);
+        zend_throw_exception(ion_class_entry(InvalidArgumentException), ERR_ION_PROCESS_INVALID_UID, 0);
         return NULL;
     }
     if (NULL == pw) {
         if(errno) {
             if(Z_TYPE_P(zuser) == IS_STRING) {
-                zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to get info by user name %s: %s", Z_STRVAL_P(zuser), strerror(errno));
+                zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_NO_USER_INFO_NAMED, Z_STRVAL_P(zuser), strerror(errno));
             } else {
-                zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to get info by UID %d: %s", Z_LVAL_P(zuser), strerror(errno));
+                zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_NO_USER_INFO_UID, Z_LVAL_P(zuser), strerror(errno));
             }
         }
         return NULL;
@@ -251,12 +251,12 @@ CLASS_METHOD(ION_Process, setUser) {
     add_assoc_string(return_value, "shell",  pw->pw_shell);
 
     if(set_group && setgid(pw->pw_gid)) {
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to set GID %d: %s", (int)pw->pw_gid, strerror(errno));
+        zend_throw_exception_ex(ion_ce_ION_RuntimeException, 0, ERR_ION_PROCESS_GET_GID, (int)pw->pw_gid, strerror(errno));
         return;
     }
 
     if(setuid(pw->pw_uid)) {
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to set UID %d: %s", (int)pw->pw_gid, strerror(errno));
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_GET_UID, (int)pw->pw_gid, strerror(errno));
         return;
     }
 }
@@ -280,7 +280,7 @@ CLASS_METHOD(ION_Process, getPriority) {
     int pri = getpriority(PRIO_PROCESS, (id_t)pid);
 
     if (errno) {
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to get process %d priority: %s", pid, strerror(errno));
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_GET_PRIO, pid, strerror(errno));
         return;
     }
 
@@ -305,13 +305,13 @@ CLASS_METHOD(ION_Process, setPriority) {
     int prev_priority = getpriority(PRIO_PROCESS, (id_t)pid);
 
     if(priority < -20 || priority > 20) {
-        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Invalid priority value", 0);
+        zend_throw_exception(ion_ce_InvalidArgumentException, ERR_ION_PROCESS_INVALID_PRIO, 0);
         return;
     }
 
     errno = 0;
     if (setpriority(PRIO_PROCESS, (id_t)pid, (int)priority)) {
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to set process %d priority %d: %s", (int)pid, (int)priority, strerror(errno));
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_PRIO_FAILED, (int)pid, (int)priority, strerror(errno));
         return;
     }
 
@@ -427,22 +427,22 @@ CLASS_METHOD(ION_Process, exec) {
     }
 
     if(pipe(out_pipes)) {
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to initializate stdout stream: %s", strerror(errno));
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_EXEC_NO_STDOUT, strerror(errno));
         return;
     }
     if(pipe(err_pipes)) {
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to initializate stdin stream: %s", strerror(errno));
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_EXEC_NO_STDERR, strerror(errno));
         return;
     }
 
     pid = fork();
     if(pid == -1) {
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to spawn process for command: %s", strerror(errno));
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_EXEC_SPLIT_FAIL, strerror(errno));
         return;
     } else if(pid) { // parent
         efree(line);
         if(options) {
-            zpid = zend_hash_str_find(Z_ARRVAL_P(options), "pid", sizeof("pid")-1);
+            zpid = zend_hash_str_find(Z_ARRVAL_P(options), STRARGS("pid"));
             if(zpid && Z_ISREF_P(zpid)) {
                 ZVAL_DEREF(zpid);
                 zval_ptr_dtor(zpid);
@@ -463,7 +463,7 @@ CLASS_METHOD(ION_Process, exec) {
             close(exec->stdout_fd);
             close(exec->stderr_fd);
             efree(exec);
-            zend_throw_exception(ion_class_entry(ION_RuntimeException),"Failed to initializate spawned process", 0);
+            zend_throw_exception(ion_class_entry(ION_RuntimeException), ERR_ION_PROCESS_EXEC_SPLIT_NO_STDOUT, 0);
             return;
         }
         if(bufferevent_base_set(GION(base), exec->out) == FAILURE) {
@@ -472,7 +472,7 @@ CLASS_METHOD(ION_Process, exec) {
             close(exec->stdout_fd);
             close(exec->stderr_fd);
             efree(exec);
-            zend_throw_exception(ion_class_entry(ION_RuntimeException),"Failed to initializate spawned process", 0);
+            zend_throw_exception(ion_class_entry(ION_RuntimeException), ERR_ION_PROCESS_EXEC_SPLIT_NO_STDERR, 0);
             return;
         }
         bufferevent_enable(exec->out, EV_READ);
@@ -484,25 +484,25 @@ CLASS_METHOD(ION_Process, exec) {
     } else {  // child
         if (dup2( out_pipes[1], 1 ) < 0 ) {
             perror(strerror(errno));
-            _exit(127);
+            _exit(1);
         }
         if (dup2( err_pipes[1], 2 ) < 0 ) {
             perror(strerror(errno));
-            _exit(127);
+            _exit(1);
         }
         if(pw) {
             if(set_group && setgid(pw->pw_gid)) {
-                fprintf(stderr, "Failed to set GID %d: %s\n", (int)pw->pw_gid, strerror(errno));
+                fprintf(stderr, ERR_ION_PROCESS_EXEC_WORKER_SET_GID_FAIL, (int)pw->pw_gid, strerror(errno));
             }
 
             if(setuid(pw->pw_uid)) {
-                fprintf(stderr, "Failed to set UID %d: %s\n", (int)pw->pw_uid, strerror(errno));
+                fprintf(stderr, ERR_ION_PROCESS_EXEC_WORKER_SET_UID_FAIL, (int)pw->pw_uid, strerror(errno));
             }
         }
         if(execle("/bin/sh", "sh", "-c", command->val, NULL, env)) {
             perror(strerror(errno));
         }
-        _exit(127);
+        _exit(1);
     }
 }
 

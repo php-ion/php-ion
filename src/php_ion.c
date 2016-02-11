@@ -1,6 +1,7 @@
 #include "ion.h"
 
 #include "php_ion.h"
+#include "config.h"
 #include <ext/standard/info.h>
 
 ZEND_DECLARE_MODULE_GLOBALS(ion);
@@ -217,6 +218,15 @@ PHP_MINFO_FUNCTION(ion) {
     }
     php_info_print_table_row(2, "ion.dns.support", "yes");
     php_info_print_table_row(2, "ion.ssl.support", "yes");
+#ifdef HAVE_INOTIFY
+    php_info_print_table_row(2, "ion.fs.events", "yes");
+    php_info_print_table_row(2, "ion.fs.events.mechanism", "inotify");
+#elif defined(HAVE_KQUEUE)
+    php_info_print_table_row(2, "ion.fs.events", "yes");
+    php_info_print_table_row(2, "ion.fs.events.mechanism", "kqueue");
+#else
+    php_info_print_table_row(2, "ion.fs.events", "no");
+#endif
     php_info_print_table_row(2, "ion.http.version", http_version);
     php_info_print_table_end();
 

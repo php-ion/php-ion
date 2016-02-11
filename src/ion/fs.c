@@ -95,7 +95,7 @@ void ion_fs_watch_cb(evutil_socket_t fd, short what, void * arg) {
     while((has_event = kevent(GION(watch_fd), NULL, 0, &event, 1, &timeout))) {
         if ((has_event < 0) || (event.flags == EV_ERROR)) {
             /* An error occurred. */
-            zend_error(E_ERROR, "FS watcher: An error occurred: %s", strerror(errno));
+            zend_error(E_ERROR, ERR_ION_FS_EVENT_ERROR, strerror(errno));
             return;
         }
         watcher = (ion_fs_watcher *)event.udata;
@@ -112,7 +112,7 @@ int ion_fs_watch_init() {
     if(event_add(notifier, NULL) == FAILURE) {
         event_del(notifier);
         event_free(notifier);
-        zend_error(E_ERROR, "FS watcher: Could not open watchers queue: %s", strerror(errno));
+        zend_error(E_ERROR, ERR_ION_FS_EVENT_NO_QUEUE, strerror(errno));
         return FAILURE;
     }
     GION(watch_event) = notifier;
@@ -135,7 +135,7 @@ ion_fs_watcher * ion_fs_watcher_add(const char * pathname, zend_long flags) {
 
     fd = open(pathname, OPEN_FLAGS);
     if (fd <= 0) {
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0 , ERR_ION_FS_READ_CANT_LISTEN_EVENTS, pathname, strerror(errno));
+        zend_throw_exception_ex(ion_ce_ION_FSException, 0 , ERR_ION_FS_EVENT_CANT_LISTEN_EVENTS, pathname, strerror(errno));
         return NULL;
     }
 
@@ -150,7 +150,7 @@ ion_fs_watcher * ion_fs_watcher_add(const char * pathname, zend_long flags) {
     EV_SET(&event, fd, EVFILT_VNODE, EV_ADD | EV_CLEAR, ION_FS_WATCH_EVENTS, 0, watcher);
     if (kevent(GION(watch_fd), &event, 1, NULL, 0, &timeout) == -1) {
         zend_object_release(watcher->sequence);
-        zend_throw_exception(ion_class_entry(ION_RuntimeException), "Failed to add fsnotify event", 0);
+        zend_throw_exception(ion_ce_ION_FSException, ERR_ION_FS_EVENT_CANT_ADD_EVENT, 0);
         return NULL;
     }
 
@@ -162,7 +162,7 @@ void ion_fs_watcher_remove(ion_fs_watcher * watcher) {
     struct timespec timeout = { 0, 0 };
     EV_SET(&event, watcher->fd, EVFILT_VNODE, EV_DELETE, 0, 0, NULL);
     if(kevent(GION(watch_fd), &event, 1, NULL, 0, &timeout) == -1) {
-        zend_error(E_NOTICE, "FS watcher: Could not remove watcher from queue: %s", strerror(errno));
+        zend_error(E_NOTICE, ERR_ION_FS_EVENT_CANT_DELETE_EVENT, strerror(errno));
     }
     zend_string_release(watcher->pathname);
     close(watcher->fd);
