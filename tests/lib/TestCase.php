@@ -146,6 +146,7 @@ class TestCase extends \PHPUnit_Framework_TestCase {
     public function loop($timeout = 0.5, $timeout_as_fail = true) {
         $this->_stop = false;
         $this->_error = null;
+//        ION::stop($timeout);
 //		$stopper = ION::await($timeout)->then(function ($tmp, $error) {
 //			if(!$error) {
 //				ION::stop();

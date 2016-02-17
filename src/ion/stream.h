@@ -186,6 +186,7 @@ void ion_storage_free(zend_object * object);
 #define ion_stream_set_peer_name(stream, name) get_object_instance(stream, ion_stream)->name_remote = name
 #define ion_stream_set_name(stream, name) get_object_instance(stream, ion_stream)->name_self = name
 
+zend_bool ion_buffer_pair(ion_buffer ** one, ion_buffer ** two);
 int ion_stream_pair(zend_object ** stream_one, zend_object ** stream_two, zend_class_entry * ce);
 zend_object * ion_stream_new_ex(ion_buffer * buffer, int flags, zend_class_entry * cls);
 zend_string * ion_stream_get_name_self(zend_object * stream);

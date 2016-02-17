@@ -14,6 +14,12 @@
 #define PION_NET_NAME_REMOTE     0
 #define PION_NET_NAME_LOCAL      1
 
+#ifdef WIN32
+#define LOCAL_SOCKETPAIR_AF AF_INET
+#else
+#define LOCAL_SOCKETPAIR_AF AF_UNIX
+#endif
+
 int pion_net_sock_name(evutil_socket_t sock, short flags, zend_string ** addr);
 int pion_net_addr_to_name(struct sockaddr * addr, socklen_t addr_len, zend_string ** address);
 

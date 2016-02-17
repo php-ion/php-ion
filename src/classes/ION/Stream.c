@@ -202,7 +202,7 @@ long ion_stream_search_token(struct evbuffer * buffer, ion_stream_token * token)
 }
 
 void _ion_stream_input(ion_buffer * bev, void * ctx) {
-    ION_LOOP_CB_BEGIN();
+    ION_CB_BEGIN();
     ion_stream      * stream = get_object_instance(ctx, ion_stream);
     ion_evbuffer    * input;
     zend_string     * data = NULL;
@@ -256,11 +256,11 @@ void _ion_stream_input(ion_buffer * bev, void * ctx) {
     }
 
     zend_object_release(&stream->std);
-    ION_LOOP_CB_END();
+    ION_CB_END();
 }
 
 void _ion_stream_output(ion_buffer * bev, void *ctx) {
-    ION_LOOP_CB_BEGIN();
+    ION_CB_BEGIN();
     ion_stream *stream = get_object_instance(ctx, ion_stream);
 
     obj_add_ref(&stream->std);
@@ -273,11 +273,11 @@ void _ion_stream_output(ion_buffer * bev, void *ctx) {
         ion_stream_close_fd(stream);
     }
     zend_object_release(&stream->std);
-    ION_LOOP_CB_END();
+    ION_CB_END();
 }
 
 void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
-    ION_LOOP_CB_BEGIN();
+    ION_CB_BEGIN();
     ion_stream * stream = get_object_instance(ctx, ion_stream);
 
     obj_add_ref(&stream->std);
@@ -372,7 +372,7 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
     }
     zend_object_release(&stream->std);
 
-    ION_LOOP_CB_END();
+    ION_CB_END();
 }
 
 int ion_stream_pair(zend_object ** stream_one, zend_object ** stream_two, zend_class_entry * ce) {

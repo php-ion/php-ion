@@ -65,5 +65,6 @@
 #define ERR_ION_PROCESS_EXEC_SPLIT_NO_STDOUT  "Failed to initializate spawned process"
 #define ERR_ION_PROCESS_EXEC_WORKER_SET_GID_FAIL  "Failed to set GID %d: %s\n"
 #define ERR_ION_PROCESS_EXEC_WORKER_SET_UID_FAIL  "Failed to set UID %d: %s\n"
+#define ERR_ION_PROCESS_SPAWN_FAIL         "Failed to spawn process: %s"
 
 #endif //PION_ERRORS_H

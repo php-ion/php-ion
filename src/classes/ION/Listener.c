@@ -66,7 +66,7 @@ void ion_listener_enable(zend_object * listener_obj, zend_bool state) {
 }
 
 static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct sockaddr * addr, int addr_len, void * ctx) {
-    ION_LOOP_CB_BEGIN();
+    ION_CB_BEGIN();
     ion_listener * listener = get_object_instance(ctx, ion_listener);
     zend_object  * stream = NULL;
     ion_stream   * istream = NULL;
@@ -119,11 +119,11 @@ static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct 
     } else {
         evutil_closesocket(fd);
     }
-    ION_LOOP_CB_END();
+    ION_CB_END();
 }
 
 static void _ion_listener_error(ion_evlistener * l, void * ctx) {
-    ION_LOOP_CB_BEGIN();
+    ION_CB_BEGIN();
     ion_listener * listener = get_object_instance(ctx, ion_listener);
     int err = EVUTIL_SOCKET_ERROR();
     zend_error(E_WARNING, "Got an error %d (%s) on the listener %s. Shutting down listener.",
@@ -132,7 +132,7 @@ static void _ion_listener_error(ion_evlistener * l, void * ctx) {
     evconnlistener_free(listener->listener);
     listener->listener = NULL;
     listener->flags &= ~ION_STREAM_STATE_ENABLED;
-    ION_LOOP_CB_END();
+    ION_CB_END();
 }
 
 /** public function ION\Listener::__construct(string $listen, int $back_log = -1) : self */

@@ -1,7 +1,17 @@
 #include "ion.h"
+#include "config.h"
 
 zend_class_entry * ion_ce_ION;
 zend_object_handlers ion_oh_ION;
+
+void ion_deferred_queue_add(ion_deferred_cb_t cb, void * ctx) {
+//    if(GION(deferred).size) {
+//        GION(deferred).size == GION(deferred).length;
+//
+//    }
+}
+
+
 
 /** public function ION::reinit() : bool */
 CLASS_METHOD(ION, reinit) {
@@ -75,13 +85,13 @@ METHOD_ARGS_BEGIN(ION, stop, 0)
 METHOD_ARGS_END()
 
 static void _timer_done(evutil_socket_t fd, short flags, void * arg) {
-    ION_LOOP_CB_BEGIN();
+    ION_CB_BEGIN();
     ion_promisor * deferred = get_object_instance(arg, ion_promisor);
 //    zval * zdeferred = (zval * )arg;
     ion_promisor_done_true(&deferred->std);
 
 //    zval_ptr_dtor(&zdeferred);
-    ION_LOOP_CB_END();
+    ION_CB_END();
 }
 
 static void _timer_dtor(ion_promisor * deferred) {
@@ -147,7 +157,7 @@ static void _ion_interval_free(ion_interval * interval) {
 }
 
 static void _ion_interval_invoke(evutil_socket_t fd, short flags, void * arg) {
-    ION_LOOP_CB_BEGIN();
+    ION_CB_BEGIN();
     ion_interval * interval = (ion_interval *) arg;
     zval data;
 
@@ -157,7 +167,7 @@ static void _ion_interval_invoke(evutil_socket_t fd, short flags, void * arg) {
         _ion_interval_free(interval);
         zend_throw_exception(ion_class_entry(ION_RuntimeException), ERR_ION_AWAIT_FAILED, 0);
     }
-    ION_LOOP_CB_END();
+    ION_CB_END();
 }
 
 static void _ion_interval_dtor(ion_promisor * promisor) {
@@ -293,7 +303,7 @@ CLASS_METHODS_END;
 
 ZEND_INI_BEGIN()
     STD_PHP_INI_BOOLEAN("ion.metrics", "On", PHP_INI_SYSTEM, OnUpdateBool, define_metrics, zend_ion_globals, ion_globals)
-    STD_PHP_INI_BOOLEAN("ion.stats",   "On", PHP_INI_USER, OnUpdateBool, stats, zend_ion_globals, ion_globals)
+    STD_PHP_INI_BOOLEAN("ion.stats",   "On", PHP_INI_USER, OnUpdateBool, stats_enabled, zend_ion_globals, ion_globals)
 ZEND_INI_END()
 
 PHP_MINIT_FUNCTION(ION) {
@@ -324,12 +334,15 @@ PHP_MINIT_FUNCTION(ION) {
 }
 
 PHP_MSHUTDOWN_FUNCTION(ION) {
+    UNREGISTER_INI_ENTRIES();
     return SUCCESS;
 }
 
 PHP_RINIT_FUNCTION(ION) {
     ALLOC_HASHTABLE(GION(timers));
     zend_hash_init(GION(timers), 128, NULL, _ion_clean_interval, 0);
+    GION(delayed) = ecalloc(1, sizeof(zend_llist));
+    zend_llist_init(GION(delayed), 128, NULL, 0);
     return SUCCESS;
 }
 
@@ -337,6 +350,9 @@ PHP_RSHUTDOWN_FUNCTION(ION) {
     zend_hash_clean(GION(timers));
     zend_hash_destroy(GION(timers));
     FREE_HASHTABLE(GION(timers));
-    UNREGISTER_INI_ENTRIES();
+
+    zend_llist_clean(GION(delayed));
+    zend_llist_destroy(GION(delayed));
+    efree(GION(delayed));
     return SUCCESS;
 }

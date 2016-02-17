@@ -6,13 +6,17 @@ namespace ION;
 use ION\Deferred\Map;
 use ION\Process\ExecResult;
 use ION\Process\Message;
+use ION\Process\Worker;
 
 class Process {
     public static function stdin() : Stream { }
+    public static function setStdin($fd) { }
 
     public static function stdout() : Stream { }
+    public static function setStdout($fd) { }
 
     public static function stderr() : Stream { }
+    public static function setStderr($fd) { }
 
     /**
      * Create a child process and restore event loop.
@@ -24,6 +28,18 @@ class Process {
      * @see \ION::reinit()
      */
     public static function fork($flags = 0) { }
+
+    public static function spawn(int $flags = 0, $ctx = null) : Worker {}
+
+    public static function getChildsCount() : int {}
+
+    public static function getChilds() : array {}
+
+    public static function getChild($pid) : Worker {}
+
+    public static function hasMaster() : bool {}
+
+    public static function getMaster() : Worker {}
 
     /**
      * Set signal handler
@@ -122,21 +138,4 @@ class Process {
      * @return int previous priority
      */
     public static function setPriority($priority, $pid = null) : int { }
-
-    /**
-     * Receive message from spawned workers.
-     *
-     * @param string $name
-     *
-     * @return Sequence
-     */
-    public static function message(string $name) : Sequence { }
-
-    /**
-     * @param string $name
-     * @param int $pid
-     *
-     * @return Message
-     */
-    public static function send(string $name, int $pid) : Message { }
 }

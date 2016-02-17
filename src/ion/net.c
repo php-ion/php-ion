@@ -1,8 +1,10 @@
 #include "net.h"
 #include "init.h"
+#include "stream.h"
 #include <php_network.h>
 #include <arpa/inet.h>
 #include <sys/un.h>
+#include <Zend/zend_exceptions.h>
 
 int pion_net_sock_name(evutil_socket_t sock, short flags, zend_string ** address) {
     socklen_t                 addr_len = sizeof(struct sockaddr);
@@ -94,35 +96,6 @@ pion_net_host * pion_net_host_parse(const char * host, size_t host_len) {
     } else {
         return NULL;
     }
-
-//    char * port_digits;
-//    zend_bool port_found = 0;
-//    size_t hostname_len = host_len;
-//    for(; hostname_len > 0; --hostname_len) {
-//        if(host[ hostname_len ] == ':') {
-//            port_found = 1;
-//            break;
-//        }
-//    }
-//    if(!port_found) {
-//        return NULL;
-//    }
-//    errno = 0;
-//    pion_net_host * net_host = ecalloc(1, sizeof(pion_net_host));
-//    net_host->hostname = zend_string_alloc(hostname_len, 0);
-//    strncpy(ZSTR_VAL(net_host->hostname), host, hostname_len);
-//    ZSTR_VAL(net_host->hostname)[hostname_len] = '\0';
-//    port_digits = emalloc(host_len - hostname_len + 2);
-//    strncpy(port_digits, host + hostname_len + 1, host_len - hostname_len + 1);
-//    port_digits[host_len - hostname_len + 1] = '\0';
-//    net_host->port = strtol(port_digits, NULL, 10);
-//    efree(port_digits);
-//    if(errno) {
-//        zend_string_release(net_host->hostname);
-//        efree(net_host);
-//        return NULL;
-//    }
-//    return net_host;
 }
 
 void pion_net_host_free(pion_net_host * host) {

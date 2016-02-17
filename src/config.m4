@@ -140,6 +140,7 @@ if test "$PHP_ION" != "no"; then
     classes/ION/Listener.c
     classes/ION/Stream.c
     classes/ION/Process.c
+    classes/ION/Process/Worker.c
 
     classes/ION/Stream/StorageAbstract.c
     classes/ION/Stream/Storage.c

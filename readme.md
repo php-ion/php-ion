@@ -57,7 +57,27 @@ ION PHP Extension
 * PHP clusters
 * that you wish
 
-## Promisors
+# Promisor
+
+## Concepts
+
+### Deferred
+
+A Deferred represents a computation or unit of work that may not have completed yet.
+Typically (but not always), that computation will be something that executes asynchronously and completes at some point in the future.
+
+### Promise
+
+While a deferred represents the computation itself, a Promise represents the result of that computation.
+Thus, each deferred is a promise that acts as a placeholder for actual result.
+
+### Sequence
+
+For recurrent events requires already created a promise chain. Sequence is promise, which may be invoked many times.
+
+## API
+
+If you've never heard about promises before, [read this first](https://gist.github.com/domenic/3889970).
 
 ```php
 use ION\Promise;
@@ -83,14 +103,17 @@ App::someEventualAction()
         // ...
     }, function (Throwable $error)) {
         // ...
-    }, function ($info) {
-        // ...
     })
 
 ```
 
 
-### Results routing
+### Resolution forwarding
+
+Resolved promises forward resolution values to the next promise.
+
+Each call to then() returns a new promise that will resolve with the return value of the previous handler.
+This creates a promise "pipeline".
 
 ```php
 App::someEventualAction()
@@ -105,7 +128,25 @@ App::someEventualAction()
     })
 ```
 
-### Generators
+### Rejection forwarding
+
+Rejected promises behave similarly, and also work similarly to try/catch:
+When you catch an exception, you must rethrow for it to propagate.
+
+```php
+App::someEventualAction()
+    ->then(function () {
+        throw new \RuntimeException("error occured", 5);
+    })
+    ->then(null, function (\Exception $e) {
+        return $e->getCode();
+    })
+    ->then(function ($code) {
+        echo "Code " . $code; // $code == 5
+    })
+```
+
+### Cooperative multitasking
 
 ```php
 App::someEventualAction()->then(function ($data) {

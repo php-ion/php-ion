@@ -4,6 +4,8 @@
 
 zend_class_entry * ion_ce_ION_Process;
 zend_object_handlers ion_oh_ION_Process;
+zend_class_entry * ion_ce_ION_ProcessException;
+zend_object_handlers ion_oh_ION_ProcessException;
 zend_class_entry * ion_ce_ION_Process_ExecResult;
 zend_object_handlers ion_oh_ION_Process_ExecResult;
 
@@ -34,6 +36,38 @@ CLASS_METHOD(ION_Process, fork) {
 
 METHOD_ARGS_BEGIN(ION_Process, fork, 0)
     METHOD_ARG_LONG(flags, 0)
+METHOD_ARGS_END()
+
+/** public function ION\Process::spawn(int $flags = 0, mixed $ctx = null) : int */
+CLASS_METHOD(ION_Process, spawn) {
+    int pid = 0;
+    zend_long flags = 0;
+    zval * ctx = NULL;
+
+    ZEND_PARSE_PARAMETERS_START(0, 2)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_LONG(flags)
+        Z_PARAM_ZVAL(ctx)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    errno = 0;
+    pid = fork();
+    if(pid == -1) {
+        zend_throw_exception_ex(ion_ce_ION_ProcessException, 0, ERR_ION_PROCESS_SPAWN_FAIL, strerror(errno));
+        return;
+    } else if(pid) { // parent
+        RETURN_LONG(pid);
+    } else { // child
+        if(event_reinit(GION(base)) == FAILURE) {
+            php_error(E_NOTICE, "Some events could not be re-added");
+        }
+        RETURN_LONG(0);
+    }
+}
+
+METHOD_ARGS_BEGIN(ION_Process, spawn, 0)
+    METHOD_ARG_LONG(flags, 0)
+    METHOD_ARG(ctx, 0)
 METHOD_ARGS_END()
 
 
@@ -78,21 +112,16 @@ void ion_process_clean_signal(zval * zs) {
     zend_object_release(sequence);
 }
 
-//void ion_process_autoclean_signal(ion_promisor * promisor) {
-//    ion_event    * event = promisor->object;
-//    int            signo = event_get_fd(event);
-//    zend_hash_index_del(GION(signals), (zend_ulong)signo);
-//}
 
 void ion_process_signal(int signo, short flags, void * ctx) {
-    ION_LOOP_CB_BEGIN();
+    ION_CB_BEGIN();
     zend_object * sequence = (zend_object *) ctx;
     zval          signal;
 
     ZVAL_LONG(&signal, signo);
     ion_promisor_sequence_invoke(sequence, &signal);
 
-    ION_LOOP_CB_END();
+    ION_CB_END();
 }
 
 /** public function ION\Process::signal(int $signo) : Sequence */
@@ -343,7 +372,7 @@ zend_string * ion_buffer_read_all(ion_buffer * buffer) {
 }
 
 void ion_exec_callback(ion_buffer * bev, short what, void * arg) {
-    ION_LOOP_CB_BEGIN();
+    ION_CB_BEGIN();
     ion_exec * exec = (ion_exec *) arg;
     int        pid;
     int        status;
@@ -382,7 +411,7 @@ void ion_exec_callback(ion_buffer * bev, short what, void * arg) {
         close(exec->stderr_fd);
         efree(exec);
     }
-    ION_LOOP_CB_END();
+    ION_CB_END();
 }
 
 /** public function ION\Process::exec($priority, $pid = null) : int */
@@ -542,6 +571,7 @@ METHOD_WITHOUT_ARGS(ION_Process, stderr);
 
 CLASS_METHODS_START(ION_Process)
     METHOD(ION_Process, fork,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, spawn,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, kill,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, signal,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, clearSignal,  ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
@@ -553,8 +583,11 @@ CLASS_METHODS_START(ION_Process)
     METHOD(ION_Process, setPriority,  ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, exec,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, stdin,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+//    METHOD(ION_Process, setStdin,     ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, stdout,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+//    METHOD(ION_Process, setStdout,    ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, stderr,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+//    METHOD(ION_Process, setStderr,    ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 CLASS_METHODS_END;
 
 CLASS_METHODS_START(ION_Process_ExecResult)
@@ -570,6 +603,9 @@ PHP_MINIT_FUNCTION(ION_Process) {
     PION_CLASS_PROP_LONG(ION_Process_ExecResult, "status", -1, ZEND_ACC_PUBLIC);
     PION_CLASS_PROP_BOOL(ION_Process_ExecResult, "signaled", 0, ZEND_ACC_PUBLIC);
     PION_CLASS_PROP_LONG(ION_Process_ExecResult, "signal", 0, ZEND_ACC_PUBLIC);
+
+    PION_REGISTER_VOID_EXTENDED_CLASS(ION_ProcessException, ion_ce_ION_RuntimeException, "ION\\ProcessException");
+
     return SUCCESS;
 }
 

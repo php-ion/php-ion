@@ -60,6 +60,7 @@ set(ION_SOURCE_FILES
     src/classes/ION/Listener.c
     src/classes/ION/Stream.c
     src/classes/ION/Process.c
+    src/classes/ION/Process/Worker.c
     src/classes/ION/FS.c
     src/classes/ION/Crypto.c
 
