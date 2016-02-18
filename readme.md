@@ -6,17 +6,19 @@ ION PHP Extension
 * **Subject:** PHP extension
 * **Language:** C
 * **OS:** linux, osx, freebsd
-* **PHP version:** 7.0
+* **PHP version:** 7.0+
 * **Stage:** develop (RC in March 2016)
 * **State:** [![Build Status](https://travis-ci.org/php-ion/php-ion.png?branch=master)](https://travis-ci.org/php-ion/php-ion) [![Coverage Status](https://coveralls.io/repos/php-ion/php-ion/badge.svg?branch=master&service=github)](https://coveralls.io/github/php-ion/php-ion?branch=master)
 * **Version:** [![Latest Stable Version](https://poser.pugx.org/phpion/phpion/v/stable)](https://packagist.org/packages/phpion/phpion) [![Latest Unstable Version](https://poser.pugx.org/phpion/phpion/v/unstable)](https://packagist.org/packages/phpion/phpion)
+* **Discussion:** [PHP ION Forum](https://groups.google.com/forum/#!forum/php-ion)
 * **Versioning:** [semver2](http://semver.org/)
 * **Based:** [libevent2](http://libevent.org/)
 * **Packagist:** [phpion/phpion](https://packagist.org/packages/phpion/phpion)
-* **Extension:** [classes](./stubs/classes), [ini](./stubs/ION.ini), [constants](./stubs/constants.php)
-* **Testing system:** [phpunit](https://phpunit.de/) (+ memory leak detector)
+* **PHP API**: see [classes](./stubs/classes) and [constants](./stubs/constants.php)
+* **Configuration**: see [ini](./stubs/ION.ini) directives
+* **Unit testing:** [phpunit](https://phpunit.de/) with memory leak detector
 
-### [Install](./docs/install.md) :: [Testing](./docs/testing.md) :: [Segfault](./docs/segfault.md)
+### [Install](./docs/install.md) :: [Testing](./docs/testing.md) :: [Segfault](./docs/segfault.md) :: [Contributing](./.github/CONTRIBUTING.md)
 
 # Features
 
@@ -35,8 +37,10 @@ ION PHP Extension
 * Async reading files from FS
 * SSL/TLS encryption supports
 * Listening FS events
+* Allows you to easily create child processes that all share server ports.
+* Inter-Process Communication
 
-# Indev [0.5](https://github.com/php-ion/php-ion/milestones/0.5)
+# Indev [0.6](https://github.com/php-ion/php-ion/milestones/0.5)
 
 * Server socket pool
 * Client socket pool
@@ -453,6 +457,44 @@ $body = yield $response->readBody();
 
 todo
 
-### IPC
+### Workers and IPC
 
-todo
+```php
+use ION\Process;
+use ION\Process\Worker;
+use ION\Process\Message;
+```
+
+How to create worker:
+
+```php
+
+$worker = Process::createWorker();
+// $worker instanceof Worker
+
+$worker->run(function (Worker $worker) {
+    // worker's code there
+});
+
+$worker->onExit()->then(function (Worker $worker) {
+    // callback invokes then worker exited (success, with error or just killed)
+});
+
+```
+
+Worker will be create delayed, when dispatcher continues work.
+
+How to send message from worker or to worker:
+
+```php
+$worker = Process::createWorker();
+
+$worker->onMessage()->then(function (Message $message) {
+    $data = $message->getData();
+});
+
+$worker->run(function (Worker $w) {
+    $w->send("some message");
+});
+
+```
