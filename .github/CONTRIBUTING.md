@@ -11,7 +11,7 @@
   and a **code sample** or an **executable test case** demonstrating the expected behavior that is not occurring.
 
 * If possible, run ION tests. See [how run tests](https://github.com/php-ion/php-ion/blob/master/docs/testing.md).
-  If tests failed, reports output to [Gist](https://gist.github.com/) and add link to created gist into issue.
+  If tests failed, copy output to a new gist [Gist](https://gist.github.com/) and add link to created gist into issue.
 
 #### **Did you write a patch that fixes a bug?**
 
