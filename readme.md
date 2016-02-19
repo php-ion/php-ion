@@ -1,7 +1,7 @@
 ION PHP Extension
 =================
 
-**ION** (regex `/^(I)nput(?:, |-)(O)utput,? (N)otifications$/im`) - PHP extension for asynchronous programming.
+**ION** (regex `/^(I)nput(?:,?\s|-)(O)utput,?\s(N)otifications?$/im`) - PHP extension for asynchronous programming.
 
 * **Subject:** PHP extension
 * **Language:** C
@@ -42,16 +42,15 @@ ION PHP Extension
 
 # Indev [0.6](https://github.com/php-ion/php-ion/milestones/0.5)
 
-* Server socket pool
-* Client socket pool
-* HTTP supported (with chunked-encoding, multiparted, websocket)
-* HTTP server
-* HTTP client
+- [x] Server socket pool
+- [ ] Client socket pool
+- [x] HTTP supported (with chunked-encoding, multiparted, websocket)
+- [ ] HTTP server
+- [ ] HTTP client
 
 # Planned
 
 * DNS server
-* IPC
 
 # What can you do
 
