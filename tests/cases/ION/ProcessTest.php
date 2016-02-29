@@ -123,7 +123,7 @@ class ProcessTest extends TestCase {
     }
 
     /**
-     * @mem check
+     * @memcheck
      */
     public function _testSetUser() {
         Process::setUser('www', true);
@@ -139,6 +139,7 @@ class ProcessTest extends TestCase {
 		$cmd = "sleep 0.1; echo 'stderr'>&2; echo 'stdout'";
 		$this->promise(function () use ($cmd) {
 			$res = yield Process::exec($cmd);
+            $res->test_write_props = "hello";
 			$this->data['instance'] = get_class($res);
 			return (array)$res;
 		});

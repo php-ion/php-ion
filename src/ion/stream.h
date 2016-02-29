@@ -72,7 +72,7 @@ typedef struct _ion_listener {
 
 typedef struct _ion_stream_storage {
     zend_object std;
-    zend_uint   flags;
+    uint32_t    flags;
     zend_long   total_conns;
     zend_long   total_read;
     zend_long   total_written;
@@ -81,11 +81,11 @@ typedef struct _ion_stream_storage {
     ion_skiplist  * queue;
 
     zend_long            max_conns;
-    zend_uint            ping_interval;
-    zend_uint            ping_timeout;
+    uint32_t             ping_interval;
+    uint32_t             ping_timeout;
     size_t               input_buffer_size;
     int                  priority;
-    zend_uint            idle_timeout;
+    uint32_t             idle_timeout;
     ion_rate_limit     * group;
     ion_rate_limit_cfg * group_cfg;
 
@@ -126,7 +126,7 @@ typedef struct _ion_stream_token {
 typedef struct _ion_stream {
     zend_object        std;
     zend_ulong         id;
-    zend_uint          state;   // flags
+    uint32_t           state;   // flags
     ion_buffer       * buffer;  // input/output buffer
     size_t             length;  // bytes for reading
     size_t             input_size;
@@ -186,7 +186,9 @@ void ion_storage_free(zend_object * object);
 #define ion_stream_set_peer_name(stream, name) get_object_instance(stream, ion_stream)->name_remote = name
 #define ion_stream_set_name(stream, name) get_object_instance(stream, ion_stream)->name_self = name
 
+zend_string * ion_buffer_read_all(ion_buffer * buffer);
 zend_bool ion_buffer_pair(ion_buffer ** one, ion_buffer ** two);
+
 int ion_stream_pair(zend_object ** stream_one, zend_object ** stream_two, zend_class_entry * ce);
 zend_object * ion_stream_new_ex(ion_buffer * buffer, int flags, zend_class_entry * cls);
 zend_string * ion_stream_get_name_self(zend_object * stream);

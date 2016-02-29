@@ -7,6 +7,7 @@
 
 #include <php.h>
 #include <event.h>
+#include "callback.h"
 
 #ifdef PHP_WIN32
 # define ION_API __declspec(dllexport)
@@ -36,9 +37,7 @@ typedef struct ev_token_bucket_cfg          ion_rate_limit_cfg;
 typedef struct bufferevent_rate_limit_group ion_rate_limit;
 typedef struct skiplist       ion_skiplist;
 
-#ifndef zend_uint
-# define zend_uint uint32_t
-#endif
+typedef struct _ion_global_queue ion_global_queue;
 
 #ifndef true
 # define true 1
@@ -50,9 +49,7 @@ typedef struct skiplist       ion_skiplist;
 
 
 
-#define SET_TIMEVAL(tval, dval)                       \
-    (tval).tv_usec = (int)((dval)*1000000) % 1000000; \
-    (tval).tv_sec = (int)dval;
+#define SET_TIMEVAL(tval, dval) SET_TIMEVAL_P(&tvalp, dval)
 
 #define SET_TIMEVAL_P(tvalp, dval)                      \
     (tvalp)->tv_usec = (int)((dval)*1000000) % 1000000; \
@@ -71,20 +68,12 @@ typedef struct _zend_ion_global_stats {
     zend_ulong handeled_events;
 } zend_ion_global_stats;
 
-typedef void (* ion_deferred_cb_t)(void * ctx);
-
-typedef struct _ion_delay_item {
-    void * callback;
-    void * data;
-};
-
 ZEND_BEGIN_MODULE_GLOBALS(ion)
     // base
     ion_event_base   * base;    // event base
     ion_event_config * config;  // event config
     uint               flags;
     HashTable        * timers;  // array of timers
-    zend_llist       * delayed;  // array of timers
 
     // Stats
     zend_bool  stats_enabled;
@@ -107,8 +96,10 @@ ZEND_BEGIN_MODULE_GLOBALS(ion)
 
     // Process
     HashTable   * signals;     // registered signals
+    HashTable   * childs;      // spawned child processes
     HashTable   * workers;     // spawned workers
     zend_object * master;      // link to master process
+    ion_event   * sigchld;
 
     // FS
     int         watch_fd;    // inotify or kqueue file descriptor
@@ -119,6 +110,7 @@ ZEND_BEGIN_MODULE_GLOBALS(ion)
     int ssl_index;
 
     // Misc.
+    ion_global_queue * queue;
     zend_bool     define_metrics;
     zend_object * quit_marker;
     zend_ion_global_cache * cache; // do not to change cache at runtime!

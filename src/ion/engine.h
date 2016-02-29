@@ -39,6 +39,8 @@
 
 #define ION_OBJ(p) &(p)->std
 
+#define ION_OBJ_HANDLERS(p) (p)->std.handlers
+
 #define Z_ISTRUE(zval)				(Z_TYPE(zval) == IS_TRUE)
 #define Z_ISTRUE_P(zval_p)			Z_ISTRUE(*(zval_p))
 

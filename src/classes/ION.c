@@ -4,15 +4,6 @@
 zend_class_entry * ion_ce_ION;
 zend_object_handlers ion_oh_ION;
 
-void ion_deferred_queue_add(ion_deferred_cb_t cb, void * ctx) {
-//    if(GION(deferred).size) {
-//        GION(deferred).size == GION(deferred).length;
-//
-//    }
-}
-
-
-
 /** public function ION::reinit() : bool */
 CLASS_METHOD(ION, reinit) {
     if(event_reinit(GION(base)) == SUCCESS) {
@@ -326,9 +317,9 @@ PHP_MINIT_FUNCTION(ION) {
     PION_CLASS_CONST_LONG(ION, "PRIORITY_HIGH",      1);
     PION_CLASS_CONST_LONG(ION, "PRIORITY_URGENT",    0);
 #ifdef ION_DEBUG
-    PION_CLASS_CONST_LONG(ION, "DEBUG",              0);
-#else
     PION_CLASS_CONST_LONG(ION, "DEBUG",              1);
+#else
+    PION_CLASS_CONST_LONG(ION, "DEBUG",              0);
 #endif
     return SUCCESS;
 }
@@ -341,8 +332,7 @@ PHP_MSHUTDOWN_FUNCTION(ION) {
 PHP_RINIT_FUNCTION(ION) {
     ALLOC_HASHTABLE(GION(timers));
     zend_hash_init(GION(timers), 128, NULL, _ion_clean_interval, 0);
-    GION(delayed) = ecalloc(1, sizeof(zend_llist));
-    zend_llist_init(GION(delayed), 128, NULL, 0);
+    GION(queue) = ion_deferred_queue_init();
     return SUCCESS;
 }
 
@@ -350,9 +340,6 @@ PHP_RSHUTDOWN_FUNCTION(ION) {
     zend_hash_clean(GION(timers));
     zend_hash_destroy(GION(timers));
     FREE_HASHTABLE(GION(timers));
-
-    zend_llist_clean(GION(delayed));
-    zend_llist_destroy(GION(delayed));
-    efree(GION(delayed));
+    ion_deferred_queue_free(GION(queue));
     return SUCCESS;
 }

@@ -228,7 +228,7 @@ CLASS_METHOD(ION_Stream_StorageAbstract, setIdleTimeout) {
          Z_PARAM_LONG(sec)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    storage->idle_timeout = (zend_uint)sec;
+    storage->idle_timeout = (uint32_t)sec;
 
     RETURN_THIS();
 }
@@ -298,8 +298,8 @@ CLASS_METHOD(ION_Stream_StorageAbstract, setPingInterval) {
         Z_PARAM_LONG(ping_timeout)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    storage->ping_interval = (zend_uint)ping_interval;
-    storage->ping_timeout  = (zend_uint)ping_timeout;
+    storage->ping_interval = (uint32_t)ping_interval;
+    storage->ping_timeout  = (uint32_t)ping_timeout;
 
     RETURN_THIS();
 }

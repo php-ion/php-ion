@@ -25,3 +25,22 @@ zend_bool ion_buffer_pair(ion_buffer ** one, ion_buffer ** two) {
 
     return true;
 }
+
+zend_string * ion_buffer_read_all(ion_buffer * buffer) {
+    size_t incoming_length = evbuffer_get_length(bufferevent_get_input(buffer));
+    zend_string * data;
+
+    if(!incoming_length) {
+        return ZSTR_EMPTY_ALLOC();
+    }
+
+    data = zend_string_alloc(incoming_length, 0);
+    ZSTR_LEN(data) = bufferevent_read(buffer, ZSTR_VAL(data), incoming_length);
+    if (ZSTR_LEN(data) > 0) {
+        ZSTR_VAL(data)[ZSTR_LEN(data)] = '\0';
+        return data;
+    } else {
+        zend_string_free(data);
+        return NULL;
+    }
+}

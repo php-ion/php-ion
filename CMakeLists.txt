@@ -38,7 +38,7 @@ set(ION_SOURCE_FILES
     src/ion/debug.c
     src/ion/callback.c
     src/ion/engine.c
-    src/ion/linkedlist.c
+    src/ion/deferred_queue.c
     src/ion/dns.h
     src/ion/timers.h
     src/ion/net.c
@@ -59,8 +59,11 @@ set(ION_SOURCE_FILES
     src/classes/ION/DNS.c
     src/classes/ION/Listener.c
     src/classes/ION/Stream.c
+
     src/classes/ION/Process.c
+    src/classes/ION/Process/ExecResult.c
     src/classes/ION/Process/Worker.c
+
     src/classes/ION/FS.c
     src/classes/ION/Crypto.c
 

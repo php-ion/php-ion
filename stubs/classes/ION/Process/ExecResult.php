@@ -11,4 +11,5 @@ class ExecResult {
     public $signaled = false;
     public $signal   = 0;
     public $code     = -1;
+
 }

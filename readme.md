@@ -18,7 +18,7 @@ ION PHP Extension
 * **Configuration**: see [ini](./stubs/ION.ini) directives
 * **Unit testing:** [phpunit](https://phpunit.de/) with memory leak detector
 
-### [Install](./docs/install.md) :: [Testing](./docs/testing.md) :: [Segfault](./docs/segfault.md) :: [Contributing](./.github/CONTRIBUTING.md)
+### [Install](./docs/install.md) :: [Testing](./docs/testing.md) :: [Segfault](./docs/segfault.md) :: [Contributing](./.github/CONTRIBUTING.md##how-to-contribute-to-php-ion)
 
 # Features
 

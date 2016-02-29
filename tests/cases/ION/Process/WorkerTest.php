@@ -8,6 +8,7 @@ use ION\Test\TestCase;
 class WorkerTest extends TestCase {
 
     /**
+     * @group dev
      * @memcheck
      */
     public function testCreate() {
@@ -21,25 +22,51 @@ class WorkerTest extends TestCase {
             // do something
         });
         $worker->onMessage()->then(function ($msg) {
-            // do something
+//             do something
         });
-        $worker->run(function (Worker $w) {
+//        $worker->run(function (Worker $w) {
             // do something
-        });
+//        });
     }
 
     /**
-     * @group dev
+     * @group d ev
      */
     public function _testSpawn() {
+        $this->data["master"] = getmypid();
         $worker = new Worker();
         $worker->run(function () {
-            usleep(100000);
+            var_dump("i am worker ".getmypid());
+            sleep(2);
+            var_dump("i am exit");
+            ob_flush();
             exit(12);
         });
         $worker->onExit()->then(function (Worker $w) {
-            $this->data["is_exit"]  = $w->isAlive();
-            $this->data["is_child"] = $w->isChild();
+            var_dump("exit");
+            $this->data["cb_pid"] = getmypid();
+            $this->data["child_pid"] = $w->getPID();
+            $this->data["is_exit"]     = $w->isAlive();
+            $this->data["is_child"]    = $w->isChild();
+            $this->data["is_signaled"] = $w->isSignaled();
+            $this->data["status"]      = $w->getExitStatus();
+//            $this->out($this->data);
+            $this->stop();
+            \ION::stop();
+        });
+
+        $this->loop();
+
+        var_dump($this->data);
+    }
+
+    public function _testMessaging() {
+        $worker = new Worker();
+        $worker->run(function () {
+            usleep(100000);
+            exit(0);
+        });
+        $worker->onExit()->then(function (Worker $w) {
             $this->data["status"]   = $w->getExitStatus();
             $this->stop();
         });

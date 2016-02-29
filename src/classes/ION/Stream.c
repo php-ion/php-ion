@@ -280,7 +280,7 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
     ION_CB_BEGIN();
     ion_stream * stream = get_object_instance(ctx, ion_stream);
 
-    obj_add_ref(&stream->std);
+    zend_object_addref(ION_OBJ(stream));
     if(what & BEV_EVENT_EOF) {
         stream->state |= ION_STREAM_STATE_EOF;
         if(stream->read) {
@@ -632,7 +632,7 @@ METHOD_WITHOUT_ARGS(ION_Stream, pair)
 CLASS_METHOD(ION_Stream, socket) {
     zval        * encrypt = NULL;
     zend_string * host = NULL;
-    zend_uint     state = ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_ENABLED | ION_STREAM_FROM_ME;
+    uint32_t      state = ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_ENABLED | ION_STREAM_FROM_ME;
     ion_buffer  * buffer   = NULL;
     zend_object * stream = NULL;
 

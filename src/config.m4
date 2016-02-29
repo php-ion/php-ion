@@ -124,6 +124,8 @@ if test "$PHP_ION" != "no"; then
     ion/engine.c
     ion/promisor.c
     ion/net.c
+    ion/stream.c
+    ion/deferred_queue.c
     ion/process.c
     ion/fs.c
     ion/http.c
@@ -139,7 +141,9 @@ if test "$PHP_ION" != "no"; then
     classes/ION/FS.c
     classes/ION/Listener.c
     classes/ION/Stream.c
+
     classes/ION/Process.c
+    classes/ION/Process/ExecResult.c
     classes/ION/Process/Worker.c
 
     classes/ION/Stream/StorageAbstract.c

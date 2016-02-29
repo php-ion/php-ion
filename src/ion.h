@@ -9,6 +9,7 @@
 #include "ion/exceptions.h"
 #include "ion/debug.h"
 #include "ion/callback.h"
+#include "ion/deferred_queue.h"
 #include "ion/engine.h"
 #include "ion/promisor.h"
 #include "ion/net.h"

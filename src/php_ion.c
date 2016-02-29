@@ -50,7 +50,6 @@ static PHP_GINIT_FUNCTION(ion) {
     memset(ion_globals, 0, sizeof(*ion_globals));
     ion_globals->cache = pecalloc(1, sizeof(zend_ion_global_cache), 1);
     ion_interned_strings_ctor();
-
 }
 
 static PHP_GSHUTDOWN_FUNCTION(ion) {
@@ -86,6 +85,7 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_Listener);
     STARTUP_MODULE(ION_Stream);
     STARTUP_MODULE(ION_Process);
+    STARTUP_MODULE(ION_Process_ExecResult);
     STARTUP_MODULE(ION_Process_Worker);
     STARTUP_MODULE(ION_URI);
     STARTUP_MODULE(ION_Stream_StorageAbstract);

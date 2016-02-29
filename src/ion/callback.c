@@ -92,6 +92,10 @@ pion_cb * pion_cb_fetch_method(const char * class_name, const char * method_name
     return cb;
 }
 
+void pion_cb_release(pion_cb * cb) {
+    pion_cb_free(cb);
+}
+
 void pion_cb_free(pion_cb *cb) {
     zval_ptr_dtor(&cb->fci->function_name);
 //    if(cb->fci->object) {
@@ -266,7 +270,7 @@ zend_class_entry * zend_fetch_class_ex(const char * class_name, int fetch_type) 
     return ce;
 }
 
-static zend_always_inline zend_bool pion_verify_arg_type_user(pion_cb * cb, zend_uint arg_num, zval * arg)
+static zend_always_inline zend_bool pion_verify_arg_type_user(pion_cb * cb, uint32_t arg_num, zval * arg)
 {
     zend_arg_info *cur_arg_info;
     zend_class_entry *ce;
@@ -307,7 +311,7 @@ static zend_always_inline zend_bool pion_verify_arg_type_user(pion_cb * cb, zend
     return true;
 }
 
-static zend_always_inline zend_bool pion_verify_arg_type_internal(pion_cb * cb, zend_uint arg_num, zval * arg) {
+static zend_always_inline zend_bool pion_verify_arg_type_internal(pion_cb * cb, uint32_t arg_num, zval * arg) {
     zend_internal_arg_info *cur_arg_info;
     zend_class_entry * ce;
     zend_function *zf = cb->fcc->function_handler;
@@ -347,7 +351,7 @@ static zend_always_inline zend_bool pion_verify_arg_type_internal(pion_cb * cb, 
 }
 
 
-zend_bool pion_verify_arg_type(pion_cb * cb, zend_uint arg_num, zval * arg) {
+zend_bool pion_verify_arg_type(pion_cb * cb, uint32_t arg_num, zval * arg) {
     if(cb->fcc->function_handler->type == ZEND_USER_FUNCTION) {
         return pion_verify_arg_type_user(cb, arg_num, arg);
     } else {
@@ -362,7 +366,7 @@ int _pion_fcall(zval * result, zend_fcall_info * fci_ptr, zend_fcall_info_cache 
         fci_ptr->retval = result;
         fci_ptr->params = args;
         fci_ptr->no_separation = 1;
-        fci_ptr->param_count = (zend_uint)num;
+        fci_ptr->param_count = (uint32_t)num;
         return zend_call_function(fci_ptr, fcc_ptr);
     } else {
         return FAILURE;
@@ -444,7 +448,7 @@ zval pion_cb_call(pion_cb *cb, int num, zval *args) {
     if (ZEND_FCI_INITIALIZED(*cb->fci)) {
         cb->fci->retval = &retval;
         cb->fci->params = args;
-        cb->fci->param_count = (zend_uint)num;
+        cb->fci->param_count = (uint32_t)num;
         zend_call_function(cb->fci, cb->fcc);
         cb->fci->params = NULL;
         cb->fci->param_count = 0;
@@ -490,7 +494,7 @@ zval pion_cb_obj_call(pion_cb *cb, zend_object * obj, int num, zval *args) {
     if (ZEND_FCI_INITIALIZED(*cb->fci)) {
         cb->fci->retval = &retval;
         cb->fci->params = args;
-        cb->fci->param_count = (zend_uint)num;
+        cb->fci->param_count = (uint32_t)num;
         if(obj) {
             Z_ADDREF(object);
             cb->fci->object = obj;
@@ -556,7 +560,7 @@ int pion_call_constructor(zend_class_entry * ce, zend_object * this_ptr, int arg
     fci.symbol_table = NULL;
     fci.object = this_ptr;
     fci.retval = &retval_ptr;
-    fci.param_count = (zend_uint)args_num;
+    fci.param_count = (uint32_t)args_num;
     fci.params = args;
     fci.no_separation = 1;
 

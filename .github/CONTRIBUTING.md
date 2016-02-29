@@ -10,8 +10,8 @@
   Be sure to include a **title and clear description**, as much relevant information as possible,
   and a **code sample** or an **executable test case** demonstrating the expected behavior that is not occurring.
 
-* If possible, run ION tests. See [how run tests](https://github.com/php-ion/php-ion/blob/master/docs/testing.md).
-  If tests failed, copy output to a new gist [Gist](https://gist.github.com/) and add link to created gist into issue.
+* If possible, [run ION tests](https://github.com/php-ion/php-ion/blob/master/docs/testing.md).
+  If tests failed, copy output to a new gist [Gist](https://gist.github.com/) and add link to gist into issue.
 
 #### **Did you write a patch that fixes a bug?**
 

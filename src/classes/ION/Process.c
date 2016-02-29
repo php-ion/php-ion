@@ -6,8 +6,6 @@ zend_class_entry * ion_ce_ION_Process;
 zend_object_handlers ion_oh_ION_Process;
 zend_class_entry * ion_ce_ION_ProcessException;
 zend_object_handlers ion_oh_ION_ProcessException;
-zend_class_entry * ion_ce_ION_Process_ExecResult;
-zend_object_handlers ion_oh_ION_Process_ExecResult;
 
 /** public function ION\Process::fork(int $flags = 0, Stream &$ipc = null) : int */
 CLASS_METHOD(ION_Process, fork) {
@@ -352,83 +350,22 @@ METHOD_ARGS_BEGIN(ION_Process, setPriority, 1)
     METHOD_ARG_LONG(pid, 0)
 METHOD_ARGS_END()
 
-zend_string * ion_buffer_read_all(ion_buffer * buffer) {
-    size_t incoming_length = evbuffer_get_length(bufferevent_get_input(buffer));
-    zend_string * data;
-
-    if(!incoming_length) {
-        return ZSTR_EMPTY_ALLOC();
-    }
-
-    data = zend_string_alloc(incoming_length, 0);
-    ZSTR_LEN(data) = bufferevent_read(buffer, ZSTR_VAL(data), incoming_length);
-    if (ZSTR_LEN(data) > 0) {
-        ZSTR_VAL(data)[ZSTR_LEN(data)] = '\0';
-        return data;
-    } else {
-        zend_string_free(data);
-        return NULL;
-    }
-}
-
-void ion_exec_callback(ion_buffer * bev, short what, void * arg) {
-    ION_CB_BEGIN();
-    ion_exec * exec = (ion_exec *) arg;
-    int        pid;
-    int        status;
-    zval       result;
-    zend_string * out;
-    zend_string * err;
-
-    if(what & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
-        pid = waitpid(exec->pid, &status, WNOHANG);
-        if(exec->pid != pid) {
-            // what we gonna do?
-        }
-        object_init_ex(&result, ion_class_entry(ION_Process_ExecResult));
-        pion_update_property_long(ION_Process_ExecResult, &result, "pid", exec->pid);
-        pion_update_property_long(ION_Process_ExecResult, &result, "status", status);
-        pion_update_property_str(ION_Process_ExecResult, &result, "command", exec->command);
-        out = ion_buffer_read_all(exec->out);
-        if(out) {
-            pion_update_property_str(ION_Process_ExecResult, &result, "stdout", out);
-        }
-        err = ion_buffer_read_all(exec->err);
-        if(err) {
-            pion_update_property_str(ION_Process_ExecResult, &result, "stderr", err);
-        }
-        ion_promisor_done(exec->deferred, &result);
-        zval_ptr_dtor(&result);
-        zend_string_release(exec->command);
-        zend_string_release(out);
-        zend_string_release(err);
-        zend_object_release(exec->deferred);
-        bufferevent_disable(exec->out, EV_READ | EV_WRITE);
-        bufferevent_free(exec->out);
-        close(exec->stdout_fd);
-        bufferevent_disable(exec->err, EV_READ | EV_WRITE);
-        bufferevent_free(exec->err);
-        close(exec->stderr_fd);
-        efree(exec);
-    }
-    ION_CB_END();
-}
-
 /** public function ION\Process::exec($priority, $pid = null) : int */
 CLASS_METHOD(ION_Process, exec) {
-    zend_string   * command = NULL;
-    zval          * options = NULL;
-    int             pid;
-    int             out_pipes[2];
-    int             err_pipes[2];
-    ion_exec      * exec;
-    char          * env[2];
-    struct passwd * pw = NULL;
-    char          * line;
-    zend_bool       set_group = 0;
-    zval          * zuser = NULL;
-    zval          * zgroup = NULL;
-    zval          * zpid = NULL;
+    zend_string      * command = NULL;
+    zval             * options = NULL;
+    int                pid;
+    int                out_pipes[2];
+    int                err_pipes[2];
+    ion_process_exec * exec;
+    zval               zexec;
+    char             * env[2];
+    struct passwd    * pw = NULL;
+    char             * line;
+    zend_bool          set_group = 0;
+    zval             * zuser = NULL;
+    zval             * zgroup = NULL;
+    zval             * zpid = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1,2)
         Z_PARAM_STR(command)
@@ -480,35 +417,21 @@ CLASS_METHOD(ION_Process, exec) {
         }
         close(out_pipes[1]);
         close(err_pipes[1]);
-        exec = ecalloc(1, sizeof(ion_exec));
+
+        ion_process_exec_object(&zexec);
+        pion_update_property_str(ION_Process_ExecResult, &zexec, "command", zend_string_copy(command));
+        exec            = get_instance(&zexec, ion_process_exec);
+
         exec->pid       = pid;
-        exec->command   = zend_string_copy(command);
-        exec->stdout_fd = out_pipes[0];
-        exec->stderr_fd = err_pipes[0];
-        exec->err       = bufferevent_new(exec->stderr_fd, NULL, NULL, NULL, (void *)exec);
-        exec->out       = bufferevent_new(exec->stdout_fd, NULL, NULL, ion_exec_callback, (void *)exec);
-        if(bufferevent_base_set(GION(base), exec->err) == FAILURE) {
-            bufferevent_free(exec->err);
-            close(exec->stdout_fd);
-            close(exec->stderr_fd);
-            efree(exec);
-            zend_throw_exception(ion_class_entry(ION_RuntimeException), ERR_ION_PROCESS_EXEC_SPLIT_NO_STDOUT, 0);
-            return;
-        }
-        if(bufferevent_base_set(GION(base), exec->out) == FAILURE) {
-            bufferevent_free(exec->err);
-            bufferevent_free(exec->out);
-            close(exec->stdout_fd);
-            close(exec->stderr_fd);
-            efree(exec);
-            zend_throw_exception(ion_class_entry(ION_RuntimeException), ERR_ION_PROCESS_EXEC_SPLIT_NO_STDERR, 0);
-            return;
-        }
+        exec->err       = bufferevent_socket_new(GION(base), err_pipes[0], BEV_OPT_CLOSE_ON_FREE);
+        exec->out       = bufferevent_socket_new(GION(base), out_pipes[0], BEV_OPT_CLOSE_ON_FREE);
+
         bufferevent_enable(exec->out, EV_READ);
         bufferevent_enable(exec->err, EV_READ);
         exec->deferred = ion_promisor_deferred_new_ex(NULL);
         ion_promisor_store(exec->deferred, exec);
         zend_object_addref(exec->deferred);
+        ion_process_add_child(pid, ION_PROC_CHILD_EXEC, ION_OBJ(exec));
         RETURN_OBJ(exec->deferred);
     } else {  // child
         if (dup2( out_pipes[1], 1 ) < 0 ) {
@@ -590,19 +513,9 @@ CLASS_METHODS_START(ION_Process)
 //    METHOD(ION_Process, setStderr,    ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 CLASS_METHODS_END;
 
-CLASS_METHODS_START(ION_Process_ExecResult)
-CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Process) {
     PION_REGISTER_STATIC_CLASS(ION_Process, "ION\\Process");
-    PION_REGISTER_DEFAULT_CLASS(ION_Process_ExecResult, "ION\\Process\\ExecResult");
-    PION_CLASS_PROP_STRING(ION_Process_ExecResult, "command", "", ZEND_ACC_PUBLIC);
-    PION_CLASS_PROP_LONG(ION_Process_ExecResult, "pid", 0, ZEND_ACC_PUBLIC);
-    PION_CLASS_PROP_STRING(ION_Process_ExecResult, "stdout", "", ZEND_ACC_PUBLIC);
-    PION_CLASS_PROP_STRING(ION_Process_ExecResult, "stderr", "", ZEND_ACC_PUBLIC);
-    PION_CLASS_PROP_LONG(ION_Process_ExecResult, "status", -1, ZEND_ACC_PUBLIC);
-    PION_CLASS_PROP_BOOL(ION_Process_ExecResult, "signaled", 0, ZEND_ACC_PUBLIC);
-    PION_CLASS_PROP_LONG(ION_Process_ExecResult, "signal", 0, ZEND_ACC_PUBLIC);
 
     PION_REGISTER_VOID_EXTENDED_CLASS(ION_ProcessException, ion_ce_ION_RuntimeException, "ION\\ProcessException");
 
@@ -612,10 +525,22 @@ PHP_MINIT_FUNCTION(ION_Process) {
 PHP_RINIT_FUNCTION(ION_Process) {
     ALLOC_HASHTABLE(GION(signals));
     zend_hash_init(GION(signals), 128, NULL, ion_process_clean_signal, 0);
+
+    ALLOC_HASHTABLE(GION(childs));
+    zend_hash_init(GION(childs), 128, NULL, ion_process_child_dtor, 0);
+
+    GION(sigchld) = evsignal_new(GION(base), SIGCHLD, ion_process_sigchld, NULL);
+    evsignal_add(GION(sigchld), NULL);
     return SUCCESS;
 }
 
 PHP_RSHUTDOWN_FUNCTION(ION_Process) {
+    evsignal_del(GION(sigchld));
+
+    zend_hash_clean(GION(childs));
+    zend_hash_destroy(GION(childs));
+    FREE_HASHTABLE(GION(childs));
+
     zend_hash_clean(GION(signals));
     zend_hash_destroy(GION(signals));
     FREE_HASHTABLE(GION(signals));
