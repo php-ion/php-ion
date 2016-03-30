@@ -26,6 +26,12 @@ enum ion_http_msg_type {
     ion_http_type_part,
 };
 
+enum ion_http_parser_type {
+    ion_http_type_websocket,
+    ion_http_type_multipart,
+    ion_http_type_default,
+};
+
 #define ION_HTTP_VERSION_DEFAULT "1.1"
 #define ION_HTTP_MESSAGE_REQUEST  1
 #define ION_HTTP_MESSAGE_RESPONSE 2
@@ -126,6 +132,30 @@ typedef struct _ion_http_multi_parted_parser {
     zend_object   std;
     multipart_parser * parser;
 } ion_http_mp_parser;
+
+typedef struct _ion_websocket_parser {
+    websocket_parser p;
+    zend_object * on_frame;
+    ion_http_websocket_frame * frame;
+    zend_ulong    frames_num;
+} ion_websocket_parser;
+
+typedef struct _ion_http_body_parser {
+    zend_object   std;
+    uint8_t       type;
+    uint32_t      flags;
+    union {
+        http_parser          * http;
+        multipart_parser     * multipart;
+        ion_websocket_parser * websocket;
+        zend_object          * custom;
+    } parser;
+    union {
+        http_parser_settings      * http;
+        multipart_parser_settings * multipart;
+        websocket_parser_settings * websocket;
+    } settings;
+} ion_http_body_parser;
 
 extern ION_API zend_string * ion_uri_stringify(zend_object * uri, unsigned short parts);
 extern ION_API zend_object * ion_uri_parse(zend_string * uri_string);

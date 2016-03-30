@@ -8,9 +8,9 @@ CLASS_METHOD(ION_HTTP, request) {
     zval          * request = NULL;
     zval          * connect = NULL;
     zend_array    * options = NULL;
-    zend_string   * req     = NULL;
-    ion_stream    * stream  = NULL;
-    ion_stream_token token;
+//    zend_string   * req     = NULL;
+//    ion_stream    * stream  = NULL;
+//    ion_stream_token token;
 
     ZEND_PARSE_PARAMETERS_START(2, 3)
         Z_PARAM_ZVAL(request)

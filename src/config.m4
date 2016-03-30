@@ -156,6 +156,7 @@ if test "$PHP_ION" != "no"; then
     classes/ION/HTTP/Request.c
     classes/ION/HTTP/Response.c
     classes/ION/HTTP/WebSocket/Frame.c
+    classes/ION/HTTP/WebSocketParser.c
     classes/ION/HTTP.c
     "
 

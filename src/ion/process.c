@@ -8,18 +8,17 @@ void ion_process_sigchld(evutil_socket_t signal, short flags, void * arg) {
     zend_object * child;
 
     if(pid <= 0) {
-        return;
-    }
-    child = zend_hash_index_find_ptr(GION(childs), (zend_ulong) pid);
-    if(child) {
-        if(ion_procces_is_exec(child)) {
-            ion_process_exec_exit(child, status);
-        } else {
-            ion_process_worker_exit(child, status);
-        }
-        zend_hash_index_del(GION(childs), (zend_ulong) pid);
+        // check disconnected workers
     } else {
-//        zend_error(E_NOTICE, "Unknown SIGCHLD received");
+        child = zend_hash_index_find_ptr(GION(childs), (zend_ulong) pid);
+        if(child) {
+            if(ion_procces_is_exec(child)) {
+                ion_process_exec_exit(child, status);
+            } else {
+                ion_process_worker_exit(child, status);
+            }
+            zend_hash_index_del(GION(childs), (zend_ulong) pid);
+        }
     }
 }
 
@@ -28,6 +27,14 @@ void ion_process_add_child(pid_t pid, ion_process_child_type type, zend_object *
     child->flags |= type;
 
     zend_hash_index_add_ptr(GION(childs), (zend_ulong) pid, object);
+}
+
+void ion_process_exec_disconnect(ion_buffer * b, short what, void * ctx) {
+    ion_process_child * child = (ion_process_child *)ctx;
+    if(what & (BEV_EVENT_ERROR | BEV_EVENT_EOF)) {
+        child->flags |= ION_WORKER_DISCONNECTED;
+        zend_hash_index_add_ptr(GION(disconnected), (zend_ulong) child->pid, NULL);
+    }
 }
 
 void ion_process_exec_exit(zend_object * exec, int status) {

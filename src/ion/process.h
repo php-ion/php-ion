@@ -34,19 +34,21 @@ enum ion_spawn_flags {
 };
 
 enum ion_worker_flags {
-    ION_WORKER_DONE     = 1 << 2,
-    ION_WORKER_FAILED   = 1 << 3,
-    ION_WORKER_SIGNALED = 1 << 4,
-    ION_WORKER_ABORT    = 1 << 5,
-    ION_WORKER_FINISHED = ION_WORKER_DONE | ION_WORKER_FAILED | ION_WORKER_SIGNALED | ION_WORKER_ABORT,
-    ION_WORKER_STARTED  = 1 << 6,
-    ION_WORKER_MASTER   = 1 << 7,
-    ION_WORKER_CHILD    = 1 << 8,
+    ION_WORKER_DONE         = 1 << 2,
+    ION_WORKER_FAILED       = 1 << 3,
+    ION_WORKER_SIGNALED     = 1 << 4,
+    ION_WORKER_ABORT        = 1 << 5,
+    ION_WORKER_FINISHED     = ION_WORKER_DONE | ION_WORKER_FAILED | ION_WORKER_SIGNALED | ION_WORKER_ABORT,
+    ION_WORKER_STARTED      = 1 << 6,
+    ION_WORKER_MASTER       = 1 << 7,
+    ION_WORKER_CHILD        = 1 << 8,
+    ION_WORKER_DISCONNECTED = 1 << 8,
 };
 
 typedef struct _ion_process_child {
     zend_object   std;
     uint          flags;
+    pid_t         pid;
 } ion_process_child;
 
 typedef struct _ion_process_worker {
@@ -66,6 +68,8 @@ typedef struct _ion_process_worker {
 
 #define ion_process_exec_object(pz) object_init_ex(pz, ion_ce_ION_Process_ExecResult)
 #define ion_procces_is_exec(obj) (get_object_instance(obj, ion_process_child)->flags & ION_PROC_CHILD_EXEC)
+
+void ion_process_exec_disconnect(ion_buffer * b, short what, void * ctx);
 
 void ion_process_sigchld(evutil_socket_t signal, short flags, void * arg);
 void ion_process_add_child(pid_t pid, ion_process_child_type type, zend_object * object);

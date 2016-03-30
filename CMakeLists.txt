@@ -77,6 +77,7 @@ set(ION_SOURCE_FILES
     src/classes/ION/URI.c
     src/classes/ION/HTTP/Request.c
     src/classes/ION/HTTP/Response.c
+    src/classes/ION/HTTP/WebSocketParser.c
     src/classes/ION/HTTP/WebSocket/Frame.c
  )
 

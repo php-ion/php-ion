@@ -414,11 +414,11 @@ zend_object * ion_promisor_clone(zend_object * proto_obj) {
     zend_objects_clone_members(clone_obj, proto_obj);
 
     if(proto->flags & ION_PROMISOR_INTERNAL) {
-        zend_throw_exception(ion_class_entry(ION_InvalidUsageException), "Trying to clone an internal promisor", 0);
+        zend_throw_exception(ion_ce_ION_InvalidUsageException, "Trying to clone an internal promisor", 0);
         return clone_obj;
     }
     if(proto->await || proto->generator) {
-        zend_throw_exception(ion_class_entry(ION_InvalidUsageException), "Promisor in progress", 0);
+        zend_throw_exception(ion_ce_ION_InvalidUsageException, "Promisor in progress", 0);
         return clone_obj;
     }
     if(proto->dtor) {

@@ -17,7 +17,7 @@ class Frame {
     const FLAG_FINAL   = 0x20;
 
     public static function parse(string $frame) : static { }
-    public static function factory(string $body, int $opcode = self::OP_TEXT, int $flags = self::FLAG_FINAL) : static { }
+    public static function factory(string $body, int $opcode = Frame::OP_TEXT, int $flags = Frame::FLAG_FINAL) : static { }
 
     public function getOpcode() : int { }
     public function withOpcode(int $opcode) : static { }

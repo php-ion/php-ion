@@ -8,7 +8,6 @@ use ION\Test\TestCase;
 class WorkerTest extends TestCase {
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testCreate() {
