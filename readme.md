@@ -37,10 +37,16 @@ ION PHP Extension
 * Async reading files from FS
 * SSL/TLS encryption supports
 * Listening FS events
-* Allows you to easily create child processes that all share server ports.
-* Inter-Process Communication
 
-# Indev [0.6](https://github.com/php-ion/php-ion/milestones/0.5)
+# Indev 
+
+## [0.5](https://github.com/php-ion/php-ion/milestones/0.5)
+
+- [x] Create workers
+- [ ] Workers' events
+- [ ] Inter-Process Communication
+
+## [0.6](https://github.com/php-ion/php-ion/milestones/0.6)
 
 - [x] Server socket pool
 - [ ] Client socket pool
