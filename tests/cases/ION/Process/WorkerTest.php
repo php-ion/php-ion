@@ -7,6 +7,9 @@ use ION\Test\TestCase;
 
 class WorkerTest extends TestCase {
 
+    public function testNoop() {
+        // stub
+    }
     /**
      * @memcheck
      */
