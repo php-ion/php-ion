@@ -10,7 +10,7 @@ class WorkerTest extends TestCase {
     /**
      * @memcheck
      */
-    public function testCreate() {
+    public function _testCreate() {
         $worker = new Worker();
         $this->assertEquals(0, $worker->getPID());
         $this->assertFalse($worker->isAlive());

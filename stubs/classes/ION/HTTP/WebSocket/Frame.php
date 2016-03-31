@@ -12,7 +12,9 @@ class Frame {
     const OP_PING     = 0x9;
     const OP_PONG     = 0xA;
 
-    const FLAG_OPCODE  = 0x0F;
+    const OPCODE_MASK = 0x0F;
+
+    const FLAG_NONE    = 0x00;
     const FLAG_MASKING = 0x10;
     const FLAG_FINAL   = 0x20;
 
@@ -30,7 +32,7 @@ class Frame {
 
     public function hasMasking() : bool {}
     public function getMasking() : int {}
-    public function withMasking(int $mask = null) : static {}
+    public function withMasking(string $mask = null) : static {}
     public function withoutMasking() : static {}
 
     public function build() : string {}

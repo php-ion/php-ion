@@ -80,7 +80,15 @@ METHOD_ARGS_BEGIN(ION_HTTP_WebSocket_Frame, parse, 1)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_HTTP_WebSocket_Frame, factory) {
+    zend_long     opcode = WS_OP_TEXT;
+    zend_string * body   = NULL;
+    zend_long     flags  = WS_FIN;
 
+    ZEND_PARSE_PARAMETERS_START(1, 3)
+        Z_PARAM_LONG(opcode)
+        Z_PARAM_STR(body)
+        Z_PARAM_LONG(flags)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 }
 
 METHOD_ARGS_BEGIN(ION_HTTP_WebSocket_Frame, factory, 1)
@@ -248,58 +256,14 @@ METHOD_WITHOUT_ARGS(ION_HTTP_WebSocket_Frame, withoutMasking);
 CLASS_METHOD(ION_HTTP_WebSocket_Frame, build) {
     ion_http_websocket_frame * frame = get_this_instance(ion_http_websocket_frame);
     zend_string * raw;
-    size_t        len = 2;
-    size_t        body_offset = 0;
+    size_t        len = websocket_calc_frame_size(frame->flags, frame->body->len);
+    size_t        raw_len;
 
-    if(frame->flags & WS_HAS_MASK) {
-        len += 4;
-    }
-    if(frame->body->len > 125) {
-        if(frame->body->len > 0xFFFF) {
-            len += 8;
-        } else {
-            len += 2;
-        }
-    }
-    len += frame->body->len;
     raw = zend_string_alloc(len, 0);
     raw->val[len] = '\000';
 
-    raw->val[0] = 0;
-    raw->val[1] = 0;
-    if(frame->flags & WS_FIN) {
-        raw->val[0] = (char) (1 << 7);
-    }
-    raw->val[0] |= frame->flags & WS_OP_MASK;
-    if(frame->flags & WS_HAS_MASK) {
-        raw->val[1] = (char) (1 << 7);
-    }
-    if(frame->body->len < 126) {
-        raw->val[1] |= frame->body->len;
-        body_offset = 2;
-    } else if(frame->body->len <= 0xFFFF) {
-        raw->val[1] |= 126;
-        raw->val[2] = (char) (frame->body->len >> 8);
-        raw->val[3] = (char) (frame->body->len & 0xFF);
-        body_offset = 4;
-    } else {
-        raw->val[1] |= 127;
-        raw->val[2] = (char) ((frame->body->len >> 56) & 0xFF);
-        raw->val[3] = (char) ((frame->body->len >> 48) & 0xFF);
-        raw->val[4] = (char) ((frame->body->len >> 40) & 0xFF);
-        raw->val[5] = (char) ((frame->body->len >> 32) & 0xFF);
-        raw->val[6] = (char) ((frame->body->len >> 24) & 0xFF);
-        raw->val[7] = (char) ((frame->body->len >> 16) & 0xFF);
-        raw->val[8] = (char) ((frame->body->len >>  8) & 0xFF);
-        raw->val[9] = (char) ((frame->body->len)       & 0xFF);
-        body_offset = 10;
-    }
-    if(frame->flags & WS_HAS_MASK) {
-        memcpy(&raw->val[body_offset], frame->mask, 4);
-        websocket_encode(&raw->val[body_offset + 4], frame->body->val, frame->body->len, frame->mask, 0);
-    } else {
-        memcpy(&raw->val[body_offset], frame->body->val, frame->body->len);
-    }
+    raw_len = websocket_build_frame(raw->val, frame->flags, frame->mask, frame->body->val, frame->body->len);
+    ZEND_ASSERT(len == raw_len);
     RETURN_STR(raw);
 
 }
@@ -330,12 +294,14 @@ PHP_MINIT_FUNCTION(ION_HTTP_WebSocket_Frame) {
 
     PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "OP_CONT",  WS_OP_CONTINUE);
     PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "OP_TEXT",  WS_OP_TEXT);
-    PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "OP_BIN",   WS_OP_BINARY);
+    PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "OP_BINARY",   WS_OP_BINARY);
     PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "OP_CLOSE", WS_OP_CLOSE);
     PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "OP_PING",  WS_OP_PING);
     PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "OP_PONG",  WS_OP_PONG);
 
-    PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "FLAG_OPCODE",  WS_OP_MASK);
+    PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "OPCODE_MASK",  WS_OP_MASK);
+
+    PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "FLAG_NONE",    0x0);
     PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "FLAG_MASKING", WS_FIN);
     PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "FLAG_FINAL",   WS_HAS_MASK);
 

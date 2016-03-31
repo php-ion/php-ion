@@ -34,4 +34,35 @@ class FrameTest extends TestCase {
         $frame->withMasking($this->mask);
         $this->assertEquals($this->frame, $frame->build());
     }
+
+    /**
+     * @memcheck
+     */
+    public function testBuild200() {
+        $frame = new Frame();
+        $frame->withBody(str_pad("x", 200, "x"));
+        $frame->withOpcode(Frame::OP_BINARY);
+        $parsed = Frame::parse($frame->build());
+        $this->assertEquals(str_pad("x", 200, "x"), $parsed->getBody());
+        $this->assertEquals(Frame::OP_BINARY, $frame->getOpcode());
+        $this->assertFalse($frame->getFinalFlag());
+        $this->assertFalse($frame->hasMasking());
+        $this->assertEquals("", $frame->getMasking());
+    }
+
+    /**
+     * @memcheck
+     */
+    public function testBuild700000() {
+        $frame = new Frame();
+        $frame->withBody(str_pad("x", 700000, "x"));
+        $frame->withOpcode(Frame::OP_BINARY);
+        $frame->withMasking("mask");
+        $parsed = Frame::parse($frame->build());
+        $this->assertEquals(str_pad("x", 700000, "x"), $parsed->getBody());
+        $this->assertEquals(Frame::OP_BINARY, $frame->getOpcode());
+        $this->assertFalse($frame->getFinalFlag());
+        $this->assertTrue($frame->hasMasking());
+        $this->assertEquals("mask", $frame->getMasking());
+    }
 }
