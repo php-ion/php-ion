@@ -123,9 +123,9 @@ typedef struct _ion_http_response {
 
 typedef struct _ion_http_websocket_frame {
     zend_object   std;
-    uint32_t      flags;
-    zend_string * body;
-    char          mask[4];
+    websocket_flags flags;
+    zend_string *   body;
+    char            mask[4];
 } ion_http_websocket_frame;
 
 typedef struct _ion_http_multi_parted_parser {

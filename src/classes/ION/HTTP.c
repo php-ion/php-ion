@@ -3,14 +3,28 @@
 zend_class_entry * ion_ce_ION_HTTP;
 zend_object_handlers ion_oh_ION_HTTP;
 
-/** public function ION\HTTP::request(ION\HTTP\Request $request, ION\Stream $stream, array $options = null) : ION\HTTP\Response */
+pion_cb * stream_read_token = NULL;
+
+zval ion_http_response_incoming(ion_promisor * promisor, zval * data) {
+    zval res;
+    ZVAL_UNDEF(&res);
+
+    ZEND_ASSERT(0 && "todo http response");
+    return res;
+}
+
+/** public function ION\HTTP::request(ION\HTTP\Request $request, ION\Stream $stream, array $options = null) : ION\Deferred */
 CLASS_METHOD(ION_HTTP, request) {
     zval          * request = NULL;
     zval          * connect = NULL;
     zend_array    * options = NULL;
-//    zend_string   * req     = NULL;
-//    ion_stream    * stream  = NULL;
-//    ion_stream_token token;
+    zend_string   * req     = NULL;
+    ion_stream    * stream  = NULL;
+    zval            token;
+    zval            mode;
+    zval            length;
+    zval            result;
+    pion_cb       * stream_read_token = pion_cb_fetch_method("ION\\Stream", "readLine");
 
     ZEND_PARSE_PARAMETERS_START(2, 3)
         Z_PARAM_ZVAL(request)
@@ -20,13 +34,38 @@ CLASS_METHOD(ION_HTTP, request) {
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
 
-//    stream = get_object_instance(connect, ion_stream);
-//    // todo: check stream
-//    req = pion_http_message_build(Z_OBJ_P(connect));
-//    // todo: check req
-//    bufferevent_write(stream->buffer, req->val, req->len);
-//    stream->state &= ~ION_STREAM_STATE_FLUSHED;
-//    token.token = ION_STR(ION_STR_CRLFCRLF);
+    stream = get_object_instance(connect, ion_stream);
+    if(stream->state & ION_STREAM_STATE_CLOSED) {
+        zend_throw_exception(ion_ce_InvalidArgumentException, ERR_ION_HTTP_REQUEST_INVALID_STREAM, 0);
+        return;
+    }
+    if(stream->read) {
+        zend_throw_exception(ion_ce_InvalidArgumentException, "Stream already busy", 0);
+        return;
+    }
+    req = pion_http_message_build(Z_OBJ_P(request));
+    if(ion_stream_write(stream, req) == false) {
+        zend_throw_exception(ion_ce_ION_StreamException, ERR_ION_STREAM_WRITE_FAILED, 0);
+        return;
+    }
+    zend_string_release(req);
+    ZVAL_STRING(&token, "\r\n\r\n");
+    ZVAL_LONG(&mode, ION_STREAM_MODE_TRIM_TOKEN);
+    ZVAL_LONG(&length, 8192);
+
+    result = pion_cb_call_with_3_args(stream_read_token, &token, &mode, &length);
+    pion_cb_free(stream_read_token);
+    if(!Z_ISUNDEF(result)) {
+        return;
+    }
+    if(Z_TYPE(result) == IS_STRING) {
+        zend_object * resp = pion_http_parse_response(Z_STR(result), ion_ce_ION_HTTP_Response);
+        RETVAL_OBJ(resp);
+        zval_ptr_dtor(&result);
+    } else if(Z_TYPE(result) == IS_OBJECT) {
+        ion_promisor_set_internal_done(Z_OBJ(result), ion_http_response_incoming);
+        RETVAL_OBJ(Z_OBJ(result));
+    }
 }
 
 METHOD_ARGS_BEGIN(ION_HTTP, request, 2)

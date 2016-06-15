@@ -44,3 +44,65 @@ zend_string * ion_buffer_read_all(ion_buffer * buffer) {
         return NULL;
     }
 }
+
+zend_bool ion_stream_write(ion_stream * stream, zend_string * data) {
+    if(bufferevent_write(stream->buffer, ZSTR_VAL(data), ZSTR_LEN(data)) == FAILURE) {
+        return false;
+    }
+
+    if(ion_stream_output_length(stream) && (stream->state & ION_STREAM_STATE_FLUSHED)) {
+        stream->state &= ~ION_STREAM_STATE_FLUSHED;
+    }
+
+    return true;
+}
+
+//zval ion_stream_read_token(zval * result, ion_stream_token * token) {
+//
+//    token->flags &= ION_STREAM_TOKEN_MODE_MASK;
+//    if(ZSTR_LEN(token->token) == 0) {
+//        zend_throw_exception(ion_ce_InvalidArgumentException, "Token can't be empty", 0);
+//        return;
+//    }
+//
+//    if(stream->read) {
+//        if(stream->token
+//           && zend_string_equals(stream->token->token, token.token)
+//           && (stream->token->flags & ION_STREAM_TOKEN_MODE_MASK) == token.flags
+//           && stream->token->length == token.length) {
+//            obj_add_ref(stream->read);
+//            RETURN_OBJ(stream->read);
+//        } else {
+//            zend_throw_exception(ion_ce_ION_InvalidUsageException, "Stream locked for reading: already in the process of reading", 0);
+//            return;
+//        }
+//    }
+//
+//    if(ion_stream_search_token(bufferevent_get_input(stream->buffer), &token) == FAILURE) {
+//        zend_throw_exception(ion_ce_ION_StreamException, "Failed to get internal buffer pointer for token_length/offset", 0);
+//        return;
+//    }
+//
+//    if(token.position == -1) {
+//        if(token.flags & ION_STREAM_TOKEN_LIMIT) {
+//            RETURN_FALSE;
+//        } else {
+//            zend_object * deferred = ion_promisor_deferred_new_ex(NULL);
+//            ion_promisor_store(deferred, stream);
+//            ion_promisor_dtor(deferred, _ion_stream_read_dtor);
+//            stream->read = deferred;
+//            stream->token = emalloc(sizeof(ion_stream_token));
+//            memcpy(stream->token, &token, sizeof(ion_stream_token));
+//            stream->token->token = zend_string_copy(token.token);
+//            obj_add_ref(deferred);
+//            RETURN_OBJ(deferred);
+//        }
+//    } else {
+//        data = ion_stream_read_token(stream, &token);
+//        if(data == NULL) {
+//            RETURN_FALSE;
+//        } else {
+//            RETURN_STR(data);
+//        }
+//    }
+//}

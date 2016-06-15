@@ -158,6 +158,9 @@ static zend_always_inline void obj_promisor_set_dtor(zend_object * promisor, pro
 #define ion_promisor_set_autoclean(promisor, cb) \
     ion_promisor_set_internal_cb(&get_object_instance(promisor, ion_promisor)->canceler, cb)
 
+#define ion_promisor_set_internal_done(promisor, cb) \
+    ion_promisor_set_internal_cb(&get_object_instance(promisor, ion_promisor)->done, cb)
+
 // Resolvers
 void ion_promisor_resolve(zend_object * promisor, zval * result, uint32_t type);
 void ion_promisor_cancel(zend_object * promisor, const char *message);

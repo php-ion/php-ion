@@ -66,8 +66,6 @@ class WebSocketParserTest extends TestCase {
     }
 
     /**
-     * @group dev
-     *
      * @param string[] ...$chunks
      *
      * @dataProvider providerFrameParts

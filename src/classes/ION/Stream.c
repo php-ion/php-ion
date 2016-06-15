@@ -909,17 +909,12 @@ CLASS_METHOD(ION_Stream, write) {
         RETURN_THIS();
     }
 
-    if(bufferevent_write(stream->buffer, ZSTR_VAL(data), ZSTR_LEN(data)) == FAILURE) {
-        zend_throw_exception(ion_ce_ION_StreamException, "Failed to write data", 0);
+    if(ion_stream_write(stream, data) == false) {
+        zend_throw_exception(ion_ce_ION_StreamException, ERR_ION_STREAM_WRITE_FAILED, 0);
         return;
     }
 
-    if(ion_stream_output_length(stream) && (stream->state & ION_STREAM_STATE_FLUSHED)) {
-        stream->state &= ~ION_STREAM_STATE_FLUSHED;
-    }
     RETURN_THIS();
-
-
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, write, 1)
@@ -1233,7 +1228,7 @@ CLASS_METHOD(ION_Stream, readLine) {
 
     token.flags &= ION_STREAM_TOKEN_MODE_MASK;
     if(ZSTR_LEN(token.token) == 0) {
-        zend_throw_exception(ion_ce_ION_StreamException, "Failed to get internal buffer pointer for token_length/offset", 0);
+        zend_throw_exception(ion_ce_InvalidArgumentException, "Token can't be empty", 0);
         return;
     }
 

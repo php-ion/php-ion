@@ -7,8 +7,14 @@
 #define ERR_ION_AWAIT_INVALID_TIME  "Timeout should be unsigned"
 #define ERR_ION_AWAIT_FAILED        "Unable to add event to queue"
 
+// class ION\Stream
+#define ERR_ION_STREAM_WRITE_FAILED "Failed to write data"
+
 // class ION\URI
 #define ERR_ION_HTTP_URI_FACTORY_UNKNOWN "Unknown option %d"
+
+// class ION\HTTP
+#define ERR_ION_HTTP_REQUEST_INVALID_STREAM "Invalid stream (closed or corrupted)"
 
 // class ION\HTTP\Request
 #define ERR_ION_HTTP_REQUEST_FACTORY_URI     "URI should be instance of ION\\URI"

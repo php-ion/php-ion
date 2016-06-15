@@ -247,7 +247,7 @@ zend_string * pion_http_message_build(zend_object * message_object) {
     // begin headers
     ZEND_HASH_FOREACH_KEY_VAL(message->headers, header_id, header, value) {
         if(!header) {
-            header = ion_cache->interned_strings[header_id - ION_HTTP_HEADERS_STRINGS_OFFSET_TO_LOW];
+            header = ION_STR_CACHE(header_id - ION_HTTP_HEADERS_STRINGS_OFFSET_TO_LOW);
         }
         if(zend_hash_num_elements(Z_ARR_P(value)) == 1) {
             if(pipe_pos + 4 > pipe_size) {

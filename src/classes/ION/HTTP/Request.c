@@ -222,6 +222,13 @@ CLASS_METHOD(ION_HTTP_Request, __toString) {
 
 METHOD_WITHOUT_ARGS(ION_HTTP_Request, __toString)
 
+/** public function ION\HTTP\Request::build() : string */
+CLASS_METHOD(ION_HTTP_Request, build) {
+    RETURN_STR(pion_http_message_build(Z_OBJ_P(getThis())));
+}
+
+METHOD_WITHOUT_ARGS(ION_HTTP_Request, build)
+
 CLASS_METHODS_START(ION_HTTP_Request)
     METHOD(ION_HTTP_Request, parse,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_HTTP_Request, factory,     ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
@@ -231,6 +238,7 @@ CLASS_METHODS_START(ION_HTTP_Request)
     METHOD(ION_HTTP_Request, withRequestTarget,   ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_Request, getRequestTarget,   ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_Request, __toString,  ZEND_ACC_PUBLIC)
+    METHOD(ION_HTTP_Request, build,  ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 
 

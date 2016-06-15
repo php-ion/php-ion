@@ -25,7 +25,7 @@ int ion_http_ws_message_body(websocket_parser * p, const char * at, size_t lengt
     ZEND_ASSERT(parser->parser.websocket->frame);
     ion_http_websocket_frame * frame = parser->parser.websocket->frame;
 
-    if(p->flags & WS_HAS_MASK) {
+    if(websocket_parser_has_mask(p)) {
         websocket_parser_decode(&frame->body->val[p->offset], at, length, p);
     } else {
         memcpy(&frame->body->val[p->offset], at, length);
@@ -147,6 +147,9 @@ CLASS_METHODS_END;
 PHP_MINIT_FUNCTION(ION_HTTP_WebSocketParser) {
     pion_register_class(ION_HTTP_WebSocketParser, "ION\\HTTP\\WebSocketParser", ion_http_websocket_parser_init, CLASS_METHODS(ION_HTTP_WebSocketParser));
     pion_init_std_object_handlers(ION_HTTP_WebSocketParser);
+
+    PION_CLASS_CONST_LONG(ION_HTTP_WebSocketParser, "UUID",  WEBSOCKET_UUID);
+
     pion_set_object_handler(ION_HTTP_WebSocketParser, free_obj, ion_http_websocket_parser_free);
     pion_set_object_handler(ION_HTTP_WebSocketParser, clone_obj, NULL);
 

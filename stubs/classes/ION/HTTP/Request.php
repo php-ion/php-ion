@@ -28,6 +28,8 @@ class Request extends Message {
      */
     public static function factory(array $options = []) : self { }
 
+    public function build() : string { }
+
     /**
      * Retrieves the message's request target.
      *
@@ -133,5 +135,6 @@ class Request extends Message {
     public function withBodyParser($filter) : self { }
 
     public function onBody(callable $filter = null) : Sequence { }
+
 
 }

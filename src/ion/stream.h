@@ -194,6 +194,7 @@ zend_object * ion_stream_new_ex(ion_buffer * buffer, int flags, zend_class_entry
 zend_string * ion_stream_get_name_self(zend_object * stream);
 zend_string * ion_stream_get_name_remote(zend_object * stream);
 zend_string * ion_stream_describe(zend_object * stream);
+zend_bool     ion_stream_write(ion_stream * stream, zend_string * data);
 zend_string * ion_stream_read(ion_stream * stream, size_t size);
 zend_string * ion_stream_read_token(ion_stream * stream, ion_stream_token * token);
 long   ion_stream_search_token(struct evbuffer * buffer, ion_stream_token * token TSRMLS_DC);

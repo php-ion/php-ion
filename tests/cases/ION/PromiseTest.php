@@ -191,6 +191,32 @@ class PromiseTest extends TestCase {
     /**
      * @memcheck
      */
+    public function testDeferredThenDeferred() {
+        $d1 = new Deferred(function() {
+            $this->data["d1.cancel"] = true;
+        });
+        $d2 = new Deferred(function() {
+            $this->data["d2.cancel"] = true;
+        });
+        $d2->then(function ($result) {
+            $this->data["result"] = $this->describe($result);
+        }, function ($result) {
+            $this->data["error"] = $this->describe($result);
+        });
+
+        $d1->then($d2);
+
+        $d2->done("iddqd");
+
+        $this->assertSame([
+            'result' => "iddqd",
+        ], $this->data);
+
+    }
+
+    /**
+     * @memcheck
+     */
     public function testEmptyHeadChain() {
         $promise  = new ResolvablePromise();
         $promise->onDone(function ($result) {

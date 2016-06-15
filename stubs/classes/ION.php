@@ -143,6 +143,16 @@ class ION {
     public static function promise($resolver) : Promise { }
 
     /**
+     * To promise anything
+     *
+     * @param callable $resolver
+     * @param callable $canceller
+     *
+     * @return Deferred
+     */
+    public static function deferred(callable $resolver, callable $canceller = null) : Deferred { }
+
+    /**
      * - load: double
      * - events: int
      * - last_get: double

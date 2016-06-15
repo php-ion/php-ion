@@ -25,11 +25,6 @@ class HTTPTest extends TestCase {
 //
 //
 //            $resp = yield HTTP::request($request, Stream::socket("example.com:80"));
-//            /** @var Response $resp */
-//            if($resp->getStatusCode() == 101) { // websocket
-//                $ws_out = new HTTP\Content\WebSocket($request);
-//                $ws_out->send(Frame::factory("hello"));
-//            }
 //        });
 //
 //        $this->promise(function () {

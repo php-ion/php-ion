@@ -324,7 +324,6 @@ zend_object * ion_promisor_deferred_new_ex(promisor_action_t canceler) {
 }
 
 
-
 int ion_promisor_set_callbacks(zend_object * promise_obj, zval * done, zval * fail) {
     ion_promisor * promise = get_object_instance(promise_obj, ion_promisor);
     if(done) {
