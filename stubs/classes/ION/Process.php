@@ -100,13 +100,24 @@ class Process {
     /**
      * Get user information
      *
-     * @param mixed $user , integer means UID, string means username, null or no argument means current user
+     * @param mixed $user integer means UID, string means user name, null or no argument means current user
      *
-     * @return array information with keys: name, uid, gid, info, home, shell
+     * @return array|false information with keys: name, uid, gid, info, home, shell
      * @throws \RuntimeException if error occurs
      * @throws \InvalidArgumentException if user not found or invalid argument type
      */
-    public static function getUser($user = null) : array { }
+    public static function getUser($user = null) { }
+
+    /**
+     * Get group information
+     *
+     * @param mixed $group integer means GID, string means group name, null or no argument means current user's group
+     *
+     * @return array|false information with keys: name, gid, and members (array of users)
+     * @throws \RuntimeException if error occurs
+     * @throws \InvalidArgumentException if user not found or invalid argument type
+     */
+    public static function getGroup($group = null) { }
 
     /**
      * Set process user

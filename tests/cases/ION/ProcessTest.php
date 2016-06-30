@@ -86,6 +86,34 @@ class ProcessTest extends TestCase {
     /**
      * @memcheck
      */
+    public function testGetGroup() {
+        $actual = Process::getGroup();
+        $expected = posix_getgrgid(posix_getgid());
+        if(!$expected) {
+            $this->markTestSkipped("posix_getgrgid() failed (root?)");
+        }
+        $this->assertSame($expected['name'], $actual['name']);
+        $this->assertSame($expected['gid'], $actual['gid']);
+        $this->assertSame($expected['members'], $actual['members']);
+    }
+
+    /**
+     * @memcheck
+     */
+    public function testGetAnotherGroup() {
+        $actual = Process::getGroup('nobody');
+        $expected = posix_getgrnam('nobody');
+        if(!$expected) {
+            $this->markTestSkipped("posix_getgrnam() failed (root?)");
+        }
+        $this->assertSame($expected['name'], $actual['name']);
+        $this->assertSame($expected['gid'], $actual['gid']);
+        $this->assertSame($expected['members'], $actual['members']);
+    }
+
+    /**
+     * @memcheck
+     */
     public function testFork() {
         $pid = Process::fork();
         if ($pid) {

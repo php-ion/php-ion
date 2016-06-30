@@ -9,7 +9,6 @@ use ION\URI;
 class RequestTest extends TestCase {
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testParseHeaders() {

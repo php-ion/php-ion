@@ -1,5 +1,6 @@
 #include "ion.h"
 #include <signal.h>
+#include <grp.h>
 
 
 zend_class_entry * ion_ce_ION_Process;
@@ -198,27 +199,15 @@ METHOD_WITHOUT_ARGS(ION_Process, getParentPid);
 
 
 struct passwd * ion_get_pw_by_zval(zval * zuser) {
-    struct passwd * pw;
     errno = 0;
+    // todo: add more ZTS there
     if(Z_TYPE_P(zuser) == IS_STRING) {
-        pw = getpwnam(Z_STRVAL_P(zuser));
+        return getpwnam(Z_STRVAL_P(zuser));
     } else if(Z_TYPE_P(zuser) == IS_LONG) {
-        pw = getpwuid((uid_t)Z_LVAL_P(zuser));
+        return getpwuid((uid_t)Z_LVAL_P(zuser));
     } else {
-        zend_throw_exception(ion_class_entry(InvalidArgumentException), ERR_ION_PROCESS_INVALID_UID, 0);
         return NULL;
     }
-    if (NULL == pw) {
-        if(errno) {
-            if(Z_TYPE_P(zuser) == IS_STRING) {
-                zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_NO_USER_INFO_NAMED, Z_STRVAL_P(zuser), strerror(errno));
-            } else {
-                zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_NO_USER_INFO_UID, Z_LVAL_P(zuser), strerror(errno));
-            }
-        }
-        return NULL;
-    }
-    return pw;
 }
 
 /** public function ION\Process::getUser($user = null) : array|bool */
@@ -239,6 +228,10 @@ CLASS_METHOD(ION_Process, getUser) {
 
     pw = ion_get_pw_by_zval(user);
 
+    if(!pw) {
+        RETURN_FALSE;
+    }
+
     array_init(return_value);
 
     add_assoc_long  (return_value, "uid",    pw->pw_uid);
@@ -251,6 +244,57 @@ CLASS_METHOD(ION_Process, getUser) {
 
 METHOD_ARGS_BEGIN(ION_Process, getUser, 0)
     METHOD_ARG(user, 0)
+METHOD_ARGS_END()
+
+
+/** public function ION\Process::getGroup(mixed $group = null) : array|bool */
+CLASS_METHOD(ION_Process, getGroup) {
+    struct group * g;
+    zval   * group = NULL;
+    zval     members;
+    zval     me;
+    int      count;
+
+    ZEND_PARSE_PARAMETERS_START(0, 1)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_ZVAL_EX(group, 1 , 0)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    if(group == NULL) {
+        ZVAL_LONG(&me, getgid());
+        group = &me;
+    }
+
+    errno = 0;
+    // todo: add more ZTS there
+    if(Z_TYPE_P(group) == IS_STRING) {
+        g = getgrnam(Z_STRVAL_P(group));
+    } else if(Z_TYPE_P(group) == IS_LONG) {
+        g = getgrgid((uid_t)Z_LVAL_P(group));
+    } else {
+        zend_throw_exception(ion_class_entry(InvalidArgumentException), ERR_ION_PROCESS_INVALID_GID, 0);
+        return;
+    }
+
+    if(!g) {
+        RETURN_FALSE;
+    }
+
+    array_init(return_value);
+    array_init(&members);
+
+    for (count = 0; g->gr_mem[count] != NULL; count++) {
+        add_next_index_string(&members, g->gr_mem[count]);
+    }
+
+    add_assoc_long  (return_value, "gid",     g->gr_gid);
+    add_assoc_string(return_value, "name",    g->gr_name);
+    add_assoc_zval(return_value,   "members", &members);
+
+}
+
+METHOD_ARGS_BEGIN(ION_Process, getGroup, 0)
+    METHOD_ARG(group, 0)
 METHOD_ARGS_END()
 
 
@@ -267,6 +311,19 @@ CLASS_METHOD(ION_Process, setUser) {
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     pw = ion_get_pw_by_zval(user);
+
+    if(!pw) {
+        if(errno) {
+            if(Z_TYPE_P(user) == IS_STRING) {
+                zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_NO_USER_INFO_NAMED, Z_STRVAL_P(user), strerror(errno));
+            } else {
+                zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_NO_USER_INFO_UID, Z_LVAL_P(user), strerror(errno));
+            }
+        } else {
+            zend_throw_exception(ion_class_entry(InvalidArgumentException), ERR_ION_PROCESS_INVALID_UID, 0);
+        }
+        return;
+    }
 
     array_init(return_value);
 
@@ -380,6 +437,14 @@ CLASS_METHOD(ION_Process, exec) {
         zuser = zend_hash_str_find(Z_ARRVAL_P(options), STRARGS("user"));
         if(zuser) {
             pw = ion_get_pw_by_zval(zuser);
+            if(!pw && errno) {
+                if(Z_TYPE_P(zuser) == IS_STRING) {
+                    zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_NO_USER_INFO_NAMED, Z_STRVAL_P(zuser), strerror(errno));
+                } else {
+                    zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_NO_USER_INFO_UID, Z_LVAL_P(zuser), strerror(errno));
+                }
+                return;
+            }
             zgroup = zend_hash_str_find(Z_ARRVAL_P(options), STRARGS("set_group"));
             if(zend_hash_str_exists(Z_ARRVAL_P(options), STRARGS("set_group"))) {
                 zval zgroup_bool;
@@ -502,6 +567,7 @@ CLASS_METHODS_START(ION_Process)
     METHOD(ION_Process, getPid,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, getParentPid, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, getUser,      ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, getGroup,     ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, setUser,      ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, getPriority,  ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, setPriority,  ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)

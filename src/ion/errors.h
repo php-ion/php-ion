@@ -57,6 +57,7 @@
 #define ERR_ION_PROCESS_SIGNAL_EVENT_FAIL  "Failed to listening signal %d"
 #define ERR_ION_PROCESS_SIGNAL_STORE_FAIL  "Failed to store signal (%d) handler"
 #define ERR_ION_PROCESS_INVALID_UID        "Invalid user identifier"
+#define ERR_ION_PROCESS_INVALID_GID        "Invalid group identifier"
 #define ERR_ION_PROCESS_NO_USER_INFO_NAMED "Failed to get info by user name %s: %s"
 #define ERR_ION_PROCESS_NO_USER_INFO_UID   "Failed to get info by UID %d: %s"
 #define ERR_ION_PROCESS_GET_GID            "Failed to set GID %d: %s"
