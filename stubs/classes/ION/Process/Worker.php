@@ -3,6 +3,7 @@
 namespace ION\Process;
 
 
+use ION\Promise;
 use ION\Sequence;
 
 class Worker {
@@ -24,21 +25,22 @@ class Worker {
 
     public function isChild() : bool {}
 
-    public function setCWD(string $path) : self {}
-
-    public function getCWD() : string {}
-
-    public function setPriority(int $prio) : self {}
-
-    public function getPriority() : int {}
-
-    public function setUser(string $user_name, string $group_name) : self {}
-
-    public function getUserName() : string {}
-
-    public function getGroupName() : string {}
+//    public function setCWD(string $path) : self {}
+//
+//    public function getCWD() : string {}
+//
+//    public function setPriority(int $prio) : self {}
+//
+//    public function getPriority() : int {}
+//
+//    public function setUser(string $user_name, string $group_name) : self {}
+//    public function getUserName() : string {}
+//
+//    public function getGroupName() : string {}
 
     public function run(callable $cb) : self {}
+    public function onConnect() : Promise {}
+    public function onDisconnect() : Promise {}
 
     public function onExit() : Sequence {}
 

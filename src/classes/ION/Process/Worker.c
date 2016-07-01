@@ -28,6 +28,14 @@ void ion_process_worker_free(zend_object * object) {
         zend_object_release(worker->on_exit);
         worker->on_exit = NULL;
     }
+    if(worker->on_connect) {
+        zend_object_release(worker->on_connect);
+        worker->on_connect = NULL;
+    }
+    if(worker->on_disconnect) {
+        zend_object_release(worker->on_disconnect);
+        worker->on_disconnect = NULL;
+    }
     if(worker->parser) {
         efree(worker->parser);
         worker->parser = NULL;
@@ -150,6 +158,14 @@ void ion_process_worker_spawn(ion_process_worker * worker) {
         if(worker->on_exit) {
             zend_object_release(worker->on_exit);
             worker->on_exit = NULL;
+        }
+        if(worker->on_connect) {
+            zend_object_release(worker->on_connect);
+            worker->on_connect = NULL;
+        }
+        if(worker->on_disconnect) {
+            zend_object_release(worker->on_disconnect);
+            worker->on_disconnect = NULL;
         }
 
 //        zend_hash_clean(GION(workers));
@@ -304,6 +320,32 @@ CLASS_METHOD(ION_Process_Worker, onMessage) {
 
 METHOD_WITHOUT_ARGS(ION_Process_Worker, onMessage);
 
+/** public function ION\Process\Worker::onConnect() : ION\Promise */
+CLASS_METHOD(ION_Process_Worker, onConnect) {
+    ion_process_worker * worker = get_this_instance(ion_process_worker);
+
+    if(!worker->on_connect) {
+        worker->on_connect = ION_OBJ(ion_promisor_promise_ex(0));
+    }
+    zend_object_addref(worker->on_connect);
+    RETURN_OBJ(worker->on_connect);
+}
+
+METHOD_WITHOUT_ARGS(ION_Process_Worker, onConnect);
+
+/** public function ION\Process\Worker::onDisconnect() : ION\Promise */
+CLASS_METHOD(ION_Process_Worker, onDisconnect) {
+    ion_process_worker * worker = get_this_instance(ion_process_worker);
+
+    if(!worker->on_disconnect) {
+        worker->on_disconnect = ION_OBJ(ion_promisor_promise_ex(0));
+    }
+    zend_object_addref(worker->on_disconnect);
+    RETURN_OBJ(worker->on_disconnect);
+}
+
+METHOD_WITHOUT_ARGS(ION_Process_Worker, onDisconnect);
+
 /** public function ION\Process\Worker::onExit() : ION\Sequence */
 CLASS_METHOD(ION_Process_Worker, onExit) {
     ion_process_worker * worker = get_this_instance(ion_process_worker);
@@ -368,6 +410,9 @@ CLASS_METHODS_START(ION_Process_Worker)
     METHOD(ION_Process_Worker, isSignaled,     ZEND_ACC_PUBLIC)
     METHOD(ION_Process_Worker, getSignal,      ZEND_ACC_PUBLIC)
     METHOD(ION_Process_Worker, getExitStatus,  ZEND_ACC_PUBLIC)
+    METHOD(ION_Process_Worker, onMessage,      ZEND_ACC_PUBLIC)
+    METHOD(ION_Process_Worker, onConnect,      ZEND_ACC_PUBLIC)
+    METHOD(ION_Process_Worker, onDisconnect,   ZEND_ACC_PUBLIC)
     METHOD(ION_Process_Worker, onMessage,      ZEND_ACC_PUBLIC)
     METHOD(ION_Process_Worker, onExit,         ZEND_ACC_PUBLIC)
     METHOD(ION_Process_Worker, event,          ZEND_ACC_PUBLIC)

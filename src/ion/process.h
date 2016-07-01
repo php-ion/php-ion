@@ -61,6 +61,8 @@ typedef struct _ion_process_worker {
     int           signal;
     pion_cb     * cb;
     zend_object * on_message;
+    zend_object * on_connect;
+    zend_object * on_disconnect;
     zend_object * on_exit;
     websocket_parser * parser;
 } ion_process_worker;
