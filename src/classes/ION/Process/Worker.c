@@ -445,7 +445,9 @@ PHP_RSHUTDOWN_FUNCTION(ION_Process_Worker) {
     zend_hash_clean(GION(workers));
     zend_hash_destroy(GION(workers));
     FREE_HASHTABLE(GION(workers));
-    pion_cb_release(worker_spawn_method);
+    if(worker_spawn_method) { // @todo analyze this
+        pion_cb_release(worker_spawn_method);
+    }
     if(GION(master)) {
         zend_object_release(GION(master));
     }
