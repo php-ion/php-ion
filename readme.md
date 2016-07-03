@@ -44,7 +44,7 @@ ION PHP Extension
 
 - [x] Create workers
 - [ ] Workers' events
-- [ ] Inter-Process Communication
+- [x] Inter-Process Communication
 
 ## [0.6](https://github.com/php-ion/php-ion/milestones/0.6)
 
