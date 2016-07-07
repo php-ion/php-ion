@@ -33,7 +33,7 @@ void ion_process_exec_disconnect(ion_buffer * b, short what, void * ctx) {
     ion_process_child * child = (ion_process_child *)ctx;
     if(what & (BEV_EVENT_ERROR | BEV_EVENT_EOF)) {
         child->flags |= ION_WORKER_DISCONNECTED;
-        zend_hash_index_add_ptr(GION(disconnected), (zend_ulong) child->pid, NULL);
+        zend_hash_index_add_ptr(GION(childs), (zend_ulong) child->pid, NULL);
     }
 }
 

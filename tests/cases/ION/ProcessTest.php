@@ -163,7 +163,7 @@ class ProcessTest extends TestCase {
 	 *
 	 * @memcheck
 	 */
-	public function _testExecSimple() {
+	public function testExecSimple() {
 		$cmd = "sleep 0.1; echo 'stderr'>&2; echo 'stdout'";
 		$this->promise(function () use ($cmd) {
 			$res = yield Process::exec($cmd);
@@ -186,7 +186,7 @@ class ProcessTest extends TestCase {
 	/**
 	 * @memcheck
 	 */
-	public function _testExecExtended() {
+	public function testExecExtended() {
 		$cmd = "sleep 0.1; echo \$_ION_EXEC_LINE;";
 		$this->promise(function () use ($cmd) {
 			$deferred = Process::exec($cmd, [
