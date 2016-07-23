@@ -45,21 +45,10 @@ pion_cb * pion_cb_create_from_zval(zval * zcb) {
     }
 }
 
-pion_cb * pion_cb_fetch_method(const char * class_name, const char * method_name) {
+pion_cb * pion_cb_fetch_method_ce(zend_class_entry * ce, const char * method_name) {
     pion_cb * cb;
     zend_function * fptr;
-    zend_class_entry *ce;
-    char * function_name_lc;
-    zend_string * class_name_zs = zend_string_init(class_name, strlen(class_name), 0);
-
-    ce = zend_lookup_class(class_name_zs);
-    zend_string_free(class_name_zs);
-
-    if (ce == NULL) {
-        return NULL;
-    }
-
-    function_name_lc = zend_str_tolower_dup(method_name, (int) strlen(method_name));
+    char * function_name_lc = zend_str_tolower_dup(method_name, (int) strlen(method_name));
 
     fptr = zend_hash_str_find_ptr(&ce->function_table, function_name_lc, (int) strlen(method_name));
 
@@ -91,6 +80,28 @@ pion_cb * pion_cb_fetch_method(const char * class_name, const char * method_name
 
     return cb;
 }
+
+pion_cb * pion_cb_create_from_object(zend_object * object, const char * method_name) {
+    pion_cb * cb = pion_cb_fetch_method_ce(object->ce, method_name);
+    cb->fci->object = object;
+    zend_object_addref(object);
+    return cb;
+}
+
+pion_cb * pion_cb_fetch_method(const char * class_name, const char * method_name) {
+    zend_class_entry *ce;
+    zend_string * class_name_zs = zend_string_init(class_name, strlen(class_name), 0);
+
+    ce = zend_lookup_class(class_name_zs);
+    zend_string_free(class_name_zs);
+
+    if (ce == NULL) {
+        return NULL;
+    }
+
+    return pion_cb_fetch_method_ce(ce, method_name);
+}
+
 
 void pion_cb_release(pion_cb * cb) {
     pion_cb_free(cb);
@@ -128,7 +139,7 @@ pion_cb * pion_cb_dup(pion_cb * proto) {
     cb->fci->no_separation = proto->fci->no_separation;
 
     if(proto->fci->object) {
-        OBJ_ADDREF(proto->fci->object);
+        zend_object_addref(proto->fci->object);
         cb->fci->object = proto->fci->object;
 //        zval obj_from, obj_to;
 //        ZVAL_OBJ(&obj_from, cb->fci->object);
@@ -147,7 +158,7 @@ pion_cb * pion_cb_dup(pion_cb * proto) {
         if(proto->fci->object == proto->fcc->object) {
             cb->fcc->object = cb->fci->object;
         } else {
-            OBJ_ADDREF(proto->fcc->object);
+            zend_object_addref(proto->fcc->object);
             cb->fcc->object = proto->fcc->object;
 //            zval obj_from, obj_to;
 //            ZVAL_OBJ(&obj_from, cb->fcc->object);

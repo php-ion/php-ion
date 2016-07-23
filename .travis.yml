@@ -7,26 +7,25 @@ addons:
       - libevent-dev
       - gdb
       - make
-#      - php7-dbg
-#      - php7-dev
       - lcov
 
 php:
   - 7.0
+  - 7.1
 
 notifications:
-    email:
-       on_failure: change
+  email:
+    on_failure: change
 
 os:
   - linux
 
 env:
-    matrix:
-      - USE_ZEND_ALLOC=0
-      - USE_ZEND_ALLOC=1
+  matrix:
+    - USE_ZEND_ALLOC=0
+    - USE_ZEND_ALLOC=1
 
-
+# Build extenstion and load phpunit + another deps
 before_script:
   - gem install coveralls-lcov
   - bin/ionizer.php --system --phpize --clean --make --coverage
@@ -38,7 +37,11 @@ script: bin/ionizer.php --test --use-gdb
 
 # Send code coverage
 after_success:
-  - lcov --directory . --capture --output-file coverage.info # capture coverage info
-  - lcov --remove coverage.info '*/src/deps/*' '/usr/*' '/opt/*' '*/Zend/*' 'classes/*.h' --output-file coverage.info # filter out system and test code
-  - lcov --list coverage.info # debug before upload
-  - coveralls-lcov coverage.info # uploads to coveralls
+  # capture coverage info
+  - lcov --directory . --capture --output-file coverage.info
+  # filter out system and test code
+  - lcov --remove coverage.info '*/src/deps/*' '/usr/*' '/opt/*' '*/Zend/*' 'classes/*.h' --output-file coverage.info
+  # debug before upload
+  - lcov --list coverage.info
+  # uploads to coveralls
+  - coveralls-lcov coverage.info

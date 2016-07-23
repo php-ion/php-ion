@@ -7,24 +7,28 @@ use ION\Test\TestCase;
 
 class WorkerTest extends TestCase {
 
-    public function testNoop() {
-        // stub
-    }
     /**
      * @memcheck
+     * @requires OS Darwin
      */
-    public function _testCreate() {
+    public function testCreate() {
         $worker = new Worker();
         $this->assertEquals(0, $worker->getPID());
         $this->assertFalse($worker->isAlive());
         $this->assertFalse($worker->isStarted());
         $this->assertFalse($worker->isSignaled());
         $this->assertEquals(-1, $worker->getExitStatus());
+        $worker->onConnect()->then(function (Worker $w) {
+            // do something
+        });
+        $worker->onDisconnect()->then(function (Worker $w) {
+            // do something
+        });
         $worker->onExit()->then(function (Worker $w) {
             // do something
         });
         $worker->onMessage()->then(function ($msg) {
-//             do something
+            // do something
         });
 //        $worker->run(function (Worker $w) {
             // do something
@@ -32,34 +36,37 @@ class WorkerTest extends TestCase {
     }
 
     /**
-     * @group d ev
+     * @group dev
      */
-    public function _testSpawn() {
+    public function testSpawn() {
         $this->data["master"] = getmypid();
         $worker = new Worker();
-        $worker->run(function () {
-            var_dump("i am worker ".getmypid());
+        $worker->onConnect()->then(function (Worker $w) {
+            $this->data["connected"] = true;
+        });
+        $worker->onDisconnect()->then(function (Worker $w) {
+            $this->data["disconnected"] = true;
+        });
+        $worker->run(function (Worker $w) {
             sleep(2);
-            var_dump("i am exit");
+            var_dump(getmypid().": i am exit");
             ob_flush();
             exit(12);
         });
         $worker->onExit()->then(function (Worker $w) {
-            var_dump("exit");
             $this->data["cb_pid"] = getmypid();
             $this->data["child_pid"] = $w->getPID();
             $this->data["is_exit"]     = $w->isAlive();
             $this->data["is_child"]    = $w->isChild();
             $this->data["is_signaled"] = $w->isSignaled();
             $this->data["status"]      = $w->getExitStatus();
-//            $this->out($this->data);
             $this->stop();
-            \ION::stop();
         });
-
         $this->loop();
 
-        var_dump($this->data);
+        $this->assertEquals([
+            'master' => getmypid(),
+        ], $this->data);
     }
 
     public function _testMessaging() {

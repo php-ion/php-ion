@@ -88,7 +88,7 @@ class Signals {
      * tty output for background process
      */
     const SIGTTOU = 21;
-    /*
+    /**
      * Urgent data available on socket
      */
     const SIGURG = 22;

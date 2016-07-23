@@ -62,7 +62,8 @@ set(ION_SOURCE_FILES
 
     src/classes/ION/Process.c
     src/classes/ION/Process/ExecResult.c
-    src/classes/ION/Process/Worker.c
+    src/classes/ION/Process/IPC.c
+    src/classes/ION/Process/ChildProcess.c
 
     src/classes/ION/FS.c
     src/classes/ION/Crypto.c

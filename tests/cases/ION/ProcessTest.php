@@ -160,7 +160,7 @@ class ProcessTest extends TestCase {
     }
 
 	/**
-	 *
+	 * @requires OS Darwin
 	 * @memcheck
 	 */
 	public function testExecSimple() {
@@ -184,6 +184,7 @@ class ProcessTest extends TestCase {
 	}
 
 	/**
+     * @requires OS Darwin
 	 * @memcheck
 	 */
 	public function testExecExtended() {

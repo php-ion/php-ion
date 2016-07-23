@@ -12,7 +12,9 @@ typedef struct pion_cb {
 /* Create native callback */
 pion_cb   * pion_cb_create(zend_fcall_info * fci_ptr, zend_fcall_info_cache * fcc_ptr);
 pion_cb   * pion_cb_create_from_zval(zval * zcb);
+pion_cb   * pion_cb_create_from_object(zend_object * object, const char * method_name);
 pion_cb   * pion_cb_fetch_method(const char * class_name, const char * method_name);
+pion_cb   * pion_cb_fetch_method_ce(zend_class_entry * ce, const char * method_name);
 void        pion_cb_release(pion_cb * cb);
 void        pion_cb_free(pion_cb *cb);
 zend_bool   pion_verify_arg_type(pion_cb * cb, uint32_t arg_num, zval * arg);

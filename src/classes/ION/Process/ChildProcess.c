@@ -4,7 +4,6 @@ zend_object_handlers ion_oh_ION_Process_Worker;
 zend_class_entry * ion_ce_ION_Process_Worker;
 websocket_parser_settings parser_settings;
 
-pion_cb * worker_spawn_method = NULL;
 
 zend_object * ion_process_worker_init(zend_class_entry * ce) {
     ion_process_worker * worker = ecalloc(1, sizeof(ion_process_worker));
@@ -75,6 +74,13 @@ void _ion_worker_link_notify(ion_buffer * bev, short what, void * ctx) {
     ION_CB_BEGIN();
     ion_process_worker * worker = (ion_process_worker *) ctx;
     if(what & BEV_EVENT_EOF) {
+        if(worker->on_disconnect) {
+            zval container;
+            ZVAL_OBJ(&container, ION_OBJ(worker));
+            zval_add_ref(&container);
+            ion_promisor_done(worker->on_disconnect, &container);
+            zval_ptr_dtor(&container);
+        }
         usleep(100000);
         int status = 0;
         pid_t p = waitpid(worker->pid, &status, WNOHANG | WUNTRACED);
@@ -121,7 +127,7 @@ void ion_process_worker_spawn(ion_process_worker * worker) {
     int pid = 0;
     ion_buffer * master_buffer;
     ion_buffer * worker_buffer;
-
+//
     if(ion_buffer_pair(&master_buffer, &worker_buffer) == false) {
         return;
     }
@@ -137,19 +143,25 @@ void ion_process_worker_spawn(ion_process_worker * worker) {
         return;
     } else if(pid) { // parent
         worker->flags |= ION_WORKER_CHILD | ION_WORKER_STARTED;
-        worker->buffer = master_buffer;
+//        worker->buffer = master_buffer;
         bufferevent_disable(worker_buffer, EV_READ | EV_WRITE);
         bufferevent_free(worker_buffer);
         worker->pid = pid;
         ion_process_add_child(pid, ION_PROC_CHILD_WORKER, ION_OBJ(worker));
+        if(worker->on_connect) {
+            zval container;
+            ZVAL_OBJ(&container, ION_OBJ(worker));
+            zval_add_ref(&container);
+            ion_promisor_done(worker->on_connect, &container);
+            zval_ptr_dtor(&container);
+        }
     } else { // child
         if(event_reinit(GION(base)) == FAILURE) {
             zend_error(E_NOTICE, "Some events could not be restarted");
         }
         worker->flags |= ION_WORKER_MASTER | ION_WORKER_STARTED;
-        worker->buffer = worker_buffer;
+//        worker->buffer = worker_buffer;
         worker->pid    = getppid();
-        PHPDBG("0");
 
         if(worker->on_message) {
             zend_object_release(worker->on_message);
@@ -180,18 +192,14 @@ void ion_process_worker_spawn(ion_process_worker * worker) {
         GION(master) = ION_OBJ(worker);
 
         if(worker->cb) {
-            PHPDBG("1");
             zval container;
             ZVAL_OBJ(&container, ION_OBJ(worker));
             zval_add_ref(&container);
-            PHPDBG("2");
 
-//            pion_cb_void_with_1_arg(worker->cb, &container);
+            pion_cb_void_with_1_arg(worker->cb, &container);
             zval_ptr_dtor(&container);
-//            pion_cb_release(worker->cb);
+            pion_cb_release(worker->cb);
             worker->cb = NULL;
-            PHPDBG("3");
-
         }
     }
 }
@@ -325,7 +333,7 @@ CLASS_METHOD(ION_Process_Worker, onConnect) {
     ion_process_worker * worker = get_this_instance(ion_process_worker);
 
     if(!worker->on_connect) {
-        worker->on_connect = ION_OBJ(ion_promisor_promise_ex(0));
+        worker->on_connect = ION_OBJ(ion_promisor_promise());
     }
     zend_object_addref(worker->on_connect);
     RETURN_OBJ(worker->on_connect);
@@ -338,7 +346,7 @@ CLASS_METHOD(ION_Process_Worker, onDisconnect) {
     ion_process_worker * worker = get_this_instance(ion_process_worker);
 
     if(!worker->on_disconnect) {
-        worker->on_disconnect = ION_OBJ(ion_promisor_promise_ex(0));
+        worker->on_disconnect = ION_OBJ(ion_promisor_promise());
     }
     zend_object_addref(worker->on_disconnect);
     RETURN_OBJ(worker->on_disconnect);
@@ -359,21 +367,12 @@ CLASS_METHOD(ION_Process_Worker, onExit) {
 
 METHOD_WITHOUT_ARGS(ION_Process_Worker, onExit);
 
-/** public function ION\Process\Worker::event(string $name) : ION\Process\Event */
-CLASS_METHOD(ION_Process_Worker, event) {
-//    ion_process_worker * worker = get_this_instance(ion_process_worker);
-
-
-}
-
-METHOD_ARGS_BEGIN(ION_Process_Worker, event, 1)
-    METHOD_ARG_STRING(name, 0)
-METHOD_ARGS_END();
 
 /** public function ION\Process\Worker::run(string $name) : self */
 CLASS_METHOD(ION_Process_Worker, run) {
     ion_process_worker * worker = get_this_instance(ion_process_worker);
     zval * zcb = NULL;
+    pion_cb * worker_spawn_method = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_ZVAL(zcb)
@@ -383,7 +382,7 @@ CLASS_METHOD(ION_Process_Worker, run) {
         pion_cb_release(worker->cb);
     }
     worker->cb = pion_cb_create_from_zval(zcb);
-
+    worker_spawn_method = pion_cb_fetch_method("ION\\Process\\Worker", "_spawn");
     ion_deferred_queue_push(worker_spawn_method, Z_OBJ_P(getThis()));
 
     RETURN_THIS();
@@ -414,7 +413,6 @@ CLASS_METHODS_START(ION_Process_Worker)
     METHOD(ION_Process_Worker, onConnect,      ZEND_ACC_PUBLIC)
     METHOD(ION_Process_Worker, onDisconnect,   ZEND_ACC_PUBLIC)
     METHOD(ION_Process_Worker, onExit,         ZEND_ACC_PUBLIC)
-    METHOD(ION_Process_Worker, event,          ZEND_ACC_PUBLIC)
     METHOD(ION_Process_Worker, run,            ZEND_ACC_PUBLIC)
     METHOD(ION_Process_Worker, _spawn,         ZEND_ACC_PRIVATE)
 CLASS_METHODS_END;
@@ -436,7 +434,6 @@ PHP_MINIT_FUNCTION(ION_Process_Worker) {
 PHP_RINIT_FUNCTION(ION_Process_Worker) {
     ALLOC_HASHTABLE(GION(workers));
     zend_hash_init(GION(workers), 128, NULL, zval_ptr_dtor_wrapper, 0);
-    worker_spawn_method = pion_cb_fetch_method("ION\\Process\\Worker", "_spawn");
     return SUCCESS;
 }
 
@@ -444,9 +441,7 @@ PHP_RSHUTDOWN_FUNCTION(ION_Process_Worker) {
     zend_hash_clean(GION(workers));
     zend_hash_destroy(GION(workers));
     FREE_HASHTABLE(GION(workers));
-    if(worker_spawn_method) { // @todo analyze this
-        pion_cb_release(worker_spawn_method);
-    }
+
     if(GION(master)) {
         zend_object_release(GION(master));
     }

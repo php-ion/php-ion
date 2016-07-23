@@ -10,6 +10,7 @@ extern ION_API zend_class_entry * ion_ce_ION_Process;
 extern ION_API zend_class_entry * ion_ce_ION_ProcessException;
 extern ION_API zend_class_entry * ion_ce_ION_Process_ExecResult;
 extern ION_API zend_class_entry * ion_ce_ION_Process_Worker;
+extern ION_API zend_class_entry * ion_ce_ION_Process_IPC;
 
 extern ION_API struct passwd * ion_get_pw_by_zval(zval * zuser);
 
@@ -45,11 +46,37 @@ enum ion_worker_flags {
     ION_WORKER_DISCONNECTED = 1 << 8,
 };
 
+#define ION_IPC_CONNECTED 0x1
+    // opcodes
+#define ION_IPC_DATA    WS_OP_CONTINUE
+#define ION_IPC_STREAM  WS_OP_TEXT
+#define ION_IPC_FD      WS_OP_BINARY
+    //    WS_OP_CLOSE    = 0x8,
+    //    WS_OP_PING     = 0x9,
+#define ION_IPC_LISTENER  0x10
+    //    WS_OP_PONG     = 0xA,
+
+// marks
+#define ION_IPC_FIN  WS_FINAL_FRAME
+
 typedef struct _ion_process_child {
     zend_object   std;
     uint          flags;
     pid_t         pid;
 } ion_process_child;
+
+// IPC object instance
+typedef struct _ion_process_ipc {
+    zend_object   std;
+    uint32_t      flags;
+    zval          ctx;
+    ion_buffer  * buffer;
+    zend_object * on_message;
+    zend_object * on_connect;
+    zend_object * on_disconnect;
+    websocket_parser * parser;
+    zend_string * frame_body;
+} ion_process_ipc;
 
 typedef struct _ion_process_worker {
     zend_object   std;
