@@ -36,7 +36,6 @@ class WorkerTest extends TestCase {
     }
 
     /**
-     * @group dev
      */
     public function testSpawn() {
         $this->data["master"] = getmypid();

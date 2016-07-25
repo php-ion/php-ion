@@ -9,11 +9,9 @@ use ION\Sequence;
 class IPC {
 
     /**
-     * @param mixed $ctx
-     *
-     * @return array|IPC[]
+     * @return IPC[]
      */
-    public static function create($ctx) : array {}
+    public static function create() : array {}
 
     /**
      * @return bool

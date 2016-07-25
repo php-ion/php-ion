@@ -119,6 +119,8 @@ CLASS_METHOD(ION_Process_IPC, create) {
     array_init(return_value);
     ZVAL_OBJ(&zone, one);
     ZVAL_OBJ(&ztwo, two);
+    zval_add_ref(&zone);
+    zval_add_ref(&ztwo);
     add_next_index_zval(return_value, &zone);
     add_next_index_zval(return_value, &ztwo);
 }
