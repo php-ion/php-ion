@@ -9,9 +9,12 @@ use ION\Sequence;
 class IPC {
 
     /**
-     * @return IPC[]
+     * @param mixed $ctx1
+     * @param mixed $ctx2
+     *
+     * @return array|IPC[]
      */
-    public static function create() : array {}
+    public static function create($ctx1 = null, $ctx2 = null) : array {}
 
     /**
      * @return bool
@@ -42,6 +45,11 @@ class IPC {
      * @return Sequence
      */
     public function message() : Sequence {}
+
+    /**
+     * @return mixed
+     */
+    public function getContext() {}
 
     public function send($data) {}
 }

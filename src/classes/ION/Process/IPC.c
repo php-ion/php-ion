@@ -5,8 +5,8 @@ zend_class_entry * ion_ce_ION_Process_IPC;
 websocket_parser_settings parser_settings;
 
 zend_object * ion_process_ipc_init(zend_class_entry * ce) {
-    ion_process_ipc * ipc = emalloc(sizeof(ion_process_ipc));
-    ipc->parser = emalloc(sizeof(websocket_parser));
+    ion_process_ipc * ipc = ecalloc(1, sizeof(ion_process_ipc));
+    ipc->parser = ecalloc(1, sizeof(websocket_parser));
     websocket_parser_init(ipc->parser);
     ipc->parser->data = ipc;
     ZVAL_UNDEF(&ipc->ctx);
@@ -83,46 +83,55 @@ void ion_worker_ipc_notification(ion_buffer * bev, short what, void * ctx) {
     ION_CB_END();
 }
 
-int ion_ipc_create(zend_object ** one, zend_object ** two) {
-    zval zone;
-    zval ztwo;
+int ion_ipc_create(zval * one, zval * two, zval * ctx1, zval * ctx2) {
     ion_buffer * buffer_one = NULL;
     ion_buffer * buffer_two = NULL;
+    ion_process_ipc * ipc1;
+    ion_process_ipc * ipc2;
     if(!ion_buffer_pair(&buffer_one, &buffer_two)) {
         // @todo error
         return FAILURE;
     }
-    object_init_ex(&zone, ion_class_entry(ION_Process_IPC));
-    object_init_ex(&ztwo, ion_class_entry(ION_Process_IPC));
-    *one = Z_OBJ(zone);
-    *two = Z_OBJ(ztwo);
-    bufferevent_setcb(buffer_one, ion_worker_ipc_incoming, NULL, ion_worker_ipc_notification, Z_OBJ(zone));
-    bufferevent_setcb(buffer_two, ion_worker_ipc_incoming, NULL, ion_worker_ipc_notification, Z_OBJ(ztwo));
-    get_object_instance(one, ion_process_ipc)->buffer = buffer_one;
-    get_object_instance(two, ion_process_ipc)->buffer = buffer_one;
+    object_init_ex(one, ion_class_entry(ION_Process_IPC));
+    object_init_ex(two, ion_class_entry(ION_Process_IPC));
+    ipc1 = get_object_instance(Z_OBJ_P(one), ion_process_ipc);
+    ipc2 = get_object_instance(Z_OBJ_P(two), ion_process_ipc);
+    bufferevent_setcb(buffer_one, ion_worker_ipc_incoming, NULL, ion_worker_ipc_notification, ipc1);
+    bufferevent_setcb(buffer_two, ion_worker_ipc_incoming, NULL, ion_worker_ipc_notification, ipc2);
+    ipc1->buffer = buffer_one;
+    ipc2->buffer = buffer_two;
+    if(ctx1) {
+        ZVAL_COPY(&ipc1->ctx, ctx1);
+    }
+    if(ctx2) {
+        ZVAL_COPY(&ipc2->ctx, ctx2);
+    }
 
     return SUCCESS;
 }
 
-/** public function ION\Process\IPC::create() : ION\IPC[] */
+/** public function ION\Process\IPC::create(mixed $ctx1 = null, mixed $ctx2 = null) : ION\IPC[] */
 CLASS_METHOD(ION_Process_IPC, create) {
-    zend_object * one = NULL;
-    zend_object * two = NULL;
-    zval zone;
-    zval ztwo;
+    zval one;
+    zval two;
+    zval * ctx1 = NULL;
+    zval * ctx2 = NULL;
+//    ZVAL_UNDEF(ctx1);
+//    ZVAL_UNDEF(ctx2);
 
-    if(ion_ipc_create(&one, &two) == FAILURE) {
+    ZEND_PARSE_PARAMETERS_START(0, 2)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_ZVAL(ctx1)
+        Z_PARAM_ZVAL(ctx2)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    if(ion_ipc_create(&one, &two, ctx1, ctx2) == FAILURE) {
         // @todo error
-
         return;
     }
     array_init(return_value);
-    ZVAL_OBJ(&zone, one);
-    ZVAL_OBJ(&ztwo, two);
-    zval_add_ref(&zone);
-    zval_add_ref(&ztwo);
-    add_next_index_zval(return_value, &zone);
-    add_next_index_zval(return_value, &ztwo);
+    add_next_index_zval(return_value, &one);
+    add_next_index_zval(return_value, &two);
 }
 
 METHOD_WITHOUT_ARGS(ION_Process_IPC, create);
@@ -215,6 +224,16 @@ METHOD_ARGS_BEGIN(ION_Process_IPC, send, 1)
     ARGUMENT(name, IS_STRING)
 METHOD_ARGS_END();
 
+/** public function ION\Process\IPC::getContext() : mixed */
+CLASS_METHOD(ION_Process_IPC, getContext) {
+    ion_process_ipc * ipc = get_this_instance(ion_process_ipc);
+    if(!Z_ISUNDEF(ipc->ctx)) {
+        ZVAL_COPY(return_value, &ipc->ctx);
+    }
+}
+
+METHOD_WITHOUT_ARGS(ION_Process_IPC, getContext);
+
 
 CLASS_METHODS_START(ION_Process_IPC)
     METHOD(ION_Process_IPC, create,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
@@ -224,6 +243,7 @@ CLASS_METHODS_START(ION_Process_IPC)
     METHOD(ION_Process_IPC, connected,      ZEND_ACC_PUBLIC)
     METHOD(ION_Process_IPC, disconnected,   ZEND_ACC_PUBLIC)
     METHOD(ION_Process_IPC, send,           ZEND_ACC_PUBLIC)
+    METHOD(ION_Process_IPC, getContext,     ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Process_IPC) {
