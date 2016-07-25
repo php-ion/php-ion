@@ -7,7 +7,7 @@ ION PHP Extension
 * **Language:** C
 * **OS:** linux, osx, freebsd
 * **PHP version:** 7.0+
-* **Stage:** develop (RC in March 2016)
+* **Stage:** develop
 * **State:** [![Build Status](https://travis-ci.org/php-ion/php-ion.png?branch=master)](https://travis-ci.org/php-ion/php-ion) [![Coverage Status](https://coveralls.io/repos/php-ion/php-ion/badge.svg?branch=master&service=github)](https://coveralls.io/github/php-ion/php-ion?branch=master)
 * **Version:** [![Latest Stable Version](https://poser.pugx.org/phpion/phpion/v/stable)](https://packagist.org/packages/phpion/phpion) [![Latest Unstable Version](https://poser.pugx.org/phpion/phpion/v/unstable)](https://packagist.org/packages/phpion/phpion)
 * **Discussion:** [PHP ION Forum](https://groups.google.com/forum/#!forum/php-ion)
@@ -42,9 +42,11 @@ ION PHP Extension
 
 ## [0.5](https://github.com/php-ion/php-ion/milestones/0.5)
 
-- [x] Create workers
-- [ ] Workers' events
-- [x] Inter-Process Communication
+- [x] Valid fork
+- [x] Create childs
+- [x] Manage childs
+- [ ] Inter-Process Communication
+- [ ] Child exit event
 
 ## [0.6](https://github.com/php-ion/php-ion/milestones/0.6)
 
