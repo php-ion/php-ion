@@ -54,9 +54,16 @@ int ion_process_ipc_message_end(websocket_parser * parser) {
     ion_process_ipc * ipc = parser->data;
 
     if(ipc->on_message) {
-        ion_promisor_done_string(ipc->on_message, ipc->frame_body, 1);
+        if (ZSTR_LEN(ipc->frame_body) > 0) {
+            ZSTR_VAL(ipc->frame_body)[ZSTR_LEN(ipc->frame_body)] = '\0';
+        }
+        zval c;
+        ZVAL_STR(&c, ipc->frame_body);
+        zval_add_ref(&c);
+        ion_promisor_sequence_invoke(ipc->on_message, &c);
+        zval_ptr_dtor(&c);
     }
-    zend_string_delref(ipc->frame_body);
+    zend_string_release(ipc->frame_body);
     return 0;
 }
 
@@ -67,6 +74,7 @@ void ion_worker_ipc_incoming(ion_buffer * bev, void * ctx) {
 
     zend_string * data = ion_buffer_read_all(ipc->buffer);
     websocket_parser_execute(ipc->parser, &parser_settings, data->val, data->len);
+    zend_string_release(data);
     ION_CB_END();
 }
 
@@ -167,7 +175,7 @@ CLASS_METHOD(ION_Process_IPC, message) {
     ion_process_ipc * ipc = get_this_instance(ion_process_ipc);
 
     if(!ipc->on_message) {
-        ipc->on_message = ION_OBJ(ion_promisor_sequence());
+        ipc->on_message = ION_OBJ(ion_promisor_sequence_ex(0));
     }
     zend_object_addref(ipc->on_message);
     RETURN_OBJ(ipc->on_message);
