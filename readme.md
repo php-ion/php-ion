@@ -45,8 +45,9 @@ ION PHP Extension
 - [x] Valid fork
 - [x] Create childs
 - [x] Manage childs
-- [ ] Inter-Process Communication
-- [ ] Child exit event
+- [x] Inter-Process Communication
+- [x] Child exit event
+- [ ] Control childs
 
 ## [0.6](https://github.com/php-ion/php-ion/milestones/0.6)
 

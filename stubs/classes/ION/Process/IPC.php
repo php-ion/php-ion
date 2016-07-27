@@ -9,8 +9,8 @@ use ION\Sequence;
 class IPC {
 
     /**
-     * @param mixed $ctx1
-     * @param mixed $ctx2
+     * @param mixed $ctx1 context for IPC channel one
+     * @param mixed $ctx2 context for IPC channel two
      *
      * @return array|IPC[]
      */
@@ -20,16 +20,6 @@ class IPC {
      * @return bool
      */
     public function isConnected() : bool {}
-
-    /**
-     * @return bool
-     */
-    public function isDisconnected() : bool {}
-
-    /**
-     * @return Promise
-     */
-    public function connected() : Promise {}
 
     /**
      * @return Promise

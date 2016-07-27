@@ -31,6 +31,10 @@ void ion_process_ipc_free(zend_object * object) {
         efree(ipc->parser);
         ipc->parser = NULL;
     }
+    if(ipc->buffer) {
+        bufferevent_disable(ipc->buffer, EV_READ | EV_WRITE);
+        bufferevent_free(ipc->buffer);
+    }
 }
 
 

@@ -8,6 +8,10 @@ use ION\Test\TestCase;
 class IPCTest extends TestCase {
 
     /**
+     * @var IPC
+     */
+    public $tmp;
+    /**
      * @memcheck
      */
     public function testCreate() {
@@ -18,7 +22,6 @@ class IPCTest extends TestCase {
         $this->assertInstanceOf(IPC::class, $one);
         $this->assertInstanceOf(IPC::class, $two);
 
-        $one->connected()->then(function () {});
         $one->disconnected()->then(function () {});
         $one->message()->then(function () {});
 
@@ -28,7 +31,6 @@ class IPCTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testCommunicate() {
@@ -38,19 +40,47 @@ class IPCTest extends TestCase {
         $one->message()->then(function ($data) {
             $this->data[] = $data;
         });
-        \ION::await(0.05)->then(function () use($two) {
+        \ION::await(0.02)->then(function () use($two) {
             $two->send("test1");
         });
-        \ION::await(0.1)->then(function () use($two) {
+        \ION::await(0.04)->then(function () use($two) {
             $two->send("test2");
         });
-        \ION::await(0.15)->then(function () use($two) {
+        \ION::await(0.06)->then(function () use($two) {
             $this->stop();
         });
 
         \ION::dispatch();
         $this->assertEquals([
             "test1", "test2"
+        ], $this->data);
+    }
+
+    /**
+     * @memcheck
+     */
+    public function testDisconnect() {
+        list($one, $this->tmp) = IPC::create("one1", "two2");
+        /* @var IPC $one */
+        /* @var IPC $two */
+        $one->message()->then(function ($data) {
+            $this->data[] = $data;
+        });
+        $one->disconnected()->then(function ($ctx) {
+            $this->data[] = $ctx;
+        });
+        \ION::await(0.02)->then(function () {
+            $this->tmp->send("test1");
+        });
+        \ION::await(0.03)->then(function () {
+            unset($this->tmp);
+        });
+        \ION::await(0.04)->then(function () {
+            $this->stop();
+        });
+        \ION::dispatch();
+        $this->assertEquals([
+            "test1", "one1"
         ], $this->data);
     }
 }
