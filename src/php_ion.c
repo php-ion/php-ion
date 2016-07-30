@@ -88,7 +88,7 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_Process);
     STARTUP_MODULE(ION_Process_ExecResult);
     STARTUP_MODULE(ION_Process_IPC);
-//    STARTUP_MODULE(ION_Process_Worker);
+    STARTUP_MODULE(ION_Process_ChildProcess);
     STARTUP_MODULE(ION_URI);
     STARTUP_MODULE(ION_Stream_StorageAbstract);
     STARTUP_MODULE(ION_Stream_Storage);
@@ -168,13 +168,13 @@ PHP_RINIT_FUNCTION(ion) {
     ACTIVATE_MODULE(ION_DNS);
     ACTIVATE_MODULE(ION_FS);
     ACTIVATE_MODULE(ION_Process);
-//    ACTIVATE_MODULE(ION_Process_Worker);
+    ACTIVATE_MODULE(ION_Process_ChildProcess);
     return SUCCESS;
 }
 
 /* End SAPI request */
 PHP_RSHUTDOWN_FUNCTION(ion) {
-//    DEACTIVATE_MODULE(ION_Process_Worker);
+    DEACTIVATE_MODULE(ION_Process_ChildProcess);
     DEACTIVATE_MODULE(ION_Process);
     DEACTIVATE_MODULE(ION_FS);
     DEACTIVATE_MODULE(ION_DNS);

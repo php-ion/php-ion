@@ -12,7 +12,7 @@ void ion_process_sigchld(evutil_socket_t signal, short flags, void * arg) {
     } else {
         child = zend_hash_index_find_ptr(GION(childs), (zend_ulong) pid);
         if(child) {
-            if(ion_procces_is_exec(child)) {
+            if(ion_process_is_exec(child)) {
                 ion_process_exec_exit(child, status);
             } else {
                 ion_process_worker_exit(child, status);
@@ -116,7 +116,7 @@ void ion_process_worker_dtor(zend_object * worker) {
 void ion_process_child_dtor(zval * pz) {
     zend_object * child = Z_OBJ_P(pz);
 
-    if(ion_procces_is_exec(child)) {
+    if(ion_process_is_exec(child)) {
         ion_process_exec_dtor(child);
     } else {
         ion_process_worker_dtor(child);

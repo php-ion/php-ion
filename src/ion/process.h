@@ -59,12 +59,6 @@ enum ion_worker_flags {
 // marks
 #define ION_IPC_FIN  WS_FINAL_FRAME
 
-typedef struct _ion_process_child {
-    zend_object   std;
-    uint          flags;
-    pid_t         pid;
-} ion_process_child;
-
 // IPC object instance
 typedef struct _ion_process_ipc {
     zend_object   std;
@@ -94,9 +88,21 @@ typedef struct _ion_process_worker {
     websocket_parser * parser;
 } ion_process_worker;
 
+typedef struct _ion_process_child {
+    zend_object   std;
+    uint          flags;
+    pid_t         pid;
+    int           exit_status;
+    ion_time      started_time;
+    ion_process_ipc * ipc;
+    zend_object * released;
+    int           signal;
+    zend_object * run;
+} ion_process_child;
+
 
 #define ion_process_exec_object(pz) object_init_ex(pz, ion_ce_ION_Process_ExecResult)
-#define ion_procces_is_exec(obj) (get_object_instance(obj, ion_process_child)->flags & ION_PROC_CHILD_EXEC)
+#define ion_process_is_exec(obj) (get_object_instance(obj, ion_process_child)->flags & ION_PROC_CHILD_EXEC)
 
 void ion_process_exec_disconnect(ion_buffer * b, short what, void * ctx);
 
@@ -107,6 +113,10 @@ void ion_process_worker_exit(zend_object * worker, int status);
 void ion_process_exec_dtor(zend_object * exec);
 void ion_process_worker_dtor(zend_object * worker);
 void ion_process_child_dtor(zval * child);
+
+// IPC
+
+int ion_ipc_create(zval * one, zval * two, zval * ctx1, zval * ctx2);
 
 END_EXTERN_C();
 

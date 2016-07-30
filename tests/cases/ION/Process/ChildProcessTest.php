@@ -5,39 +5,34 @@ namespace ION\Process;
 
 use ION\Test\TestCase;
 
-class WorkerTest extends TestCase {
+class ChildProcessTest extends TestCase {
 
     /**
      * @memcheck
      * @requires OS Darwin
      */
     public function testCreate() {
-        $worker = new Worker();
+        $worker = new ChildProcess();
         $this->assertEquals(0, $worker->getPID());
         $this->assertFalse($worker->isAlive());
         $this->assertFalse($worker->isStarted());
         $this->assertFalse($worker->isSignaled());
         $this->assertEquals(-1, $worker->getExitStatus());
-        $worker->onConnect()->then(function (Worker $w) {
+
+        $worker->released()->then(function (Worker $w) {
             // do something
         });
-        $worker->onDisconnect()->then(function (Worker $w) {
+        $worker->ipc()->message()->then(function ($msg) {
             // do something
         });
-        $worker->onExit()->then(function (Worker $w) {
+        $worker->run()->then(function (Worker $w = null) {
             // do something
         });
-        $worker->onMessage()->then(function ($msg) {
-            // do something
-        });
-//        $worker->run(function (Worker $w) {
-            // do something
-//        });
     }
 
     /**
      */
-    public function testSpawn() {
+    public function _testSpawn() {
         $this->data["master"] = getmypid();
         $worker = new Worker();
         $worker->onConnect()->then(function (Worker $w) {
