@@ -95,11 +95,12 @@ ZEND_BEGIN_MODULE_GLOBALS(ion)
     char           * hosts_file;
 
     // Process
-    HashTable   * signals;     // registered signals
-    HashTable   * childs;      // spawned child processes
-    HashTable   * workers;     // spawned workers
-    HashTable   * disconnected;  // list of disconnected workers
-    zend_object * master;      // link to master process
+    HashTable   * signals;      // registered signals
+    HashTable   * proc_childs;  // spawned child processes
+    HashTable   * proc_execs;   // exec processes
+    HashTable   * workers;      // spawned workers
+    HashTable   * disconnected; // list of disconnected workers
+    zend_object * master;       // link to master process
     ion_event   * sigchld;
 
     // FS

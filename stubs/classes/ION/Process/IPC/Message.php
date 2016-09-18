@@ -2,18 +2,31 @@
 
 namespace ION\Process\IPC;
 
+use ION\Process\ChildProcess;
 
-use ION\Process\Worker;
-
+/**
+ * Сообщение межпроцессорного коммуникатора.
+ *
+ * @package ION\Process\IPC
+ */
 class Message {
+    const DATA_BINARY = 1;
 
-    public function __construct(string $name) { }
+    /**
+     * @var int
+     */
+    public $type = self::DATA_BINARY;
+    /**
+     * @var mixed
+     */
+    public $context;
+    /**
+     * @var ChildProcess
+     */
+    public $process;
+    /**
+     * @var mixed
+     */
+    public $data;
 
-    public function getWorker() : Worker {}
-
-    public function getName() : string {}
-
-    public function setData($data) : static {}
-
-    public function getData() : mixed {}
 }

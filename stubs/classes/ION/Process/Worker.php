@@ -7,8 +7,18 @@ use ION\Promise;
 use ION\Sequence;
 
 class Worker {
+    /**
+     * Returns process start time
+     *
+     * @return float timestamp
+     */
     public function getStartedTime() : float {}
 
+    /**
+     * Returns PID
+     *
+     * @return int
+     */
     public function getPID() : int {}
 
     public function isStarted() : bool {}

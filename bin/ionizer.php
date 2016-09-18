@@ -289,11 +289,17 @@ class BuildRunner {
 	}
 
     public function printSystemInfo() {
-		$this->li("/proc/sys/kernel/core_pattern", `cat /proc/sys/kernel/core_pattern`);
-		$this->li("phpunit", `which phpunit`);
-		$this->li("composer", `which composer`);
-		$this->li("core size", `ulimit -c`);
-		$this->li("max fds", `ulimit -n`);
+        $this->li("phpunit", `which phpunit`);
+        $this->li("composer", `which composer`);
+        if(file_exists("/proc/sys/kernel/core_pattern")) {
+            $this->li("core_dump.storage", `cat /proc/sys/kernel/core_pattern`);
+        } elseif(file_exists("/cores")) {
+            $this->li("core_dump.storage", '/cores');
+        } else {
+            $this->li("core_dump.storage", 'none');
+        }
+        $this->li("core_dump.size", `ulimit -c`);
+		$this->li("ulimit.fd_count", `ulimit -n`);
     }
 
 	public function isLinux() {
@@ -329,24 +335,24 @@ class BuildRunner {
 	}
 
 	public function help() {
-		echo "Usage: ".basename(__FILE__)." OPTIONS\n
+		echo "Usage: ".$_SERVER["PHP_SELF"]." [OPTIONS] ...\n
 Build:
-  --help,    -h   — show help
-  --clean,   -c   — make clean
-  --make,    -m   — make
-  --coverage -o   - generate code coverage information
-  --install, -l   — install module
-  --phpize,  -p   — phpize and configure project
-  --build,   -b   — alias: --phpize --clean --make
-  --setup,   -B   — alias: --build --install
-  --info,    -i   - print info about module
-  --system,  -I   — print information about system
+  -h, --help        show help
+  -c, --clean       make clean
+  -m, --make        make
+  -o, --coverage    generate code coverage information
+  -l, --install     install module
+  -p, --phpize      phpize and configure project
+  -b, --build       alias of --phpize --clean --make
+  -B, --setup       alias of --build --install
+  -i, --info        print info about module
+  -I, --system      print information about system
 
 Testing:
-  --test[=TEST_PATH], -t  — run tests, all or only by path
-  --group=GROUP_LIST, -g  - only runs tests from the specified group(s). Option --test required
-  --dev                   - alias: --test --group=dev
-  --use-gdb[=BINARY]      - use gdb for running tests
+  -t, --test[=TESTS]   run tests, all or only by path
+  -g, --group=GROUPS   only runs tests from the specified group(s). Option --test required
+      --dev            alias of --test --group=dev
+      --use-gdb[=PATH] use gdb for running tests
 
 Default env:
 ";

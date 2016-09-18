@@ -30,7 +30,7 @@ before_script:
   - gem install coveralls-lcov
   - bin/ionizer.php --system --phpize --clean --make --coverage
   - bin/ionizer.php --info
-  - composer install
+  - composer install --quiet
 
 # Run tests
 script: bin/ionizer.php --test --use-gdb

@@ -2,38 +2,45 @@
 
 
 void ion_process_sigchld(evutil_socket_t signal, short flags, void * arg) {
+    ION_CB_BEGIN();
     IONF("SIGCHLD received: check execs and workers");
     int status;
     pid_t pid = waitpid(-1, &status, WNOHANG | WUNTRACED);
-    zend_object * child;
+    zend_object * proc;
 
     if(pid <= 0) {
         // check disconnected workers
     } else {
-        child = zend_hash_index_find_ptr(GION(childs), (zend_ulong) pid);
-        if(child) {
-            if(ion_process_is_exec(child)) {
-                ion_process_exec_exit(child, status);
-            } else {
-                ion_process_worker_exit(child, status);
+        proc = zend_hash_index_find_ptr(GION(proc_childs), (zend_ulong) pid);
+        if(proc) {
+            ion_process_child_exit(proc, status);
+            zend_hash_index_del(GION(proc_childs), (zend_ulong) pid);
+            zend_object_release(proc);
+        } else {
+            proc = zend_hash_index_find_ptr(GION(proc_execs), (zend_ulong) pid);
+            if(proc) {
+                ion_process_exec_exit(proc, status);
+                zend_hash_index_del(GION(proc_execs), (zend_ulong) pid);
+                zend_object_release(proc);
             }
-            zend_hash_index_del(GION(childs), (zend_ulong) pid);
         }
+
     }
+    ION_CB_END();
 }
 
-void ion_process_add_child(pid_t pid, ion_process_child_type type, zend_object * object) {
+void ion_process_add_subprocess(pid_t pid, enum ion_process_flags type, zend_object * object) {
     ion_process_child * child = get_object_instance(object, ion_process_child);
     child->flags |= type;
 
-    zend_hash_index_add_ptr(GION(childs), (zend_ulong) pid, object);
+    zend_hash_index_add_ptr(GION(proc_childs), (zend_ulong) pid, object);
 }
 
 void ion_process_exec_disconnect(ion_buffer * b, short what, void * ctx) {
     ion_process_child * child = (ion_process_child *)ctx;
     if(what & (BEV_EVENT_ERROR | BEV_EVENT_EOF)) {
-        child->flags |= ION_WORKER_DISCONNECTED;
-        zend_hash_index_add_ptr(GION(childs), (zend_ulong) child->pid, NULL);
+//        child->flags |= ION_PROCESS_DISCONNECTED;
+        zend_hash_index_add_ptr(GION(proc_childs), (zend_ulong) child->pid, NULL);
     }
 }
 
@@ -47,22 +54,22 @@ void ion_process_exec_exit(zend_object * exec, int status) {
     ZVAL_OBJ(&result, exec);
     zval_add_ref(&result);
 
-    pion_update_property_long(ION_Process_ExecResult, &result, "pid", e->pid);
+    pion_update_property_long(ION_Process_Exec, &result, "pid", e->pid);
     if(WIFSIGNALED(status)) {
-        pion_update_property_bool(ION_Process_ExecResult, &result, "signaled", 1);
-        pion_update_property_long(ION_Process_ExecResult, &result, "signal", WTERMSIG(status));
-        pion_update_property_long(ION_Process_ExecResult, &result, "status", status);
+        pion_update_property_bool(ION_Process_Exec, &result, "signaled", 1);
+        pion_update_property_long(ION_Process_Exec, &result, "signal", WTERMSIG(status));
+        pion_update_property_long(ION_Process_Exec, &result, "status", status);
     } else {
-        pion_update_property_long(ION_Process_ExecResult, &result, "status", WEXITSTATUS(status));
+        pion_update_property_long(ION_Process_Exec, &result, "status", WEXITSTATUS(status));
     }
     out = ion_buffer_read_all(e->out);
     if(out) {
-        pion_update_property_str(ION_Process_ExecResult, &result, "stdout", out);
+        pion_update_property_str(ION_Process_Exec, &result, "stdout", out);
         zend_string_release(out);
     }
     err = ion_buffer_read_all(e->err);
     if(err) {
-        pion_update_property_str(ION_Process_ExecResult, &result, "stderr", err);
+        pion_update_property_str(ION_Process_Exec, &result, "stderr", err);
         zend_string_release(err);
     }
     ion_promisor_done(e->deferred, &result);
@@ -71,34 +78,34 @@ void ion_process_exec_exit(zend_object * exec, int status) {
     zval_ptr_dtor(&result);
 }
 
-void ion_process_worker_exit(zend_object * w, int status) {
-    ion_process_worker * worker = get_object_instance(w, ion_process_worker);
+void ion_process_child_exit(zend_object * w, int status) {
+    ion_process_child * child = get_object_instance(w, ion_process_child);
     if(WIFSIGNALED(status)) {
-        worker->signal = WTERMSIG(status);
-        worker->exit_status = status;
-        worker->flags |= ION_WORKER_SIGNALED;
+        child->signal = WTERMSIG(status);
+        child->exit_status = status;
+        child->flags |= ION_PROCESS_SIGNALED;
     } else if(WIFSTOPPED(status)) {
         // unreachable
     } else {
-        worker->exit_status = WEXITSTATUS(status);
-        if(worker->exit_status) {
-            worker->flags |= ION_WORKER_FAILED;
+        child->exit_status = WEXITSTATUS(status);
+        if(child->exit_status) {
+            child->flags |= ION_PROCESS_FAILED;
         } else {
-            worker->flags |= ION_WORKER_DONE;
+            child->flags |= ION_PROCESS_DONE;
         }
     }
-    if(worker->on_exit) {
-        zval container;
-        ZVAL_OBJ(&container, ION_OBJ(worker));
-        ion_promisor_sequence_invoke(worker->on_exit, &container);
-    }
-    if(worker->buffer) {
-        bufferevent_disable(worker->buffer, EV_READ | EV_WRITE);
-        bufferevent_free(worker->buffer);
-        worker->buffer = NULL;
-    }
-    if(worker->flags & ION_WORKER_CHILD) {
-        zend_hash_index_del(GION(workers), (zend_ulong) worker->pid);
+//    if(child->on_exit) {
+//        zval container;
+//        ZVAL_OBJ(&container, ION_OBJ(child));
+//        ion_promisor_sequence_invoke(child->on_exit, &container);
+//    }
+//    if(child->buffer) {
+//        bufferevent_disable(child->buffer, EV_READ | EV_WRITE);
+//        bufferevent_free(child->buffer);
+//        child->buffer = NULL;
+//    }
+    if(child->flags & ION_PROCESS_CHILD) {
+        zend_hash_index_del(GION(workers), (zend_ulong) child->pid);
     }
 }
 
@@ -107,8 +114,8 @@ void ion_process_exec_dtor(zend_object * exec) {
 }
 
 void ion_process_worker_dtor(zend_object * worker) {
-    ion_process_worker * w = get_object_instance(worker, ion_process_worker);
-    w->flags |= ION_WORKER_ABORT;
+//    ion_process_worker * w = get_object_instance(worker, ion_process_worker);
+//    w->flags |= ION_PROCESS_ABORT;
     zend_object_release(worker);
 }
 
@@ -121,4 +128,59 @@ void ion_process_child_dtor(zval * pz) {
     } else {
         ion_process_worker_dtor(child);
     }
+}
+
+/* IPC */
+//
+//int ion_process_ipc_buffer(ion_buffer ** one, ion_buffer ** two, void * ctx) {
+//
+//}
+//
+//
+int ion_process_ipc_message_begin(websocket_parser * parser) {
+    ion_process_ipc * ipc = parser->data;
+
+    if(parser->length) {
+        ipc->frame_body = zend_string_alloc(parser->length, 0);
+    }
+    return 0;
+}
+
+int ion_process_ipc_message_body(websocket_parser * parser, const char * at, size_t length) {
+    ion_process_ipc * ipc = parser->data;
+
+    memcpy(&ipc->frame_body->val[parser->offset], at, length);
+    return 0;
+}
+
+int ion_process_ipc_message_end(websocket_parser * parser) {
+    ion_process_ipc * ipc = parser->data;
+
+    if(ipc->on_message) {
+        if (ZSTR_LEN(ipc->frame_body) > 0) {
+            ZSTR_VAL(ipc->frame_body)[ZSTR_LEN(ipc->frame_body)] = '\0';
+        }
+        zval c;
+        ZVAL_STR(&c, ipc->frame_body);
+        zval_add_ref(&c);
+        ion_promisor_sequence_invoke(ipc->on_message, &c);
+        zval_ptr_dtor(&c);
+    }
+    zend_string_release(ipc->frame_body);
+    return 0;
+}
+//
+//
+void ion_process_ipc_incoming(ion_buffer * bev, void * ctx) {
+    ION_CB_BEGIN();
+    ion_process_ipc * ipc = ctx;
+    websocket_parser_settings parser_settings;
+    parser_settings.on_frame_header = ion_process_ipc_message_begin;
+    parser_settings.on_frame_body   = ion_process_ipc_message_body;
+    parser_settings.on_frame_end    = ion_process_ipc_message_end;
+
+    zend_string * data = ion_buffer_read_all(ipc->buffer);
+    websocket_parser_execute(ipc->parser, &parser_settings, data->val, data->len);
+    zend_string_release(data);
+    ION_CB_END();
 }

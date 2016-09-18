@@ -143,7 +143,7 @@ if test "$PHP_ION" != "no"; then
     classes/ION/Stream.c
 
     classes/ION/Process.c
-    classes/ION/Process/ExecResult.c
+    classes/ION/Process/Exec.c
     classes/ION/Process/IPC.c
     classes/ION/Process/ChildProcess.c
 

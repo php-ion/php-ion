@@ -6,7 +6,17 @@ namespace ION\Process;
 use ION\Promise;
 use ION\Sequence;
 
-class IPC {
+/**
+ * Межпроцессорный коммуникатор.
+ * Отрывает двунаправлыеный поток для передачи данных.
+ *
+ * @package ION\Process
+ *
+ * @source src/classes/ION/Process/IPC.c
+ * @source src/ion/process.c
+ * @source src/ion/process.h
+ */
+class IPC extends IPCAbstract {
 
     /**
      * @param mixed $ctx1 context for IPC channel one
@@ -16,30 +26,5 @@ class IPC {
      */
     public static function create($ctx1 = null, $ctx2 = null) : array {}
 
-    /**
-     * @return bool
-     */
-    public function isConnected() : bool {}
-
-    /**
-     * @return Promise
-     */
-    public function disconnected() : Promise {}
-
-    /**
-     * @return float
-     */
-    public function getLastTime() : float  {}
-
-    /**
-     * @return Sequence
-     */
-    public function message() : Sequence {}
-
-    /**
-     * @return mixed
-     */
     public function getContext() {}
-
-    public function send($data) {}
 }

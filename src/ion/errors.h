@@ -6,6 +6,7 @@
 #define ERR_ION_DISPATCH_FAILED     "Dispatching runtime error"
 #define ERR_ION_AWAIT_INVALID_TIME  "Timeout should be unsigned"
 #define ERR_ION_AWAIT_FAILED        "Unable to add event to queue"
+#define ERR_ION_REINIT_FAILED       "Some events could not be restarted"
 
 // class ION\Stream
 #define ERR_ION_STREAM_WRITE_FAILED "Failed to write data"
@@ -67,11 +68,12 @@
 #define ERR_ION_PROCESS_PRIO_FAILED        "Failed to set process %d priority %d: %s"
 #define ERR_ION_PROCESS_EXEC_NO_STDOUT     "Failed to initializate stdout stream: %s"
 #define ERR_ION_PROCESS_EXEC_NO_STDERR     "Failed to initializate stderr stream: %s"
-#define ERR_ION_PROCESS_EXEC_SPLIT_FAIL    "Failed to spawn process for command: %s"
+#define ERR_ION_PROCESS_EXEC_FORK_FAIL     "Failed to spawn process for command: %s"
 #define ERR_ION_PROCESS_EXEC_SPLIT_NO_STDERR  "Failed to initializate spawned process"
 #define ERR_ION_PROCESS_EXEC_SPLIT_NO_STDOUT  "Failed to initializate spawned process"
-#define ERR_ION_PROCESS_EXEC_WORKER_SET_GID_FAIL  "Failed to set GID %d: %s\n"
-#define ERR_ION_PROCESS_EXEC_WORKER_SET_UID_FAIL  "Failed to set UID %d: %s\n"
+#define ERR_ION_PROCESS_EXEC_SET_GID_FAIL  "Failed to set GID %d: %s\n"
+#define ERR_ION_PROCESS_EXEC_SET_UID_FAIL  "Failed to set UID %d: %s\n"
+#define ERR_ION_PROCESS_EXEC_CHDIR_FAIL    "Failed to change cwd to %s: %s\n"
 #define ERR_ION_PROCESS_SPAWN_FAIL         "Failed to spawn process: %s"
 
 #endif //PION_ERRORS_H

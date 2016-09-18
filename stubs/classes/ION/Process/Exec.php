@@ -3,7 +3,7 @@
 namespace ION\Process;
 
 
-class ExecResult {
+class Exec {
     public $command  = "";
     public $pid      = 0;
     public $stdout   = "";

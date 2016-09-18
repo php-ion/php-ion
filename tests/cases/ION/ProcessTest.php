@@ -160,6 +160,7 @@ class ProcessTest extends TestCase {
     }
 
 	/**
+     * @group dev
 	 * @requires OS Darwin
 	 * @memcheck
 	 */
@@ -172,7 +173,7 @@ class ProcessTest extends TestCase {
 			return (array)$res;
 		});
 		$this->loop();
-		$this->assertEquals('ION\Process\ExecResult', $this->data['instance']);
+		$this->assertEquals('ION\Process\Exec', $this->data['instance']);
 		$this->assertEquals($cmd, $this->data['result']['command']);
 		$this->assertTrue(is_integer($this->data['result']['pid']));
 		$this->assertEquals('stdout', trim($this->data['result']['stdout']));
@@ -184,6 +185,7 @@ class ProcessTest extends TestCase {
 	}
 
 	/**
+     * @group dev
      * @requires OS Darwin
 	 * @memcheck
 	 */
@@ -200,7 +202,7 @@ class ProcessTest extends TestCase {
 			return (array)$res;
 		});
 		$this->loop();
-		$this->assertEquals('ION\Process\ExecResult', $this->data['instance']);
+		$this->assertEquals('ION\Process\Exec', $this->data['instance']);
 		$this->assertEquals($cmd, $this->data['result']['command']);
 		$this->assertTrue(is_integer($this->data['result']['pid']));
 		$this->assertTrue(is_integer($this->data['pid']));

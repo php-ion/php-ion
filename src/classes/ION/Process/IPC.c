@@ -9,12 +9,13 @@ zend_object * ion_process_ipc_init(zend_class_entry * ce) {
     ipc->parser = ecalloc(1, sizeof(websocket_parser));
     websocket_parser_init(ipc->parser);
     ipc->parser->data = ipc;
-    ZVAL_UNDEF(&ipc->ctx);
+    ZVAL_NULL(&ipc->ctx);
     RETURN_INSTANCE(ION_Process_IPC, ipc);
 }
 
 
 void ion_process_ipc_free(zend_object * object) {
+    PHPDBG("FREE IPC");
     ion_process_ipc * ipc = get_object_instance(object, ion_process_ipc);
     if(ipc->on_message) {
         zend_object_release(ipc->on_message);
@@ -35,54 +36,20 @@ void ion_process_ipc_free(zend_object * object) {
         bufferevent_disable(ipc->buffer, EV_READ | EV_WRITE);
         bufferevent_free(ipc->buffer);
     }
+    zval_ptr_dtor(&ipc->ctx);
 }
 
 
-int ion_process_ipc_message_begin(websocket_parser * parser) {
-    ion_process_ipc * ipc = parser->data;
+//int ion_process_ipc_message_begin(websocket_parser * parser) {
+//    ion_process_ipc * ipc = parser->data;
+//
+//    if(parser->length) {
+//        ipc->frame_body = zend_string_alloc(parser->length, 0);
+//    }
+//    return 0;
+//}
 
-    if(parser->length) {
-        ipc->frame_body = zend_string_alloc(parser->length, 0);
-    }
-    return 0;
-}
-
-int ion_process_ipc_message_body(websocket_parser * parser, const char * at, size_t length) {
-    ion_process_ipc * ipc = parser->data;
-
-    memcpy(&ipc->frame_body->val[parser->offset], at, length);
-    return 0;
-}
-
-int ion_process_ipc_message_end(websocket_parser * parser) {
-    ion_process_ipc * ipc = parser->data;
-
-    if(ipc->on_message) {
-        if (ZSTR_LEN(ipc->frame_body) > 0) {
-            ZSTR_VAL(ipc->frame_body)[ZSTR_LEN(ipc->frame_body)] = '\0';
-        }
-        zval c;
-        ZVAL_STR(&c, ipc->frame_body);
-        zval_add_ref(&c);
-        ion_promisor_sequence_invoke(ipc->on_message, &c);
-        zval_ptr_dtor(&c);
-    }
-    zend_string_release(ipc->frame_body);
-    return 0;
-}
-
-
-void ion_worker_ipc_incoming(ion_buffer * bev, void * ctx) {
-    ION_CB_BEGIN();
-    ion_process_ipc * ipc = ctx;
-
-    zend_string * data = ion_buffer_read_all(ipc->buffer);
-    websocket_parser_execute(ipc->parser, &parser_settings, data->val, data->len);
-    zend_string_release(data);
-    ION_CB_END();
-}
-
-void ion_worker_ipc_notification(ion_buffer * bev, short what, void * ctx) {
+void ion_process_ipc_notification(ion_buffer * bev, short what, void * ctx) {
     ION_CB_BEGIN();
     ion_process_ipc * ipc = ctx;
 
@@ -108,15 +75,15 @@ int ion_ipc_create(zval * one, zval * two, zval * ctx1, zval * ctx2) {
     object_init_ex(two, ion_class_entry(ION_Process_IPC));
     ipc1 = get_object_instance(Z_OBJ_P(one), ion_process_ipc);
     ipc2 = get_object_instance(Z_OBJ_P(two), ion_process_ipc);
-    bufferevent_setcb(buffer_one, ion_worker_ipc_incoming, NULL, ion_worker_ipc_notification, ipc1);
-    bufferevent_setcb(buffer_two, ion_worker_ipc_incoming, NULL, ion_worker_ipc_notification, ipc2);
+    bufferevent_setcb(buffer_one, ion_process_ipc_incoming, NULL, ion_process_ipc_notification, ipc1);
+    bufferevent_setcb(buffer_two, ion_process_ipc_incoming, NULL, ion_process_ipc_notification, ipc2);
     ipc1->buffer = buffer_one;
     ipc2->buffer = buffer_two;
     if(ctx1) {
-        ZVAL_COPY(&ipc1->ctx, ctx1);
+        ZVAL_COPY_VALUE(&ipc1->ctx, ctx1);
     }
     if(ctx2) {
-        ZVAL_COPY(&ipc2->ctx, ctx2);
+        ZVAL_COPY_VALUE(&ipc2->ctx, ctx2);
     }
 
     return SUCCESS;
@@ -137,6 +104,8 @@ CLASS_METHOD(ION_Process_IPC, create) {
         Z_PARAM_ZVAL(ctx2)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
+    zval_add_ref(ctx1);
+    zval_add_ref(ctx2);
     if(ion_ipc_create(&one, &two, ctx1, ctx2) == FAILURE) {
         // @todo error
         return;
@@ -174,8 +143,8 @@ CLASS_METHOD(ION_Process_IPC, isDisconnected) {
 
 METHOD_WITHOUT_ARGS(ION_Process_IPC, isDisconnected);
 
-/** public function ION\Process\IPC::message() : ION\Sequence */
-CLASS_METHOD(ION_Process_IPC, message) {
+/** public function ION\Process\IPC::incoming() : ION\Sequence */
+CLASS_METHOD(ION_Process_IPC, incoming) {
     ion_process_ipc * ipc = get_this_instance(ion_process_ipc);
 
     if(!ipc->on_message) {
@@ -185,7 +154,7 @@ CLASS_METHOD(ION_Process_IPC, message) {
     RETURN_OBJ(ipc->on_message);
 }
 
-METHOD_WITHOUT_ARGS(ION_Process_IPC, message);
+METHOD_WITHOUT_ARGS(ION_Process_IPC, incoming);
 
 /** public function ION\Process\IPC::connected() : ION\Promise */
 CLASS_METHOD(ION_Process_IPC, connected) {
@@ -251,7 +220,7 @@ CLASS_METHODS_START(ION_Process_IPC)
     METHOD(ION_Process_IPC, create,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process_IPC, isConnected,    ZEND_ACC_PUBLIC)
     METHOD(ION_Process_IPC, isDisconnected, ZEND_ACC_PUBLIC)
-    METHOD(ION_Process_IPC, message,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Process_IPC, incoming,       ZEND_ACC_PUBLIC)
     METHOD(ION_Process_IPC, connected,      ZEND_ACC_PUBLIC)
     METHOD(ION_Process_IPC, disconnected,   ZEND_ACC_PUBLIC)
     METHOD(ION_Process_IPC, send,           ZEND_ACC_PUBLIC)

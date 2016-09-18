@@ -3,12 +3,14 @@
 namespace ION\Process;
 
 
+use ION\Process\IPC\Message;
 use ION\Test\TestCase;
+
 
 class ChildProcessTest extends TestCase {
 
     /**
-     * @memcheck
+     * @memc heck
      * @requires OS Darwin
      */
     public function testCreate() {
@@ -19,15 +21,20 @@ class ChildProcessTest extends TestCase {
         $this->assertFalse($worker->isSignaled());
         $this->assertEquals(-1, $worker->getExitStatus());
 
-        $worker->released()->then(function (Worker $w) {
+        $worker->whenExit()->then(function (ChildProcess $w) {
             // do something
         });
-        $worker->ipc()->message()->then(function ($msg) {
+        $worker->whenStarted()->then(function (ChildProcess $w) {
             // do something
         });
-        $worker->run()->then(function (Worker $w = null) {
+        $worker->whenMessage()->then(function (Message $msg) {
             // do something
         });
+        $worker->start(function (IPC $parent_ipc) {
+            // do something
+        });
+
+        $this->loop();
     }
 
     /**
