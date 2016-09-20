@@ -15,7 +15,7 @@ zend_object * ion_process_ipc_init(zend_class_entry * ce) {
 
 
 void ion_process_ipc_free(zend_object * object) {
-    PHPDBG("FREE IPC");
+    PHPDBG("FREE IPC %d", getpid());
     ion_process_ipc * ipc = get_object_instance(object, ion_process_ipc);
     if(ipc->on_message) {
         zend_object_release(ipc->on_message);

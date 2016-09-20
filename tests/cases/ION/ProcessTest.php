@@ -160,7 +160,6 @@ class ProcessTest extends TestCase {
     }
 
 	/**
-     * @group dev
 	 * @requires OS Darwin
 	 * @memcheck
 	 */
@@ -185,19 +184,17 @@ class ProcessTest extends TestCase {
 	}
 
 	/**
-     * @group dev
      * @requires OS Darwin
 	 * @memcheck
 	 */
 	public function testExecExtended() {
 		$cmd = "sleep 0.1; echo \$_ION_EXEC_LINE;";
 		$this->promise(function () use ($cmd) {
-			$deferred = Process::exec($cmd, [
+			$res = yield Process::exec($cmd, [
 				'user' => 'www',
 				'set_group' => true,
 				'pid' => &$this->data['pid']
 			]);
-			$res = yield $deferred;
 			$this->data['instance'] = get_class($res);
 			return (array)$res;
 		});

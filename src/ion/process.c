@@ -26,6 +26,7 @@ void ion_process_sigchld(evutil_socket_t signal, short flags, void * arg) {
         }
 
     }
+//    evsignal_add(GION(sigchld), NULL);
     ION_CB_END();
 }
 
@@ -78,57 +79,27 @@ void ion_process_exec_exit(zend_object * exec, int status) {
     zval_ptr_dtor(&result);
 }
 
-void ion_process_child_exit(zend_object * w, int status) {
-    ion_process_child * child = get_object_instance(w, ion_process_child);
-    if(WIFSIGNALED(status)) {
-        child->signal = WTERMSIG(status);
-        child->exit_status = status;
-        child->flags |= ION_PROCESS_SIGNALED;
-    } else if(WIFSTOPPED(status)) {
-        // unreachable
-    } else {
-        child->exit_status = WEXITSTATUS(status);
-        if(child->exit_status) {
-            child->flags |= ION_PROCESS_FAILED;
-        } else {
-            child->flags |= ION_PROCESS_DONE;
-        }
-    }
-//    if(child->on_exit) {
-//        zval container;
-//        ZVAL_OBJ(&container, ION_OBJ(child));
-//        ion_promisor_sequence_invoke(child->on_exit, &container);
+
+//void ion_process_exec_dtor(zend_object * exec) {
+//    zend_object_release(exec);
+//}
+//
+//void ion_process_worker_dtor(zend_object * worker) {
+////    ion_process_worker * w = get_object_instance(worker, ion_process_worker);
+////    w->flags |= ION_PROCESS_ABORT;
+//    zend_object_release(worker);
+//}
+
+
+//void ion_process_child_dtor(zval * pz) {
+//    zend_object * child = Z_OBJ_P(pz);
+//
+//    if(ion_process_is_exec(child)) {
+//        ion_process_exec_dtor(child);
+//    } else {
+//        ion_process_worker_dtor(child);
 //    }
-//    if(child->buffer) {
-//        bufferevent_disable(child->buffer, EV_READ | EV_WRITE);
-//        bufferevent_free(child->buffer);
-//        child->buffer = NULL;
-//    }
-    if(child->flags & ION_PROCESS_CHILD) {
-        zend_hash_index_del(GION(workers), (zend_ulong) child->pid);
-    }
-}
-
-void ion_process_exec_dtor(zend_object * exec) {
-    zend_object_release(exec);
-}
-
-void ion_process_worker_dtor(zend_object * worker) {
-//    ion_process_worker * w = get_object_instance(worker, ion_process_worker);
-//    w->flags |= ION_PROCESS_ABORT;
-    zend_object_release(worker);
-}
-
-
-void ion_process_child_dtor(zval * pz) {
-    zend_object * child = Z_OBJ_P(pz);
-
-    if(ion_process_is_exec(child)) {
-        ion_process_exec_dtor(child);
-    } else {
-        ion_process_worker_dtor(child);
-    }
-}
+//}
 
 /* IPC */
 //

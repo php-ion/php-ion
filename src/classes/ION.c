@@ -30,8 +30,7 @@ CLASS_METHOD(ION, dispatch) {
         Z_PARAM_LONG(flags)
     ZEND_PARSE_PARAMETERS_END();
 
-    GION(flags) |= ION_LOOP_STARTED;
-    ret = event_base_loop(GION(base), (int)flags);
+    GION(flags) |= ION_LOOP_STARTED;ret = event_base_loop(GION(base), (int)flags);
 //    ret = event_base_loop(GION(base), EVLOOP_NONBLOCK | EVLOOP_ONCE);
     GION(flags) &= ~ION_LOOP_STARTED;
 

@@ -15,7 +15,7 @@ use ION\Promise;
  * @source src/ion/process.c
  * @source src/ion/process.h
  */
-class ChildProcess extends IPCAbstract {
+class ChildProcess {
     /**
      * Возвращает время запуска дочернего процесса
      * @return float

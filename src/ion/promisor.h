@@ -255,6 +255,14 @@ static zend_always_inline void ion_promisor_done_object(zend_object * promisor, 
     zval_ptr_dtor(&value);
 }
 
+static zend_always_inline void ion_promisor_done_object_ref(zend_object * promisor, zend_object * object) {
+    zval value;
+    ZVAL_OBJ(&value, object);
+    zval_add_ref(&value);
+    ion_promisor_done(promisor, &value);
+    zval_ptr_dtor(&value);
+}
+
 static zend_always_inline void ion_promisor_done_string(zend_object * promisor, zend_string * string, int dup) {
     zval value;
     if(dup) {

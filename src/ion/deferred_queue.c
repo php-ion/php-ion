@@ -63,6 +63,7 @@ void ion_deferred_dequeue() {
 
 void ion_deferred_dequeue_event_wrapper(evutil_socket_t fd, short flags, void * arg) {
     ION_CB_BEGIN();
+    GION(queue)->delayed = false;
     ion_deferred_dequeue();
     ION_CB_END();
 }

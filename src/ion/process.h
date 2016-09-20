@@ -41,15 +41,6 @@ enum ion_process_flags {
     ION_PROCESS_FINISHED     = ION_PROCESS_DONE | ION_PROCESS_FAILED | ION_PROCESS_SIGNALED | ION_PROCESS_ABORT,
 };
 
-
-typedef struct _ion_process {
-    zend_object   std;
-    uint          flags;
-    pid_t         pid;
-    ion_buffer  * connect;
-} ion_process;
-
-
 typedef struct _ion_process_exec {
     zend_object   std;
     uint          flags;
@@ -68,10 +59,10 @@ typedef struct _ion_process_child {
     ion_time      started_time;
     ion_process_ipc * ipc_parent;
     ion_process_ipc * ipc_child;
-    zend_object * gone;
     int           signal;
     pion_cb     * on_start;
-    zend_object * start;
+    zend_object * prom_exit;
+    zend_object * prom_started;
 } ion_process_child;
 
 
@@ -95,12 +86,8 @@ typedef struct _ion_process_child {
 void ion_process_exec_disconnect(ion_buffer * b, short what, void * ctx);
 
 void ion_process_sigchld(evutil_socket_t signal, short flags, void * arg);
-void ion_process_add_subprocess(pid_t pid, enum ion_process_flags type, zend_object * object);
 void ion_process_exec_exit(zend_object * exec, int status);
 void ion_process_child_exit(zend_object * worker, int status);
-void ion_process_exec_dtor(zend_object * exec);
-void ion_process_worker_dtor(zend_object * worker);
-void ion_process_child_dtor(zval * child);
 
 // IPC
 int ion_process_ipc_message_begin(websocket_parser * parser);

@@ -10,31 +10,50 @@ use ION\Test\TestCase;
 class ChildProcessTest extends TestCase {
 
     /**
-     * @memc heck
+     * @group dev
+     * @memcheck
      * @requires OS Darwin
      */
     public function testCreate() {
+        $this->out("begin ".getmypid());
         $worker = new ChildProcess();
         $this->assertEquals(0, $worker->getPID());
         $this->assertFalse($worker->isAlive());
         $this->assertFalse($worker->isStarted());
         $this->assertFalse($worker->isSignaled());
         $this->assertEquals(-1, $worker->getExitStatus());
-
+//
         $worker->whenExit()->then(function (ChildProcess $w) {
+            $this->data["exit"] = $w->getPID();
+            $this->out("stop");
+
+            $this->stop();
+
             // do something
         });
         $worker->whenStarted()->then(function (ChildProcess $w) {
             // do something
+            $this->data["started"] = 1;
+            $this->out("started");
+
         });
-        $worker->whenMessage()->then(function (Message $msg) {
+//        $worker->whenMessage()->then(function (Message $msg) {
+//             do something
+//        });
+        $this->out("spawn");
+
+        $worker->start(function ($parent_ipc) {
+            usleep(10000);
+            $this->out("done");
+            exit;
             // do something
         });
-        $worker->start(function (IPC $parent_ipc) {
-            // do something
-        });
+//        unset($worker);
 
         $this->loop();
+
+        $this->out($this->data);
+        sleep(1);
     }
 
     /**

@@ -137,7 +137,7 @@ class Printer extends \PHPUnit_TextUI_ResultPrinter {
     public function startTest(\PHPUnit_Framework_Test $test) {
         $this->numTests;
         $this->write(sprintf(
-            "Test %d/%d %s",
+            "Test %d/%d %s ",
             ++$this->numTestsRun,
             $this->numTests,
             \PHPUnit_Util_Test::describe($test)
