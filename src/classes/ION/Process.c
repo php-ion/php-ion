@@ -537,6 +537,60 @@ METHOD_ARGS_BEGIN(ION_Process, exec, 1)
     METHOD_ARG_ARRAY(options, 0, 0)
 METHOD_ARGS_END()
 
+
+
+/** public function ION\Process::hasChildProcess(int $pid) : bool */
+CLASS_METHOD(ION_Process, hasChildProcess) {
+    zend_long pid = 0;
+
+    ZEND_PARSE_PARAMETERS_START(1,2)
+        Z_PARAM_LONG(pid)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    if(zend_hash_index_exists(GION(proc_childs), (zend_ulong) pid)) {
+        RETURN_TRUE;
+    } else {
+        RETURN_FALSE;
+    }
+}
+
+METHOD_ARGS_BEGIN(ION_Process, hasChildProcess, 1)
+    ARGUMENT(pid, IS_LONG)
+METHOD_ARGS_END()
+
+
+/** public function ION\Process::getChildProcess(int $pid) : ION\Process\ChildProcess */
+CLASS_METHOD(ION_Process, getChildProcess) {
+    zend_long pid = 0;
+    zval * child = NULL;
+
+    ZEND_PARSE_PARAMETERS_START(1,2)
+            Z_PARAM_LONG(pid)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    child = zend_hash_index_find(GION(proc_childs), (zend_ulong) pid);
+    if(child) {
+        ZVAL_COPY(return_value, child);
+    } else {
+        RETURN_NULL();
+    }
+}
+
+METHOD_ARGS_BEGIN(ION_Process, getChildProcess, 1)
+    ARGUMENT(pid, IS_LONG)
+METHOD_ARGS_END()
+
+/** public function ION\Process::getChilds() : ION\Process\ChildProcess[] */
+CLASS_METHOD(ION_Process, getChildProcesses) {
+    zend_array * childs;
+
+    childs = zend_array_dup(GION(proc_childs));
+
+    RETURN_ARR(childs);
+}
+
+METHOD_WITHOUT_ARGS_RETURN_ARRAY(ION_Process, getChildProcesses);
+
 #undef stdin
 #undef stdout
 #undef stderr
@@ -567,22 +621,25 @@ CLASS_METHOD(ION_Process, stderr) {
 METHOD_WITHOUT_ARGS(ION_Process, stderr);
 
 CLASS_METHODS_START(ION_Process)
-    METHOD(ION_Process, fork,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, spawn,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, kill,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, signal,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, clearSignal,  ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, getPid,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, getParentPid, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, getUser,      ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, getGroup,     ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, setUser,      ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, getPriority,  ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, setPriority,  ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, exec,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, stdin,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, stdout,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, stderr,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, fork,              ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, spawn,             ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, kill,              ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, signal,            ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, clearSignal,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, getPid,            ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, getParentPid,      ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, getUser,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, getGroup,          ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, setUser,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, getPriority,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, setPriority,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, hasChildProcess,   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, getChildProcess,   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, getChildProcesses, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, exec,              ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, stdin,             ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, stdout,            ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, stderr,            ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 CLASS_METHODS_END;
 
 

@@ -3,6 +3,7 @@
 namespace ION\Process;
 
 
+use ION\Process;
 use ION\Process\IPC\Message;
 use ION\Test\TestCase;
 
@@ -30,6 +31,9 @@ class ChildProcessTest extends TestCase {
             $this->data["exit"]["signaled"]  = $w->isSignaled();
             $this->data["exit"]["started"]   = $w->isStarted();
             $this->data["exit"]["connected"] = $w->getIPC()->isConnected();
+
+            $this->data["exit"]["worker"] = ($w === Process::getChild($w->getPID()));
+
             $this->stop();
             // do something else
         });
@@ -41,6 +45,8 @@ class ChildProcessTest extends TestCase {
             $this->data["started"]["signaled"]  = $w->isSignaled();
             $this->data["started"]["started"]   = $w->isStarted();
             $this->data["started"]["connected"] = $w->getIPC()->isConnected();
+
+            $this->data["started"]["worker"] = ($w === Process::getChild($w->getPID()));
             // do something else
 
         });

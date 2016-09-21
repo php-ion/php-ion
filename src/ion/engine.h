@@ -200,6 +200,10 @@
     METHOD_ARGS_BEGIN_RETURN_INT(class_name, method_name, 0)    \
     ZEND_END_ARG_INFO()
 
+#define METHOD_WITHOUT_ARGS_RETURN_BOOL(class_name, method_name) \
+    METHOD_ARGS_BEGIN_RETURN_BOOL(class_name, method_name, 0)    \
+    ZEND_END_ARG_INFO()
+
 #define METHOD_WITHOUT_ARGS_RETURN_STRING(class_name, method_name) \
     METHOD_ARGS_BEGIN_RETURN_STRING(class_name, method_name, 0)    \
     ZEND_END_ARG_INFO()

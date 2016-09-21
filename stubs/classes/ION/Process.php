@@ -4,6 +4,7 @@ namespace ION;
 
 
 use ION\Deferred\Map;
+use ION\Process\ChildProcess;
 use ION\Process\ExecResult;
 use ION\Process\Message;
 use ION\Process\Worker;
@@ -30,10 +31,6 @@ class Process {
     public static function fork($flags = 0) { }
 
     public static function spawn(int $flags = 0, $ctx = null) : Worker {}
-
-    public static function getChildsCount() : int {}
-
-    public static function getChilds() : array {}
 
     public static function getChild($pid) : Worker {}
 
@@ -149,4 +146,23 @@ class Process {
      * @return int previous priority
      */
     public static function setPriority($priority, $pid = null) : int { }
+
+    /**
+     * @param int $pid
+     *
+     * @return bool
+     */
+    public static function hasChildProcess(int $pid) : bool { }
+
+    /**
+     * @param int $pid
+     *
+     * @return ChildProcess
+     */
+    public static function getChildProcess(int $pid) : ChildProcess { }
+
+    /**
+     * @return array
+     */
+    public static function getChildProcesses() : array { }
 }
