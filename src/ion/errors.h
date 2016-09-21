@@ -76,4 +76,7 @@
 #define ERR_ION_PROCESS_EXEC_CHDIR_FAIL    "Failed to change cwd to %s: %s\n"
 #define ERR_ION_PROCESS_SPAWN_FAIL         "Failed to spawn process: %s"
 
+// class ION\Process\ChildProcess
+#define ERR_ION_PROCESS_IPC_FAIL           "Failed to create IPC channel"
+
 #endif //PION_ERRORS_H

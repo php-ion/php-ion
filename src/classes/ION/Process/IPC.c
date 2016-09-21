@@ -15,7 +15,7 @@ zend_object * ion_process_ipc_init(zend_class_entry * ce) {
 
 
 void ion_process_ipc_free(zend_object * object) {
-    PHPDBG("FREE IPC %d", getpid());
+//    PHPDBG("FREE IPC %d", getpid());
     ion_process_ipc * ipc = get_object_instance(object, ion_process_ipc);
     if(ipc->on_message) {
         zend_object_release(ipc->on_message);
@@ -80,10 +80,10 @@ int ion_ipc_create(zval * one, zval * two, zval * ctx1, zval * ctx2) {
     ipc1->buffer = buffer_one;
     ipc2->buffer = buffer_two;
     if(ctx1) {
-        ZVAL_COPY_VALUE(&ipc1->ctx, ctx1);
+        ZVAL_COPY(&ipc1->ctx, ctx1);
     }
     if(ctx2) {
-        ZVAL_COPY_VALUE(&ipc2->ctx, ctx2);
+        ZVAL_COPY(&ipc2->ctx, ctx2);
     }
 
     return SUCCESS;

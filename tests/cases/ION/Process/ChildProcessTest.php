@@ -14,46 +14,42 @@ class ChildProcessTest extends TestCase {
      * @memcheck
      * @requires OS Darwin
      */
-    public function testCreate() {
-        $this->out("begin ".getmypid());
+    public function testInit() {
         $worker = new ChildProcess();
         $this->assertEquals(0, $worker->getPID());
         $this->assertFalse($worker->isAlive());
         $this->assertFalse($worker->isStarted());
         $this->assertFalse($worker->isSignaled());
         $this->assertEquals(-1, $worker->getExitStatus());
-//
+
         $worker->whenExit()->then(function (ChildProcess $w) {
-            $this->data["exit"] = $w->getPID();
-            $this->out("stop");
-
+            $this->data["exit"] = $w->getExitStatus();
             $this->stop();
-
-            // do something
+            // do something else
         });
         $worker->whenStarted()->then(function (ChildProcess $w) {
-            // do something
-            $this->data["started"] = 1;
-            $this->out("started");
+            $this->data["started"] = $w->getPID();
+            // do something else
 
         });
-//        $worker->whenMessage()->then(function (Message $msg) {
-//             do something
-//        });
-        $this->out("spawn");
+        $this->assertInstanceOf(IPC::class, $worker->getIPC());
+        $this->assertEquals($worker, $worker->getIPC()->getContext());
 
-        $worker->start(function ($parent_ipc) {
+        $worker->start(function (IPC $ipc) {
             usleep(10000);
-            $this->out("done");
+            // do something and exit
             exit;
-            // do something
         });
-//        unset($worker);
 
         $this->loop();
 
-        $this->out($this->data);
-        sleep(1);
+//        $this->out($this->data);
+        usleep(10000); // ru: ждем что бы дать время буферу вывода дочернего процесса сплюнуть все в stdout/stderr
+
+        $this->assertArrayHasKey("started", $this->data);
+        $this->assertInternalType("integer", $this->data["started"]);
+        $this->assertArrayHasKey("exit", $this->data);
+        $this->assertEquals(0, $this->data["exit"]);
     }
 
     /**
