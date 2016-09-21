@@ -23,12 +23,24 @@ class ChildProcessTest extends TestCase {
         $this->assertEquals(-1, $worker->getExitStatus());
 
         $worker->whenExit()->then(function (ChildProcess $w) {
-            $this->data["exit"] = $w->getExitStatus();
+            $this->data["exit"]["pid"]       = $w->getPID();
+            $this->data["exit"]["status"]    = $w->getExitStatus();
+            $this->data["exit"]["alive"]     = $w->isAlive();
+            $this->data["exit"]["finished"]  = $w->isFinished();
+            $this->data["exit"]["signaled"]  = $w->isSignaled();
+            $this->data["exit"]["started"]   = $w->isStarted();
+            $this->data["exit"]["connected"] = $w->getIPC()->isConnected();
             $this->stop();
             // do something else
         });
         $worker->whenStarted()->then(function (ChildProcess $w) {
-            $this->data["started"] = $w->getPID();
+            $this->data["started"]["pid"]       = $w->getPID();
+            $this->data["started"]["status"]    = $w->getExitStatus();
+            $this->data["started"]["alive"]     = $w->isAlive();
+            $this->data["started"]["finished"]  = $w->isFinished();
+            $this->data["started"]["signaled"]  = $w->isSignaled();
+            $this->data["started"]["started"]   = $w->isStarted();
+            $this->data["started"]["connected"] = $w->getIPC()->isConnected();
             // do something else
 
         });
@@ -41,15 +53,47 @@ class ChildProcessTest extends TestCase {
             exit;
         });
 
+        $this->data["begin"]["pid"]       = $worker->getPID();
+        $this->data["begin"]["status"]    = $worker->getExitStatus();
+        $this->data["begin"]["alive"]     = $worker->isAlive();
+        $this->data["begin"]["finished"]  = $worker->isFinished();
+        $this->data["begin"]["signaled"]  = $worker->isSignaled();
+        $this->data["begin"]["started"]   = $worker->isStarted();
+        $this->data["begin"]["connected"] = $worker->getIPC()->isConnected();
+
         $this->loop();
 
-//        $this->out($this->data);
         usleep(10000); // ru: ждем что бы дать время буферу вывода дочернего процесса сплюнуть все в stdout/stderr
 
-        $this->assertArrayHasKey("started", $this->data);
-        $this->assertInternalType("integer", $this->data["started"]);
-        $this->assertArrayHasKey("exit", $this->data);
-        $this->assertEquals(0, $this->data["exit"]);
+        $this->assertEquals([
+            "pid"       => 0,
+            "status"    => -1,
+            "alive"     => false,
+            "finished"  => false,
+            "signaled"  => false,
+            "started"   => false,
+            "connected" => true,
+        ], $this->data["begin"]);
+
+        $this->assertEquals([
+            "pid"       => $worker->getPID(),
+            "status"    => -1,
+            "alive"     => true,
+            "finished"  => false,
+            "signaled"  => false,
+            "started"   => true,
+            "connected" => true,
+        ], $this->data["started"]);
+
+        $this->assertEquals([
+            "pid"       => $worker->getPID(),
+            "status"    => 0,
+            "alive"     => false,
+            "finished"  => true,
+            "signaled"  => false,
+            "started"   => true,
+            "connected" => false,
+        ], $this->data["exit"]);
     }
 
     /**

@@ -79,6 +79,8 @@ int ion_ipc_create(zval * one, zval * two, zval * ctx1, zval * ctx2) {
     bufferevent_setcb(buffer_two, ion_process_ipc_incoming, NULL, ion_process_ipc_notification, ipc2);
     ipc1->buffer = buffer_one;
     ipc2->buffer = buffer_two;
+    ipc1->flags |= ION_IPC_CONNECTED;
+    ipc2->flags |= ION_IPC_CONNECTED;
     if(ctx1) {
         ZVAL_COPY(&ipc1->ctx, ctx1);
     }
