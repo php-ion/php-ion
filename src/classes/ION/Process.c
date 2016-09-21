@@ -582,11 +582,7 @@ METHOD_ARGS_END()
 
 /** public function ION\Process::getChilds() : ION\Process\ChildProcess[] */
 CLASS_METHOD(ION_Process, getChildProcesses) {
-    zend_array * childs;
-
-    childs = zend_array_dup(GION(proc_childs));
-
-    RETURN_ARR(childs);
+    RETURN_ARR(zend_array_dup(GION(proc_childs)));
 }
 
 METHOD_WITHOUT_ARGS_RETURN_ARRAY(ION_Process, getChildProcesses);

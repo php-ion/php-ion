@@ -55,6 +55,7 @@ typedef struct _ion_process_child {
     zend_object   std;
     uint          flags;
     pid_t         pid;
+    pid_t         ppid; // parent pid for validation
     int           exit_status;
     ion_time      started_time;
     ion_process_ipc * ipc_parent;

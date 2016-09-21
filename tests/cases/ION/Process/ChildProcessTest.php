@@ -13,7 +13,6 @@ class ChildProcessTest extends TestCase {
     /**
      * @group dev
      * @memcheck
-     * @requires OS Darwin
      */
     public function testInit() {
         $worker = new ChildProcess();
@@ -32,7 +31,9 @@ class ChildProcessTest extends TestCase {
             $this->data["exit"]["started"]   = $w->isStarted();
             $this->data["exit"]["connected"] = $w->getIPC()->isConnected();
 
-            $this->data["exit"]["worker"] = ($w === Process::getChild($w->getPID()));
+            $this->data["exit"]["has"] = Process::hasChildProcess($w->getPID());
+            $this->data["exit"]["get"] = Process::getChildProcess($w->getPID());
+            $this->data["exit"]["childs"] = Process::getChildProcesses();
 
             $this->stop();
             // do something else
@@ -46,7 +47,9 @@ class ChildProcessTest extends TestCase {
             $this->data["started"]["started"]   = $w->isStarted();
             $this->data["started"]["connected"] = $w->getIPC()->isConnected();
 
-            $this->data["started"]["worker"] = ($w === Process::getChild($w->getPID()));
+            $this->data["started"]["has"] = Process::hasChildProcess($w->getPID());
+            $this->data["started"]["get"] = Process::getChildProcess($w->getPID());
+            $this->data["started"]["childs"] = Process::getChildProcesses();
             // do something else
 
         });
@@ -67,9 +70,15 @@ class ChildProcessTest extends TestCase {
         $this->data["begin"]["started"]   = $worker->isStarted();
         $this->data["begin"]["connected"] = $worker->getIPC()->isConnected();
 
+        $this->data["begin"]["has"]       = Process::hasChildProcess($worker->getPID());
+        $this->data["begin"]["get"]       = Process::getChildProcess($worker->getPID());
+        $this->data["begin"]["childs"]    = Process::getChildProcesses();
+
         $this->loop();
 
         usleep(10000); // ru: ждем что бы дать время буферу вывода дочернего процесса сплюнуть все в stdout/stderr
+
+//        $this->out($this->data);
 
         $this->assertEquals([
             "pid"       => 0,
@@ -79,7 +88,10 @@ class ChildProcessTest extends TestCase {
             "signaled"  => false,
             "started"   => false,
             "connected" => true,
-        ], $this->data["begin"]);
+            "has"       => false,
+            "get"       => NULL,
+            "childs"    => []
+        ], $this->data["begin"], "Begin");
 
         $this->assertEquals([
             "pid"       => $worker->getPID(),
@@ -89,7 +101,10 @@ class ChildProcessTest extends TestCase {
             "signaled"  => false,
             "started"   => true,
             "connected" => true,
-        ], $this->data["started"]);
+            "has"       => true,
+            "get"       => $worker,
+            "childs"    => [$worker->getPID() => $worker]
+        ], $this->data["started"], "Started");
 
         $this->assertEquals([
             "pid"       => $worker->getPID(),
@@ -99,7 +114,10 @@ class ChildProcessTest extends TestCase {
             "signaled"  => false,
             "started"   => true,
             "connected" => false,
-        ], $this->data["exit"]);
+            "has"       => false,
+            "get"       => NULL,
+            "childs"    => []
+        ], $this->data["exit"], "Exit");
     }
 
     /**

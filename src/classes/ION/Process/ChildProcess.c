@@ -6,6 +6,7 @@ zend_class_entry * ion_ce_ION_Process_ChildProcess;
 zend_object * ion_process_child_init(zend_class_entry * ce) {
     ion_process_child * child = ecalloc(1, sizeof(ion_process_child));
     child->exit_status = -1;
+    child->ppid = getpid();
 
     RETURN_INSTANCE(ION_Process_ChildProcess, child);
 }
@@ -30,25 +31,34 @@ void ion_process_child_free(zend_object * object) {
         zend_object_release(ION_OBJ(child->ipc_child));
         child->ipc_child = NULL;
     }
+    if(child->on_start) {
+        pion_cb_release(child->on_start);
+        child->on_start = NULL;
+    }
 }
 
 void ion_process_child_spawn(ion_process_child * worker) {
     int pid = 0;
-    zval res;
-    pion_cb * on_start = worker->on_start;
-    ZVAL_NULL(&res);
+    zval w;
+
+    if(worker->ppid != getpid()) {
+        return;
+    }
+
     errno = 0;
     pid = fork();
     if(pid == -1) {
         zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_SPAWN_FAIL, strerror(errno));
         return;
-    } else if(pid) { // parent
+    } else if(pid) { // in parent
         worker->flags |= ION_PROCESS_STARTED;
         worker->pid = pid;
         zend_object_release(ION_OBJ(worker->ipc_child));
         worker->ipc_child = NULL;
-//        worker->ipc_child = NULL;
         bufferevent_enable(worker->ipc_parent->buffer, EV_READ | EV_WRITE);
+        zend_object_addref(ION_OBJ(worker));
+        ZVAL_OBJ(&w, ION_OBJ(worker));
+        zend_hash_index_add(GION(proc_childs), (zend_ulong) pid, &w);
         if(worker->prom_started) {
             // use "weak" ref
             zval chld;
@@ -57,33 +67,24 @@ void ion_process_child_spawn(ion_process_child * worker) {
             ion_promisor_done(worker->prom_started, &chld);
             zval_ptr_dtor(&chld);
         }
-//        worker->ipc_parent = get_object_instance(Z_OBJ(ipc4parent), ion_process_ipc);
-//        ZVAL_OBJ(&worker->ipc_parent->ctx, ION_OBJ(worker));
-//        zval_add_ref(&worker->ipc_parent->ctx);
-//        ion_process_add_subprocess(pid, ION_PROCESS_CHILD, ION_OBJ(worker));
-//        ZVAL_OBJ(&res, ION_OBJ(worker));
-        zend_object_addref(ION_OBJ(worker));
-        zend_hash_index_add_ptr(GION(proc_childs), (zend_ulong) pid, ION_OBJ(worker));
-
-    } else { // child
+    } else { // in child
         zval ipc;
         if(event_reinit(GION(base)) == FAILURE) {
             zend_error(E_WARNING, ERR_ION_REINIT_FAILED);
         }
-//        ZVAL_OBJ(&ipc, ION_OBJ(worker->ipc_child));
-//        zval_add_ref(&ipc);
 
-        ZVAL_OBJ(&ipc, ION_OBJ(worker->ipc_child));
-        pion_cb_call_with_1_arg(on_start, &ipc);
+        if(worker->on_start) {
+            ZVAL_OBJ(&ipc, ION_OBJ(worker->ipc_child));
+            pion_cb_call_with_1_arg(worker->on_start, &ipc);
+
+        }
         zend_object_release(ION_OBJ(worker->ipc_child));
 
-//        zval_ptr_dtor(&ipc);
         bufferevent_enable(worker->ipc_child->buffer, EV_READ | EV_WRITE);
         worker->ipc_child = NULL;
         zend_object_release(ION_OBJ(worker));
 
     }
-    pion_cb_release(on_start);
 }
 
 
@@ -110,14 +111,6 @@ void ion_process_child_exit(zend_object * w, int status) {
         ZVAL_OBJ(Z_REFVAL(chld), w);
         ion_promisor_done(child->prom_exit, &chld);
         zval_ptr_dtor(&chld);
-    }
-//    if(child->buffer) {
-//        bufferevent_disable(child->buffer, EV_READ | EV_WRITE);
-//        bufferevent_free(child->buffer);
-//        child->buffer = NULL;
-//    }
-    if(child->flags & ION_PROCESS_CHILD) {
-        zend_hash_index_del(GION(workers), (zend_ulong) child->pid);
     }
 }
 

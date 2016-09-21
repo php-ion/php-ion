@@ -6,27 +6,31 @@ void ion_process_sigchld(evutil_socket_t signal, short flags, void * arg) {
     IONF("SIGCHLD received: check execs and workers");
     int status;
     pid_t pid = waitpid(-1, &status, WNOHANG | WUNTRACED);
-    zend_object * proc;
+    zval * found = NULL;
+    zend_object * proc = NULL;
 
     if(pid <= 0) {
-        // check disconnected workers
+        // check disconnected childs?
     } else {
-        proc = zend_hash_index_find_ptr(GION(proc_childs), (zend_ulong) pid);
-        if(proc) {
-            ion_process_child_exit(proc, status);
+        found = zend_hash_index_find(GION(proc_childs), (zend_ulong) pid);
+        if(found) {
+            proc = Z_OBJ_P(found);
+            zend_object_addref(proc);
             zend_hash_index_del(GION(proc_childs), (zend_ulong) pid);
+            ion_process_child_exit(proc, status);
             zend_object_release(proc);
         } else {
-            proc = zend_hash_index_find_ptr(GION(proc_execs), (zend_ulong) pid);
-            if(proc) {
-                ion_process_exec_exit(proc, status);
+            found = zend_hash_index_find(GION(proc_execs), (zend_ulong) pid);
+            if(found) {
+                proc = Z_OBJ_P(found);
+                zend_object_addref(proc);
                 zend_hash_index_del(GION(proc_execs), (zend_ulong) pid);
+                ion_process_exec_exit(proc, status);
                 zend_object_release(proc);
             }
         }
 
     }
-//    evsignal_add(GION(sigchld), NULL);
     ION_CB_END();
 }
 
