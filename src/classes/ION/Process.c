@@ -473,8 +473,6 @@ CLASS_METHOD(ION_Process, exec) {
         zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_EXEC_FORK_FAIL, strerror(errno));
         return;
     } else if(pid) { // parent
-//        zend_array * z1  = GION(proc_execs);
-//        zend_array * z2  = GION(proc_childs);
         efree(line);
         if(options) {
             zpid = zend_hash_str_find(Z_ARRVAL_P(options), STRARGS("pid"));
@@ -488,7 +486,6 @@ CLASS_METHOD(ION_Process, exec) {
         close(err_pipes[1]);
 
         ion_process_exec_object(&zexec);
-//        zval_add_ref(&zexec);
         zend_hash_index_add(GION(proc_execs), (zend_ulong) pid, &zexec);
 
         pion_update_property_str(ION_Process_Exec, &zexec, "command", zend_string_copy(command));
@@ -526,9 +523,9 @@ CLASS_METHOD(ION_Process, exec) {
 
 
         }
-//        if(zcwd && chdir(Z_STRVAL_P(zcwd)) == FAILURE) {
-//            fprintf(stderr, ERR_ION_PROCESS_EXEC_CHDIR_FAIL, Z_STRVAL_P(zcwd), strerror(errno));
-//        }
+        if(zcwd && chdir(Z_STRVAL_P(zcwd)) == FAILURE) {
+            fprintf(stderr, ERR_ION_PROCESS_EXEC_CHDIR_FAIL, Z_STRVAL_P(zcwd), strerror(errno));
+        }
         if(execle("/bin/sh", "sh", "-c", command->val, NULL, env)) {
             perror(strerror(errno));
         }
