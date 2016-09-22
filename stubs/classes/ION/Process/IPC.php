@@ -43,7 +43,7 @@ class IPC {
      *
      * @return Promise
      */
-    public function whenDisconnect() : Promise {}
+    public function whenDisconnected() : Promise {}
 
     /**
      * Возвращает время последнего сообщения
@@ -58,7 +58,7 @@ class IPC {
      *
      * @return Sequence
      */
-    public function whenMessage() : Sequence {}
+    public function whenIncoming() : Sequence {}
 
 
     /**

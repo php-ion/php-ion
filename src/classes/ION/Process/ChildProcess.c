@@ -14,7 +14,6 @@ zend_object * ion_process_child_init(zend_class_entry * ce) {
 
 void ion_process_child_free(zend_object * object) {
     ion_process_child * child = get_object_instance(object, ion_process_child);
-//    PHPDBG("RELEASE CHILD %d (mypid %d)", child->pid, getpid());
     if(child->prom_exit) {
         zend_object_release(child->prom_exit);
         child->prom_exit = NULL;
@@ -90,6 +89,11 @@ void ion_process_child_spawn(ion_process_child * worker) {
 
 void ion_process_child_exit(zend_object * w, int status) {
     ion_process_child * child = get_object_instance(w, ion_process_child);
+
+    if(child->ppid != getpid()) {
+        return;
+    }
+
     if(WIFSIGNALED(status)) {
         child->signal = WTERMSIG(status);
         child->exit_status = status;

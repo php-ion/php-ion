@@ -473,6 +473,8 @@ CLASS_METHOD(ION_Process, exec) {
         zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_EXEC_FORK_FAIL, strerror(errno));
         return;
     } else if(pid) { // parent
+//        zend_array * z1  = GION(proc_execs);
+//        zend_array * z2  = GION(proc_childs);
         efree(line);
         if(options) {
             zpid = zend_hash_str_find(Z_ARRVAL_P(options), STRARGS("pid"));
@@ -486,6 +488,9 @@ CLASS_METHOD(ION_Process, exec) {
         close(err_pipes[1]);
 
         ion_process_exec_object(&zexec);
+//        zval_add_ref(&zexec);
+        zend_hash_index_add(GION(proc_execs), (zend_ulong) pid, &zexec);
+
         pion_update_property_str(ION_Process_Exec, &zexec, "command", zend_string_copy(command));
         exec            = get_instance(&zexec, ion_process_exec);
 
@@ -493,13 +498,12 @@ CLASS_METHOD(ION_Process, exec) {
         exec->err       = bufferevent_socket_new(GION(base), err_pipes[0], BEV_OPT_CLOSE_ON_FREE);
         exec->out       = bufferevent_socket_new(GION(base), out_pipes[0], BEV_OPT_CLOSE_ON_FREE);
 
-        bufferevent_setcb(exec->err, NULL, NULL, ion_process_exec_disconnect, exec);
+//        bufferevent_setcb(exec->err, NULL, NULL, ion_process_exec_disconnect, exec);
         bufferevent_enable(exec->out, EV_READ);
         bufferevent_enable(exec->err, EV_READ);
         exec->deferred = ion_promisor_deferred_new_ex(NULL);
         ion_promisor_store(exec->deferred, exec);
         zend_object_addref(exec->deferred);
-        zend_hash_index_add_ptr(GION(proc_execs), (zend_ulong) pid, ION_OBJ(exec));
 //        ion_process_add_subprocess(pid, ION_PROCESS_EXEC, ION_OBJ(exec));
         RETURN_OBJ(exec->deferred);
     } else {  // child
@@ -522,9 +526,9 @@ CLASS_METHOD(ION_Process, exec) {
 
 
         }
-        if(zcwd && chdir(Z_STRVAL_P(zcwd)) == FAILURE) {
-            fprintf(stderr, ERR_ION_PROCESS_EXEC_CHDIR_FAIL, Z_STRVAL_P(zcwd), strerror(errno));
-        }
+//        if(zcwd && chdir(Z_STRVAL_P(zcwd)) == FAILURE) {
+//            fprintf(stderr, ERR_ION_PROCESS_EXEC_CHDIR_FAIL, Z_STRVAL_P(zcwd), strerror(errno));
+//        }
         if(execle("/bin/sh", "sh", "-c", command->val, NULL, env)) {
             perror(strerror(errno));
         }
@@ -565,7 +569,7 @@ CLASS_METHOD(ION_Process, getChildProcess) {
     zval * child = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1,2)
-            Z_PARAM_LONG(pid)
+       Z_PARAM_LONG(pid)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     child = zend_hash_index_find(GION(proc_childs), (zend_ulong) pid);
@@ -652,7 +656,7 @@ PHP_RINIT_FUNCTION(ION_Process) {
     zend_hash_init(GION(signals), 128, NULL, ion_process_clean_signal, 0);
 
     ALLOC_HASHTABLE(GION(proc_childs));
-    zend_hash_init(GION(proc_childs), 64, NULL, zval_ptr_dtor_wrapper, 0);
+    zend_hash_init(GION(proc_childs), 37, NULL, zval_ptr_dtor_wrapper, 0);
 
     ALLOC_HASHTABLE(GION(proc_execs));
     zend_hash_init(GION(proc_execs), 64, NULL, zval_ptr_dtor_wrapper, 0);

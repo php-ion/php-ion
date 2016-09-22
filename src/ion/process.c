@@ -34,21 +34,6 @@ void ion_process_sigchld(evutil_socket_t signal, short flags, void * arg) {
     ION_CB_END();
 }
 
-void ion_process_add_subprocess(pid_t pid, enum ion_process_flags type, zend_object * object) {
-    ion_process_child * child = get_object_instance(object, ion_process_child);
-    child->flags |= type;
-
-    zend_hash_index_add_ptr(GION(proc_childs), (zend_ulong) pid, object);
-}
-
-void ion_process_exec_disconnect(ion_buffer * b, short what, void * ctx) {
-    ion_process_child * child = (ion_process_child *)ctx;
-    if(what & (BEV_EVENT_ERROR | BEV_EVENT_EOF)) {
-//        child->flags |= ION_PROCESS_DISCONNECTED;
-        zend_hash_index_add_ptr(GION(proc_childs), (zend_ulong) child->pid, NULL);
-    }
-}
-
 void ion_process_exec_exit(zend_object * exec, int status) {
     zval result;
     zend_string * out;
@@ -135,6 +120,8 @@ int ion_process_ipc_message_end(websocket_parser * parser) {
         if (ZSTR_LEN(ipc->frame_body) > 0) {
             ZSTR_VAL(ipc->frame_body)[ZSTR_LEN(ipc->frame_body)] = '\0';
         }
+//        zval message;
+//        object_init_ex(&message, ion_class_entry(ION_Process_IPC_Message));
         zval c;
         ZVAL_STR(&c, ipc->frame_body);
         zval_add_ref(&c);

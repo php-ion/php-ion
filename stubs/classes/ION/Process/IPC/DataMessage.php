@@ -9,7 +9,7 @@ use ION\Process\ChildProcess;
  *
  * @package ION\Process\IPC
  */
-class Message {
+class DataMessage {
     const DATA_BINARY = 1;
 
     /**

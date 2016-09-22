@@ -145,6 +145,7 @@ if test "$PHP_ION" != "no"; then
     classes/ION/Process.c
     classes/ION/Process/Exec.c
     classes/ION/Process/IPC.c
+    classes/ION/Process/IPC/Message.c
     classes/ION/Process/ChildProcess.c
 
     classes/ION/Stream/StorageAbstract.c

@@ -9,8 +9,9 @@ BEGIN_EXTERN_C();
 extern ION_API zend_class_entry * ion_ce_ION_Process;
 extern ION_API zend_class_entry * ion_ce_ION_ProcessException;
 extern ION_API zend_class_entry * ion_ce_ION_Process_Exec;
-extern ION_API zend_class_entry * ion_ce_ION_Process_Worker;
+extern ION_API zend_class_entry * ion_ce_ION_Process_ChildProcess;
 extern ION_API zend_class_entry * ion_ce_ION_Process_IPC;
+extern ION_API zend_class_entry * ion_ce_ION_Process_IPC_Message;
 
 extern ION_API struct passwd * ion_get_pw_by_zval(zval * zuser);
 
@@ -22,7 +23,6 @@ typedef struct _ion_process_ipc {
     zval          ctx;
     ion_buffer  * buffer;
     zend_object * on_message;
-    zend_object * on_connect;
     zend_object * on_disconnect;
     websocket_parser * parser;
     zend_string * frame_body;
@@ -83,8 +83,6 @@ typedef struct _ion_process_child {
 
 #define ion_process_exec_object(pz) object_init_ex(pz, ion_ce_ION_Process_Exec)
 #define ion_process_is_exec(obj) (get_object_instance(obj, ion_process_child)->flags & ION_PROCESS_EXEC)
-
-void ion_process_exec_disconnect(ion_buffer * b, short what, void * ctx);
 
 void ion_process_sigchld(evutil_socket_t signal, short flags, void * arg);
 void ion_process_exec_exit(zend_object * exec, int status);

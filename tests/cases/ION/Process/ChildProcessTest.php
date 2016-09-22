@@ -4,14 +4,13 @@ namespace ION\Process;
 
 
 use ION\Process;
-use ION\Process\IPC\Message;
+use ION\Process\IPC\DataMessage;
 use ION\Test\TestCase;
 
 
 class ChildProcessTest extends TestCase {
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testInit() {

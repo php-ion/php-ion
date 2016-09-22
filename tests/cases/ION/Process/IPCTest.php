@@ -22,8 +22,8 @@ class IPCTest extends TestCase {
         $this->assertInstanceOf(IPC::class, $one);
         $this->assertInstanceOf(IPC::class, $two);
 
-        $one->disconnected()->then(function () {});
-        $one->incoming()->then(function () {});
+        $one->whenDisconnected()->then(function () {});
+        $one->whenIncoming()->then(function () {});
 
         $this->assertEquals("one1", $one->getContext());
         $this->assertEquals("two2", $two->getContext());
@@ -37,7 +37,7 @@ class IPCTest extends TestCase {
         list($one, $two) = IPC::create("one1", "two2");
         /* @var IPC $one */
         /* @var IPC $two */
-        $one->incoming()->then(function ($data) {
+        $one->whenIncoming()->then(function ($data) {
             $this->data[] = $data;
         });
         \ION::await(0.02)->then(function () use($two) {
@@ -63,10 +63,10 @@ class IPCTest extends TestCase {
         list($one, $this->tmp) = IPC::create("one1", "two2");
         /* @var IPC $one */
         /* @var IPC $two */
-        $one->incoming()->then(function ($data) {
+        $one->whenIncoming()->then(function ($data) {
             $this->data[] = $data;
         });
-        $one->disconnected()->then(function ($ctx) {
+        $one->whenDisconnected()->then(function ($ctx) {
             $this->data[] = $ctx;
         });
         \ION::await(0.02)->then(function () {
