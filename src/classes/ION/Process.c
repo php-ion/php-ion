@@ -495,13 +495,11 @@ CLASS_METHOD(ION_Process, exec) {
         exec->err       = bufferevent_socket_new(GION(base), err_pipes[0], BEV_OPT_CLOSE_ON_FREE);
         exec->out       = bufferevent_socket_new(GION(base), out_pipes[0], BEV_OPT_CLOSE_ON_FREE);
 
-//        bufferevent_setcb(exec->err, NULL, NULL, ion_process_exec_disconnect, exec);
         bufferevent_enable(exec->out, EV_READ);
         bufferevent_enable(exec->err, EV_READ);
         exec->deferred = ion_promisor_deferred_new_ex(NULL);
         ion_promisor_store(exec->deferred, exec);
         zend_object_addref(exec->deferred);
-//        ion_process_add_subprocess(pid, ION_PROCESS_EXEC, ION_OBJ(exec));
         RETURN_OBJ(exec->deferred);
     } else {  // child
         if (dup2( out_pipes[1], 1 ) < 0 ) {

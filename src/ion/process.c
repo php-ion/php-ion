@@ -68,35 +68,6 @@ void ion_process_exec_exit(zend_object * exec, int status) {
     zval_ptr_dtor(&result);
 }
 
-
-//void ion_process_exec_dtor(zend_object * exec) {
-//    zend_object_release(exec);
-//}
-//
-//void ion_process_worker_dtor(zend_object * worker) {
-////    ion_process_worker * w = get_object_instance(worker, ion_process_worker);
-////    w->flags |= ION_PROCESS_ABORT;
-//    zend_object_release(worker);
-//}
-
-
-//void ion_process_child_dtor(zval * pz) {
-//    zend_object * child = Z_OBJ_P(pz);
-//
-//    if(ion_process_is_exec(child)) {
-//        ion_process_exec_dtor(child);
-//    } else {
-//        ion_process_worker_dtor(child);
-//    }
-//}
-
-/* IPC */
-//
-//int ion_process_ipc_buffer(ion_buffer ** one, ion_buffer ** two, void * ctx) {
-//
-//}
-//
-//
 int ion_process_ipc_message_begin(websocket_parser * parser) {
     ion_process_ipc * ipc = parser->data;
 
