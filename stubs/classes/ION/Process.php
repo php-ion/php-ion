@@ -3,21 +3,17 @@
 namespace ION;
 
 
-use ION\Deferred\Map;
 use ION\Process\ChildProcess;
-use ION\Process\ExecResult;
-use ION\Process\Message;
-use ION\Process\Worker;
 
 class Process {
     public static function stdin() : Stream { }
-    public static function setStdin($fd) { }
+//    public static function setStdin($fd) { }
 
     public static function stdout() : Stream { }
-    public static function setStdout($fd) { }
+//    public static function setStdout($fd) { }
 
     public static function stderr() : Stream { }
-    public static function setStderr($fd) { }
+//    public static function setStderr($fd) { }
 
     /**
      * Create a child process and restore event loop.
@@ -30,13 +26,15 @@ class Process {
      */
     public static function fork($flags = 0) { }
 
-    public static function spawn(int $flags = 0, $ctx = null) : Worker {}
-
-    public static function getChild($pid) : Worker {}
-
-    public static function hasMaster() : bool {}
-
-    public static function getMaster() : Worker {}
+    /**
+     * Spawn new child process.
+     *
+     * @param int $flags
+     * @param mixed $ctx
+     *
+     * @return int
+     */
+    public static function spawn(int $flags = 0, $ctx = null) : int {}
 
     /**
      * Set signal handler
@@ -71,13 +69,15 @@ class Process {
      * @param array $options  execute options:
      *                        <pre>
      *                        [
-     *                        'user'  => $user_name_or_uid,
-     *                        'group' => $group_name_or_uid,
-     *                        'pid'   => &$pid
+     *                          'user'  => $user_name_or_uid,
+     *                          'group' => $group_name_or_uid,
+     *                          'cwd'   => $path,
+     *                          'pid'   => &$pid
      *                        ]
      *                        </pre>
      *
-     * @return Deferred|ExecResult
+     * @return Deferred
+     * @see ION\Process\Exec
      * */
     public static function exec($command, array $options = []) : Deferred { }
 
@@ -85,13 +85,13 @@ class Process {
     /**
      * Return the current process identifier
      * @return int
-     * */
+     */
     public static function getPid() : int { }
 
     /**
      * Return the parent process identifier
      * @return int
-     * */
+     */
     public static function getParentPid() : int { }
 
     /**

@@ -157,7 +157,7 @@ class SequenceTest extends TestCase {
     }
 
     /**
-     * @memcheck
+     * @mem check
      */
     public function _testMultiArgs() {
         $seq = new Sequence(function (int $x, int $y, float $z) {

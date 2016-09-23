@@ -4,7 +4,7 @@ namespace ION\Process;
 
 
 use ION\Process;
-use ION\Process\IPC\DataMessage;
+use ION\Process\IPC\Message;
 use ION\Test\TestCase;
 
 
@@ -30,9 +30,9 @@ class ChildProcessTest extends TestCase {
             $this->data["exit"]["started"]   = $w->isStarted();
             $this->data["exit"]["connected"] = $w->getIPC()->isConnected();
 
-            $this->data["exit"]["has"] = Process::hasChildProcess($w->getPID());
-            $this->data["exit"]["get"] = Process::getChildProcess($w->getPID());
-            $this->data["exit"]["childs"] = Process::getChildProcesses();
+            $this->data["exit"]["has"]       = Process::hasChildProcess($w->getPID());
+            $this->data["exit"]["get"]       = Process::getChildProcess($w->getPID());
+            $this->data["exit"]["childs"]    = Process::getChildProcesses();
 
             $this->stop();
             // do something else
@@ -46,9 +46,9 @@ class ChildProcessTest extends TestCase {
             $this->data["started"]["started"]   = $w->isStarted();
             $this->data["started"]["connected"] = $w->getIPC()->isConnected();
 
-            $this->data["started"]["has"] = Process::hasChildProcess($w->getPID());
-            $this->data["started"]["get"] = Process::getChildProcess($w->getPID());
-            $this->data["started"]["childs"] = Process::getChildProcesses();
+            $this->data["started"]["has"]       = Process::hasChildProcess($w->getPID());
+            $this->data["started"]["get"]       = Process::getChildProcess($w->getPID());
+            $this->data["started"]["childs"]    = Process::getChildProcesses();
             // do something else
 
         });
@@ -119,50 +119,10 @@ class ChildProcessTest extends TestCase {
         ], $this->data["exit"], "Exit");
     }
 
-    /**
-     */
-    public function _testSpawn() {
-        $this->data["master"] = getmypid();
-        $worker = new Worker();
-        $worker->onConnect()->then(function (Worker $w) {
-            $this->data["connected"] = true;
-        });
-        $worker->onDisconnect()->then(function (Worker $w) {
-            $this->data["disconnected"] = true;
-        });
-        $worker->run(function (Worker $w) {
-            sleep(2);
-            var_dump(getmypid().": i am exit");
-            ob_flush();
-            exit(12);
-        });
-        $worker->onExit()->then(function (Worker $w) {
-            $this->data["cb_pid"] = getmypid();
-            $this->data["child_pid"] = $w->getPID();
-            $this->data["is_exit"]     = $w->isAlive();
-            $this->data["is_child"]    = $w->isChild();
-            $this->data["is_signaled"] = $w->isSignaled();
-            $this->data["status"]      = $w->getExitStatus();
-            $this->stop();
-        });
-        $this->loop();
+    public function testCommunication() {
+        $worker = new ChildProcess();
+        $worker->getIPC()->whenIncoming()->then(function (Message $message) {
 
-        $this->assertEquals([
-            'master' => getmypid(),
-        ], $this->data);
-    }
-
-    public function _testMessaging() {
-        $worker = new Worker();
-        $worker->run(function () {
-            usleep(100000);
-            exit(0);
         });
-        $worker->onExit()->then(function (Worker $w) {
-            $this->data["status"]   = $w->getExitStatus();
-            $this->stop();
-        });
-
-        $this->loop();
     }
 }

@@ -91,13 +91,17 @@ int ion_process_ipc_message_end(websocket_parser * parser) {
         if (ZSTR_LEN(ipc->frame_body) > 0) {
             ZSTR_VAL(ipc->frame_body)[ZSTR_LEN(ipc->frame_body)] = '\0';
         }
-//        zval message;
-//        object_init_ex(&message, ion_class_entry(ION_Process_IPC_Message));
-        zval c;
-        ZVAL_STR(&c, ipc->frame_body);
-        zval_add_ref(&c);
-        ion_promisor_sequence_invoke(ipc->on_message, &c);
-        zval_ptr_dtor(&c);
+        zval message;
+        object_init_ex(&message, ion_class_entry(ION_Process_IPC_Message));
+        zval_add_ref(&ipc->ctx);
+        zend_update_property_str(ion_class_entry(ION_Process_IPC_Message), &message, STRARGS("data"), zend_string_copy(ipc->frame_body));
+        zend_update_property(ion_class_entry(ION_Process_IPC_Message), &message, STRARGS("context"), &ipc->ctx);
+
+        ion_promisor_sequence_invoke(ipc->on_message, &message);
+
+        zval_ptr_dtor(&ipc->ctx);
+        zend_string_release(ipc->frame_body);
+        zval_ptr_dtor(&message);
     }
     zend_string_release(ipc->frame_body);
     return 0;

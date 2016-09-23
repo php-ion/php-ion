@@ -651,7 +651,7 @@ PHP_RINIT_FUNCTION(ION_Process) {
     zend_hash_init(GION(signals), 128, NULL, ion_process_clean_signal, 0);
 
     ALLOC_HASHTABLE(GION(proc_childs));
-    zend_hash_init(GION(proc_childs), 37, NULL, zval_ptr_dtor_wrapper, 0);
+    zend_hash_init(GION(proc_childs), 32, NULL, zval_ptr_dtor_wrapper, 0);
 
     ALLOC_HASHTABLE(GION(proc_execs));
     zend_hash_init(GION(proc_execs), 64, NULL, zval_ptr_dtor_wrapper, 0);

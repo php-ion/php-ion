@@ -8,22 +8,13 @@ use ION\Process\ChildProcess;
  * Сообщение межпроцессорного коммуникатора.
  *
  * @package ION\Process\IPC
+ *
  */
-class DataMessage {
-    const DATA_BINARY = 1;
-
+class Message {
     /**
-     * @var int
-     */
-    public $type = self::DATA_BINARY;
-    /**
-     * @var mixed
+     * @var mixed|ChildProcess
      */
     public $context;
-    /**
-     * @var ChildProcess
-     */
-    public $process;
     /**
      * @var mixed
      */

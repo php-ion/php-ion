@@ -5,7 +5,7 @@ use ION\Test\TestCase;
 class IONTest extends TestCase {
 
     /**
-     * Always should be fine
+     * Always passed
      * @memcheck
      */
     public function testMemcheck() {

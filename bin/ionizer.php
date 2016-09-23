@@ -162,11 +162,11 @@ class BuildRunner {
 			} else {
 				$group = "";
 			}
-			$phpunit = $this->getBin('php'/*, ['USE_ZEND_ALLOC' => $this->zend_alloc]*/)." -e -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --colors=always $group ".$this->getOption('test', 't', '');
+			$phpunit = $this->getBin('php'/*, ['USE_ZEND_ALLOC' => $this->zend_alloc]*/)." -e -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --colors=always $group ".$this->getOption('test', '', '');
 			$this->exec($phpunit, false, $use_gdb);
             if($this->hasOption('coverage', 'o')) {
                 $this->exec($this->getBin('lcov')." --directory . --capture --output-file coverage.info");
-                $this->exec($this->getBin('lcov')." --remove coverage.info 'src/externals/*' '/usr/*' '/opt/*' '*/Zend/*' --output-file coverage.info");
+                $this->exec($this->getBin('lcov')." --remove coverage.info 'src/deps/*' '/usr/*' '/opt/*' '*/Zend/*' --output-file coverage.info");
                 $this->exec($this->getBin('lcov')." --list coverage.info");
             }
 		}

@@ -3,6 +3,7 @@
 namespace ION\Process;
 
 
+use ION\Process\IPC\Message;
 use ION\Test\TestCase;
 
 class IPCTest extends TestCase {
@@ -30,14 +31,22 @@ class IPCTest extends TestCase {
 
     }
 
+    public function message($data, $ctx) {
+        $msg = new Message();
+        $msg->context = $ctx;
+        $msg->data = $data;
+        return $msg;
+    }
+
     /**
+     * @group dev
      * @memcheck
      */
     public function testCommunicate() {
         list($one, $two) = IPC::create("one1", "two2");
         /* @var IPC $one */
         /* @var IPC $two */
-        $one->whenIncoming()->then(function ($data) {
+        $one->whenIncoming()->then(function (Message $data) {
             $this->data[] = $data;
         });
         \ION::await(0.02)->then(function () use($two) {
@@ -52,7 +61,8 @@ class IPCTest extends TestCase {
 
         \ION::dispatch();
         $this->assertEquals([
-            "test1", "test2"
+            $this->message("test1", "one1"),
+            $this->message("test2", "one1"),
         ], $this->data);
     }
 
@@ -80,7 +90,8 @@ class IPCTest extends TestCase {
         });
         \ION::dispatch();
         $this->assertEquals([
-            "test1", "one1"
+            $this->message("test1", "one1"),
+            "one1"
         ], $this->data);
     }
 }

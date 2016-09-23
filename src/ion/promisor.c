@@ -1,3 +1,4 @@
+#include <ion.h>
 #include "promisor.h"
 #include "debug.h"
 
@@ -111,7 +112,7 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, uint32_t type)
 //                if(type & ION_PROMISOR_MULTI_ARGS) {
 //                    uint8_t count = (uint8_t) (type >> ION_PROMISOR_ARGS_NUM_SHIFT);
 //                    for(uint8_t i = 0; i < count; i++) {
-//                        if(pion_verify_arg_type(callback, i, &data[i]) == false) {
+//                        if(pion_verify_arg_type(callback->cb.php, i, &data[i]) == false) {
 //                            callback = NULL;
 //                        }
 //                    }
