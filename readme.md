@@ -5,7 +5,7 @@ ION PHP Extension
 
 * **Subject:** PHP extension
 * **Language:** C
-* **OS:** linux, osx, freebsd
+* **OS:** linux, mac, freebsd
 * **PHP version:** 7.0+
 * **Stage:** develop
 * **State:** [![Build Status](https://travis-ci.org/php-ion/php-ion.png?branch=master)](https://travis-ci.org/php-ion/php-ion) [![Coverage Status](https://coveralls.io/repos/php-ion/php-ion/badge.svg?branch=master&service=github)](https://coveralls.io/github/php-ion/php-ion?branch=master)

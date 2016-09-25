@@ -33,7 +33,7 @@ before_script:
   - composer install --quiet
 
 # Run tests
-script: bin/ionizer.php --test --use-gdb
+script: bin/ionizer.php --test --gdb
 
 # Send code coverage
 after_success:

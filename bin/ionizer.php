@@ -11,19 +11,98 @@ class BuildRunner {
 
 	const SEGEV_CODE = 139;
 
+    const GDB_NONE   = 0;
+    const GDB_LOCAL  = 1;
+    const GDB_SERVER = 2;
+
 	public $binaries = [
-		"php"      => PHP_BINARY,
-		"phpize"   => 'phpize',
-		"make"     => 'make',
-		"phpunit"  => 'vendor/bin/phpunit',
-		"gdb"      => 'gdb',
-		"lcov"     => 'lcov',
+		"php"       => PHP_BINARY,
+		"phpize"    => 'phpize',
+		"make"      => 'make',
+		"phpunit"   => 'vendor/bin/phpunit',
+		"gdb"       => 'gdb',
+		"gdbserver" => 'gdbserver',
+		"lcov"      => 'lcov',
+		"docker"    => 'docker',
 	];
 
-    public $shorts = [
-        'system' => 'I',
-        'diagnostic' => ''
-
+    public $options = [
+        'diagnostic' => [
+            'short' => '',
+            'desc'  => 'Prints extension diagnostic info.'
+        ],
+        'help' => [
+            'short' => 'h',
+            'desc'  => 'Prints this usage information.'
+        ],
+        'clean' => [
+            'short' => 'c',
+            'desc'  => 'Deletes all the already compiled object files.'
+        ],
+        'make' => [
+            'short' => 'm',
+            'desc'  => 'Compile ION extension (make required)'
+        ],
+        'coverage' => [
+            'short' => 'o',
+            'desc'  => 'Compile extension with code coverage and generate code coverage report in Clover XML format (lcov required).'
+        ],
+        'install' => [
+            'short' => '',
+            'desc'  => 'Install extension.'
+        ],
+        'phpize' => [
+            'short' => 'p',
+            'desc'  => 'Prepare the build environment for a PHP extension (phpize required).'
+        ],
+        'build' => [
+            'short' => 'b',
+            'desc'  => 'Build and compile the extension. Alias of --phpize --clean --make.'
+        ],
+        'setup' => [
+            'short' => 'B',
+            'desc'  => 'Build, compile and install the extension. Alias of --build --install.'
+        ],
+        'info' => [
+            'short' => 'i',
+            'desc'  => 'Prints info about the extension.'
+        ],
+        'system' => [
+            'short' => 'I',
+            'desc'  => 'Prints useful for extension information about this OS.'
+        ],
+        'test' => [
+            'short' => 't',
+            'desc'  => 'Run tests (phpunit required).',
+            'extra' => "[=PATH]"
+        ],
+        'group' => [
+            'short' => '',
+            'desc'  => 'Only runs tests from the specified group(s).',
+            'extra' => '=GROUP'
+        ],
+        'dev' => [
+            'short' => '',
+            'desc'  => 'Only runs tests from the dev group. Alias of --group=dev.'
+        ],
+        'gdb' => [
+            'short' => '',
+            'desc'  => 'Runs tests via GDB (gdb required).'
+        ],
+        'gdb-server' => [
+            'desc'  => 'Runs tests via GDB Server (gdbserver required).',
+            'extra' => '=HOST:PORT'
+        ],
+        'docker-gdb-server' => [
+            'desc'  => 'Start docker image with gdb-server (docker required)',
+        ],
+        'docker-sync' => [
+            'desc'  => 'Copy extension files into docker dev directory.',
+        ],
+        'docker-sync-rebuild' => [
+            'desc'  => 'Copy extension files into docker dev directory and rebuild if .m4 or .h files has changes.',
+            'extra' => '=HOST:PORT'
+        ]
     ];
 
 	public $opts = [];
@@ -42,6 +121,13 @@ class BuildRunner {
         });
     }
 
+    /**
+     * Get program binary name/path
+     * @param string $name short name
+     * @param array $env
+     *
+     * @return string
+     */
 	public function getBin(string $name, array $env = []) {
         if($env) {
             foreach($env as $var => &$value) {
@@ -58,30 +144,102 @@ class BuildRunner {
 		}
 	}
 
-
+    /**
+     * Write string to stderr
+     *
+     * @param string $msg
+     *
+     * @return $this
+     */
 	public function write(string $msg) {
 		fwrite(STDERR, $msg);
 		return $this;
 	}
 
+    /**
+     * Write line to stderr
+     *
+     * @param string $msg
+     *
+     * @return BuildRunner
+     */
 	public function line(string $msg) {
 		return $this->write($msg."\n");
 	}
 
-	public function hasOption(string $long, string $short = "") {
+    /**
+     * @param string $option
+     * @param string $key
+     * @param string $default
+     *
+     * @return mixed
+     */
+    private function getOptionInfo(string $option, string $key = '', $default = '') {
+        if(isset($this->options[$option])) {
+            if($key) {
+                return $this->options[$option][$key] ?? $default;
+            } else {
+                return $this->options[$option];
+            }
+        } else {
+            throw new LogicException("Option <$option> doesn't exists");
+        }
+    }
+
+    /**
+     * @param string $option
+     *
+     * @return string
+     */
+    private function getShort(string $option) {
+        return $this->getOptionInfo($option, 'short', '');
+    }
+
+    private function getDesc(string $option) {
+        return $this->getOptionInfo($option, 'desc', '');
+    }
+
+    private function getExtra(string $option) {
+        return $this->getOptionInfo($option, 'extra', '');
+    }
+
+    /**
+     * Checks whether the parameter
+     *
+     * @param string $long
+     *
+     * @return bool
+     *
+     */
+	public function hasOption(string $long) {
+        $short = $this->getShort($long);
 		$options = getopt($short, [$long]);
 		return isset($this->opts[ $long ]) || isset($options[ $long ]) || isset($options[ $short ]);
 	}
 
+    /**
+     * Sets parameter
+     * @param string $long
+     * @param string $value
+     *
+     * @return $this
+     */
 	public function setOption(string $long, string $value = "") {
 		$this->opts[$long] = $value;
 		return $this;
 	}
 
-	public function getOption(string $long, string $short = "", $default = null) {
+    /**
+     * @param string $long
+     * @param mixed $default
+     *
+     * @return mixed
+     */
+	public function getOption(string $long, $default = null) {
 		if(isset($this->opts[$long])) {
 			return $this->opts[$long];
 		}
+        $short = $this->getShort($long);
 		$options = getopt($short."::", [$long."::"]);
 		if(isset($options[ $long ])) {
 			return $options[ $long ];
@@ -92,46 +250,51 @@ class BuildRunner {
 		}
 	}
 
+    /**
+     * Run dispatcher
+     */
 	public function run() {
-        if($this->hasOption('system', 'I')) {
+        if($this->hasOption('system')) {
             $this->printSystemInfo();
         }
 
-        if($this->hasOption('diagnostic', "")) {
+        if($this->hasOption('diagnostic')) {
             $this->printInfo();
             return;
         }
 
-		if($this->hasOption("help", "h")) {
+		if($this->hasOption("help")) {
 			$this->help();
 			return;
 		}
 
-		if($this->hasOption("build", "b")) {
+		if($this->hasOption("build")) {
 			$this->setOption("phpize");
 			$this->setOption("make");
 			$this->setOption("clean");
 		}
 
-		if($this->hasOption("setup", "B")) {
+		if($this->hasOption("setup")) {
 			$this->setOption("phpize");
 			$this->setOption("make");
 			$this->setOption("clean");
 			$this->setOption("install");
 		}
 
-		if($use_gdb = $this->hasOption("use-gdb")) {
-			if($this->getOption("use-gdb")) {
-				$this->binaries['gdb'] = $this->getOption("use-gdb");
-			}
-		}
+		if($this->hasOption("gdb")) {
+            $gdb = self::GDB_LOCAL;
+		} elseif($this->hasOption("gdb-server")) {
+            $gdb = self::GDB_SERVER;
+        } else {
+            $gdb = self::GDB_NONE;
+        }
 
-		if($this->hasOption('phpize', 'p')) {
-			if($this->hasOption('clean', 'c')) {
+		if($this->hasOption('phpize')) {
+			if($this->hasOption('clean')) {
 				$this->exec($this->getBin('phpize').' --clean', "src/");
 			}
 			$this->exec($this->getBin('phpize'), "src/");
-            if($this->hasOption('coverage', 'o')) {
+            if($this->hasOption('coverage')) {
                 $this->exec('./configure --with-ion --enable-ion-debug --enable-ion-coverage', "src/");
             } else {
 //                $this->exec('./configure --with-ion='.__DIR__.'/../Libevent --enable-ion-debug', "src/");
@@ -139,32 +302,32 @@ class BuildRunner {
             }
 		}
 
-		if($this->hasOption('clean', 'c')) {
+		if($this->hasOption('clean')) {
 			$this->exec($this->getBin('make').' clean', "src/");
 		}
 
-		if($this->hasOption('make', 'm')) {
+		if($this->hasOption('make')) {
 			$this->exec($this->getBin('make').' -j2',  "src/");
 		}
 
-		if($this->hasOption('info', 'i')) {
-			$this->exec($this->getBin('php'/*, ['USE_ZEND_ALLOC' => $this->zend_alloc]*/) . ' -e -dextension=./src/modules/ion.so '.__FILE__." --diagnostic", false, $use_gdb);
+		if($this->hasOption('info')) {
+			$this->exec($this->getBin('php'/*, ['USE_ZEND_ALLOC' => $this->zend_alloc]*/) . ' -e -dextension=./src/modules/ion.so '.__FILE__." --diagnostic", false, $gdb);
 		}
 
 		if($this->hasOption("dev")) {
 			$this->setOption("test");
 			$this->setOption("group", "dev");
 		}
-		if($this->hasOption('test', 't')) {
-			$group = $this->getOption('group', 'g');
+		if($this->hasOption('test')) {
+			$group = $this->getOption('group');
 			if($group) {
 				$group = "--group=".$group;
 			} else {
 				$group = "";
 			}
-			$phpunit = $this->getBin('php'/*, ['USE_ZEND_ALLOC' => $this->zend_alloc]*/)." -e -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --colors=always $group ".$this->getOption('test', '', '');
-			$this->exec($phpunit, false, $use_gdb);
-            if($this->hasOption('coverage', 'o')) {
+			$phpunit = $this->getBin('php'/*, ['USE_ZEND_ALLOC' => $this->zend_alloc]*/)." -e -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --colors=always $group ".$this->getOption('test', '');
+			$this->exec($phpunit, false, $gdb);
+            if($this->hasOption('coverage')) {
                 $this->exec($this->getBin('lcov')." --directory . --capture --output-file coverage.info");
                 $this->exec($this->getBin('lcov')." --remove coverage.info 'src/deps/*' '/usr/*' '/opt/*' '*/Zend/*' --output-file coverage.info");
                 $this->exec($this->getBin('lcov')." --list coverage.info");
@@ -334,30 +497,63 @@ class BuildRunner {
 		}
 	}
 
+    public function dockerSync($from, $to) {
+        exec("cd $from && git ls-files", $files, $code);
+        if($code) {
+            throw new RuntimeException("Failed git ls-files");
+        }
+        foreach($files as $file) {
+            copy($from.'/'.$file, $to.'/'.$file);
+        }
+    }
+
+    /**
+     * @param array $options
+     * @param int $minimal
+     *
+     * @return string
+     */
+    private function compileHelp(array $options, $minimal = 0) {
+        $table = [];
+        foreach($options as $option) {
+            $option_key = "  ";
+            if($this->getShort($option)) {
+                $option_key .= "-".$this->getShort($option).",";
+            } else {
+                $option_key .= "   ";
+            }
+            $option_key .= " --".$option.$this->getExtra($option);
+
+            $table[$option_key] = $this->getDesc($option);
+        }
+
+        $size = max($minimal, ... array_map("strlen", array_keys($table)));
+
+        foreach($table as $key => &$row) {
+            $row = sprintf("%-{$size}s  %s", $key, $row);
+        }
+
+        return implode("\n", $table);
+    }
+
 	public function help() {
 		echo "Usage: ".$_SERVER["PHP_SELF"]." [OPTIONS] ...\n
 Build:
-  -h, --help        show help
-  -c, --clean       make clean
-  -m, --make        make
-  -o, --coverage    generate code coverage information
-  -l, --install     install module
-  -p, --phpize      phpize and configure project
-  -b, --build       alias of --phpize --clean --make
-  -B, --setup       alias of --build --install
-  -i, --info        print info about module
-  -I, --system      print information about system
+".$this->compileHelp(["help", "clean", "make", "coverage", "phpize", "build", "install"], 20)."
+
+Information:
+".$this->compileHelp(["info", "system"], 20)."
 
 Testing:
-  -t, --test[=TESTS]   run tests, all or only by path
-  -g, --group=GROUPS   only runs tests from the specified group(s). Option --test required
-      --dev            alias of --test --group=dev
-      --use-gdb[=PATH] use gdb for running tests
+".$this->compileHelp(["test", "group", "dev", "gdb", "gdb-server"], 20)."
 
-Default env:
+Docker:
+".$this->compileHelp(["docker-gdb-server", "docker-sync", "docker-sync-rebuild"], 20)."
+
+Environment:
 ";
 		foreach($this->binaries as $name => $path) {
-			echo "  ".strtoupper("ion_{$name}_exec")."=".$path."\n";
+			printf("  %-36s  -> %s\n", strtoupper("ion_{$name}_exec")."=".$path, trim(`command -v $path`));
 		}
 		echo "\n";
 	}
