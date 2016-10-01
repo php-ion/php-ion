@@ -19,12 +19,12 @@ abstract class StorageAbstract {
     public function setMaxPoolSize(int $max) : self { }
 
     /**
-     * Set idle connection timout.
+     * Set idle connection timeout.
      * After timeout timeout sequence will be invoked.
      *
      * @param int $sec
      *
-     * @return Server
+     * @return StorageAbstract
      */
     public function setIdleTimeout(int $sec) : self { }
 
@@ -39,15 +39,36 @@ abstract class StorageAbstract {
     public function setPingInterval(int $ping_interval, int $ping_timeout) : self { }
 
 
-    public function handshake() : Sequence { }
+    /**
+     * @return Sequence
+     */
+    public function whenHandshake() : Sequence { }
 
-    public function incoming() : Sequence { }
+    /**
+     * @return Sequence
+     */
+    public function whenIncoming() : Sequence { }
 
-    public function timeout() : Sequence { }
+    /**
+     * @return Sequence
+     */
+    public function whenTimeout() : Sequence { }
 
-    public function close() : Sequence { }
+    /**
+     * @return Sequence
+     */
+    public function whenClose() : Sequence { }
 
-    public function ping() : Sequence { }
+    /**
+     * @return Sequence
+     */
+    public function whenCorrupted() : Sequence { }
+
+    /**
+     *
+     * @return Sequence
+     */
+    public function whenPing() : Sequence { }
 
 
     public function getStream(string $name) : Stream { }

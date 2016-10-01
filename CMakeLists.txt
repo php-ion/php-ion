@@ -61,7 +61,7 @@ set(ION_SOURCE_FILES
     src/classes/ION/Stream.c
 
     src/classes/ION/Process.c
-        src/classes/ION/Process/Exec.c
+    src/classes/ION/Process/Exec.c
     src/classes/ION/Process/IPC.c
     src/classes/ION/Process/IPC/Message.c
     src/classes/ION/Process/ChildProcess.c

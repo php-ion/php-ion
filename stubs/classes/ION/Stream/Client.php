@@ -12,6 +12,8 @@ class Client extends StorageAbstract {
      * @param string $target
      * @param string $host
      * @param Crypto $ssl
+     *
+     * @return Client
      */
     public function addTarget(string $target, string $host, Crypto $ssl = null) : self { }
 

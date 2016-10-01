@@ -137,6 +137,7 @@ PHP_MINIT_FUNCTION(ION_DNS) {
 
     GION(evdns) = evdns_base_new(GION(base), 1);
     int error = evdns_base_resolv_conf_parse(GION(evdns), DNS_OPTIONS_ALL, GION(resolv_conf));
+//    int error = 0;
     if(error) {
         switch(error) {
             case 1:

@@ -39,7 +39,6 @@ class IPCTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testCommunicate() {

@@ -20,6 +20,8 @@ class ProcessTest extends TestCase {
         $this->assertSame(posix_getppid(), Process::getParentPid());
     }
 
+
+
 	/**
 	 * @memcheck
 	 */
@@ -111,6 +113,7 @@ class ProcessTest extends TestCase {
         $this->assertSame($expected['members'], $actual['members']);
     }
 
+
     /**
      * @memcheck
      */
@@ -124,6 +127,8 @@ class ProcessTest extends TestCase {
         }
     }
 
+
+
     /**
      * @memcheck
      */
@@ -136,9 +141,10 @@ class ProcessTest extends TestCase {
     /**
      * @memcheck
      */
-    public function testSetPriority() {
+    public function _testSetPriority() {
         $prio = Process::getPriority();
         $pid = pcntl_fork();
+        \ION::reinit();
         if ($pid) {
             usleep(10000);
             $this->assertSame($prio + 10, Process::getPriority($pid));
@@ -150,6 +156,55 @@ class ProcessTest extends TestCase {
         }
     }
 
+
+    /**
+     * @group dev
+     * @memcheck
+     */
+    public function testExecSimple() {
+        $cmd = "sleep 0.1; echo 'stderr'>&2; echo 'stdout'";
+        $this->promise(function () use ($cmd) {
+            $res = yield Process::exec($cmd);
+            $res->test_write_props = "hello";
+            $this->data['instance'] = get_class($res);
+            return (array)$res;
+        });
+        $this->loop();
+        $this->assertEquals('ION\Process\Exec', $this->data['instance']);
+        $this->assertEquals($cmd, $this->data['result']['command']);
+        $this->assertTrue(is_integer($this->data['result']['pid']));
+        $this->assertEquals('stdout', trim($this->data['result']['stdout']));
+        $this->assertEquals('stderr', trim($this->data['result']['stderr']));
+        $this->assertEquals(0, $this->data['result']['status']);
+        $this->assertFalse($this->data['result']['signaled']);
+        $this->assertEquals(0, $this->data['result']['signal']);
+
+    }
+
+    /**
+     * @group dev
+     * @memcheck
+     */
+    public function testExecExtended() {
+        $cmd = "sleep 0.1; echo \$_ION_EXEC_LINE;";
+        $this->promise(function () use ($cmd) {
+            $res = yield Process::exec($cmd, [
+                'user' => 'www',
+                'set_group' => true,
+                'pid' => &$this->data['pid']
+            ]);
+            $this->data['instance'] = get_class($res);
+            return (array)$res;
+        });
+        $this->loop();
+        $this->assertEquals('ION\Process\Exec', $this->data['instance']);
+        $this->assertEquals($cmd, $this->data['result']['command']);
+        $this->assertTrue(is_integer($this->data['result']['pid']));
+        $this->assertTrue(is_integer($this->data['pid']));
+        $this->assertEquals($this->data['result']['pid'], $this->data['pid']);
+        $this->assertStringMatchesFormat(__FILE__.":%i", trim($this->data['result']['stdout']));
+    }
+
     /**
      * @memcheck
      */
@@ -159,49 +214,4 @@ class ProcessTest extends TestCase {
 //        Process::setUser($_SERVER['USER'], 'staff');
     }
 
-	/**
-	 * @memcheck
-	 */
-	public function testExecSimple() {
-		$cmd = "sleep 0.1; echo 'stderr'>&2; echo 'stdout'";
-		$this->promise(function () use ($cmd) {
-			$res = yield Process::exec($cmd);
-            $res->test_write_props = "hello";
-			$this->data['instance'] = get_class($res);
-			return (array)$res;
-		});
-		$this->loop();
-		$this->assertEquals('ION\Process\Exec', $this->data['instance']);
-		$this->assertEquals($cmd, $this->data['result']['command']);
-		$this->assertTrue(is_integer($this->data['result']['pid']));
-		$this->assertEquals('stdout', trim($this->data['result']['stdout']));
-		$this->assertEquals('stderr', trim($this->data['result']['stderr']));
-		$this->assertEquals(0, $this->data['result']['status']);
-		$this->assertFalse($this->data['result']['signaled']);
-		$this->assertEquals(0, $this->data['result']['signal']);
-
-	}
-
-	/**
-	 * @memcheck
-	 */
-	public function testExecExtended() {
-		$cmd = "sleep 0.1; echo \$_ION_EXEC_LINE;";
-		$this->promise(function () use ($cmd) {
-			$res = yield Process::exec($cmd, [
-				'user' => 'www',
-				'set_group' => true,
-				'pid' => &$this->data['pid']
-			]);
-			$this->data['instance'] = get_class($res);
-			return (array)$res;
-		});
-		$this->loop();
-		$this->assertEquals('ION\Process\Exec', $this->data['instance']);
-		$this->assertEquals($cmd, $this->data['result']['command']);
-		$this->assertTrue(is_integer($this->data['result']['pid']));
-		$this->assertTrue(is_integer($this->data['pid']));
-		$this->assertEquals($this->data['result']['pid'], $this->data['pid']);
-		$this->assertStringMatchesFormat(__FILE__.":%i", trim($this->data['result']['stdout']));
-	}
 }

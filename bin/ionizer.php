@@ -481,9 +481,12 @@ class BuildRunner {
 			chdir($cwd);
 		}
 		$this->line("\n** ".getcwd().": $cmd");
-		if($gdb) {
+		if($gdb == self::GDB_LOCAL) {
 			$run_cmd = $this->getBin('gdb').' -ex "handle SIGHUP nostop SIGCHLD nostop" -ex "run" -ex "thread apply all bt" -ex "set pagination 0" -batch -return-child-result -silent --args  '.$cmd;
 			$this->line("*** Using gdb: $run_cmd");
+		} elseif($gdb == self::GDB_SERVER) {
+            $run_cmd = $this->getBin('gdbserver').' 127.0.0.1:8017 --args  '.$cmd;
+            $this->line("*** Using gdbserver: $run_cmd");
 		} else {
 			$run_cmd = $cmd.' 2>&1';
 		}
@@ -503,6 +506,7 @@ class BuildRunner {
             throw new RuntimeException("Failed git ls-files");
         }
         foreach($files as $file) {
+
             copy($from.'/'.$file, $to.'/'.$file);
         }
     }
@@ -536,6 +540,9 @@ class BuildRunner {
         return implode("\n", $table);
     }
 
+    /**
+     *
+     */
 	public function help() {
 		echo "Usage: ".$_SERVER["PHP_SELF"]." [OPTIONS] ...\n
 Build:

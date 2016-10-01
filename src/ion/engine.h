@@ -18,11 +18,8 @@
     zend_object_handlers h ## class;
 
 #define ION_DEFINE_CLASS(cls)    \
-    zend_class_entry *c ## cls; \
-    zend_object_handlers h ## cls; \
-    zend_class_entry * _ion_get_class_ ## cls() {       \
-        return c ## cls;             \
-    }
+    zend_class_entry *ion_ce_ ## cls; \
+    zend_object_handlers ion_oh_ ## cls;
 
 
 #define DEFINE_CLASS(class) ION_DEFINE_CLASS(class);
