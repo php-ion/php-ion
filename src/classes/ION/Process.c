@@ -27,7 +27,7 @@ CLASS_METHOD(ION_Process, fork) {
         RETURN_LONG(pid);
     } else { // child
         if(event_reinit(GION(base)) == FAILURE) {
-            php_error(E_NOTICE, "Some events could not be re-added");
+            php_error(E_NOTICE, ERR_ION_REINIT_FAILED);
         }
         RETURN_LONG(0);
     }
@@ -36,39 +36,6 @@ CLASS_METHOD(ION_Process, fork) {
 METHOD_ARGS_BEGIN(ION_Process, fork, 0)
     METHOD_ARG_LONG(flags, 0)
 METHOD_ARGS_END()
-
-/** public function ION\Process::spawn(int $flags = 0, mixed $ctx = null) : int */
-CLASS_METHOD(ION_Process, spawn) {
-    int pid = 0;
-    zend_long flags = 0;
-    zval * ctx = NULL;
-
-    ZEND_PARSE_PARAMETERS_START(0, 2)
-        Z_PARAM_OPTIONAL
-        Z_PARAM_LONG(flags)
-        Z_PARAM_ZVAL(ctx)
-    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
-
-    errno = 0;
-    pid = fork();
-    if(pid == -1) {
-        zend_throw_exception_ex(ion_ce_ION_ProcessException, 0, ERR_ION_PROCESS_SPAWN_FAIL, strerror(errno));
-        return;
-    } else if(pid) { // parent
-        RETURN_LONG(pid);
-    } else { // child
-        if(event_reinit(GION(base)) == FAILURE) {
-            php_error(E_NOTICE, "Some events could not be re-added");
-        }
-        RETURN_LONG(0);
-    }
-}
-
-METHOD_ARGS_BEGIN(ION_Process, spawn, 0)
-    METHOD_ARG_LONG(flags, 0)
-    METHOD_ARG(ctx, 0)
-METHOD_ARGS_END()
-
 
 /** public function ION\Process::kill(int $signo, int $pid, bool $to_group = false) : bool */
 CLASS_METHOD(ION_Process, kill) {
@@ -474,9 +441,6 @@ CLASS_METHOD(ION_Process, exec) {
         return;
     } else if(pid) { // parent
         efree(line);
-        if(event_reinit(GION(base)) == FAILURE) {
-            zend_error(E_WARNING, ERR_ION_REINIT_FAILED);
-        }
         if(options) {
             zpid = zend_hash_str_find(Z_ARRVAL_P(options), STRARGS("pid"));
             if(zpid && Z_ISREF_P(zpid)) {
@@ -620,7 +584,6 @@ METHOD_WITHOUT_ARGS(ION_Process, stderr);
 
 CLASS_METHODS_START(ION_Process)
     METHOD(ION_Process, fork,              ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    METHOD(ION_Process, spawn,             ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, kill,              ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, signal,            ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, clearSignal,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)

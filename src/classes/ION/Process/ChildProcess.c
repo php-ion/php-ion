@@ -50,9 +50,6 @@ void ion_process_child_spawn(ion_process_child * worker) {
         zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_SPAWN_FAIL, strerror(errno));
         return;
     } else if(pid) { // in parent
-        if(event_reinit(GION(base)) == FAILURE) {
-            zend_error(E_WARNING, ERR_ION_REINIT_FAILED);
-        }
         worker->flags |= ION_PROCESS_STARTED;
         worker->pid = pid;
         zend_object_release(ION_OBJ(worker->ipc_child));
@@ -333,15 +330,15 @@ PHP_MINIT_FUNCTION(ION_Process_ChildProcess) {
 }
 
 PHP_RINIT_FUNCTION(ION_Process_ChildProcess) {
-    ALLOC_HASHTABLE(GION(workers));
-    zend_hash_init(GION(workers), 128, NULL, zval_ptr_dtor_wrapper, 0);
+//    ALLOC_HASHTABLE(GION(workers));
+//    zend_hash_init(GION(workers), 128, NULL, zval_ptr_dtor_wrapper, 0);
     return SUCCESS;
 }
 
 PHP_RSHUTDOWN_FUNCTION(ION_Process_ChildProcess) {
-    zend_hash_clean(GION(workers));
-    zend_hash_destroy(GION(workers));
-    FREE_HASHTABLE(GION(workers));
+//    zend_hash_clean(GION(workers));
+//    zend_hash_destroy(GION(workers));
+//    FREE_HASHTABLE(GION(workers));
 
 //    if(GION(master)) {
 //        zend_object_release(GION(master));
