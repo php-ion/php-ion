@@ -16,7 +16,9 @@ class IPCTest extends TestCase {
     public function testWTF() {
         // travis ci? wtf?
         list($one, $two) = IPC::create("one1", "two2");
-
+        /* @var IPC $one */
+        $one->whenDisconnected()->then(function () {});
+        $one->whenIncoming()->then(function () {});
     }
     /**
      * @memcheck
