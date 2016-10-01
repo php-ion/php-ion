@@ -63,7 +63,6 @@ int ion_ipc_create(zval * one, zval * two, zval * ctx1, zval * ctx2) {
     ion_process_ipc * ipc1;
     ion_process_ipc * ipc2;
     if(!ion_buffer_pair(&buffer_one, &buffer_two)) {
-        // @todo error
         return FAILURE;
     }
     object_init_ex(one, ion_class_entry(ION_Process_IPC));

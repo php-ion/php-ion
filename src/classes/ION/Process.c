@@ -474,6 +474,9 @@ CLASS_METHOD(ION_Process, exec) {
         return;
     } else if(pid) { // parent
         efree(line);
+        if(event_reinit(GION(base)) == FAILURE) {
+            zend_error(E_WARNING, ERR_ION_REINIT_FAILED);
+        }
         if(options) {
             zpid = zend_hash_str_find(Z_ARRVAL_P(options), STRARGS("pid"));
             if(zpid && Z_ISREF_P(zpid)) {

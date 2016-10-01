@@ -50,6 +50,9 @@ void ion_process_child_spawn(ion_process_child * worker) {
         zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_SPAWN_FAIL, strerror(errno));
         return;
     } else if(pid) { // in parent
+        if(event_reinit(GION(base)) == FAILURE) {
+            zend_error(E_WARNING, ERR_ION_REINIT_FAILED);
+        }
         worker->flags |= ION_PROCESS_STARTED;
         worker->pid = pid;
         zend_object_release(ION_OBJ(worker->ipc_child));
