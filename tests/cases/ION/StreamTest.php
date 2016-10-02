@@ -659,6 +659,7 @@ class StreamTest extends TestCase {
     }
 
     /**
+     * @group dev
      * @memcheck
      * @todo fix for tarvis (see jobs)
      */

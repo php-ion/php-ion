@@ -8,6 +8,7 @@ addons:
       - gdb
       - make
       - lcov
+      - ca-certificates
 
 php:
   - 7.0
