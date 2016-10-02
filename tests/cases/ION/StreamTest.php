@@ -676,6 +676,9 @@ class StreamTest extends TestCase {
         });
         $this->loop(1);
 
+        if(isset($this->data["error"])) {
+            $this->fail($this->data["error"]["exception"].": ".$this->data["error"]["message"]);
+        }
         $this->assertTrue(isset($this->data["response"]));
         $this->assertEquals("HTTP/1.1 200 OK", strstr($this->data["response"], "\r\n", true));
     }
