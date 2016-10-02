@@ -37,17 +37,9 @@ ION PHP Extension
 * Async reading files from FS
 * SSL/TLS encryption supports
 * Listening FS events
-
-# Indev 
-
-## [0.5](https://github.com/php-ion/php-ion/milestones/0.5)
-
-- [x] Valid fork
-- [x] Create childs
-- [x] Manage childs
-- [x] Inter-Process Communication
-- [x] Child exit event
-- [ ] Control childs
+* Create async process childs
+* Async Inter-Process Communication with parent and child processes
+* Manage process childs
 
 ## [0.6](https://github.com/php-ion/php-ion/milestones/0.6)
 
