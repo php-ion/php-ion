@@ -100,8 +100,8 @@ CLASS_METHOD(ION_Process_IPC, create) {
         Z_PARAM_ZVAL(ctx2)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    zval_add_ref(ctx1);
-    zval_add_ref(ctx2);
+//    zval_add_ref(ctx1);
+//    zval_add_ref(ctx2);
     if(ion_ipc_create(&one, &two, ctx1, ctx2) == FAILURE) {
         // @todo error
         return;

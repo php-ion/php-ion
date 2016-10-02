@@ -16,19 +16,9 @@ class IPCTest extends TestCase {
     /**
      * @memcheck
      */
-    public function testWTF() {
-        // travis ci? wtf?
-        list($one, $two) = IPC::create("one1", "two2");
-        /* @var IPC $one */
-        $one->whenDisconnected()->then(function () {});
-        $one->whenIncoming()->then(function () {});
-    }
-    /**
-     * @memcheck
-     */
     public function testCreate() {
 
-        list($one, $two) = IPC::create("one1", "two2");
+        list($one, $two) = IPC::create((string)"one1", (string)"two2");
         /* @var IPC $one */
         /* @var IPC $two */
         $this->assertInstanceOf(IPC::class, $one);
@@ -53,7 +43,7 @@ class IPCTest extends TestCase {
      * @memcheck
      */
     public function testCommunicate() {
-        list($one, $two) = IPC::create("one1", "two2");
+        list($one, $two) = IPC::create((string)"one1", (string)"two2");
         /* @var IPC $one */
         /* @var IPC $two */
         $one->whenIncoming()->then(function (Message $data) {
@@ -80,7 +70,7 @@ class IPCTest extends TestCase {
      * @memcheck
      */
     public function testDisconnect() {
-        list($one, $this->tmp) = IPC::create("one1", "two2");
+        list($one, $this->tmp) = IPC::create((string)"one1", (string)"two2");
         /* @var IPC $one */
         /* @var IPC $two */
         $one->whenIncoming()->then(function ($data) {

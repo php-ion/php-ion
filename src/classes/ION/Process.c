@@ -453,7 +453,7 @@ CLASS_METHOD(ION_Process, exec) {
         close(err_pipes[1]);
 
         ion_process_exec_object(&zexec);
-        PHPDBG("\nADD EXEC pid %d", pid);
+//        PHPDBG("\nADD EXEC pid %d", pid);
 
         zend_hash_index_add(GION(proc_execs), (zend_ulong) pid, &zexec);
 

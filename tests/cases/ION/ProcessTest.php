@@ -161,10 +161,10 @@ class ProcessTest extends TestCase {
      * @memcheck
      */
     public function testExecSimple() {
-        $cmd = "sleep 0.1; echo 'stderr'>&2; echo 'stdout'";
+        $cmd = (string)"sleep 0.1; echo 'stderr'>&2; echo 'stdout'";
         $this->promise(function () use ($cmd) {
             $res = yield Process::exec($cmd);
-            $res->test_write_props = "hello";
+            $res->test_write_props = (string)"hello";
             $this->data['instance'] = get_class($res);
             return (array)$res;
         });
@@ -184,10 +184,10 @@ class ProcessTest extends TestCase {
      * @memcheck
      */
     public function testExecExtended() {
-        $cmd = "sleep 0.1; echo \$_ION_EXEC_LINE;";
+        $cmd = (string)"sleep 0.1; echo \$_ION_EXEC_LINE;";
         $this->promise(function () use ($cmd) {
             $res = yield Process::exec($cmd, [
-                'user' => 'www',
+                'user' => (string)'www',
                 'set_group' => true,
                 'pid' => &$this->data['pid']
             ]);
