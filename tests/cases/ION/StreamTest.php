@@ -66,6 +66,20 @@ class StreamTest extends TestCase {
     /**
      * @memcheck
      */
+    public function testSocketError() {
+        $stream = Stream::socket(DNSTest::UNEXISTS_DOMAIN.":80");
+        $this->promise(function () use ($stream) {
+            yield $stream->connect();
+        });
+        $this->loop();
+        $this->assertTrue($stream->hasError());
+        $this->assertInstanceOf($this->data["error"]["exception"], $stream->getError());
+        $this->assertEquals($this->data["error"]["message"], $stream->getError()->getMessage());
+    }
+
+    /**
+     * @memcheck
+     */
     public function testEnableDisable() {
         list($a, $b) = Stream::pair();
         /* @var Stream $a */

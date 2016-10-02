@@ -17,6 +17,8 @@ class ChildProcessTest extends TestCase {
         $worker = new ChildProcess();
         $this->assertEquals(0, $worker->getPID());
         $this->assertFalse($worker->isAlive());
+        $this->assertFalse(Process::hasParentIPC());
+        $this->assertNull(Process::getParentIPC());
         $this->assertFalse($worker->isStarted());
         $this->assertFalse($worker->isSignaled());
         $this->assertEquals(-1, $worker->getExitStatus());

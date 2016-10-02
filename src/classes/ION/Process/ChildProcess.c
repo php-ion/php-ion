@@ -78,7 +78,11 @@ void ion_process_child_spawn(ion_process_child * worker) {
 
         }
         zend_object_release(ION_OBJ(worker->ipc_child));
-
+        if(GION(parent_ipc)) {
+            zend_object_release(GION(parent_ipc));
+            GION(parent_ipc) = ION_OBJ(worker->ipc_parent);
+            zend_object_addref(GION(parent_ipc));
+        }
         bufferevent_enable(worker->ipc_child->buffer, EV_READ | EV_WRITE);
         worker->ipc_child = NULL;
         zend_object_release(ION_OBJ(worker));

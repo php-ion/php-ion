@@ -554,6 +554,30 @@ CLASS_METHOD(ION_Process, getChildProcesses) {
 
 METHOD_WITHOUT_ARGS_RETURN_ARRAY(ION_Process, getChildProcesses);
 
+
+/** public function ION\Process::hasParentIPC() : bool */
+CLASS_METHOD(ION_Process, hasParentIPC) {
+    if(GION(parent_ipc)) {
+        RETURN_TRUE;
+    } else {
+        RETURN_FALSE;
+    }
+}
+
+METHOD_WITHOUT_ARGS_RETURN_BOOL(ION_Process, hasParentIPC)
+
+/** public function ION\Process::getParentIPC() : ION\Process\IPC */
+CLASS_METHOD(ION_Process, getParentIPC) {
+    if(GION(parent_ipc)) {
+        zend_object_addref(GION(parent_ipc));
+        RETURN_OBJ(GION(parent_ipc));
+    } else {
+        RETURN_NULL();
+    }
+}
+
+METHOD_WITHOUT_ARGS(ION_Process, getParentIPC);
+
 #undef stdin
 #undef stdout
 #undef stderr
@@ -598,6 +622,8 @@ CLASS_METHODS_START(ION_Process)
     METHOD(ION_Process, hasChildProcess,   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, getChildProcess,   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, getChildProcesses, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, hasParentIPC,      ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Process, getParentIPC,      ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, exec,              ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, stdin,             ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process, stdout,            ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
@@ -630,6 +656,10 @@ PHP_RINIT_FUNCTION(ION_Process) {
 
 PHP_RSHUTDOWN_FUNCTION(ION_Process) {
     evsignal_del(GION(sigchld));
+
+    if(GION(parent_ipc)) {
+        zend_object_release(GION(parent_ipc));
+    }
 
     zend_hash_clean(GION(proc_childs));
     zend_hash_destroy(GION(proc_childs));

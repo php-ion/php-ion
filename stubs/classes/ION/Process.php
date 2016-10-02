@@ -4,6 +4,7 @@ namespace ION;
 
 
 use ION\Process\ChildProcess;
+use ION\Process\IPC;
 
 class Process {
     public static function stdin() : Stream { }
@@ -165,4 +166,7 @@ class Process {
      * @return array
      */
     public static function getChildProcesses() : array { }
+
+    public static function hasParentIPC() : bool { }
+    public static function getParentIPc() : IPC { }
 }

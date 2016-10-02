@@ -270,8 +270,15 @@ class Stream {
      */
     public function isEnabled() : bool { }
 
+    /**
+     * @return bool
+     */
     public function hasEOF() : bool { }
 
+    /**
+     * Is stream errored
+     * @return bool
+     */
     public function hasError() : bool { }
 
     /**

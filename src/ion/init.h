@@ -100,7 +100,7 @@ ZEND_BEGIN_MODULE_GLOBALS(ion)
     zend_array  * proc_childs;  // spawned child processes
     zend_array  * workers;      // spawned workers
     zend_array  * disconnected; // list of disconnected workers
-    zend_object * master;       // link to master process
+    zend_object * parent_ipc;   // link to IPC of parent process
     ion_event   * sigchld;
 
     // FS
