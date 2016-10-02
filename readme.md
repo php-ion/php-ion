@@ -427,15 +427,61 @@ $result = yield Process::exec("vendor/bin/phpunit --tap");
 
 ```php
 $result = yield Process::exec("vendor/bin/phpunit --tap", [
-    "cwd"  => "/data/project",
-    "user" => "nobody",
+    "cwd"   => "/data/project",
+    "user"  => "nobody",
     "group" => "nobody",
-    "pid" => &$pid  // get the PID by reference
+    "pid"   => &$pid  // get the PID by reference
 ]);
-/* @var ION\Process\ExecResult $result */
+/* @var ION\Process\Exec $result */
 var_dump($result->stdout);
 var_dump($result->stderr);
 ```
+
+### Multi-Process management
+
+```php
+use ION\Process;
+use ION\Process\ChildProcess;
+use ION\Process\IPC;
+use ION\Process\IPC\Message;
+```
+
+Creates new child process
+
+```php
+$child = new ChildProcess();
+
+$child->whenStarted()->then(function (ChildProcess $process) {
+    // notify parent process when child has ben started after fork
+}); 
+
+$child->whenExited()->then(function (ChildProcess $process) {
+    // notify parent process when child has ben exit
+}); 
+
+$child->start(function (IPC $ipc) {
+    // this callback runs in the child process
+    // $ipc - link with parent process
+});
+
+```
+
+Inter-processes communication
+
+```php
+$child = Process:getChildProcess($pid);
+
+// send data to child process
+$child->getIPC()->send(json_ecnode($data));
+
+// receive data from child process
+$child->getIPC()->whenMessage(function (Message $message) {
+    // $message->data - data from child process
+    // $message->ctx - child process object
+});
+
+```
+
 
 ## HTTP
 
