@@ -13,6 +13,9 @@ class IPCTest extends TestCase {
      */
     public $tmp;
 
+    /**
+     * @memcheck
+     */
     public function testWTF() {
         // travis ci? wtf?
         list($one, $two) = IPC::create("one1", "two2");
