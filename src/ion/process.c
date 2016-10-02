@@ -9,8 +9,6 @@ void ion_process_sigchld(evutil_socket_t signal, short flags, void * arg) {
     zval * found = NULL;
     zend_object * proc = NULL;
 
-//    PHPDBG("\nSIGCHLD pid %d", pid);
-
     while(pid > 0) {
         found = zend_hash_index_find(GION(proc_childs), (zend_ulong) pid);
         if(found) {

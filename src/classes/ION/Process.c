@@ -21,7 +21,7 @@ CLASS_METHOD(ION_Process, fork) {
     errno = 0;
     pid = fork();
     if(pid == -1) {
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, "Failed to spawn process: %s", strerror(errno));
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_SPAWN_FAIL, strerror(errno));
         return;
     } else if(pid) { // parent
         RETURN_LONG(pid);
@@ -453,7 +453,6 @@ CLASS_METHOD(ION_Process, exec) {
         close(err_pipes[1]);
 
         ion_process_exec_object(&zexec);
-//        PHPDBG("\nADD EXEC pid %d", pid);
 
         zend_hash_index_add(GION(proc_execs), (zend_ulong) pid, &zexec);
 
