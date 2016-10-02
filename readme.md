@@ -258,10 +258,10 @@ use ION\Sequence;
 ```php
 $stream = Stream::resource(STDIN);
 list($stream1, $stream2) = Stream::pair();
-$stream = Stream::connect("example.com:80");
-$stream = Stream::connect("/var/run/server.sock");
-$stream = Stream::connect("example.com:443", Crypto::client());
-$stream = Stream::connect(["93.184.216.34:0" => "example.com:443"]); // connecting from IP 93.184.216.34 to example.com:443
+$stream = Stream::socket("example.com:80");
+$stream = Stream::socket("/var/run/server.sock");
+$stream = Stream::socket("example.com:443", Crypto::client());
+$stream = Stream::socket(["93.184.216.34:0" => "example.com:443"]); // connecting from IP 93.184.216.34 to example.com:443
 ```
 
 ```php
@@ -304,7 +304,7 @@ use ION\Stream;
 
 ```php
 $crypto = Crypto::client()->allowSelfSigned();
-$stream = Stream::connect("example.com:443", $crypto);
+$stream = Stream::socket("example.com:443", $crypto);
 // ...
 ```
 

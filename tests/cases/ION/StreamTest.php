@@ -662,7 +662,7 @@ class StreamTest extends TestCase {
      * @memcheck
      * @todo fix for tarvis (see jobs)
      */
-    public function _testEnableEncryption() {
+    public function testEnableEncryption() {
         $this->promise(function () {
             $socket = Stream::socket("example.com:443");
             $socket->encrypt(Crypto::client());
