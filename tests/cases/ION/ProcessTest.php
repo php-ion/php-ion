@@ -158,7 +158,6 @@ class ProcessTest extends TestCase {
 
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testExecSimple() {
@@ -182,7 +181,6 @@ class ProcessTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testExecExtended() {
