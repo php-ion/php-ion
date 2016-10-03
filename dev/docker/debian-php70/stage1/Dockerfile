@@ -34,6 +34,8 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libevent-dev \
     unzip         \
+    tcpdump \
+    aptitude \
     --no-install-recommends
 
 CMD touch /tmp/lock && tail -F /tmp/lock

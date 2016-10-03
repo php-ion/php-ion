@@ -664,6 +664,7 @@ class StreamTest extends TestCase {
      * @todo fix for tarvis (see jobs)
      */
     public function testEnableEncryption() {
+//        exec("tcpdump -i any port 443 & >/tmp/dump.log");
         $this->promise(function () {
             $socket = Stream::socket("example.com:443");
             $socket->encrypt(Crypto::client(Crypto::METHOD_TLSv12));
@@ -678,6 +679,7 @@ class StreamTest extends TestCase {
         });
         $this->loop(1);
 
+//        passthru("cat /tmp/dump.log");
         if(isset($this->data["error"])) {
             $this->fail($this->data["error"]["exception"].": ".$this->data["error"]["message"]);
         }
