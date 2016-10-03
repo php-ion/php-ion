@@ -681,6 +681,9 @@ class StreamTest extends TestCase {
 
 //        passthru("cat /tmp/dump.log");
         if(isset($this->data["error"])) {
+            if(isset($this->data["response"])) {
+                $this->out($this->data["response"]);
+            }
             $this->fail($this->data["error"]["exception"].": ".$this->data["error"]["message"]);
         }
         $this->assertTrue(isset($this->data["response"]));
