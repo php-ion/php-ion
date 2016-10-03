@@ -681,7 +681,7 @@ class StreamTest extends TestCase {
 
 //        passthru("cat /tmp/dump.log");
         if(isset($this->data["error"])) {
-            if($this->data["response"]) {
+            if(isset($this->data["response"])) {
                 $this->out($this->data["response"]);
             }
             $this->out($socket->getAll());
