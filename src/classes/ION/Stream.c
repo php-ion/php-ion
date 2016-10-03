@@ -119,7 +119,7 @@ zend_string * ion_stream_describe(zend_object * stream_object) {
     zend_string * address_local;
 
     if(stream->buffer == NULL) {
-        return zend_string_init(STRARGS("Stream(empty)"), 0);
+        return zend_string_init(STRARGS("Stream"), 0);
     }
     if (stream->state & ION_STREAM_RESERVED) {
         switch(bufferevent_getfd(stream->buffer)) {
@@ -135,15 +135,15 @@ zend_string * ion_stream_describe(zend_object * stream_object) {
     }
     if(stream->state & ION_STREAM_STATE_SOCKET) {
         if(ion_stream_is_valid_fd(stream)) {
-            return zend_string_init(STRARGS("Stream(invalid)"), 0);
+            return zend_string_init(STRARGS("Stream"), 0);
         }
         address_local   = ion_stream_get_name_self(stream_object);
         address_remote  = ion_stream_get_name_remote(stream_object);
         if(address_remote == NULL) {
-            address_remote = zend_string_init("undefined", strlen("undefined"), 0);
+            address_remote = zend_string_init(STRARGS("undefined"), 0);
         }
         if(address_local == NULL) {
-            address_remote = zend_string_init("undefined", strlen("undefined"), 0);
+            address_remote = zend_string_init(STRARGS("undefined"), 0);
         }
 
         if(stream->state & ION_STREAM_FROM_PEER) {
@@ -328,7 +328,7 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
                 error_message = evutil_socket_error_to_string(error_int);
                 exception_ce = ion_ce_ION_StreamException;
             } else { // magic problem
-                error_message = "unknown error";
+                error_message = "stream corrupted";
                 exception_ce = ion_ce_ION_StreamException;
             }
 
@@ -1305,7 +1305,7 @@ CLASS_METHOD(ION_Stream, readAll) {
             if(data) {
                 RETURN_STR(data);
             } else {
-                zend_throw_exception(ion_ce_ION_StreamException, "Stream buffer is unreachable", 0);
+                zend_throw_exception(ion_ce_ION_StreamException, ERR_ION_STREAM_READ_FAILED, 0);
                 return;
             }
         } else {
@@ -1422,7 +1422,7 @@ CLASS_METHOD(ION_Stream, encrypt) {
     enum bufferevent_ssl_state ssl_state;
 
     if(stream->state & ION_STREAM_ENCRYPTED) {
-        zend_throw_exception(ion_ce_ION_StreamException, "Stream already has encryption", 0);
+        zend_throw_exception(ion_ce_ION_StreamException, ERR_ION_STREAM_ALREADY_ENCRYPTED, 0);
         return;
     }
 
@@ -1439,7 +1439,7 @@ CLASS_METHOD(ION_Stream, encrypt) {
     }
 
     if(!ssl_handler) {
-        zend_throw_exception(ion_ce_ION_StreamException, "Failed to setup SSL/TLS handler", 0);
+        zend_throw_exception(ion_ce_ION_StreamException, ERR_ION_STREAM_SET_ENCRYPT_FAILED, 0);
         return;
     }
     stream->buffer = bufferevent_openssl_filter_new(GION(base), stream->buffer, ssl_handler, ssl_state, STREAM_BUFFER_DEFAULT_FLAGS | BEV_OPT_CLOSE_ON_FREE);
@@ -1451,8 +1451,8 @@ CLASS_METHOD(ION_Stream, encrypt) {
         bufferevent_priority_set(stream->buffer, stream->priority);
     }
     stream->state |= ION_STREAM_ENCRYPTED | ION_STREAM_HAS_UNDERLYING;
-    stream->encrypt = Z_OBJ_P(encrypt);
     zval_add_ref(encrypt);
+    ion_stream_store_encrypt(stream, Z_OBJ_P(encrypt));
     SSL_set_ex_data(ssl_handler, GION(ssl_index), Z_OBJ_P(encrypt));
 
     RETURN_THIS();

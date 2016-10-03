@@ -9,7 +9,10 @@
 #define ERR_ION_REINIT_FAILED       "Some events could not be restarted"
 
 // class ION\Stream
-#define ERR_ION_STREAM_WRITE_FAILED "Failed to write data"
+#define ERR_ION_STREAM_WRITE_FAILED       "Failed to write data"
+#define ERR_ION_STREAM_READ_FAILED        "Stream buffer is unreachable"
+#define ERR_ION_STREAM_SET_ENCRYPT_FAILED "Failed to setup SSL/TLS handler"
+#define ERR_ION_STREAM_ALREADY_ENCRYPTED  "Stream already encrypted"
 
 // class ION\URI
 #define ERR_ION_HTTP_URI_FACTORY_UNKNOWN "Unknown option %d"
