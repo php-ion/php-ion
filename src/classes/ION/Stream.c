@@ -206,7 +206,7 @@ void _ion_stream_input(ion_buffer * bev, void * ctx) {
     ion_stream      * stream = get_object_instance(ctx, ion_stream);
     ion_evbuffer    * input;
     zend_string     * data = NULL;
-    PHPDBG("INCOMING");
+//    PHPDBG("INCOMING");
 
     zend_object_addref(&stream->std);
     if(stream->read) {
@@ -283,7 +283,7 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
 
     zend_object_addref(ION_OBJ(stream));
     if(what & BEV_EVENT_EOF) {
-        PHPDBG("EOF");
+//        PHPDBG("EOF");
         stream->state |= ION_STREAM_STATE_EOF;
         if(stream->read) {
             if(stream->token || stream->length) {
@@ -309,7 +309,7 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
             ion_promisor_done_object(stream->shutdown, ctx);
         }
     } else if(what & BEV_EVENT_ERROR) {
-        PHPDBG("ERROR %d", what);
+//        PHPDBG("ERROR %d", what);
         stream->state |= ION_STREAM_STATE_ERROR;
         if(stream->connect || stream->read || stream->flush) {
             zend_ulong    error_ulong = 0;
@@ -360,10 +360,10 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
             ion_promisor_done_object(stream->shutdown, ctx);
         }
     } else if(what & BEV_EVENT_TIMEOUT) {
-        PHPDBG("TIMEOUT");
+//        PHPDBG("TIMEOUT");
         // we do not use this feature yet
     } else if(what & BEV_EVENT_CONNECTED) {
-        PHPDBG("CONNECTED");
+//        PHPDBG("CONNECTED");
         stream->state |= ION_STREAM_STATE_CONNECTED;
         if(stream->name_remote) {
             zend_string_release(stream->name_remote);
@@ -1303,7 +1303,7 @@ CLASS_METHOD(ION_Stream, readAll) {
             return;
         }
     }
-    if(stream->state & ION_STREAM_STATE_EOF) {
+    if(stream->state & (ION_STREAM_STATE_EOF | ION_STREAM_STATE_ERROR)) {
         current = ion_stream_input_length(stream);
         if(current) {
             data = ion_stream_read(stream, current);
@@ -1434,7 +1434,7 @@ CLASS_METHOD(ION_Stream, encrypt) {
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_OBJECT(encrypt)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
-    PHPDBG("ENCRYPT");
+//    PHPDBG("ENCRYPT");
 
     if(ion_crypto_check_is_client(Z_OBJ_P(encrypt))) {
         ssl_handler = ion_crypto_client_stream_handler(Z_OBJ_P(encrypt));
