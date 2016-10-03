@@ -318,6 +318,7 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
             zend_string * desc = ion_stream_describe(&stream->std);
 
             if((error_ulong =  bufferevent_get_openssl_error(bev))) { // problem with openssl connection
+//                ERR_get_error()
                 error_message = ERR_error_string(error_ulong, NULL);
                 exception_ce = ion_ce_ION_CryptoException;
             } else if((error_int =  bufferevent_socket_get_dns_error(bev))) { // DNS problem

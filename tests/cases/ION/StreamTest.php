@@ -660,7 +660,7 @@ class StreamTest extends TestCase {
 
     /**
      * @group dev
-     * @memcheck
+     * @mem check
      * @todo fix for tarvis (see jobs)
      */
     public function testEnableEncryption() {
