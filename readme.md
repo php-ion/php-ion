@@ -41,7 +41,13 @@ ION PHP Extension
 * Async Inter-Process Communication with parent and child processes
 * Manage process childs
 
-## [0.6](https://github.com/php-ion/php-ion/milestones/0.6)
+## [0.6](https://github.com/php-ion/php-ion/milestones/0.6) tech release
+
+- [ ] Built-in libevent
+- [ ] PHP 7.1 supports
+- [ ] Internal improvements
+
+## [0.7](https://github.com/php-ion/php-ion/milestones/0.7)
 
 - [x] Server socket pool
 - [ ] Client socket pool
