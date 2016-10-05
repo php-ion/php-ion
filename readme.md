@@ -37,9 +37,11 @@ ION PHP Extension
 * Async reading files from FS
 * SSL/TLS encryption supports
 * Listening FS events
-* Create async process childs
-* Async Inter-Process Communication with parent and child processes
-* Manage process childs
+* Create process childs
+* Asynchronous inter-process communication
+* Management of child processes
+* Built-in HTTP 1.0 and 1.1 request/response parsers
+* Built-in WebSocket frame and  Multi-parted form parsers
 
 ## [0.6](https://github.com/php-ion/php-ion/milestones/0.6) tech release
 
@@ -51,7 +53,6 @@ ION PHP Extension
 
 - [x] Server socket pool
 - [ ] Client socket pool
-- [x] HTTP supported (with chunked-encoding, multiparted, websocket)
 - [ ] HTTP server
 - [ ] HTTP client
 
