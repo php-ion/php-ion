@@ -1,4 +1,4 @@
-#!/usr/bin/env php
+#!/usr/bin/env php -n
 <?php
 
 ini_set('memory_limit', -1);
@@ -35,6 +35,10 @@ class BuildRunner {
             'short' => 'h',
             'desc'  => 'Prints this usage information.'
         ],
+        'debug' => [
+            'short' => 'd',
+            'desc'  => 'Enable debug.'
+        ],
         'clean' => [
             'short' => 'c',
             'desc'  => 'Deletes all the already compiled object files.'
@@ -51,13 +55,13 @@ class BuildRunner {
             'short' => '',
             'desc'  => 'Install extension.'
         ],
-        'phpize' => [
+        'prepare' => [
             'short' => 'p',
             'desc'  => 'Prepare the build environment for a PHP extension (phpize required).'
         ],
         'build' => [
             'short' => 'b',
-            'desc'  => 'Build and compile the extension. Alias of --phpize --clean --make.'
+            'desc'  => 'Build and compile the extension. Alias of --prepare --clean --make.'
         ],
         'setup' => [
             'short' => 'B',
@@ -107,6 +111,16 @@ class BuildRunner {
 
 	public $opts = [];
 
+    public $ion_confugure = ['--with-ion'];
+    public $event_confugure = [
+        '--disable-libevent-install',
+        '--enable-malloc-replacement=yes',
+        '--disable-libevent-regress',
+    ];
+    public $cflags        = ['-std=gnu99', '-I/opt/local/include', '-I/usr/local/include', '-I/usr/include'];
+    public $ldflags       = [];
+    public $nproc         = 2;
+
     public $zend_alloc = 1;
 
     public function __construct() {
@@ -119,6 +133,23 @@ class BuildRunner {
             $this->line(get_class($exception).": ".$exception->getMessage()." in ".$exception->getFile().":".$exception->getLine()."\n".$exception->getTraceAsString()."\n");
 	        exit(1);
         });
+        if($this->isMacOS()) {
+            if(fnmatch('1*.*.*', php_uname("r"))) {
+                $this->cflags[] = "-arch x86_64 -mmacosx-version-min=10.5";
+            } else {
+                $this->cflags[] = "-arch x86_64 -arch ppc -arch ppc64";
+            }
+
+        }
+        if($this->isLinux()) {
+            $this->nproc = intval(`nproc`);
+        } elseif($this->isMacOS() || $this->isBSD()) {
+            $this->nproc = intval(`sysctl -n hw.ncpu`);
+        }
+        if(!PHP_ZTS) {
+            $this->event_confugure[] = "--disable-thread-support";
+        }
+//        $this->event_confugure[] = "--includedir=/opt/local --oldincludedir=/opt/local";
     }
 
     /**
@@ -254,6 +285,17 @@ class BuildRunner {
      * Run dispatcher
      */
 	public function run() {
+        if($this->hasOption("debug")) {
+            $this->cflags[]          = "-Wall -g3 -ggdb -O0";
+            $this->ion_confugure[]   = "--enable-ion-debug";
+            $this->event_confugure[] = "--enable-debug-mode=no";
+        }
+
+        if($this->hasOption('coverage')) {
+            $this->cflags[]        = "-fprofile-arcs -ftest-coverage";
+            $this->ldflags[]       = "-fprofile-arcs -ftest-coverage";
+            $this->ion_confugure[] = "--enable-ion-coverage";
+        }
         if($this->hasOption('system')) {
             $this->printSystemInfo();
         }
@@ -269,13 +311,13 @@ class BuildRunner {
 		}
 
 		if($this->hasOption("build")) {
-			$this->setOption("phpize");
+			$this->setOption("prepare");
 			$this->setOption("make");
 			$this->setOption("clean");
 		}
 
 		if($this->hasOption("setup")) {
-			$this->setOption("phpize");
+			$this->setOption("prepare");
 			$this->setOption("make");
 			$this->setOption("clean");
 			$this->setOption("install");
@@ -289,29 +331,32 @@ class BuildRunner {
             $gdb = self::GDB_NONE;
         }
 
-		if($this->hasOption('phpize')) {
+        if($this->hasOption('clean')) {
+            $this->exec($this->getBin('make').' clean', "src/");
+        }
+
+		if($this->hasOption('prepare')) {
+            if(!file_exists('src/deps/libevent/.git')) {
+                $this->exec('git submodule update --init --recursive');
+            }
 			if($this->hasOption('clean')) {
 				$this->exec($this->getBin('phpize').' --clean', "src/");
 			}
-			$this->exec($this->getBin('phpize'), "src/");
-            if($this->hasOption('coverage')) {
-                $this->exec('./configure --with-ion --enable-ion-debug --enable-ion-coverage', "src/");
-            } else {
-//                $this->exec('./configure --with-ion='.__DIR__.'/../Libevent --enable-ion-debug', "src/");
-                $this->exec('./configure --with-ion --enable-ion-debug', "src/");
-            }
+            $this->configure("src/deps/libevent", $this->event_confugure, $this->cflags, $this->ldflags);
+            $this->exec($this->getBin('make').' -j'.$this->nproc,  "src/deps/libevent");
+
+            $this->exec($this->getBin('phpize'), "src/");
+            $this->configure("src", $this->ion_confugure, $this->cflags, $this->ldflags);
 		}
 
-		if($this->hasOption('clean')) {
-			$this->exec($this->getBin('make').' clean', "src/");
-		}
+
 
 		if($this->hasOption('make')) {
-			$this->exec($this->getBin('make').' -j2',  "src/");
+			$this->exec($this->getBin('make').' -j'.$this->nproc,  "src/");
 		}
 
 		if($this->hasOption('info')) {
-			$this->exec($this->getBin('php'/*, ['USE_ZEND_ALLOC' => $this->zend_alloc]*/) . ' -e -dextension=./src/modules/ion.so '.__FILE__." --diagnostic", false, $gdb);
+			$this->exec($this->getBin('php') . ' -e -dextension=./src/modules/ion.so '.__FILE__." --diagnostic", false, $gdb);
 		}
 
 		if($this->hasOption("dev")) {
@@ -325,11 +370,11 @@ class BuildRunner {
 			} else {
 				$group = "";
 			}
-			$phpunit = $this->getBin('php'/*, ['USE_ZEND_ALLOC' => $this->zend_alloc]*/)." -e -n -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --colors=always $group ".$this->getOption('test', '');
+			$phpunit = $this->getBin('php')." -e -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --colors=always $group ".$this->getOption('test', '');
 			$this->exec($phpunit, false, $gdb);
             if($this->hasOption('coverage')) {
                 $this->exec($this->getBin('lcov')." --directory . --capture --output-file coverage.info");
-                $this->exec($this->getBin('lcov')." --remove coverage.info 'src/deps/*' '/usr/*' '/opt/*' '*/Zend/*' --output-file coverage.info");
+                $this->exec($this->getBin('lcov')." --remove coverage.info 'src/deps/*' '*.h' --output-file coverage.info");
                 $this->exec($this->getBin('lcov')." --list coverage.info");
             }
 		}
@@ -447,6 +492,10 @@ class BuildRunner {
         return "{$declare}(".implode(", ", $params).")$return";
     }
 
+    public function prepare() {
+
+    }
+
 	public function li($name, $value) {
 		$this->line(trim($name).": ".trim($value));
 	}
@@ -469,11 +518,28 @@ class BuildRunner {
 		return strtolower(PHP_OS) == "linux";
 	}
 
+    public function isBSD() {
+        return strtolower(PHP_OS) == "freebsd";
+    }
+
 	public function isMacOS() {
 		return strtolower(PHP_OS) == "darwin";
 	}
 
-	public function exec($cmd, $cwd = null, $gdb = false) {
+    public function configure(string $cwd, array $options, array $cflags = [], array $ldflags = []) {
+        $cmd = [];
+        if($cflags) {
+            $cmd[] = 'CFLAGS="$CFLAGS '.implode(' ', $cflags).'"';
+        }
+        if($ldflags) {
+            $cmd[] = 'LDLAGS="$LDLAGS '.implode(' ', $ldflags).'"';
+        }
+        $cmd[] = './configure';
+        $cmd[] = implode(" ", $options);
+        $this->exec(implode(" ", $cmd), $cwd);
+    }
+
+	public function exec(string $cmd, string $cwd = null, int $gdb = self::GDB_NONE) {
 		$prev_cwd = null;
 		if($cwd) {
 			$cwd = realpath($cwd);
@@ -491,14 +557,14 @@ class BuildRunner {
 			$run_cmd = $cmd.' 2>&1';
 		}
 		passthru($run_cmd, $code);
-		if($code) {
-			throw new RuntimeException("Command $cmd failed", $code);
-		}
 
-		if($prev_cwd) { // rollback cwd
-			chdir($prev_cwd);
-		}
-	}
+        if($prev_cwd) { // rollback cwd
+            chdir($prev_cwd);
+        }
+        if($code) {
+            throw new RuntimeException("Command $cmd failed", $code);
+        }
+    }
 
     public function dockerSync($from, $to) {
         exec("cd $from && git ls-files", $files, $code);
@@ -546,7 +612,7 @@ class BuildRunner {
 	public function help() {
 		echo "Usage: ".$_SERVER["PHP_SELF"]." [OPTIONS] ...\n
 Build:
-".$this->compileHelp(["help", "clean", "make", "coverage", "phpize", "build", "install"], 20)."
+".$this->compileHelp(["help", "clean", "make", "coverage", "prepare", "build", "install"], 20)."
 
 Information:
 ".$this->compileHelp(["info", "system"], 20)."

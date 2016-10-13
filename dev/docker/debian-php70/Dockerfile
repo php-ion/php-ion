@@ -63,28 +63,3 @@ RUN make -j"$(nproc)"
 RUN make install
 RUN make clean
 RUN php -m
-
-## /php/php-src/archive/PHP-7.0.11.zip
-#ENV PHP_EXTRA_CONFIGURE_ARGS "--enable-debug --enable-pcntl"
-
-
-#EXPOSE 8017
-#
-#RUN mkdir -p /data/ion-dev
-#RUN mkdir -p /data/ion-orig
-#
-#WORKDIR /root
-#
-#RUN php -r "readfile('https://getcomposer.org/installer');" | php
-#RUN mv composer.phar /usr/bin/composer
-#
-#RUN git clone https://github.com/php-ion/php-ion.git /data/ion-dev
-#WORKDIR /data/ion-dev
-#RUN git submodule update --init --recursive
-#RUN composer install
-#RUN bin/ionizer.php --phpize --make --info
-##CMD bin/ionizer.php --dev --resync=/data/ion-orig:/data/ion-dev --make --gdb-server=127.0.0.1:8017
-##CMD php -dextension=src/modiles/ion.so -a
-#
-#RUN touch /tmp/lock
-#CMD tail -F /tmp/lock

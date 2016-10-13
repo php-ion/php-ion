@@ -17,7 +17,7 @@ RUN mv composer.phar /usr/bin/composer
 #WORKDIR /data/ion-dev
 #RUN git submodule update --init --recursive
 #RUN composer install
-#RUN bin/ionizer.php --phpize --make --info
+#RUN bin/ionizer.php --prepare --make --info
 #CMD bin/ionizer.php --dev --resync=/data/ion-orig:/data/ion-dev --make --gdb-server=127.0.0.1:8017
 #CMD php -dextension=src/modiles/ion.so -a
 

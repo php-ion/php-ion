@@ -30,7 +30,7 @@ env:
 # Build extenstion and load phpunit + another deps
 before_script:
   - gem install coveralls-lcov
-  - bin/ionizer.php --system --phpize --clean --make --coverage
+  - bin/ionizer.php --system --prepare --clean --make --coverage
   - bin/ionizer.php --info
   - composer install --quiet
 
