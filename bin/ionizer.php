@@ -1,4 +1,4 @@
-#!/usr/bin/env php -n
+#!/usr/bin/env php
 <?php
 
 ini_set('memory_limit', -1);
