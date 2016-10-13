@@ -336,6 +336,7 @@ class BuildRunner {
 		if($this->hasOption('prepare')) {
             if(!file_exists('src/deps/libevent/.git')) {
                 $this->exec('git submodule update --init --recursive');
+                $this->exec('./autogen.sh', 'src/deps/libevent');
             }
 			if($this->hasOption('clean')) {
 				$this->exec($this->getBin('phpize').' --clean', "src/");
