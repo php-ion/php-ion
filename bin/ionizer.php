@@ -331,9 +331,7 @@ class BuildRunner {
             $gdb = self::GDB_NONE;
         }
 
-        if($this->hasOption('clean')) {
-            $this->exec($this->getBin('make').' clean', "src/");
-        }
+
 
 		if($this->hasOption('prepare')) {
             if(!file_exists('src/deps/libevent/.git')) {
@@ -342,12 +340,18 @@ class BuildRunner {
 			if($this->hasOption('clean')) {
 				$this->exec($this->getBin('phpize').' --clean', "src/");
 			}
+
             $this->configure("src/deps/libevent", $this->event_confugure, $this->cflags, $this->ldflags);
-            $this->exec($this->getBin('make').' -j'.$this->nproc,  "src/deps/libevent");
 
             $this->exec($this->getBin('phpize'), "src/");
             $this->configure("src", $this->ion_confugure, $this->cflags, $this->ldflags);
-		}
+            if($this->hasOption('clean')) {
+                $this->exec($this->getBin('make').' clean', "src/");
+            }
+            $this->exec($this->getBin('make').' -j'.$this->nproc,  "src/deps/libevent");
+        } else if($this->hasOption('clean')) {
+            $this->exec($this->getBin('make').' clean', "src/");
+        }
 
 
 
