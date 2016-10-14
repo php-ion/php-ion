@@ -142,12 +142,15 @@ class BuildRunner {
 
         }
         if($this->isLinux()) {
-            $this->nproc = intval(`nproc`);
+            $this->nproc = intval(`nproc`) - 1;
         } elseif($this->isMacOS() || $this->isBSD()) {
-            $this->nproc = intval(`sysctl -n hw.ncpu`);
+            $this->nproc = intval(`sysctl -n hw.ncpu`) - 1;
+        }
+        if($this->nproc < 1) {
+            $this->nproc = 1;
         }
         if(!PHP_ZTS) {
-            $this->event_confugure[] = "--disable-thread-support";
+//            $this->event_confugure[] = "--disable-thread-support";
         }
 //        $this->event_confugure[] = "--includedir=/opt/local --oldincludedir=/opt/local";
     }
@@ -499,7 +502,7 @@ class BuildRunner {
 
 
 	public function li($name, $value) {
-        $this->line(sprintf("  %-36s  => %s", $name, $value));
+        $this->line(sprintf("  %-36s  => %s", trim($name), trim($value)));
 	}
 
     public function printSystemInfo() {
@@ -514,8 +517,10 @@ class BuildRunner {
         }
         $this->li("core_dump.size", `ulimit -c`);
 		$this->li("ulimit.fd_count", `ulimit -n`);
-		$this->li("c flags", `\$CFLAGS`);
-		$this->li("ld flags", `\$LDLAGS`);
+		$this->li("os.cflags", `\$CFLAGS`);
+		$this->li("ion.cflags", implode(" ", $this->cflags));
+		$this->li("os.ldflags", `\$LDLAGS`);
+		$this->li("ion.ldflags", implode(" ", $this->ldflags));
     }
 
 	public function isLinux() {

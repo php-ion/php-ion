@@ -33,6 +33,7 @@ RUN cd /usr/src \
         \
         --enable-debug \
         --enable-pcntl  \
+        --enable-maintainer-zts \
          \
      && make -j"$(nproc)" \
      && make install  \

@@ -78,6 +78,7 @@ if test "$PHP_ION" != "no"; then
 #    PHP_ADD_LIBRARY_WITH_PATH(event_core, $EVENT_DIR, ION_SHARED_LIBADD)
 #    PHP_ADD_LIBRARY_WITH_PATH(event_extra, $EVENT_DIR, ION_SHARED_LIBADD)
     PHP_ADD_LIBRARY_WITH_PATH(event_openssl, $EVENT_DIR, ION_SHARED_LIBADD)
+    PHP_ADD_LIBRARY_WITH_PATH(event_pthreads, $EVENT_DIR, ION_SHARED_LIBADD)
 #    EXTRA_LIBS="-lm"
 #    AC_CHECK_LIB(dl, dlopen, [
 #       EXTRA_LIBS="$EXTRA_LIBS -ldl"
@@ -113,18 +114,18 @@ if test "$PHP_ION" != "no"; then
 #    ])
 
     # PHP_SUBST(LIBEVENT_SHARED_LIBADD)
-    case $build_os in
-    darwin1*.*.*)
-      AC_MSG_CHECKING([whether to compile for recent osx architectures])
-      CFLAGS="$CFLAGS -arch x86_64 -mmacosx-version-min=10.5"
-      AC_MSG_RESULT([yes])
-      ;;
-    darwin*)
-      AC_MSG_CHECKING([whether to compile for every osx architecture ever])
-      CFLAGS="$CFLAGS -arch x86_64 -arch ppc -arch ppc64"
-      AC_MSG_RESULT([yes])
-      ;;
-    esac
+#    case $build_os in
+#    darwin1*.*.*)
+#      AC_MSG_CHECKING([whether to compile for recent osx architectures])
+#      CFLAGS="$CFLAGS -arch x86_64 -mmacosx-version-min=10.5"
+#      AC_MSG_RESULT([yes])
+#      ;;
+#    darwin*)
+#      AC_MSG_CHECKING([whether to compile for every osx architecture ever])
+#      CFLAGS="$CFLAGS -arch x86_64 -arch ppc -arch ppc64"
+#      AC_MSG_RESULT([yes])
+#      ;;
+#    esac
     AC_CHECK_FUNCS(fork, AC_DEFINE(HAVE_FORK,1, [ ]),)
     AC_CHECK_FUNCS(kill, AC_DEFINE(HAVE_KILL,1, [ ]),)
     AC_CHECK_FUNCS(waitpid, [ AC_DEFINE(HAVE_WAITPID,1,[ ]) ],)
