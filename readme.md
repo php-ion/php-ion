@@ -45,7 +45,7 @@ ION PHP Extension
 
 ## [0.6](https://github.com/php-ion/php-ion/milestones/0.6) tech release
 
-- [ ] Built-in libevent
+- [x] Built-in libevent
 - [ ] PHP 7.1 supports
 - [ ] Internal improvements
 
