@@ -342,7 +342,7 @@ class BuildRunner {
 				$this->exec($this->getBin('phpize').' --clean', "src/");
 			}
 
-            $this->configure("src/deps/libevenst", $this->event_confugure, $this->cflags, $this->ldflags);
+            $this->configure("src/deps/libevent", $this->event_confugure, $this->cflags, $this->ldflags);
             $this->exec($this->getBin('make').' -j'.$this->nproc,  "src/deps/libevent");
 
             $this->exec($this->getBin('phpize'), "src/");
