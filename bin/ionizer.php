@@ -336,6 +336,8 @@ class BuildRunner {
 		if($this->hasOption('prepare')) {
             if(!file_exists('src/deps/libevent/.git')) {
                 $this->exec('git submodule update --init --recursive');
+            }
+            if(!file_exists('src/deps/libevent/configure')) {
                 $this->exec('./autogen.sh', 'src/deps/libevent');
             }
 			if($this->hasOption('clean')) {
@@ -495,12 +497,9 @@ class BuildRunner {
         return "{$declare}(".implode(", ", $params).")$return";
     }
 
-    public function prepare() {
-
-    }
 
 	public function li($name, $value) {
-		$this->line(trim($name).": ".trim($value));
+        $this->line(sprintf("  %-36s  => %s", $name, $value));
 	}
 
     public function printSystemInfo() {
@@ -515,6 +514,8 @@ class BuildRunner {
         }
         $this->li("core_dump.size", `ulimit -c`);
 		$this->li("ulimit.fd_count", `ulimit -n`);
+		$this->li("c flags", `\$CFLAGS`);
+		$this->li("ld flags", `\$LDLAGS`);
     }
 
 	public function isLinux() {
