@@ -86,8 +86,11 @@ set(ION_SOURCE_FILES
 add_library(ion ${ION_SOURCE_FILES})
 add_dependencies(ion external_ion)
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src")
-include_directories("/opt/local/include/php70/php" "/opt/local/include/php70/php/main" "/opt/local/include/php70/php/Zend" "/opt/local/include/php70/php/TSRM"  )
-include_directories("/opt/local/var/macports/build/_opt_local_var_macports_sources_rsync.macports.org_release_tarballs_ports_lang_php/php70/work/php-7.0.0")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src/deps")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src/deps/libevent")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src/deps/libevent/include")
+#include_directories("/opt/local/include/php70/php" "/opt/local/include/php70/php/main" "/opt/local/include/php70/php/Zend" "/opt/local/include/php70/php/TSRM"  )
+#include_directories("/opt/local/var/macports/build/_opt_local_var_macports_sources_rsync.macports.org_release_tarballs_ports_lang_php/php70/work/php-7.0.0")
 #include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Libevent")
 include_directories("/opt/local/include")
 

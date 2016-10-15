@@ -124,6 +124,7 @@ class BuildRunner {
     public $zend_alloc = 1;
 
     public function __construct() {
+        chdir(dirname(__DIR__));
 	    foreach($this->binaries as $name => $path) {
 			if(getenv(strtoupper("ion_{$name}_exec"))) {
 				$this->binaries[$name] = getenv(strtoupper("ion_{$name}_exec"));
@@ -152,7 +153,6 @@ class BuildRunner {
         if(!PHP_ZTS) {
 //            $this->event_confugure[] = "--disable-thread-support";
         }
-//        $this->event_confugure[] = "--includedir=/opt/local --oldincludedir=/opt/local";
     }
 
     /**
@@ -334,32 +334,36 @@ class BuildRunner {
             $gdb = self::GDB_NONE;
         }
 
-
+        if($this->hasOption('clean')) {
+            if(file_exists('src/Makefile')) {
+                rename('src/deps', 'deps'); // protect depends from clean
+                try {
+                    $this->exec($this->getBin('make').' clean', "src/");
+                } finally {
+                    rename('deps', 'src/deps');
+                }
+            }
+            if(file_exists('src/configure')) {
+                $this->exec($this->getBin('phpize').' --clean', "src/");
+            }
+        }
 
 		if($this->hasOption('prepare')) {
-            if(!file_exists('src/deps/libevent/.git')) {
+            if (!file_exists('src/deps/libevent/.git')) {
                 $this->exec('git submodule update --init --recursive');
             }
-            if(!file_exists('src/deps/libevent/configure')) {
+            if (!file_exists('src/deps/libevent/configure')) {
                 $this->exec('./autogen.sh', 'src/deps/libevent');
             }
-			if($this->hasOption('clean')) {
-				$this->exec($this->getBin('phpize').' --clean', "src/");
-			}
 
             $this->configure("src/deps/libevent", $this->event_confugure, $this->cflags, $this->ldflags);
-            $this->exec($this->getBin('make').' -j'.$this->nproc,  "src/deps/libevent");
+            $this->exec($this->getBin('make') . ' -j' . $this->nproc, "src/deps/libevent");
 
             $this->exec($this->getBin('phpize'), "src/");
             $this->configure("src", $this->ion_confugure, $this->cflags, $this->ldflags);
         }
 
-        if($this->hasOption('clean')) {
-            $this->exec($this->getBin('make').' clean', "src/");
-        }
-
-
-		if($this->hasOption('make')) {
+        if($this->hasOption('make')) {
 			$this->exec($this->getBin('make').' -j'.$this->nproc,  "src/");
 		}
 
