@@ -1367,26 +1367,25 @@ CLASS_METHOD(ION_Stream, incoming) {
     obj_add_ref(stream->incoming);
     RETURN_OBJ(stream->incoming);
 }
-
 METHOD_WITHOUT_ARGS(ION_Stream, incoming)
 
 /** public function ION\Stream::suspend() : self */
-CLASS_METHOD(ION_Stream, suspend) {
-    ion_stream * stream = get_this_instance(ion_stream);
-    ion_stream_suspend(stream);
-    RETURN_THIS();
-}
-
-METHOD_WITHOUT_ARGS(ION_Stream, suspend)
-
-/** public function ION\Stream::resume() : self */
-CLASS_METHOD(ION_Stream, resume) {
-    ion_stream * stream = get_this_instance(ion_stream);
-    ion_stream_resume(stream);
-    RETURN_THIS();
-}
-
-METHOD_WITHOUT_ARGS(ION_Stream, resume)
+//CLASS_METHOD(ION_Stream, suspend) {
+//    ion_stream * stream = get_this_instance(ion_stream);
+//    ion_stream_suspend(stream);
+//    RETURN_THIS();
+//}
+//
+//METHOD_WITHOUT_ARGS(ION_Stream, suspend)
+//
+///** public function ION\Stream::resume() : self */
+//CLASS_METHOD(ION_Stream, resume) {
+//    ion_stream * stream = get_this_instance(ion_stream);
+//    ion_stream_resume(stream);
+//    RETURN_THIS();
+//}
+//
+//METHOD_WITHOUT_ARGS(ION_Stream, resume)
 
 void _deferred_stream_closing_dtor(ion_promisor * deferred) {
     ion_stream * stream = deferred->object;
@@ -1803,50 +1802,50 @@ METHOD_ARGS_BEGIN(ION_Stream, appendToInput, 1)
 METHOD_ARGS_END()
 
 /** public function ION\Stream::hasStorage() : string */
-CLASS_METHOD(ION_Stream, hasStorage) {
-    ion_stream * stream = get_this_instance(ion_stream);
-    if(stream->storage) {
-        RETURN_TRUE;
-    } else {
-        RETURN_FALSE;
-    }
-}
-
-METHOD_WITHOUT_ARGS(ION_Stream, hasStorage)
-
-/** public function ION\Stream::getStorage() : string */
-CLASS_METHOD(ION_Stream, getStorage) {
-    ion_stream * stream = get_this_instance(ion_stream);
-    if(stream->storage) {
-        zend_object_addref(stream->storage);
-        RETURN_OBJ(stream->storage);
-    } else {
-        RETURN_NULL();
-    }
-}
-
-METHOD_WITHOUT_ARGS(ION_Stream, getStorage)
+//CLASS_METHOD(ION_Stream, hasStorage) {
+//    ion_stream * stream = get_this_instance(ion_stream);
+//    if(stream->storage) {
+//        RETURN_TRUE;
+//    } else {
+//        RETURN_FALSE;
+//    }
+//}
+//
+//METHOD_WITHOUT_ARGS(ION_Stream, hasStorage)
+//
+///** public function ION\Stream::getStorage() : string */
+//CLASS_METHOD(ION_Stream, getStorage) {
+//    ion_stream * stream = get_this_instance(ion_stream);
+//    if(stream->storage) {
+//        zend_object_addref(stream->storage);
+//        RETURN_OBJ(stream->storage);
+//    } else {
+//        RETURN_NULL();
+//    }
+//}
+//
+//METHOD_WITHOUT_ARGS(ION_Stream, getStorage)
 
 
 /** public function ION\Stream::release() : string */
-CLASS_METHOD(ION_Stream, release) {
-    ion_stream * stream = get_this_instance(ion_stream);
-    zend_bool    force = 0;
+//CLASS_METHOD(ION_Stream, release) {
+//    ion_stream * stream = get_this_instance(ion_stream);
+//    zend_bool    force = 0;
+//
+//    if(stream->storage) {
+//        ion_storage_handler_release(stream->storage, &stream->std);
+//    } else {
+//        if((stream->state & ION_STREAM_STATE_FLUSHED) || force) {
+//            ion_stream_close_fd(stream);
+//        } else {
+//            bufferevent_disable(stream->buffer, EV_READ);
+//            stream->state |= ION_STREAM_STATE_CLOSE_ON_FLUSH;
+//            RETURN_THIS();
+//        }
+//    }
+//}
 
-    if(stream->storage) {
-        ion_storage_handler_release(stream->storage, &stream->std);
-    } else {
-        if((stream->state & ION_STREAM_STATE_FLUSHED) || force) {
-            ion_stream_close_fd(stream);
-        } else {
-            bufferevent_disable(stream->buffer, EV_READ);
-            stream->state |= ION_STREAM_STATE_CLOSE_ON_FLUSH;
-            RETURN_THIS();
-        }
-    }
-}
-
-METHOD_WITHOUT_ARGS(ION_Stream, release)
+//METHOD_WITHOUT_ARGS(ION_Stream, release)
 
 CLASS_METHODS_START(ION_Stream)
     // Factories
@@ -1901,8 +1900,8 @@ CLASS_METHODS_START(ION_Stream)
 
     // Handle incoming data
     METHOD(ION_Stream, incoming,           ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, suspend,            ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, resume,             ZEND_ACC_PUBLIC)
+//    METHOD(ION_Stream, suspend,            ZEND_ACC_PUBLIC)
+//    METHOD(ION_Stream, resume,             ZEND_ACC_PUBLIC)
 
     // Check states
     METHOD(ION_Stream, isEnabled,          ZEND_ACC_PUBLIC)
@@ -1919,9 +1918,9 @@ CLASS_METHODS_START(ION_Stream)
     METHOD(ION_Stream, __destruct,         ZEND_ACC_PUBLIC)
 
     // Storage
-    METHOD(ION_Stream, hasStorage,         ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, getStorage,         ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, release,            ZEND_ACC_PUBLIC)
+//    METHOD(ION_Stream, hasStorage,         ZEND_ACC_PUBLIC)
+//    METHOD(ION_Stream, getStorage,         ZEND_ACC_PUBLIC)
+//    METHOD(ION_Stream, release,            ZEND_ACC_PUBLIC)
 
 CLASS_METHODS_END;
 

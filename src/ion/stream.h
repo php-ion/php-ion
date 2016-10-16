@@ -197,8 +197,8 @@ zend_string * ion_stream_describe(zend_object * stream);
 zend_bool     ion_stream_write(ion_stream * stream, zend_string * data);
 zend_string * ion_stream_read(ion_stream * stream, size_t size);
 zend_string * ion_stream_read_token(ion_stream * stream, ion_stream_token * token);
-long   ion_stream_search_token(struct evbuffer * buffer, ion_stream_token * token TSRMLS_DC);
-int    ion_stream_close_fd(ion_stream * stream TSRMLS_DC);
+long   ion_stream_search_token(struct evbuffer * buffer, ion_stream_token * token);
+int    ion_stream_close_fd(ion_stream * stream);
 
 #define CHECK_STREAM_BUFFER(stream)                          \
     if(stream->buffer == NULL) {                             \

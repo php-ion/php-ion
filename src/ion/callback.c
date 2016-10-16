@@ -63,9 +63,11 @@ pion_cb * pion_cb_fetch_method_ce(zend_class_entry * ce, const char * method_nam
     *cb->fci = empty_fcall_info;
     *cb->fcc = empty_fcall_info_cache;
     cb->fci->size = sizeof(zend_fcall_info);
+#ifdef IS_PHP70
     cb->fci->function_table = NULL;
-    ZVAL_UNDEF(&cb->fci->function_name);
     cb->fci->symbol_table  = NULL;
+#endif
+    ZVAL_UNDEF(&cb->fci->function_name);
     cb->fci->object        = NULL;
     cb->fci->retval        = NULL;
     cb->fci->param_count   = 0;
@@ -125,9 +127,10 @@ pion_cb * pion_cb_dup(pion_cb * proto) {
     *cb->fci = empty_fcall_info;
     *cb->fcc = empty_fcall_info_cache;
 
-    // fci
     cb->fci->size = sizeof(zend_fcall_info);
+#ifdef IS_PHP70
     cb->fci->function_table = proto->fci->function_table;
+#endif
     if(Z_ISUNDEF(proto->fci->function_name)) {
         ZVAL_UNDEF(&proto->fci->function_name);
     } else {
@@ -566,9 +569,14 @@ int pion_call_constructor(zend_class_entry * ce, zend_object * this_ptr, int arg
         return FAILURE;
     }
     fci.size = sizeof(fci);
-    fci.function_table = EG(function_table);
     ZVAL_UNDEF(&fci.function_name);
+#ifdef IS_PHP70
     fci.symbol_table = NULL;
+    fci.function_table = EG(function_table);
+    fcc.calling_scope = EG(scope);
+#else
+    fcc.calling_scope = EG(fake_scope);
+#endif
     fci.object = this_ptr;
     fci.retval = &retval_ptr;
     fci.param_count = (uint32_t)args_num;
@@ -577,7 +585,6 @@ int pion_call_constructor(zend_class_entry * ce, zend_object * this_ptr, int arg
 
     fcc.initialized = 1;
     fcc.function_handler = ce->constructor;
-    fcc.calling_scope = EG(scope);
     fcc.called_scope = this_ptr->ce;
     fcc.object = this_ptr;
 

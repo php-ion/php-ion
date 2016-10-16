@@ -43,6 +43,10 @@ class BuildRunner {
             'short' => 'c',
             'desc'  => 'Deletes all the already compiled object files.'
         ],
+        'clean-deps' => [
+            'short' => 'e',
+            'desc'  => 'Deletes all the already compiled object files from deps (required --clean)'
+        ],
         'make' => [
             'short' => 'm',
             'desc'  => 'Compile ION extension (make required)'
@@ -88,6 +92,9 @@ class BuildRunner {
         'dev' => [
             'short' => '',
             'desc'  => 'Only runs tests from the dev group. Alias of --group=dev.'
+        ],
+        'ci' => [
+            'desc'  => 'Alias: --debug --coverage --system --clean-deps --clean --prepare --make --info --test'
         ],
         'gdb' => [
             'short' => '',
@@ -288,6 +295,19 @@ class BuildRunner {
      * Run dispatcher
      */
 	public function run() {
+        if($this->hasOption("ci")) {
+            $this->setOption('debug');
+            $this->setOption('coverage');
+
+            $this->setOption('system');
+            $this->setOption('clean-deps');
+            $this->setOption('clean');
+            $this->setOption('prepare');
+            $this->setOption('make');
+            $this->setOption('info');
+
+            $this->setOption('test');
+        }
         if($this->hasOption("debug")) {
             $this->cflags[]          = "-Wall -g3 -ggdb -O0";
             $this->ion_confugure[]   = "--enable-ion-debug";
@@ -334,16 +354,25 @@ class BuildRunner {
             $gdb = self::GDB_NONE;
         }
 
+        if($this->hasOption('clean-deps')) {
+            if(file_exists('src/deps/libevent/Makefile')) {
+                $this->exec($this->getBin('make').' clean', "src/deps/libevent");
+                $this->exec('rm -f src/deps/libevent/Makefile');
+            }
+            if(file_exists('src/deps/libevent/configure') && $this->hasOption('prepare')) {
+                $this->exec('rm -f src/deps/libevent/configure');
+            }
+        }
         if($this->hasOption('clean')) {
             if(file_exists('src/Makefile')) {
-                rename('src/deps', 'deps'); // protect depends from clean
+                rename('src/deps/libevent', 'libevent'); // protect libevent from clean
                 try {
                     $this->exec($this->getBin('make').' clean', "src/");
                 } finally {
-                    rename('deps', 'src/deps');
+                    rename('libevent', 'src/deps/libevent');
                 }
             }
-            if(file_exists('src/configure')) {
+            if(file_exists('src/configure') && $this->hasOption('prepare')) {
                 $this->exec($this->getBin('phpize').' --clean', "src/");
             }
         }
@@ -356,7 +385,9 @@ class BuildRunner {
                 $this->exec('./autogen.sh', 'src/deps/libevent');
             }
 
-            $this->configure("src/deps/libevent", $this->event_confugure, $this->cflags, $this->ldflags);
+            if(!file_exists('src/deps/libevent/Makefile')) {
+                $this->configure("src/deps/libevent", $this->event_confugure, $this->cflags, $this->ldflags);
+            }
             $this->exec($this->getBin('make') . ' -j' . $this->nproc, "src/deps/libevent");
 
             $this->exec($this->getBin('phpize'), "src/");
@@ -625,13 +656,13 @@ class BuildRunner {
 	public function help() {
 		echo "Usage: ".$_SERVER["PHP_SELF"]." [OPTIONS] ...\n
 Build:
-".$this->compileHelp(["help", "clean", "make", "coverage", "prepare", "build", "install"], 20)."
+".$this->compileHelp(["help", "clean", "clean-deps", "make", "coverage", "prepare", "build", "install"], 20)."
 
 Information:
 ".$this->compileHelp(["info", "system"], 20)."
 
 Testing:
-".$this->compileHelp(["test", "group", "dev", "gdb", "gdb-server"], 20)."
+".$this->compileHelp(["test", "group", "dev", "ci", "gdb", "gdb-server"], 20)."
 
 Docker:
 ".$this->compileHelp(["docker-gdb-server", "docker-sync", "docker-sync-rebuild"], 20)."

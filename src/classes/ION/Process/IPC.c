@@ -102,6 +102,8 @@ CLASS_METHOD(ION_Process_IPC, create) {
         zend_throw_exception(ion_ce_ION_RuntimeException, ERR_ION_PROCESS_IPC_FAIL, 0);
         return;
     }
+    zval_add_ref(ctx1);
+    zval_add_ref(ctx2);
     array_init(return_value);
     add_next_index_zval(return_value, &one);
     add_next_index_zval(return_value, &two);
@@ -175,12 +177,19 @@ METHOD_ARGS_END();
 CLASS_METHOD(ION_Process_IPC, getContext) {
     ion_process_ipc * ipc = get_this_instance(ion_process_ipc);
     if(!Z_ISUNDEF(ipc->ctx)) {
-        ZVAL_COPY(return_value, &ipc->ctx);
+        if(!Z_ISREF(ipc->ctx)) {
+            zval ref;
+            PHPDBG("ref");
+            ZVAL_NEW_EMPTY_REF(&ref);
+            ZVAL_COPY_VALUE(Z_REFVAL(ref), &ipc->ctx);
+            ZVAL_COPY_VALUE(return_value, &ref);
+        } else {
+            ZVAL_COPY(return_value, &ipc->ctx);
+        }
     }
 }
 
-METHOD_WITHOUT_ARGS(ION_Process_IPC, getContext);
-
+METHOD_WITHOUT_ARGS_RETURN(ION_Process_IPC, getContext, RET_REF);
 
 CLASS_METHODS_START(ION_Process_IPC)
     METHOD(ION_Process_IPC, create,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)

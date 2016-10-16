@@ -47,6 +47,11 @@ typedef struct _ion_global_queue ion_global_queue;
 # define false 0
 #endif
 
+#if PHP_API_VERSION == 20151012
+# define IS_PHP70 1
+#else
+
+#endif
 
 
 #define SET_TIMEVAL(tval, dval) SET_TIMEVAL_P(&tvalp, dval)

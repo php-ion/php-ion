@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y \
     vim-tiny \
     less \
     autoconf \
+    automake \
+    libtool \
+    lcov \
     file \
     g++ \
     gcc \

@@ -14,11 +14,12 @@ class IPCTest extends TestCase {
     public $tmp;
 
     /**
+     * @group dev
      * @memcheck
      */
     public function testCreate() {
 
-        list($one, $two) = IPC::create((string)"one1", (string)"two2");
+        list($one, $two) = IPC::create(strtolower("ONE1"), strtolower("TWO2"));
         /* @var IPC $one */
         /* @var IPC $two */
         $this->assertInstanceOf(IPC::class, $one);

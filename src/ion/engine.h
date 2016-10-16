@@ -237,6 +237,10 @@
 #define ARG_IS_REF           0x20
 #define ARG_ALLOW_NULL       0x40
 #define ARG_IS_VARIADIC      0x80
+
+#define RET_REF              ARG_IS_REF
+#define RET_NULL             ARG_ALLOW_NULL
+
 #define ARGUMENT(name, flags)  { #name, \
                                  NULL, \
                                  flags & _ARGUMENT_HINT_MASK, \
@@ -254,6 +258,18 @@
 #define METHOD_ARG_CALLBACK(name, pass_by_ref, allow_null)            ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_CALLABLE, allow_null)
 #define METHOD_ARG_TYPE(name, type_hint, allow_null, pass_by_ref)     ZEND_ARG_TYPE_INFO(pass_by_ref, name, type_hint, allow_null)
 #define METHOD_ARG_OBJECT(name, classname, allow_null, pass_by_ref)   ZEND_ARG_OBJ_INFO(pass_by_ref, name, classname, allow_null)
+
+#define METHOD_WITHOUT_ARGS_RETURN(class_name, method_name, flags) \
+        ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX( \
+        	args ## class_name ## method_name,   \
+            (flags & RET_REF) ? 1 : 0,		 	 \
+            0, 									 \
+            flags & _ARGUMENT_HINT_MASK, 		 \
+            NULL, 								 \
+            (flags & RET_NULL) ? 1 : 0			 \
+        )								   	     \
+        ZEND_END_ARG_INFO()                      \
+
 
 #define METHOD_ARGS_END() \
     ZEND_END_ARG_INFO()

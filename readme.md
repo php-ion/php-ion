@@ -46,7 +46,7 @@ ION PHP Extension
 ## [0.6](https://github.com/php-ion/php-ion/milestones/0.6) tech release
 
 - [x] Built-in libevent
-- [ ] PHP 7.1 supports
+- [x] PHP 7.1 supports
 - [ ] Internal improvements
 
 ## [0.7](https://github.com/php-ion/php-ion/milestones/0.7)
@@ -56,9 +56,16 @@ ION PHP Extension
 - [ ] HTTP server
 - [ ] HTTP client
 
-# Planned
+## [0.8]
 
-* DNS server
+- [ ] Feedback
+- [ ] Optimizations
+- [ ] Refactory
+- [ ] DNS server (may be)
+
+## [1.0]
+
+- [ ] Stability
 
 # What can you do
 
