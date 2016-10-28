@@ -7,8 +7,8 @@
 
 VERSION=`git describe --tags --long`
 
-PHP_ARG_WITH(ion, "for asynchronous IO notifications $VERSION",
-[  --with-ion              "Include ION support"])
+PHP_ARG_WITH(ion, for asynchronous IO notifications $VERSION,
+[  --with-ion              Include ION support])
 
 PHP_ARG_ENABLE(ion-debug, whether to enable debug for ION,
 [  --enable-ion-debug      Enable ION debug], no, no)
@@ -38,7 +38,9 @@ if test "$PHP_ION" != "no"; then
 
     PHP_ADD_LIBRARY_WITH_PATH(event, $EVENT_DIR, ION_SHARED_LIBADD)
     PHP_ADD_LIBRARY_WITH_PATH(event_openssl, $EVENT_DIR, ION_SHARED_LIBADD)
-    PHP_ADD_LIBRARY_WITH_PATH(event_pthreads, $EVENT_DIR, ION_SHARED_LIBADD)
+    if test "$enable_maintainer_zts" = "yes"; then
+        PHP_ADD_LIBRARY_WITH_PATH(event_pthreads, $EVENT_DIR, ION_SHARED_LIBADD)
+    fi
 
     AC_CHECK_FUNCS(fork, AC_DEFINE(HAVE_FORK,1, [ ]),)
     AC_CHECK_FUNCS(kill, AC_DEFINE(HAVE_KILL,1, [ ]),)

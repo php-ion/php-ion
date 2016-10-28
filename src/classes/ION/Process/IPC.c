@@ -31,7 +31,9 @@ void ion_process_ipc_free(zend_object * object) {
         bufferevent_disable(ipc->buffer, EV_READ | EV_WRITE);
         bufferevent_free(ipc->buffer);
     }
-    zval_ptr_dtor(&ipc->ctx);
+    if(ipc->flags & ION_IPC_CTX_RELEASE) {
+        zval_ptr_dtor(&ipc->ctx);
+    }
 }
 
 
@@ -57,7 +59,7 @@ void ion_process_ipc_notification(ion_buffer * bev, short what, void * ctx) {
     ION_CB_END();
 }
 
-int ion_ipc_create(zval * one, zval * two, zval * ctx1, zval * ctx2) {
+int ion_ipc_create(zval * one, zval * two, zval * ctx1, zval * ctx2, uint32_t flags) {
     ion_buffer * buffer_one = NULL;
     ion_buffer * buffer_two = NULL;
     ion_process_ipc * ipc1;
@@ -73,8 +75,8 @@ int ion_ipc_create(zval * one, zval * two, zval * ctx1, zval * ctx2) {
     bufferevent_setcb(buffer_two, ion_process_ipc_incoming, NULL, ion_process_ipc_notification, ipc2);
     ipc1->buffer = buffer_one;
     ipc2->buffer = buffer_two;
-    ipc1->flags |= ION_IPC_CONNECTED;
-    ipc2->flags |= ION_IPC_CONNECTED;
+    ipc1->flags |= ION_IPC_CONNECTED | flags;
+    ipc2->flags |= ION_IPC_CONNECTED | flags;
     if(ctx1) {
         ZVAL_COPY(&ipc1->ctx, ctx1);
     }
@@ -98,7 +100,7 @@ CLASS_METHOD(ION_Process_IPC, create) {
         Z_PARAM_ZVAL(ctx2)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    if(ion_ipc_create(&one, &two, ctx1, ctx2) == FAILURE) {
+    if(ion_ipc_create(&one, &two, ctx1, ctx2, ION_IPC_CTX_RELEASE) == FAILURE) {
         zend_throw_exception(ion_ce_ION_RuntimeException, ERR_ION_PROCESS_IPC_FAIL, 0);
         return;
     }

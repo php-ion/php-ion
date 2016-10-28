@@ -132,7 +132,7 @@ CLASS_METHOD(ION_Process_ChildProcess, __construct) {
     ZVAL_NEW_EMPTY_REF(&context);
     ZVAL_OBJ(Z_REFVAL(context), Z_OBJ_P(getThis()));
 
-    int r = ion_ipc_create(&ipc_parent, &ipc_child, &context, NULL);
+    int r = ion_ipc_create(&ipc_parent, &ipc_child, &context, NULL, 0);
     zval_ptr_dtor(&context);
 
     if(r == FAILURE) {

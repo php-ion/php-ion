@@ -68,6 +68,7 @@ typedef struct _ion_process_child {
 
 
 #define ION_IPC_CONNECTED 0x1
+#define ION_IPC_CTX_RELEASE 0x2
 // opcodes
 #define ION_IPC_DATA    WS_OP_CONTINUE
 // reserve
@@ -94,7 +95,7 @@ int ion_process_ipc_message_body(websocket_parser * parser, const char * at, siz
 int ion_process_ipc_message_end(websocket_parser * parser);
 void ion_process_ipc_incoming(ion_buffer * bev, void * ctx);
 
-int ion_ipc_create(zval * one, zval * two, zval * ctx1, zval * ctx2);
+int ion_ipc_create(zval * one, zval * two, zval * ctx1, zval * ctx2, uint32_t flags);
 
 END_EXTERN_C();
 
