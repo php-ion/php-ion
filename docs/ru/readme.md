@@ -3,7 +3,7 @@
 
 ## Содержаение
 
-* [Промисы](./promissor.md) (`ION\Promise`, `ION\Deferred`, `ION\Sequence`)
+* [Промисы](./promisor.md) (`ION\Promise`, `ION\Deferred`, `ION\Sequence`)
 * [Работа с файловой системой](./fs.md) (`ION\FS`)
     * [События файловой системы](./fs.md)
     * [Чтение файлов](./fs.md)
