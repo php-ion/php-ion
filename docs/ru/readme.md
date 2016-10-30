@@ -4,9 +4,11 @@
 ## Содержаение
 
 * [Промисы](./promisor.md) (`ION\Promise`, `ION\Deferred`, `ION\Sequence`)
+* [Иерерхия исключений](./exceptions.md)
 * [Работа с файловой системой](./fs.md) (`ION\FS`)
-    * [События файловой системы](./fs.md)
-    * [Чтение файлов](./fs.md)
+    * [События файловой системы](./fs.md#События-файловой-системы)
+    * [Чтение файлов](./fs.md#Чтение-файлов)
+* [Работа и настройка DNS](./dns.md)
 * [Работа с процессами](./process.md) (`ION\Process`, `ION\Process\ChildProcess`)
     * [Манипуляции с прцессом](./process.md#work)
     * [Сигналы](./process.md#signals) (`ION\Process\Signals`)
