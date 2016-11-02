@@ -12,7 +12,7 @@
 * [Работа с процессами](./process.md) (`ION\Process`, `ION\Process\ChildProcess`)
     * [Манипуляции с прцессом](./process.md#work)
     * [Сигналы](./process.md#signals) (`ION\Process\Signals`)
-    * [Выполнение подпроцесса](./process.md#exec) (`ION\Process\Exec`)
+    * [Исполнение внешних программ](./process.md#Исполнение-внешних-программ) (`ION\Process\Exec`)
     * [Дочерние процессы](./process.md#childs) (`ION\Process\ChildProcess`)
         * [Создание дочерних процессов](./process.md#create-childs)
         * [Межпроцесорные коммуникации](./process.md#ipc) (`ION\Process\IPC`, `ION\Process\IPC\Message`)

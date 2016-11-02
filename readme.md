@@ -14,6 +14,7 @@ ION PHP Extension
 * **Versioning:** [semver2](http://semver.org/)
 * **Based:** [libevent2](http://libevent.org/)
 * **Packagist:** [phpion/phpion](https://packagist.org/packages/phpion/phpion)
+* **Documentation:** en, [ru](./docs/ru/readme.md)
 * **PHP API**: see [classes](./stubs/classes) and [constants](./stubs/constants.php)
 * **Configuration**: see [ini](./stubs/ION.ini) directives
 * **Unit testing:** [phpunit](https://phpunit.de/) with memory leak detector
