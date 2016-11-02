@@ -47,3 +47,73 @@ print $result->stdout; // выведет что-то похожее на /www/ap
 
 # Дочерние процессы
 
+Для увеличения потоко обработки входящих данных часто использую систему мастер-рабочие. 
+Один осонвной процесс, назовем его мастер, порождает другие процессы, их назовем рабочими процессами. 
+Рабочие процессы занимаются обработкой данных, в то время как мастер только следит за рабочими 
+и запускает/перезапускает рабочих в зависимости от потребности приложения. Для более плотного взаимодействия мастера с 
+рабочими процессами используют [IPC](https://en.wikipedia.org/wiki/Inter-process_communication) что бы передавать сообщения.
+
+## Создание дочерних процессов
+
+Обычно такая схема релизуется через парные сокеты и [pcntl_fork](http://docs.php.net/pcntl_fork). 
+Схема мастер-рабочий учтена в расширении и реализована в классе `ION\Process\ChildProcess`.
+
+
+```php
+
+$worker = new ION\Process\ChildProcess();
+
+$worker->whenStarted()->then(function (ION\Process\ChildProcess $worker) {
+    // промис разрешится когда процесс запустится и будет иметь свой собственный PID
+});
+
+$worker->whenExit()->then(function (ION\Process\ChildProcess $worker) {
+    // вызывается когда процесс завершился
+});
+
+$worker->start(function (ION\Process\IPC $master_ipc) {
+    // $master_ipc соединение с мастер-процессом которое может быть использавнно для передачи сообщений
+});
+
+```
+
+## Межпроцессное взаимодействие
+
+Межпроцессное взаимодействие (IPC) предоставляется объектом `ION\Process\IPC`. 
+Объект IPC изначально существует у каждого объекта дочернего процесса `ION\Process\ChildProcess`.
+
+```php
+$worker = new ION\Process\ChildProcess();
+
+$worker->getIPC()->whenIncoming()->then(function (ION\Process\IPC\Message $message) {
+    // Сообщения от дочернего процесса
+});
+
+$worker->getIPC()->whenDisconnected()->then(function (ION\Process\ChildProcess $worker) {
+    // Разрыв соединения с дочерним процессом. Это может произойти только из-за завершения процесса
+});
+
+```
+
+После запуска дочерний процесс получает IPC с мастером
+
+```php
+
+$worker = new ION\Process\ChildProcess();
+
+$worker->start(function (ION\Process\IPC $master_ipc) {
+    $master_ipc->whenIncoming()->then(function (ION\Process\IPC\Message $message) {
+        // Сообщения от родительского процесса
+    });
+    
+    $master_ipc->whenDisconnected()->then(function (ION\Process\ChildProcess $worker) {
+        // Разрыв соединения с родительским процессом. Это может произойти только из-за завершения родительского процесса
+    });
+});
+
+```
+
+IPC с родителем можно получить в любое время через метод `ION\Process::getParentIPC()`.
+
+
+## Управление дочерними процессами

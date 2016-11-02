@@ -34,6 +34,10 @@ ION\FS::watch('/etc/app/main.conf', ION\FS::WATCH_MODIFY)->then(function (array 
 Пример чтения файла через [корутину](./promisor.md#Корутины)
 
 ```php
+// чтение всего файла
 $data = yield ION\FS::readFile('/etc/app/main.conf');
+
+// чтение части файла 
+$data = yield ION\FS::readFile('/var/log/app/error.log', 0, 8 * KiB); // прочитает первые 8192 байт
 ```
 
