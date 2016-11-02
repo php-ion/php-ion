@@ -10,7 +10,7 @@
 
 ```php
 
-// получим список файлов которые не под версией
+// получим список файлов которые не под версией или имеют измененный статус
 $result = yield ION\Process::exec('git status -s');
 
 // $result instanceof ION\Process\Exec
@@ -60,7 +60,6 @@ print $result->stdout; // выведет что-то похожее на /www/ap
 
 
 ```php
-
 $worker = new ION\Process\ChildProcess();
 
 $worker->whenStarted()->then(function (ION\Process\ChildProcess $worker) {
@@ -98,7 +97,6 @@ $worker->getIPC()->whenDisconnected()->then(function (ION\Process\ChildProcess $
 После запуска дочерний процесс получает IPC с мастером
 
 ```php
-
 $worker = new ION\Process\ChildProcess();
 
 $worker->start(function (ION\Process\IPC $master_ipc) {
@@ -129,18 +127,14 @@ if(ION\Process::hasParentIPC()) {
 Всегда можно получить лубой действующий дочерний процесс 
 
 ```php
-
 if(ION\Process::hasChildProcess($pid)) {
     $worker = ION\Process::getChildProcess($pid);
     // работа с дочерним процессом
 }
 
 ```
-
 или массив всех действующих дочерних процессов
-
 ```php
-
 foreach(ION\Process:getChildProcesses() as $pid => $worker) {
     // работа с дочерним процессом
 }
