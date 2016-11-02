@@ -113,7 +113,36 @@ $worker->start(function (ION\Process\IPC $master_ipc) {
 
 ```
 
-IPC с родителем можно получить в любое время через метод `ION\Process::getParentIPC()`.
+IPC с родителем можно получить в любое время через метод `ION\Process::getParentIPC()`
+
+```php 
+if(ION\Process::hasParentIPC()) {
+    $master_ipc = ION\Process::getParentIPC();
+}
+```
 
 
 ## Управление дочерними процессами
+
+У класса `ION\Process` есть набор методов для работы с дочерними процессами. 
+ 
+Всегда можно получить лубой действующий дочерний процесс 
+
+```php
+
+if(ION\Process::hasChildProcess($pid)) {
+    $worker = ION\Process::getChildProcess($pid);
+    // работа с дочерним процессом
+}
+
+```
+
+или массив всех действующих дочерних процессов
+
+```php
+
+foreach(ION\Process:getChildProcesses() as $pid => $worker) {
+    // работа с дочерним процессом
+}
+
+```
