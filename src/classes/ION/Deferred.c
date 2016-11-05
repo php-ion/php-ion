@@ -10,19 +10,28 @@ zend_object * ion_deferred_init(zend_class_entry * ce) {
     RETURN_INSTANCE(ION_Deferred, deferred);
 }
 
-/** public function ION\Deferred::__construct(callable $cancel_callback) : self */
+/** public function ION\Deferred::__construct(callable $canceler = null, bool $protected = true) : self */
 CLASS_METHOD(ION_Deferred, __construct) {
     ion_promisor * deferred = get_this_instance(ion_promisor);
-    zend_fcall_info        fci = empty_fcall_info;
-    zend_fcall_info_cache  fcc = empty_fcall_info_cache;
-    ZEND_PARSE_PARAMETERS_START(1, 1)
-        Z_PARAM_FUNC(fci, fcc)
+    zval                 * canceler = NULL;
+    zend_bool              protected = true;
+    ZEND_PARSE_PARAMETERS_START(0, 2)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_ZVAL_DEREF_EX(canceler, 1, 0)
+        Z_PARAM_BOOL(protected)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
-    ion_promisor_set_php_cb(&deferred->canceler, pion_cb_create(&fci, &fcc));
+
+    if(canceler) {
+        ion_promisor_set_php_cb(&deferred->canceler, pion_cb_create_from_zval(canceler));
+    }
+    if(protected) {
+        // @todo save run scope
+    }
 }
 
-METHOD_ARGS_BEGIN(ION_Deferred, __construct, 1)
-    METHOD_ARG_TYPE(cancel_callback, IS_CALLABLE, 0, 0)
+METHOD_ARGS_BEGIN(ION_Deferred, __construct, 0)
+    ARGUMENT(canceleler, IS_CALLABLE | ARG_ALLOW_NULL)
+    ARGUMENT(canceleler, _IS_BOOL)
 METHOD_ARGS_END();
 
 

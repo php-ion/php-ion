@@ -10,8 +10,9 @@ class Deferred extends ResolvablePromise {
 
     /**
      * @param callable $canceller
+     * @param bool $protected
      */
-    public function __construct(callable $canceller = null) { }
+    public function __construct(callable $canceller = null, bool $protected = true) { }
 
 
     /**
