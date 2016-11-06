@@ -9,7 +9,6 @@
     * [Константы](./../../stubs/constants.php)
     * [INI настройки](./../../stubs/ION.ini)
     * [Тесты](./../../tests/cases/)
-    * Примеры
 * [Промисы](./promisor.md) (`ION\Promise`, `ION\ResolvabePromise`, `ION\Deferred`, `ION\Sequence`)
 * [Иерерхия исключений](./exceptions.md)
 * [Работа с файловой системой](./fs.md) (`ION\FS`)
@@ -31,14 +30,18 @@
     * [События в потоке](./streams.md)
     * Фильтры
     * Групповые лимиты
-* Хранилище потоков
-    * Абстрактный сервер
-    * Абстрактный клиент
+* Хранилище потоков (`ION\Stream\StorageAbstract`)
+    * Абстрактный сервер (`ION\Stream\ServerAbstract`)
+    * Абстрактный клиент (`ION\Stream\ClientAbstract`)
 * [HTTP](./http.md)
     * Парсеры
+        * [URI](./http.md) (`ION\URI`)
         * [HTTP](./http.md) (`ION\HTTP\Request`, `ION\HTTP\Respose`)
         * [WebSocket](./http.md) (`ION\HTTP\WebSocket\Frame`)
         * [MultiPart](./http.md) (`ION\HTTP\MultiPart`, `ION\HTTP\MultiPart\Part`)
-    * HTTP сервер
-    * HTTP клиент
+    * HTTP сервер (`ION\HTTPServer`)
+    * HTTP клиент (`ION\HTTPClient`)
+* Примеры
+    * HTTP-прокси сервер
+    * WebSocket чат 
 * [C API](./capi.md)
