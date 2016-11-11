@@ -423,6 +423,13 @@ class BuildRunner {
                 $this->exec($this->getBin('lcov')." --list coverage.info");
             }
 		}
+        if($this->hasOption("build") && $path = $this->getOption("build")) {
+            if(file_exists("src/modules/ion.so")) {
+                copy("src/modules/ion.so", $path);
+            } else {
+                throw new RuntimeException("Failed to copy complied extension from src/modules/ion.so to $path");
+            }
+        }
         if($this->hasOption("install")) {
             $this->exec("sudo " . $this->getBin('make') . " install"); // @todo do it more 'clear'
         }

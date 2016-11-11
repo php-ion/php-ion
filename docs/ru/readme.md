@@ -14,7 +14,7 @@
 * [Работа с файловой системой](./fs.md) (`ION\FS`)
     * [События файловой системы](./fs.md#События-файловой-системы)
     * [Чтение файлов](./fs.md#Чтение-файлов)
-* [DNS](./dns.md)
+* [DNS](./dns.md) (`ION\DNS`)
 * [Работа с процессами](./process.md) (`ION\Process`, `ION\Process\ChildProcess`)
     * [Манипуляции с прцессом](./process.md#work)
     * [Сигналы](./process.md#signals) (`ION\Process\Signals`)
