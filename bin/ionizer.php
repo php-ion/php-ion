@@ -65,7 +65,8 @@ class BuildRunner {
         ],
         'build' => [
             'short' => 'b',
-            'desc'  => 'Build and compile the extension. Alias of --prepare --clean --make.'
+            'desc'  => 'Build and compile the extension. Alias of --prepare --clean --clean-deps --make.',
+            'extra' => '[=PATH]'
         ],
         'setup' => [
             'short' => 'B',
@@ -333,10 +334,11 @@ class BuildRunner {
 			return;
 		}
 
-		if($this->hasOption("build")) {
+		if($this->hasOption("build") || $this->hasOption("install")) {
 			$this->setOption("prepare");
 			$this->setOption("make");
 			$this->setOption("clean");
+			$this->setOption("clean-deps");
 		}
 
 		if($this->hasOption("setup")) {
@@ -421,6 +423,9 @@ class BuildRunner {
                 $this->exec($this->getBin('lcov')." --list coverage.info");
             }
 		}
+        if($this->hasOption("install")) {
+            $this->exec("sudo " . $this->getBin('make') . " install"); // @todo do it more 'clear'
+        }
 	}
 
     public function printInfo() {
