@@ -44,12 +44,6 @@ ION PHP Extension
 * Built-in HTTP 1.0 and 1.1 request/response parsers
 * Built-in WebSocket frame and  Multi-parted form parsers
 
-## [0.6](https://github.com/php-ion/php-ion/milestones/0.6) tech release
-
-- [x] Built-in libevent
-- [x] PHP 7.1 supports
-- [ ] Internal improvements
-
 ## [0.7](https://github.com/php-ion/php-ion/milestones/0.7)
 
 - [x] Server socket pool
