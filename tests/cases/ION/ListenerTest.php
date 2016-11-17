@@ -32,7 +32,7 @@ class ListenerTest extends TestCase {
     public function testAccept($address, $name, $stream_address = null) {
 
         $listener = new Listener($address);
-        $listener->accept()->then(function (Stream $connect) {
+        $listener->whenAccepted()->then(function (Stream $connect) {
             $this->data["connect"] = $this->describe($connect);
             $this->stop();
         })->onFail(function (\Throwable $error) {
@@ -89,7 +89,7 @@ class ListenerTest extends TestCase {
             ->allowSelfSigned();
 
         $listener->encrypt($server_ssl);
-        $listener->accept()->then(function (Stream $connect) {
+        $listener->whenAccepted()->then(function (Stream $connect) {
             $this->data["connect"] = $this->describe($connect);
             $this->data["incoming"] = yield $connect->readLine("\r\n");
 

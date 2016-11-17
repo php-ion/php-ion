@@ -119,7 +119,6 @@ ZEND_BEGIN_MODULE_GLOBALS(ion)
     // Misc.
     ion_global_queue * queue;
     zend_bool     define_metrics;
-    zend_object * quit_marker;
     zend_ion_global_cache * cache; // do not to change cache at runtime!
 ZEND_END_MODULE_GLOBALS(ion)
 

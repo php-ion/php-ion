@@ -186,8 +186,6 @@ void ion_promisor_resolve(zend_object * promise_obj, zval * data, uint32_t type)
                         zval_add_ref(&zpromise);
                         resolved = 0;
                     }
-                } else if (Z_OBJCE(result) == ion_ce_ION_Sequence_Quit) {
-
                 }
             } else {
                 resolved = 1;

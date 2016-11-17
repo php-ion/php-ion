@@ -462,6 +462,7 @@ CLASS_METHOD(ION_Process, exec) {
         exec->pid       = pid;
         exec->err       = bufferevent_socket_new(GION(base), err_pipes[0], BEV_OPT_CLOSE_ON_FREE);
         exec->out       = bufferevent_socket_new(GION(base), out_pipes[0], BEV_OPT_CLOSE_ON_FREE);
+        exec->cancel_signal = SIGTERM;
 
         bufferevent_enable(exec->out, EV_READ);
         bufferevent_enable(exec->err, EV_READ);

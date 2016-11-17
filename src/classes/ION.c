@@ -138,7 +138,7 @@ static void _ion_interval_free(ion_interval * interval) {
     if(interval->name) {
         int res = zend_symtable_del(GION(timers), interval->name);
         ZEND_ASSERT(res == SUCCESS);
-        zend_string_free(interval->name);
+        zend_string_release(interval->name);
     }
     if(interval->promisor) {
         obj_ptr_dtor(interval->promisor);

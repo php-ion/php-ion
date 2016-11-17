@@ -62,7 +62,8 @@ class IONTest extends TestCase {
     }
 
     /**
-     * @memcheck
+     * @group dev
+     * @mem check
      */
     public function testInterval() {
         $this->data["count"] = 0;

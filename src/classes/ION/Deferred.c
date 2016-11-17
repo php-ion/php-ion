@@ -30,7 +30,7 @@ CLASS_METHOD(ION_Deferred, __construct) {
 }
 
 METHOD_ARGS_BEGIN(ION_Deferred, __construct, 0)
-    ARGUMENT(canceleler, IS_CALLABLE | ARG_ALLOW_NULL)
+    METHOD_ARG_TYPE(cancel_callback, IS_CALLABLE, 0, 0)
     ARGUMENT(canceleler, _IS_BOOL)
 METHOD_ARGS_END();
 

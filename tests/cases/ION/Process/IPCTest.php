@@ -14,7 +14,6 @@ class IPCTest extends TestCase {
     public $tmp;
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testCreate() {

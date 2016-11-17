@@ -248,6 +248,7 @@
                                  (flags & ARG_ALLOW_NULL) ? 1 : 0, \
                                  (flags & ARG_IS_VARIADIC) ? 1 : 0 \
                                },
+
 #define METHOD_ARG(name, pass_by_ref)             ZEND_ARG_INFO(pass_by_ref, name)
 #define METHOD_ARG_LONG(name, pass_by_ref)        ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_LONG, 0)
 #define METHOD_ARG_STRING(name, pass_by_ref)      ZEND_ARG_TYPE_INFO(pass_by_ref, name, IS_STRING, 0)

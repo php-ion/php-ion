@@ -32,7 +32,7 @@ class Listener {
      *
      * @return Sequence
      */
-    public function accept() : Sequence { }
+    public function whenAccepted() : Sequence { }
 
     /**
      * Reenable listener for new connections.

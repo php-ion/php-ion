@@ -7,7 +7,8 @@ ENV DEBIAN_FRONTEND noninteractive
 # Build php
 ENV PHP_INI_DIR /usr/local/etc/php
 RUN mkdir -p $PHP_INI_DIR/conf.d
-ENV PHP_RELEASE php-7.0.11
+#ENV PHP_RELEASE php-7.0.11
+ENV PHP_RELEASE php-7.1.0RC6
 
 #RUN curl -fSL "https://github.com/php/php-src/archive/$PHP_RELEASE.zip" -o php-src.zip
 ADD php.zip /usr/src/php-src.zip

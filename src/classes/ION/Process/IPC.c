@@ -31,9 +31,10 @@ void ion_process_ipc_free(zend_object * object) {
         bufferevent_disable(ipc->buffer, EV_READ | EV_WRITE);
         bufferevent_free(ipc->buffer);
     }
-    if(ipc->flags & ION_IPC_CTX_RELEASE) {
+//    if(ipc->flags & ION_IPC_CTX_RELEASE) {
+//        PHPDBG("relase");
         zval_ptr_dtor(&ipc->ctx);
-    }
+//    }
 }
 
 
@@ -181,7 +182,6 @@ CLASS_METHOD(ION_Process_IPC, getContext) {
     if(!Z_ISUNDEF(ipc->ctx)) {
         if(!Z_ISREF(ipc->ctx)) {
             zval ref;
-            PHPDBG("ref");
             ZVAL_NEW_EMPTY_REF(&ref);
             ZVAL_COPY_VALUE(Z_REFVAL(ref), &ipc->ctx);
             ZVAL_COPY_VALUE(return_value, &ref);

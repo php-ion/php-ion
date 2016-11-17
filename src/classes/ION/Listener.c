@@ -209,8 +209,8 @@ METHOD_ARGS_BEGIN(ION_Listener, __construct, 2)
     METHOD_ARG_LONG(back_log, 0)
 METHOD_ARGS_END();
 
-/** public function ION\Listener::accept() : ION\Sequence */
-CLASS_METHOD(ION_Listener, accept) {
+/** public function ION\Listener::whenAccepted() : ION\Sequence */
+CLASS_METHOD(ION_Listener, whenAccepted) {
     ion_listener * listener = get_this_instance(ion_listener);
 
     if(listener->accept) {
@@ -224,7 +224,7 @@ CLASS_METHOD(ION_Listener, accept) {
     RETURN_OBJ(listener->accept);
 }
 
-METHOD_WITHOUT_ARGS(ION_Listener, accept);
+METHOD_WITHOUT_ARGS(ION_Listener, whenAccepted);
 
 
 /** public function ION\Listener::encrypt(ION\Crypto $ssl) : self */
@@ -298,7 +298,7 @@ METHOD_WITHOUT_ARGS(ION_Listener, getName);
 CLASS_METHODS_START(ION_Listener)
     METHOD(ION_Listener, __construct,   ZEND_ACC_PUBLIC)
     METHOD(ION_Listener, encrypt,       ZEND_ACC_PUBLIC)
-    METHOD(ION_Listener, accept,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Listener, whenAccepted,  ZEND_ACC_PUBLIC)
     METHOD(ION_Listener, enable,        ZEND_ACC_PUBLIC)
     METHOD(ION_Listener, disable,       ZEND_ACC_PUBLIC)
     METHOD(ION_Listener, shutdown,      ZEND_ACC_PUBLIC)

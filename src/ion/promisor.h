@@ -47,7 +47,6 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Deferred;
 extern ZEND_API zend_class_entry * ion_ce_ION_Sequence;
 extern ZEND_API zend_class_entry * ion_ce_ION_Promise_CancelException;
 extern ZEND_API zend_class_entry * ion_ce_ION_Promise_TimeoutException;
-extern ZEND_API zend_class_entry * ion_ce_ION_Sequence_Quit;
 
 #define ion_ce_Generator zend_ce_generator
 #define ion_ce_Closure   zend_ce_closure

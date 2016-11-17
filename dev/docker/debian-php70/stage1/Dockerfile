@@ -1,4 +1,4 @@
-FROM debian:jessie
+FROM ubuntu:precise
 
 MAINTAINER Ivan Shalagnov <ivan@shalganov.me>
 
@@ -39,6 +39,7 @@ RUN apt-get update && apt-get install -y \
     unzip         \
     tcpdump \
     aptitude \
+    linux-generic-lts-trusty \
     --no-install-recommends
 
 CMD touch /tmp/lock && tail -F /tmp/lock

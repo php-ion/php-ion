@@ -49,6 +49,7 @@ typedef struct _ion_process_exec {
     ion_buffer  * err;
     ion_buffer  * in;
     zend_object * deferred;
+    int           cancel_signal;
 } ion_process_exec;
 
 typedef struct _ion_process_child {
