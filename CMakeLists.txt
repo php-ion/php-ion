@@ -23,8 +23,6 @@ add_custom_target(
 )
 
 set(ION_SOURCE_FILES
-    src/ion_skiplist_config.h
-    src/deps/skiplist/skiplist.c
     src/deps/http-parser/http_parser.c
     src/deps/multipart-parser-c/multipart_parser.c
     src/deps/websocket-parser/websocket_parser.c

@@ -1,9 +1,6 @@
 [submodule "src/deps/http-parser"]
 	path = src/deps/http-parser
 	url = https://github.com/nodejs/http-parser.git
-[submodule "src/deps/skiplist"]
-	path = src/deps/skiplist
-	url = https://github.com/silentbicycle/skiplist.git
 [submodule "src/deps/multipart-parser-c"]
 	path = src/deps/multipart-parser-c
 	url = https://github.com/iafonov/multipart-parser-c.git

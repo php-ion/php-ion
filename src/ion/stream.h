@@ -2,7 +2,6 @@
 #define PION_STREAM_H
 
 #include "init.h"
-#include "../deps/skiplist/skiplist.h"
 
 extern ZEND_API zend_class_entry * ion_ce_ION_Listener;
 extern ZEND_API zend_class_entry * ion_ce_ION_ListenerException;

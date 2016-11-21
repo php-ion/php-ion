@@ -7,7 +7,7 @@ $server = new \ION\Stream\Server();
 $server->listen("0.0.0.0:8080");
 $server->listen("0.0.0.0:8443")->encrypt(\ION\Crypto::server());
 
-$server->incoming()->then(function (\ION\HTTP\Request $proxy_req) use ($client) {
+$server->whenIncoming()->then(function (\ION\HTTP\Request $proxy_req) use ($client) {
 
 	$uri = $proxy_req->getUri();
     $body = new \ION\HTTP\Body($proxy_req);

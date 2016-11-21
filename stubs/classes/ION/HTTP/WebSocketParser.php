@@ -5,7 +5,7 @@ namespace ION\HTTP;
 
 use ION\Sequence;
 
-class WebSocketParser {
+class WebSocketParser extends Sequence {
 
     public function isFinished() : bool { }
 
@@ -13,7 +13,5 @@ class WebSocketParser {
 
     public function getParsedCount() : int { }
 
-    public function hasUnparsedFrame() : bool { }
-
-    public function __invoke(string $raw) { }
+    public function __invoke($source) { }
 }

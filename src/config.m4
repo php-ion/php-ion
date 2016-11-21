@@ -51,7 +51,6 @@ if test "$PHP_ION" != "no"; then
     PHP_SUBST(ION_SHARED_LIBADD)
 
     ion_src="php_ion.c
-    deps/skiplist/skiplist.c
     deps/http-parser/http_parser.c
     deps/multipart-parser-c/multipart_parser.c
     deps/websocket-parser/websocket_parser.c
