@@ -137,7 +137,6 @@ PHP_MINIT_FUNCTION(ION_DNS) {
 
     GION(evdns) = evdns_base_new(GION(base), 1);
     int error = evdns_base_resolv_conf_parse(GION(evdns), DNS_OPTIONS_ALL, GION(resolv_conf));
-//    int error = 0;
     if(error) {
         switch(error) {
             case 1:
@@ -161,6 +160,7 @@ PHP_MINIT_FUNCTION(ION_DNS) {
             default:
                 zend_error(E_ERROR, ERR_ION_DNS_RESOLV_ERROR, GION(resolv_conf));
         }
+        GION(evdns) = NULL;
         return FAILURE;
     }
     if(GION(hosts_file)) {
