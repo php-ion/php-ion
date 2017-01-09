@@ -15,6 +15,13 @@ class BuildRunner {
     const GDB_LOCAL  = 1;
     const GDB_SERVER = 2;
 
+    const POSSIBLE_INCLUDES = [
+        '/usr', // /use/include and /usr/lib
+        '/usr/local', // /use/local/include and /usr/local/lib
+        '/opt/local', // default MacPorts includes /opt/local/include and /opt/local/lib
+        '/usr/local/opt/openssl', // HomeBrew has own include for OpenSSL
+    ];
+
 	public $binaries = [
 		"php"       => PHP_BINARY,
 		"phpize"    => 'phpize',
@@ -119,13 +126,15 @@ class BuildRunner {
 
 	public $opts = [];
 
+	public $includes = [];
     public $ion_confugure = ['--with-ion'];
     public $event_confugure = [
         '--disable-libevent-install',
         '--enable-malloc-replacement=yes',
         '--disable-libevent-regress',
     ];
-    public $cflags        = ['-std=gnu99', '-I/opt/local/include', '-I/usr/local/include', '-I/usr/include'];
+
+    public $cflags        = ['-std=gnu99'];
     public $ldflags       = [];
     public $nproc         = 2;
 
@@ -296,6 +305,8 @@ class BuildRunner {
      * Run dispatcher
      */
 	public function run() {
+	    $this->selectIncludes();
+
         if($this->hasOption("ci")) {
             $this->setOption('debug');
             $this->setOption('coverage');
@@ -309,6 +320,7 @@ class BuildRunner {
 
             $this->setOption('test');
         }
+
         if($this->hasOption("debug")) {
             $this->cflags[]          = "-Wall -g3 -ggdb -O0";
             $this->ion_confugure[]   = "--enable-ion-debug";
@@ -582,6 +594,24 @@ class BuildRunner {
 		return strtolower(PHP_OS) == "darwin";
 	}
 
+	public function selectIncludes(array $additional = []) {
+        $paths = array_merge($additional, self::POSSIBLE_INCLUDES);
+        foreach($paths as $path) {
+            if(file_exists($path."/include")) {
+                $this->cflags[] = "-I{$path}/include";
+            }
+            if(file_exists($path."/lib")) {
+                $this->cflags[] = "-L{$path}/lib";
+            }
+        }
+    }
+
+    /**
+     * @param string $cwd
+     * @param array $options
+     * @param array $cflags
+     * @param array $ldflags
+     */
     public function configure(string $cwd, array $options, array $cflags = [], array $ldflags = []) {
         $cmd = [];
         if($cflags) {
@@ -595,6 +625,11 @@ class BuildRunner {
         $this->exec(implode(" ", $cmd), $cwd);
     }
 
+    /**
+     * @param string $cmd
+     * @param string|null $cwd
+     * @param int $gdb
+     */
 	public function exec(string $cmd, string $cwd = null, int $gdb = self::GDB_NONE) {
 		$prev_cwd = null;
 		if($cwd) {
@@ -622,6 +657,10 @@ class BuildRunner {
         }
     }
 
+    /**
+     * @param $from
+     * @param $to
+     */
     public function dockerSync($from, $to) {
         exec("cd $from && git ls-files", $files, $code);
         if($code) {
@@ -676,14 +715,13 @@ Information:
 Testing:
 ".$this->compileHelp(["test", "group", "dev", "ci", "gdb", "gdb-server"], 20)."
 
-Docker:
-".$this->compileHelp(["docker-gdb-server", "docker-sync", "docker-sync-rebuild"], 20)."
-
 Environment:
 ";
 		foreach($this->binaries as $name => $path) {
 			printf("  %-36s  -> %s\n", strtoupper("ion_{$name}_exec")."=".$path, trim(`command -v $path`));
 		}
+		echo "\n  CFLAGS=".implode(" ", $this->cflags);
+		echo "\n  LDFLAGS=".implode(" ", $this->ldflags);
 		echo "\n";
 	}
 }
