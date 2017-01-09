@@ -67,12 +67,6 @@ typedef struct _zend_ion_global_cache {
     zend_string * interned_strings[512];
 } zend_ion_global_cache;
 
-typedef struct _zend_ion_global_stats {
-    ion_time   start_time;
-    ion_time   active_time;
-    zend_ulong handeled_events;
-} zend_ion_global_stats;
-
 ZEND_BEGIN_MODULE_GLOBALS(ion)
     // base
     ion_event_base   * base;    // event base
@@ -82,9 +76,12 @@ ZEND_BEGIN_MODULE_GLOBALS(ion)
 
     // Stats
     zend_bool  stats_enabled;
-    ion_time   start_time;
-    ion_time   active_time;
-    zend_ulong handeled_events;
+#ifdef ION_DEBUG
+    zend_bool  in_call;       // callback started
+#endif
+    double     php_time;
+    ion_time   reset_ts;
+    zend_ulong calls_count;
 
     // Stream
     zend_ulong    stream_index;
@@ -127,18 +124,12 @@ ZEND_EXTERN_MODULE_GLOBALS(ion);
 // ION globals access
 #define GION(v) ZEND_MODULE_GLOBALS_ACCESSOR(ion, v)
 
-
-static zend_always_inline zend_bool ion_stats_begin() {
-    if(GION(stats_enabled)) {
-
-        return true;
-    } else {
-        return false;
-    }
-}
-
-static zend_always_inline void ion_stats_commit() {
-
+static zend_always_inline void ion_stats_commit(ion_time * start_time) {
+    ion_time vt = { 0,0 };
+    gettimeofday(&vt, NULL);
+    timersub(&vt, start_time, &vt);
+    GION(calls_count) += 1; // do not use ++ because thread's magic
+    GION(php_time) += vt.tv_sec + vt.tv_usec / 1e6;
 }
 
 static zend_always_inline void ion_cb_commit() {
@@ -148,12 +139,17 @@ static zend_always_inline void ion_cb_commit() {
 }
 
 
-#define ION_CB_BEGIN() zend_bool __stats = ion_stats_begin();
+#define ION_CB_BEGIN() \
+    ion_time __ion_call_start;  \
+    if(GION(stats_enabled)) {   \
+        gettimeofday(&__ion_call_start, NULL); \
+    }
 
-#define ION_CB_END()   \
-    if(__stats) {           \
-        ion_stats_commit(); \
-    }                       \
+
+#define ION_CB_END()                         \
+    if(timerisset(&__ion_call_start)) {      \
+        ion_stats_commit(&__ion_call_start); \
+    }                                        \
     ion_cb_commit();
 
 #endif //PION_INIT_H

@@ -5,11 +5,9 @@ sudo: false
 addons:
   apt:
     packages:
-      - libevent-dev
       - gdb
       - make
       - lcov
-      - ca-certificates
 
 php:
   - 7.0
