@@ -266,19 +266,34 @@ METHOD_ARGS_BEGIN(ION, promise, 1)
     METHOD_ARG(resolver, 0)
 METHOD_ARGS_END()
 
-/** public function ION::getStats() : array */
+/** public function ION::getStats(bool $reset = true) : array */
 CLASS_METHOD(ION, getStats) {
-//    double time = 0.0;
-//    zval   v;
+    zend_bool reset = 1;
+    double reset_ts;
+
+    ZEND_PARSE_PARAMETERS_START(0, 1)
+            Z_PARAM_OPTIONAL
+            Z_PARAM_BOOL(reset)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     array_init(return_value);
-//    ZVAL_DOUBLE(&v, GION(last_flush).tv_sec + GION(last_flush).tv_usec/1e6);
-//    zend_hash_str_add(return_value, STRARGS("last_fetch"), &v);
-//    ZVAL_DOUBLE(&v, GION(last_flush).tv_sec + GION(last_flush).tv_usec/1e6);
+    add_assoc_double(return_value, "php_time", GION(php_time));
+    add_assoc_long(return_value,   "calls_count", GION(calls_count));
+    reset_ts = GION(reset_ts).tv_sec;
+    reset_ts += GION(reset_ts).tv_usec / 1e6;
+    add_assoc_double(return_value, "reset_ts", reset_ts);
 
+    if(reset) {
+        GION(php_time) = 0.0;
+        GION(calls_count) = 0;
+        gettimeofday(&GION(reset_ts), NULL);
+    }
 }
 
-METHOD_WITHOUT_ARGS(ION, getStats);
+METHOD_ARGS_BEGIN(ION, getStats, 0)
+    ARGUMENT(reset, _IS_BOOL)
+METHOD_ARGS_END()
+
 
 CLASS_METHODS_START(ION)
     METHOD(ION, reinit,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
@@ -315,6 +330,9 @@ PHP_MINIT_FUNCTION(ION) {
     PION_CLASS_CONST_LONG(ION, "PRIORITY_DEFAULT",   3);
     PION_CLASS_CONST_LONG(ION, "PRIORITY_HIGH",      1);
     PION_CLASS_CONST_LONG(ION, "PRIORITY_URGENT",    0);
+
+    PION_CLASS_CONST_LONG(ION, "INTERVAL_PROTECTED",  1);
+    PION_CLASS_CONST_LONG(ION, "INTERVAL_PERSISTENT", 2);
 #ifdef ION_DEBUG
     PION_CLASS_CONST_LONG(ION, "DEBUG",              1);
 #else

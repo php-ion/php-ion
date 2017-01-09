@@ -153,11 +153,14 @@ class ION {
     public static function deferred(callable $resolver, callable $canceller = null) : Deferred { }
 
     /**
-     * - load: double
-     * - events: int
-     * - last_get: double
+     * - php_time: double
+     * - calls: int
+     * - reset_time: double
+     *
+     * @param bool $reset reset php_time and calls to 0, set current time for reset_time
+     *
      * @return array
      */
-    public static function getStats() : array { }
+    public static function getStats(bool $reset = true) : array { }
 
 }
