@@ -73,11 +73,11 @@ static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct 
     ion_buffer   * buffer = NULL;
     int            state = ION_STREAM_STATE_ENABLED | ION_STREAM_STATE_SOCKET | ION_STREAM_STATE_CONNECTED | ION_STREAM_FROM_PEER;
 
-    if(listener->storage || listener->accept) {
+    if(listener->accept) {
         if(listener->encrypt) {
             SSL * ssl_handler = ion_crypto_server_stream_handler(listener->encrypt);
             if(!ssl_handler) {
-                zend_error(E_WARNING, "Failed to create SSL/TLS handler for incoming connection to %s", listener->name->val);
+                zend_error(E_WARNING, ERR_ION_LISTENER_SSL_ERROR, listener->name->val);
                 evutil_closesocket(fd);
 
             } else {
@@ -106,9 +106,6 @@ static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct 
                 pion_net_addr_to_name(addr, (socklen_t)addr_len, &istream->name_remote);
             }
             istream->state |= (listener->flags & ION_STREAM_NAME_MASK);
-            if(listener->storage) {
-//                listener->storage->connect_handler(stream);
-            }
             if(listener->accept) {
                 zval zstream;
                 ZVAL_OBJ(&zstream, stream);
@@ -126,7 +123,7 @@ static void _ion_listener_error(ion_evlistener * l, void * ctx) {
     ION_CB_BEGIN();
     ion_listener * listener = get_object_instance(ctx, ion_listener);
     int err = EVUTIL_SOCKET_ERROR();
-    zend_error(E_WARNING, "Got an error %d (%s) on the listener %s. Shutting down listener.",
+    zend_error(E_WARNING, ERR_ION_LISTENER_GOT_AN_ERROR,
                err, evutil_socket_error_to_string(err), listener->name);
     evconnlistener_disable(listener->listener);
     evconnlistener_free(listener->listener);
@@ -157,11 +154,11 @@ CLASS_METHOD(ION_Listener, __construct) {
             } else if(sock.ss_family == AF_INET6) {
                 listener->flags |= ION_STREAM_NAME_IPV6;
             } else {
-                zend_throw_exception_ex(ion_class_entry(ION_InvalidUsageException), 0, "Address family %d not supported by protocol family", sock.ss_family);
+                zend_throw_exception_ex(ion_class_entry(ION_InvalidUsageException), 0, ERR_ION_LISTENER_UNSUPPORTED_ADDRESS, sock.ss_family);
                 return;
             }
         } else {
-            zend_throw_exception_ex(ion_class_entry(InvalidArgumentException), 0, "Address %s is not well-formed", listen->val);
+            zend_throw_exception_ex(ion_class_entry(InvalidArgumentException), 0, ERR_ION_LISTENER_INVALID_FORMAT, listen->val);
             return;
         }
         listener->listener = evconnlistener_new_bind(GION(base), _ion_listener_accept, listener,
@@ -178,7 +175,7 @@ CLASS_METHOD(ION_Listener, __construct) {
         listener->flags |= ION_STREAM_NAME_UNIX;
         fd = socket(AF_UNIX, SOCK_STREAM, 0);
         if(fd < 0) {
-            zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, "Failed to listen socket %s: %s", listener->name->val, evutil_socket_error_to_string(errno));
+            zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, ERR_ION_LISTENER_FAILED_OPEN_SOCKET, listener->name->val, evutil_socket_error_to_string(errno));
             return;
         }
         memset(&local, 0, sizeof(local));
@@ -186,7 +183,7 @@ CLASS_METHOD(ION_Listener, __construct) {
         strncpy(local.sun_path, listen->val, 100);
         unlink(local.sun_path);
         if(bind(fd, (struct sockaddr *)&local, sock_len) == FAILURE) {
-            zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, "Failed to listen on %s: %s", listener->name->val, evutil_socket_error_to_string(errno));
+            zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, ERR_ION_LISTENER_FAILED_LISTEN_SOCKET, listener->name->val, evutil_socket_error_to_string(errno));
             return;
         }
         listener->listener = evconnlistener_new(GION(base), _ion_listener_accept, listener,
@@ -199,26 +196,40 @@ CLASS_METHOD(ION_Listener, __construct) {
         evconnlistener_enable(listener->listener);
         listener->flags |= ION_STREAM_STATE_ENABLED;
     } else {
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, "Failed to listen on %s: %s", listener->name->val, evutil_socket_error_to_string(errno));
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, ERR_ION_LISTENER_FAILED_LISTEN_SOCKET, listener->name->val, evutil_socket_error_to_string(errno));
         return;
     }
 }
 
-METHOD_ARGS_BEGIN(ION_Listener, __construct, 2)
+METHOD_ARGS_BEGIN(ION_Listener, __construct, 1)
     METHOD_ARG_STRING(listen, 0)
     METHOD_ARG_LONG(back_log, 0)
 METHOD_ARGS_END();
+
+/** public function ION\Listener::setStreamClass(string $classname) : self */
+CLASS_METHOD(ION_Listener, setStreamClass) {
+    zend_class_entry * ce = ion_class_entry(ION_Stream);
+    ion_listener     * listener = get_this_instance(ion_listener);
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_CLASS(ce)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    listener->stream_class = ce;
+}
+
+METHOD_ARGS_BEGIN(ION_Listener, setStreamClass, 1)
+    ARGUMENT(classname, IS_STRING)
+METHOD_ARGS_END();
+
 
 /** public function ION\Listener::whenAccepted() : ION\Sequence */
 CLASS_METHOD(ION_Listener, whenAccepted) {
     ion_listener * listener = get_this_instance(ion_listener);
 
-    if(listener->accept) {
-        zend_throw_exception(ion_class_entry(ION_InvalidUsageException), "Sequence already defined", 0);
-        return;
+    if(!listener->accept) {
+        listener->accept = ion_promisor_sequence_new(NULL);
     }
-
-    listener->accept = ion_promisor_sequence_new(NULL);
 
     obj_add_ref(listener->accept);
     RETURN_OBJ(listener->accept);
@@ -296,14 +307,15 @@ METHOD_WITHOUT_ARGS(ION_Listener, getName);
 
 
 CLASS_METHODS_START(ION_Listener)
-    METHOD(ION_Listener, __construct,   ZEND_ACC_PUBLIC)
-    METHOD(ION_Listener, encrypt,       ZEND_ACC_PUBLIC)
-    METHOD(ION_Listener, whenAccepted,  ZEND_ACC_PUBLIC)
-    METHOD(ION_Listener, enable,        ZEND_ACC_PUBLIC)
-    METHOD(ION_Listener, disable,       ZEND_ACC_PUBLIC)
-    METHOD(ION_Listener, shutdown,      ZEND_ACC_PUBLIC)
-    METHOD(ION_Listener, getName,       ZEND_ACC_PUBLIC)
-    METHOD(ION_Listener, __toString,    ZEND_ACC_PUBLIC)
+    METHOD(ION_Listener, __construct,    ZEND_ACC_PUBLIC)
+    METHOD(ION_Listener, setStreamClass, ZEND_ACC_PUBLIC)
+    METHOD(ION_Listener, encrypt,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Listener, whenAccepted,   ZEND_ACC_PUBLIC)
+    METHOD(ION_Listener, enable,         ZEND_ACC_PUBLIC)
+    METHOD(ION_Listener, disable,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Listener, shutdown,       ZEND_ACC_PUBLIC)
+    METHOD(ION_Listener, getName,        ZEND_ACC_PUBLIC)
+    METHOD(ION_Listener, __toString,     ZEND_ACC_PUBLIC)
 CLASS_METHODS_END;
 
 

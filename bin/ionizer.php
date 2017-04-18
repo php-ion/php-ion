@@ -16,10 +16,10 @@ class BuildRunner {
     const GDB_SERVER = 2;
 
     const POSSIBLE_INCLUDES = [
-        '/usr', // /use/include and /usr/lib
-        '/usr/local', // /use/local/include and /usr/local/lib
+//        '/usr', // /use/include and /usr/lib
+//        '/usr/local', // /use/local/include and /usr/local/lib
         '/opt/local', // default MacPorts includes /opt/local/include and /opt/local/lib
-        '/usr/local/opt/openssl', // HomeBrew has own include for OpenSSL
+//        '/usr/local/opt/openssl', // HomeBrew has own include for OpenSSL
     ];
 
 	public $binaries = [
@@ -103,6 +103,9 @@ class BuildRunner {
         ],
         'ci' => [
             'desc'  => 'Alias: --debug --coverage --system --clean-deps --clean --prepare --make --info --test'
+        ],
+        'ide' => [
+            'desc'  => 'Alias: --debug --system --clean-deps --clean --prepare --make --info --test'
         ],
         'gdb' => [
             'short' => '',
@@ -310,6 +313,19 @@ class BuildRunner {
         if($this->hasOption("ci")) {
             $this->setOption('debug');
             $this->setOption('coverage');
+
+            $this->setOption('system');
+            $this->setOption('clean-deps');
+            $this->setOption('clean');
+            $this->setOption('prepare');
+            $this->setOption('make');
+            $this->setOption('info');
+
+            $this->setOption('test');
+        }
+
+        if($this->hasOption("ide")) {
+            $this->setOption('debug');
 
             $this->setOption('system');
             $this->setOption('clean-deps');
@@ -713,7 +729,7 @@ Information:
 ".$this->compileHelp(["info", "system"], 20)."
 
 Testing:
-".$this->compileHelp(["test", "group", "dev", "ci", "gdb", "gdb-server"], 20)."
+".$this->compileHelp(["test", "group", "dev", "ci", "ide", "gdb", "gdb-server"], 20)."
 
 Environment:
 ";

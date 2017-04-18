@@ -553,3 +553,11 @@ $worker->run(function (Worker $w) {
 });
 
 ```
+
+
+cmake
+automake
+autoconf
+libtool
+openssl
+php

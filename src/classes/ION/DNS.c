@@ -124,6 +124,7 @@ CLASS_METHODS_START(ION_DNS)
 CLASS_METHODS_END;
 
 ZEND_INI_BEGIN()
+    STD_PHP_INI_ENTRY("ion.dns.async", ION_DNS_RESOLV_CONF_DEFAULT, PHP_INI_SYSTEM, OnUpdateBool, adns_enabled, zend_ion_globals, ion_globals)
     STD_PHP_INI_ENTRY("ion.dns.resolv_conf", ION_DNS_RESOLV_CONF_DEFAULT, PHP_INI_SYSTEM, OnUpdateStringUnempty, resolv_conf, zend_ion_globals, ion_globals)
     STD_PHP_INI_ENTRY("ion.dns.hosts_file",  ION_DNS_HOSTS_FILE_DEFAULT, PHP_INI_SYSTEM, OnUpdateString, hosts_file, zend_ion_globals, ion_globals)
 ZEND_INI_END()
@@ -134,31 +135,35 @@ PHP_MINIT_FUNCTION(ION_DNS) {
     PION_CLASS_CONST_LONG(ION_DNS, "RECORD_A", ION_DNS_RECORD_A);
     PION_CLASS_CONST_LONG(ION_DNS, "RECORD_AAAA", ION_DNS_RECORD_AAAA);
     PION_CLASS_CONST_LONG(ION_DNS, "RECORD_CNAME", ION_DNS_RECORD_CNAME);
+    PION_REGISTER_VOID_EXTENDED_CLASS(ION_DNSException, ion_ce_ION_RuntimeException, "ION\\DNSException");
 
+    if(!GION(adns_enabled)) {
+        return SUCCESS;
+    }
     GION(evdns) = evdns_base_new(GION(base), 1);
     int error = evdns_base_resolv_conf_parse(GION(evdns), DNS_OPTIONS_ALL, GION(resolv_conf));
     if(error) {
         switch(error) {
             case 1:
-                zend_error(E_ERROR, ERR_ION_DNS_RESOLV_NOT_FOUND, GION(resolv_conf));
+                zend_error(E_WARNING, ERR_ION_DNS_RESOLV_NOT_FOUND, GION(resolv_conf));
                 break;
             case 2:
-                zend_error(E_ERROR, ERR_ION_DNS_RESOLV_CANT_STAT, GION(resolv_conf));
+                zend_error(E_WARNING, ERR_ION_DNS_RESOLV_CANT_STAT, GION(resolv_conf));
                 break;
             case 3:
-                zend_error(E_ERROR, ERR_ION_DNS_RESOLV_TOO_LARGE, GION(resolv_conf));
+                zend_error(E_WARNING, ERR_ION_DNS_RESOLV_TOO_LARGE, GION(resolv_conf));
                 break;
             case 4:
-                zend_error(E_ERROR, ERR_ION_DNS_RESOLV_OUT_OF_MEMORY);
+                zend_error(E_WARNING, ERR_ION_DNS_RESOLV_OUT_OF_MEMORY);
                 break;
             case 5:
-                zend_error(E_ERROR, ERR_ION_DNS_RESOLV_CANT_READ, GION(resolv_conf));
+                zend_error(E_WARNING, ERR_ION_DNS_RESOLV_CANT_READ, GION(resolv_conf));
                 break;
             case 6:
-                zend_error(E_ERROR, ERR_ION_DNS_RESOLV_NO_SERVERS, GION(resolv_conf));
+                zend_error(E_WARNING, ERR_ION_DNS_RESOLV_NO_SERVERS, GION(resolv_conf));
                 break;
             default:
-                zend_error(E_ERROR, ERR_ION_DNS_RESOLV_ERROR, GION(resolv_conf));
+                zend_error(E_WARNING, ERR_ION_DNS_RESOLV_ERROR, GION(resolv_conf));
         }
         GION(evdns) = NULL;
         return FAILURE;
@@ -166,8 +171,6 @@ PHP_MINIT_FUNCTION(ION_DNS) {
     if(GION(hosts_file)) {
         evdns_base_load_hosts(GION(evdns), GION(hosts_file));
     }
-
-    PION_REGISTER_VOID_EXTENDED_CLASS(ION_DNSException, ion_ce_ION_RuntimeException, "ION\\DNSException");
 
     return SUCCESS;
 }
@@ -187,7 +190,9 @@ PHP_RSHUTDOWN_FUNCTION(ION_DNS) {
 }
 
 PHP_MSHUTDOWN_FUNCTION(ION_DNS) {
-    evdns_base_free(GION(evdns), 0);
+    if(GION(evdns)) {
+        evdns_base_free(GION(evdns), 0);
+    }
     UNREGISTER_INI_ENTRIES();
     return SUCCESS;
 }

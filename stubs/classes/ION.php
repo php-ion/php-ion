@@ -154,8 +154,7 @@ class ION {
 
     /**
      * - php_time: double
-     * - calls: int
-     * - reset_time: double
+     * - reset_timestamp: double
      *
      * @param bool $reset reset php_time and calls to 0, set current time for reset_time
      *

@@ -62,11 +62,11 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Stream_StorageException;
 typedef struct _ion_listener {
     zend_object      std;
     uint             flags;
-    zend_object    * accept;
-    zend_object    * encrypt;
-    zend_string    * name;
-    ion_evlistener * listener;
-    zend_object    * storage; // storage's listener
+    zend_object      * accept;
+    zend_object      * encrypt;
+    zend_string      * name;
+    ion_evlistener   * listener;
+    zend_class_entry * stream_class;
 } ion_listener;
 
 typedef struct _ion_stream_storage {

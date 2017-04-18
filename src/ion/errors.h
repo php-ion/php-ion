@@ -1,6 +1,7 @@
 #ifndef PION_ERRORS_H
 #define PION_ERRORS_H
 
+
 // class ION
 #define ERR_ION_DISPATCH_IN_LOOP    "Dispatching in progress"
 #define ERR_ION_DISPATCH_FAILED     "Dispatching runtime error"
@@ -8,11 +9,21 @@
 #define ERR_ION_AWAIT_FAILED        "Unable to add event to queue"
 #define ERR_ION_REINIT_FAILED       "Some events could not be restarted"
 
+// class ION/Sequence
+
 // class ION\Stream
 #define ERR_ION_STREAM_WRITE_FAILED       "Failed to write data"
 #define ERR_ION_STREAM_READ_FAILED        "Stream buffer is unreachable"
 #define ERR_ION_STREAM_SET_ENCRYPT_FAILED "Failed to setup SSL/TLS handler"
 #define ERR_ION_STREAM_ALREADY_ENCRYPTED  "Stream already encrypted"
+
+// class ION\Listener
+#define ERR_ION_LISTENER_UNSUPPORTED_ADDRESS  "Address family %d not supported by protocol family"
+#define ERR_ION_LISTENER_INVALID_FORMAT       "Address %s is not well-formed"
+#define ERR_ION_LISTENER_FAILED_OPEN_SOCKET   "Failed to open socket %s: %s"
+#define ERR_ION_LISTENER_FAILED_LISTEN_SOCKET "Failed to listen on %s: %s"
+#define ERR_ION_LISTENER_GOT_AN_ERROR         "Got an error %d (%s) on the listener %s. Shutting down listener."
+#define ERR_ION_LISTENER_SSL_ERROR            "Failed to create SSL/TLS handler for incoming connection to %s. Connection will be refused."
 
 // class ION\URI
 #define ERR_ION_HTTP_URI_FACTORY_UNKNOWN "Unknown option %d"
