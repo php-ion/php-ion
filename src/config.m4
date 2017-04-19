@@ -39,6 +39,7 @@ if test "$PHP_ION" != "no"; then
     PHP_ADD_LIBRARY_WITH_PATH(event, $EVENT_DIR, ION_SHARED_LIBADD)
     PHP_ADD_LIBRARY_WITH_PATH(event_openssl, $EVENT_DIR, ION_SHARED_LIBADD)
     if test "$enable_maintainer_zts" = "yes"; then
+        AC_DEFINE(HAVE_THREADING, 1, ['zts"])
         PHP_ADD_LIBRARY_WITH_PATH(event_pthreads, $EVENT_DIR, ION_SHARED_LIBADD)
     fi
 

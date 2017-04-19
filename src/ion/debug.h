@@ -13,11 +13,11 @@
 
 #define ZVAL_DUMP_P(zvar)  \
     php_printf("DUMP: "); \
-    php_var_dump(&(zvar), 1 TSRMLS_CC);
+    php_var_dump(&(zvar), 1);
 
 #define ZVAL_DUMPF(zvar, format, ...)  \
     php_printf(format, ##__VA_ARGS__); \
-    php_var_dump(&zvar, 1 TSRMLS_CC);
+    php_var_dump(&zvar, 1);
 
 #define IONF(msg, ...)
 

@@ -729,7 +729,7 @@ Information:
 ".$this->compileHelp(["info", "system"], 20)."
 
 Testing:
-".$this->compileHelp(["test", "group", "dev", "ci", "ide", "gdb", "gdb-server"], 20)."
+".$this->compileHelp(["test", "group", "dev", "debug", "ci", "ide", "gdb", "gdb-server"], 20)."
 
 Environment:
 ";

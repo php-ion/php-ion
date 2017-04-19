@@ -14,7 +14,8 @@ class DNSTest extends TestCase {
     ];
 
     /**
-     * @memcheck
+     * @group dev
+     * @mem check
      */
     public function testResolve() {
         $this->promise(function () {

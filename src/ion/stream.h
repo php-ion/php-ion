@@ -174,7 +174,7 @@ void ion_storage_free(zend_object * object);
 //#define STREAM_BUFFER_DEFAULT_FLAGS BEV_OPT_DEFER_CALLBACKS
 //#endif
 
-#define ion_stream_new(buffer, state)                  ion_stream_new_ex(buffer, state, NULL TSRMLS_CC)
+#define ion_stream_new(buffer, state)                  ion_stream_new_ex(buffer, state, NULL)
 
 #define ion_stream_input_length(stream) evbuffer_get_length( bufferevent_get_input(stream->buffer) )
 #define ion_stream_output_length(stream) evbuffer_get_length( bufferevent_get_output(stream->buffer) )

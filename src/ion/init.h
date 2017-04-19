@@ -19,6 +19,11 @@
 
 #ifdef ZTS
 # include "TSRM.h"
+#else
+BEGIN_EXTERN_C()
+ZEND_API extern int compiler_globals_id;
+ZEND_API extern int executor_globals_id;
+END_EXTERN_C()
 #endif
 
 #if defined(COMPILE_DL_ION) && defined(ZTS)

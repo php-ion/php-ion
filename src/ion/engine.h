@@ -46,11 +46,11 @@
 
 #define Z_BVAL_P(z) (zend_bool)Z_LVAL_P(z)
 
-#define getThisInstance()             zend_object_store_get_object(this_ptr TSRMLS_CC)
-#define getThisInstanceEx(obj_type)   (obj_type) zend_object_store_get_object(this_ptr TSRMLS_CC)
+#define getThisInstance()             zend_object_store_get_object(this_ptr)
+#define getThisInstanceEx(obj_type)   (obj_type) zend_object_store_get_object(this_ptr)
 
 #define PARSE_ARGS(format, ...)                                                 \
-    if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, format, ##__VA_ARGS__) == FAILURE) {    \
+    if(zend_parse_parameters(ZEND_NUM_ARGS(), format, ##__VA_ARGS__) == FAILURE) {    \
         return;                                                                 \
     }
 
@@ -87,7 +87,7 @@
  * Define instance destructor function
  */
 #define CLASS_INSTANCE_FREE(class) \
-    static void _ ## class ## _free(zend_object * object TSRMLS_DC)
+    static void _ ## class ## _free(zend_object * object)
 
 //#define getInstanceObject(obj_type)   ((obj_type) object);
 
@@ -95,10 +95,10 @@
  * Define instance constructor function
  */
 #define CLASS_INSTANCE_INIT(class) \
-    static zend_object * _ ## class ## _init(zend_class_entry * ce TSRMLS_DC)
+    static zend_object * _ ## class ## _init(zend_class_entry * ce)
 
 
-#define getInstance(zobj)   zend_object_store_get_object(zobj TSRMLS_CC)
+#define getInstance(zobj)   zend_object_store_get_object(zobj)
 
 #define MAKE_COPY_ZVAL(copy, orig) \
     copy = emalloc(zval);
@@ -124,7 +124,7 @@
     ion_oh_ ## class.handler = funct;
 
 #define PION_REGISTER_CLASS(class, class_name)     \
-    pion_register_std_class(&ion_ce_ ## class, class_name, _ ## class ## _init, methods_ ## class TSRMLS_CC);   \
+    pion_register_std_class(&ion_ce_ ## class, class_name, _ ## class ## _init, methods_ ## class);   \
     pion_init_std_object_handlers(class); \
     pion_set_object_handler(class, free_obj, _ ## class ## _free);
 
@@ -140,12 +140,12 @@
     h ## class.free_obj = _ ## class ## _free;
 
 #define PION_REGISTER_EXTENDED_CLASS_EX(class, parent_class, class_name) \
-    pion_register_sub_class(&c ## class, c ## parent_class, class_name, _ ## parent_class ## _init, methods_ ## class TSRMLS_CC); \
+    pion_register_sub_class(&c ## class, c ## parent_class, class_name, _ ## parent_class ## _init, methods_ ## class); \
     pion_init_std_object_handlers(class); \
     pion_set_object_handler(class, free_obj, _ ## class ## _free);
 
 #define REGISTER_EXTENDED_CLASS(class, parent_class, class_name) \
-    spl_register_sub_class(&c ## class, ion_get_class(parent_class), class_name, NULL, m ## class TSRMLS_CC); \
+    spl_register_sub_class(&c ## class, ion_get_class(parent_class), class_name, NULL, m ## class); \
     memcpy(&h ## class, zend_get_std_object_handlers(), sizeof (zend_object_handlers));
 
 #define PION_REGISTER_VOID_EXTENDED_CLASS(class, parent_class, class_name) \

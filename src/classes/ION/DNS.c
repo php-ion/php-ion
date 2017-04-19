@@ -124,7 +124,7 @@ CLASS_METHODS_START(ION_DNS)
 CLASS_METHODS_END;
 
 ZEND_INI_BEGIN()
-    STD_PHP_INI_ENTRY("ion.dns.async", ION_DNS_RESOLV_CONF_DEFAULT, PHP_INI_SYSTEM, OnUpdateBool, adns_enabled, zend_ion_globals, ion_globals)
+    STD_PHP_INI_BOOLEAN("ion.dns.async", "1", PHP_INI_SYSTEM, OnUpdateBool, adns_enabled, zend_ion_globals, ion_globals)
     STD_PHP_INI_ENTRY("ion.dns.resolv_conf", ION_DNS_RESOLV_CONF_DEFAULT, PHP_INI_SYSTEM, OnUpdateStringUnempty, resolv_conf, zend_ion_globals, ion_globals)
     STD_PHP_INI_ENTRY("ion.dns.hosts_file",  ION_DNS_HOSTS_FILE_DEFAULT, PHP_INI_SYSTEM, OnUpdateString, hosts_file, zend_ion_globals, ion_globals)
 ZEND_INI_END()
@@ -138,6 +138,7 @@ PHP_MINIT_FUNCTION(ION_DNS) {
     PION_REGISTER_VOID_EXTENDED_CLASS(ION_DNSException, ion_ce_ION_RuntimeException, "ION\\DNSException");
 
     if(!GION(adns_enabled)) {
+        PHPDBG("no adns");
         return SUCCESS;
     }
     GION(evdns) = evdns_base_new(GION(base), 1);

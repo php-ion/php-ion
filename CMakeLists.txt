@@ -96,5 +96,5 @@ include_directories("/opt/local/var/macports/build/_opt_local_var_macports_sourc
 #include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Libevent")
 include_directories("/opt/local/include")
 include_directories("/opt/local/include/openssl/")
-include_directories("/usr/local/opt/include")
+#include_directories("/usr/local/opt/include")
 
