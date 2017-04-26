@@ -659,13 +659,17 @@ class StreamTest extends TestCase {
     }
 
     /**
-     * @memcheck
+     * @group dev
+     * @mem check
      */
     public function testEnableEncryption() {
         $socket = Stream::socket("example.com:443");
+//        $socket = Stream::socket("www.jetbrains.com:443");
         $this->promise(function () use ($socket) {
-            $socket->encrypt(Crypto::client(Crypto::METHOD_TLSv12));
+            $ctx = Crypto::client(Crypto::METHOD_TLSv12);
+            $socket->encrypt($ctx);
             yield $socket->connect();
+            yield $socket->flush();
             $socket->write(implode("\r\n", ["GET / HTTP/1.1",
                     "Host: example.com",
                     "Connection: close",
@@ -677,10 +681,10 @@ class StreamTest extends TestCase {
         $this->loop(1);
 
         if(isset($this->data["error"])) {
-//            if(isset($this->data["response"])) {
-//                $this->out($this->data["response"]);
-//            }
-//            $this->out($socket->getAll());
+            if(isset($this->data["response"])) {
+                $this->out($this->data["response"]);
+            }
+            $this->out($socket->getAll());
             $this->fail($this->data["error"]["exception"].": ".$this->data["error"]["message"]);
         }
         $this->assertTrue(isset($this->data["response"]));
@@ -688,11 +692,13 @@ class StreamTest extends TestCase {
     }
 
     /**
+     * @group dev
      * @memcheck
      */
     public function testEncrypted() {
         $this->promise(function () {
             $socket = Stream::socket("example.com:443", Crypto::client());
+            yield $socket->flush();
             $socket->write(implode("\r\n", ["GET / HTTP/1.1",
                 "Host: example.com",
                 "Connection: close",

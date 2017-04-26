@@ -412,6 +412,7 @@ class BuildRunner {
                 $this->exec('git submodule update --init --recursive');
             }
             if (!file_exists('src/deps/libevent/configure')) {
+                $this->exec('autoreconf -i', 'src/deps/libevent');
                 $this->exec('./autogen.sh', 'src/deps/libevent');
             }
 
