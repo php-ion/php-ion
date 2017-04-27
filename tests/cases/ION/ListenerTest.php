@@ -14,6 +14,7 @@ class ListenerTest extends TestCase {
     public function testCreate() {
         $listener = new Listener(ION_TEST_SERVER_IPV4, 10);
         $listener = new Listener(ION_TEST_SERVER_IPV6, -1);
+        $listener = new Listener(ION_TEST_SERVER_UNIX, -1);
     }
 
     public function providerHosts() {
@@ -30,7 +31,6 @@ class ListenerTest extends TestCase {
 
     /**
      * @dataProvider providerHosts
-     * @group        dev
      * @memcheck
      *
      * @param string $address

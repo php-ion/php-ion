@@ -217,11 +217,11 @@ zend_string * pion_http_message_build(zend_object * message_object) {
     // begin head
     if(message->type == ion_http_type_response) {
         pipe[0] = ION_STR_CACHE(ION_STR_UP_HTTP);  // 4 bytes
-        pipe[1] = ION_STR_CACHE(ION_STR_SLASH);    // 1 bytes
+        pipe[1] = ION_STR_CACHE(ION_STR_SLASH);    // 1 byte
         pipe[2] = message->version ? message->version : ION_STR_CACHE(ION_STR_V11);
-        pipe[3] = ION_STR_CACHE(ION_STR_SPACE);    // 1 bytes
+        pipe[3] = ION_STR_CACHE(ION_STR_SPACE);    // 1 byte
         pipe[4] = buffer = strpprintf(4, "%d", message->status);
-        pipe[5] = ION_STR_CACHE(ION_STR_SPACE);    // 1 bytes
+        pipe[5] = ION_STR_CACHE(ION_STR_SPACE);    // 1 byte
         pipe[6] = message->reason ? message->reason : pion_http_reason(message->status);
         pipe[7] = ION_STR_CACHE(ION_STR_CRLF);     // 2 bytes
         message_size = pipe[2]->len + buffer->len + pipe[6]->len + 9;
@@ -233,11 +233,11 @@ zend_string * pion_http_message_build(zend_object * message_object) {
             buffer = ion_uri_stringify(message->uri, URI_ALL);
         }
         pipe[0] = message->method ? message->method : ION_STR_CACHE(ION_STR_UP_GET);
-        pipe[1] = ION_STR_CACHE(ION_STR_SPACE);    // 1 bytes
+        pipe[1] = ION_STR_CACHE(ION_STR_SPACE);    // 1 byte
         pipe[2] = buffer ? buffer : ION_STR_CACHE(ION_STR_SLASH);
-        pipe[3] = ION_STR_CACHE(ION_STR_SPACE);    // 1 bytes
+        pipe[3] = ION_STR_CACHE(ION_STR_SPACE);    // 1 byte
         pipe[4] = ION_STR_CACHE(ION_STR_UP_HTTP);  // 4 bytes
-        pipe[5] = ION_STR_CACHE(ION_STR_SLASH);    // 1 bytes
+        pipe[5] = ION_STR_CACHE(ION_STR_SLASH);    // 1 byte
         pipe[6] = message->version ? message->version : ION_STR_CACHE(ION_STR_V11);
         pipe[7] = ION_STR_CACHE(ION_STR_CRLF);     // 2 bytes
         message_size = pipe[0]->len + pipe[2]->len + pipe[6]->len + 9;
