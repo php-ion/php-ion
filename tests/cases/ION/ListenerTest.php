@@ -3,6 +3,7 @@
 namespace ION;
 
 
+use ION\Test\Conn;
 use ION\Test\TestCase;
 
 class ListenerTest extends TestCase {
@@ -17,22 +18,31 @@ class ListenerTest extends TestCase {
 
     public function providerHosts() {
         return [
-            [ION_TEST_SERVER_IPV4],
-            [ION_TEST_SERVER_IPV6],
-            [ION_TEST_SERVER_UNIX, "unix://".ION_TEST_SERVER_UNIX], // TODO: fix ION::stop() when unix listening
+            [ION_TEST_SERVER_IPV4, "", ""],
+            [ION_TEST_SERVER_IPV6, "", ""],
+            [ION_TEST_SERVER_UNIX, "unix://".ION_TEST_SERVER_UNIX, ""],
+
+            [ION_TEST_SERVER_IPV4, "", Conn::class],
+            [ION_TEST_SERVER_IPV6, "", Conn::class],
+            [ION_TEST_SERVER_UNIX, "unix://".ION_TEST_SERVER_UNIX, Conn::class],
         ];
     }
 
     /**
      * @dataProvider providerHosts
-     * @group dev
+     * @group        dev
      * @memcheck
+     *
      * @param string $address
      * @param string $stream_address
+     * @param $class
      */
-    public function testAccept($address, $stream_address = null) {
+    public function testAccept($address, $stream_address, $class) {
 
         $listener = new Listener($address);
+        if($class) {
+            $listener->setStreamClass($class);
+        }
         $listener->whenAccepted()->then(function (Stream $connect) use ($listener) {
             $this->data["connect"] = $this->describe($connect);
             $this->stop();
@@ -53,7 +63,7 @@ class ListenerTest extends TestCase {
         }
 
         $this->assertEquals([
-            'object' => 'ION\Stream'
+            'object' => $class ?: Stream::class
         ], $this->data['connect']);
         $this->assertArrayNotHasKey("error", $this->data);
     }

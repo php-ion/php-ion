@@ -21,6 +21,13 @@ class Listener {
     public function __construct(string $listen, int $backlog = -1) { }
 
     /**
+     * Name of an ION\Stream derived class to use.
+     *
+     * @param string $class_name
+     */
+    public function setStreamClass(string $class_name) { }
+
+    /**
      * @param Crypto $ssl
      *
      * @return Listener
@@ -35,14 +42,15 @@ class Listener {
     public function whenAccepted() : Sequence { }
 
     /**
-     * Reenable listener for new connections.
+     * Enable listener for new connections.
+     * By default listener already enabled.
      *
      * @return self
      */
     public function enable() : self { }
 
     /**
-     * Temporarily disable listener for new connections.
+     * Disable listener for new connections.
      *
      * @return self
      */

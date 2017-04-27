@@ -174,16 +174,16 @@ CLASS_METHOD(ION_Listener, __construct) {
         listener->flags |= ION_STREAM_NAME_UNIX;
         fd = socket(AF_UNIX, SOCK_STREAM, 0);
         if(fd < 0) {
-            zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, ERR_ION_LISTENER_FAILED_OPEN_SOCKET, listener->name->val, evutil_socket_error_to_string(errno));
+            zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, ERR_ION_LISTENER_FAILED_OPEN_SOCKET, listen_address->val, evutil_socket_error_to_string(errno));
             return;
         }
         memset(&local, 0, sizeof(local));
 //        local.sun_family = AF_UNIX;
         local.sun_family = AF_LOCAL;
-        strncpy(local.sun_path, listen_address->val, listen_address->len + 1);
+        strncpy(local.sun_path, listen_address->val, 100);
         unlink(local.sun_path);
         if(bind(fd, (struct sockaddr *)&local, sock_len) == FAILURE) {
-            zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, ERR_ION_LISTENER_FAILED_LISTEN_SOCKET, listener->name->val, evutil_socket_error_to_string(errno));
+            zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, ERR_ION_LISTENER_FAILED_LISTEN_SOCKET, listen_address->val, evutil_socket_error_to_string(errno));
             return;
         }
         listener->listener = evconnlistener_new(GION(base), _ion_listener_accept, listener,
@@ -196,7 +196,7 @@ CLASS_METHOD(ION_Listener, __construct) {
         evconnlistener_enable(listener->listener);
         listener->flags |= ION_STREAM_STATE_ENABLED;
     } else {
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, ERR_ION_LISTENER_FAILED_LISTEN_SOCKET, listener->name->val, evutil_socket_error_to_string(errno));
+        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, ERR_ION_LISTENER_FAILED_LISTEN_SOCKET, listen_address->val, evutil_socket_error_to_string(errno));
         return;
     }
 }
