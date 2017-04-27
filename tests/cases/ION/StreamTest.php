@@ -659,14 +659,12 @@ class StreamTest extends TestCase {
     }
 
     /**
-     * @group dev
-     * @mem check
+     * @memcheck
      */
     public function testEnableEncryption() {
         $socket = Stream::socket("example.com:443");
-//        $socket = Stream::socket("www.jetbrains.com:443");
         $this->promise(function () use ($socket) {
-            $ctx = Crypto::client(Crypto::METHOD_TLSv12);
+            $ctx = Crypto::client();
             $socket->encrypt($ctx);
             yield $socket->connect();
             yield $socket->flush();
@@ -692,7 +690,6 @@ class StreamTest extends TestCase {
     }
 
     /**
-     * @group dev
      * @memcheck
      */
     public function testEncrypted() {

@@ -17,32 +17,40 @@ class ListenerTest extends TestCase {
 
     public function providerHosts() {
         return [
-            [ION_TEST_SERVER_IPV4, ION_TEST_SERVER_IPV4],
-            [ION_TEST_SERVER_IPV6, ION_TEST_SERVER_IPV6],
-//            [ION_TEST_SERVER_UNIX, ION_TEST_SERVER_UNIX, "unix://".ION_TEST_SERVER_UNIX], // TODO: fix ION::stop() when unix listening
+            [ION_TEST_SERVER_IPV4],
+            [ION_TEST_SERVER_IPV6],
+            [ION_TEST_SERVER_UNIX, "unix://".ION_TEST_SERVER_UNIX], // TODO: fix ION::stop() when unix listening
         ];
     }
 
     /**
      * @dataProvider providerHosts
+     * @group dev
      * @memcheck
      * @param string $address
      * @param string $stream_address
      */
-    public function testAccept($address, $name, $stream_address = null) {
+    public function testAccept($address, $stream_address = null) {
 
         $listener = new Listener($address);
-        $listener->whenAccepted()->then(function (Stream $connect) {
+        $listener->whenAccepted()->then(function (Stream $connect) use ($listener) {
             $this->data["connect"] = $this->describe($connect);
             $this->stop();
-        })->onFail(function (\Throwable $error) {
+            $listener->shutdown();
+        })->onFail(function (\Throwable $error) use ($listener) {
             $this->data["error"] = $this->describe($error);
             $this->stop();
+            $listener->shutdown();
         });
         $client = stream_socket_client($stream_address?:$address, $errno, $error, 10, STREAM_CLIENT_ASYNC_CONNECT);
         stream_set_blocking($client, 0);
 
         $this->loop();
+        stream_socket_shutdown($client, STREAM_SHUT_RDWR);
+        unset($client);
+        if($stream_address) {
+            unlink($address);
+        }
 
         $this->assertEquals([
             'object' => 'ION\Stream'

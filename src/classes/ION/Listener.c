@@ -16,17 +16,12 @@ void ion_listener_release(zend_object * object) {
         evconnlistener_free(listener->listener);
         listener->listener = NULL;
     }
+    if(listener->accept) {
+        zend_object_release(listener->accept);
+        listener->accept = NULL;
+    }
     listener->flags &= ~ION_STREAM_STATE_ENABLED;
 }
-
-zend_bool ion_listener_default_handler(zend_object * listen, zend_object * connect) {
-    ion_listener * listener = get_object_instance(listen, ion_listener);
-    zval zstream;
-    ZVAL_OBJ(&zstream, connect);
-    ion_promisor_sequence_invoke(listener->accept, &zstream);
-    return true;
-}
-
 
 zend_object * ion_listener_init(zend_class_entry * ce) {
     ion_listener * listener = ecalloc(1, sizeof(ion_listener));
@@ -48,22 +43,22 @@ void ion_listener_free(zend_object * object) {
     }
 }
 
-void ion_listener_enable(zend_object * listener_obj, zend_bool state) {
-    ion_listener * listener = get_object_instance(listener_obj, ion_listener);
-    if(listener->listener) {
-        if(state) {
-            if(!(listener->flags & ION_STREAM_STATE_ENABLED)) {
-                evconnlistener_enable(listener->listener);
-                listener->flags |= ION_STREAM_STATE_ENABLED;
-            }
-        } else {
-            if((listener->flags & ION_STREAM_STATE_ENABLED)) {
-                evconnlistener_disable(listener->listener);
-                listener->flags &= ~ION_STREAM_STATE_ENABLED;
-            }
-        }
-    }
-}
+//void ion_listener_enable(zend_object * listener_obj, zend_bool state) {
+//    ion_listener * listener = get_object_instance(listener_obj, ion_listener);
+//    if(listener->listener) {
+//        if(state) {
+//            if(!(listener->flags & ION_STREAM_STATE_ENABLED)) {
+//                evconnlistener_enable(listener->listener);
+//                listener->flags |= ION_STREAM_STATE_ENABLED;
+//            }
+//        } else {
+//            if((listener->flags & ION_STREAM_STATE_ENABLED)) {
+//                evconnlistener_disable(listener->listener);
+//                listener->flags &= ~ION_STREAM_STATE_ENABLED;
+//            }
+//        }
+//    }
+//}
 
 static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct sockaddr * addr, int addr_len, void * ctx) {
     ION_CB_BEGIN();
@@ -91,7 +86,11 @@ static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct 
             buffer = bufferevent_socket_new(GION(base), fd, BEV_OPT_CLOSE_ON_FREE);
         }
         if(buffer) {
-            stream = ion_stream_new(buffer, state);
+            if(listener->stream_class) {
+                stream = ion_stream_new_ex(buffer, state, listener->stream_class);
+            } else {
+                stream = ion_stream_new(buffer, state);
+            }
             if(listener->encrypt) {
                 obj_add_ref(listener->encrypt);
                 ion_stream_store_encrypt(stream, listener->encrypt);
@@ -134,20 +133,20 @@ static void _ion_listener_error(ion_evlistener * l, void * ctx) {
 
 /** public function ION\Listener::__construct(string $listen, int $back_log = -1) : self */
 CLASS_METHOD(ION_Listener, __construct) {
-    zend_string * listen = NULL;
+    zend_string * listen_address = NULL;
     zend_long back_log = -1;
     ion_listener * listener = get_this_instance(ion_listener);
 
     ZEND_PARSE_PARAMETERS_START(1, 2)
-        Z_PARAM_STR(listen)
+        Z_PARAM_STR(listen_address)
         Z_PARAM_OPTIONAL
         Z_PARAM_LONG(back_log)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    if(listen->val[0] != '/') { // ipv4, ipv6, hostname
+    if(listen_address->val[0] != '/') { // ipv4, ipv6, hostname
         struct sockaddr_storage sock;
         socklen_t sock_len = sizeof(struct sockaddr_storage);
-        int result = evutil_parse_sockaddr_port(listen->val, (struct sockaddr *)&sock, (int *)&sock_len);
+        int result = evutil_parse_sockaddr_port(listen_address->val, (struct sockaddr *)&sock, (int *)&sock_len);
         if(result == SUCCESS) {
             if(sock.ss_family == AF_INET) {
                 listener->flags |= ION_STREAM_NAME_IPV4;
@@ -158,7 +157,7 @@ CLASS_METHOD(ION_Listener, __construct) {
                 return;
             }
         } else {
-            zend_throw_exception_ex(ion_class_entry(InvalidArgumentException), 0, ERR_ION_LISTENER_INVALID_FORMAT, listen->val);
+            zend_throw_exception_ex(ion_class_entry(InvalidArgumentException), 0, ERR_ION_LISTENER_INVALID_FORMAT, listen_address->val);
             return;
         }
         listener->listener = evconnlistener_new_bind(GION(base), _ion_listener_accept, listener,
@@ -179,8 +178,9 @@ CLASS_METHOD(ION_Listener, __construct) {
             return;
         }
         memset(&local, 0, sizeof(local));
-        local.sun_family = AF_UNIX;
-        strncpy(local.sun_path, listen->val, 100);
+//        local.sun_family = AF_UNIX;
+        local.sun_family = AF_LOCAL;
+        strncpy(local.sun_path, listen_address->val, listen_address->len + 1);
         unlink(local.sun_path);
         if(bind(fd, (struct sockaddr *)&local, sock_len) == FAILURE) {
             zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), errno, ERR_ION_LISTENER_FAILED_LISTEN_SOCKET, listener->name->val, evutil_socket_error_to_string(errno));
@@ -188,7 +188,7 @@ CLASS_METHOD(ION_Listener, __construct) {
         }
         listener->listener = evconnlistener_new(GION(base), _ion_listener_accept, listener,
              LEV_OPT_CLOSE_ON_FREE | LEV_OPT_CLOSE_ON_EXEC, (int)back_log, fd);
-        listener->name = zend_string_copy(listen);
+        listener->name = zend_string_copy(listen_address);
     }
 
     if(listener->listener) {
