@@ -13,4 +13,4 @@
     * `ION\ProcessException`
         * `ION\Process\SpawnException`
     * `ION\Stream\StorageException`
-* `ION\InvalidUsageException` (расширяет `LogicException`) — ошибка не правильной настройки или использлвания элементов расширения
+* `ION\InvalidUsageException` (расширяет `LogicException`) — ошибка не правильной настройки или использования элементов расширения
