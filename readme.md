@@ -63,4 +63,4 @@ ION PHP Extension
 * PHP clusters
 * as you wish
 
-# Documentation [EN] [RU](./docs/ru/readme.md)
+# Documentation [EN](./docs/en/readme.md) [RU](./docs/ru/readme.md)
