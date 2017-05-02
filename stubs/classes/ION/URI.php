@@ -38,11 +38,11 @@ class URI {
      *
      * @return URI
      */
-    public static function parse(string $uri) : static { }
+    public static function parse(string $uri) : self { }
 
-    public static function factory(string $options = []) : static { }
+    public static function factory(array $options = []) : self { }
 
-    public function relative() : static { }
+    public function relative() : self { }
 
     /**
      * Retrieve the scheme component of the URI.
