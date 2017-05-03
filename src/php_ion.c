@@ -17,7 +17,6 @@ ZEND_GET_MODULE(ion);
 static const zend_module_dep ion_depends[] = {
     ZEND_MOD_REQUIRED_EX("core", "ge", "7.0")
     ZEND_MOD_REQUIRED("spl")
-    ZEND_MOD_REQUIRED("openssl")
     {NULL, NULL, NULL}
 };
 

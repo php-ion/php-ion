@@ -1,8 +1,6 @@
 <?php
 namespace ION;
 
-use ION\Process;
-use ION\Process\Signal as Sig;
 use ION\Test\TestCase;
 
 /**

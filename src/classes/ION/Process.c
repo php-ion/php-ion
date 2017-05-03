@@ -1,4 +1,5 @@
 #include "ion.h"
+#include "ext/standard/php_var.h"
 #include <signal.h>
 #include <grp.h>
 
@@ -633,10 +634,78 @@ CLASS_METHODS_END;
 
 
 PHP_MINIT_FUNCTION(ION_Process) {
+    zval signals;
+    zend_array * ht = (HashTable *) pemalloc(sizeof(HashTable), 1);
+    zend_hash_init(ht, 64, NULL, zval_dtor_wrapper, 1);
+//    array_init(&signals);
+
+    ZVAL_ARR(&signals, ht);
+    zval_add_ref(&signals);
+//    signals.value.arr = ht;
+
     PION_REGISTER_STATIC_CLASS(ION_Process, "ION\\Process");
 
     PION_REGISTER_VOID_EXTENDED_CLASS(ION_ProcessException, ion_ce_ION_RuntimeException, "ION\\ProcessException");
 
+
+    /* Signal Constants */
+
+    add_assoc_long(&signals, "HUP",   (zend_long) SIGHUP);
+    add_assoc_long(&signals, "INT",   (zend_long) SIGINT);
+    add_assoc_long(&signals, "QUIT",  (zend_long) SIGQUIT);
+    add_assoc_long(&signals, "ILL",   (zend_long) SIGILL);
+    add_assoc_long(&signals, "TRAP",  (zend_long) SIGTRAP);
+    add_assoc_long(&signals, "ABRT",  (zend_long) SIGABRT);
+#ifdef SIGIOT
+    add_assoc_long(&signals, "IOT",   (zend_long) SIGIOT);
+#endif
+
+    add_assoc_long(&signals, "BUS",   (zend_long) SIGBUS);
+    add_assoc_long(&signals, "FPE",   (zend_long) SIGFPE);
+    add_assoc_long(&signals, "KILL",  (zend_long) SIGKILL);
+    add_assoc_long(&signals, "USR1",  (zend_long) SIGUSR1);
+    add_assoc_long(&signals, "SEGV",  (zend_long) SIGSEGV);
+    add_assoc_long(&signals, "USR2",  (zend_long) SIGUSR2);
+    add_assoc_long(&signals, "PIPE",  (zend_long) SIGPIPE);
+    add_assoc_long(&signals, "ALRM",  (zend_long) SIGALRM);
+    add_assoc_long(&signals, "TERM",  (zend_long) SIGTERM);
+#ifdef SIGSTKFLT
+    add_assoc_long(&signals, "STKFLT",(zend_long) SIGSTKFLT);
+#endif
+#ifdef SIGCLD
+    add_assoc_long(&signals, "CLD",   (zend_long) SIGCLD);
+#endif
+
+#ifdef SIGCHLD
+    add_assoc_long(&signals, "CHLD",  (zend_long) SIGCHLD);
+#endif
+    add_assoc_long(&signals, "CONT",  (zend_long) SIGCONT);
+    add_assoc_long(&signals, "STOP",  (zend_long) SIGSTOP);
+    add_assoc_long(&signals, "TSTP",  (zend_long) SIGTSTP);
+    add_assoc_long(&signals, "TTIN",  (zend_long) SIGTTIN);
+    add_assoc_long(&signals, "TTOU",  (zend_long) SIGTTOU);
+    add_assoc_long(&signals, "URG",   (zend_long) SIGURG );
+    add_assoc_long(&signals, "XCPU",  (zend_long) SIGXCPU);
+    add_assoc_long(&signals, "XFSZ",  (zend_long) SIGXFSZ);
+    add_assoc_long(&signals, "VTALRM",(zend_long) SIGVTALRM);
+    add_assoc_long(&signals, "PROF",  (zend_long) SIGPROF);
+    add_assoc_long(&signals, "WINCH", (zend_long) SIGWINCH);
+#ifdef SIGPOLL
+    add_assoc_long(&signals, "POLL",  (zend_long) SIGPOLL);
+#endif
+    add_assoc_long(&signals, "IO",    (zend_long) SIGIO);
+#ifdef SIGPWR
+    add_assoc_long(&signals, "PWR",   (zend_long) SIGPWR);
+#endif
+#ifdef SIGSYS
+    add_assoc_long(&signals, "SYS",   (zend_long) SIGSYS);
+    add_assoc_long(&signals, "BABY",  (zend_long) SIGSYS);
+#endif
+    add_assoc_long(&signals, "_IGN",  (zend_long) SIG_IGN);
+    add_assoc_long(&signals, "_DFL",  (zend_long) SIG_DFL);
+    add_assoc_long(&signals, "ERR",  (zend_long) SIG_ERR);
+
+    PION_CLASS_CONST_ZVAL(ION_Process, "SIG", &signals);
     return SUCCESS;
 }
 

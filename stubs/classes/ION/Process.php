@@ -7,6 +7,11 @@ use ION\Process\ChildProcess;
 use ION\Process\IPC;
 
 class Process {
+    const SIG = [
+        "HUP" => 1,
+        "INT" => 2,
+    ];
+
     public static function stdin() : Stream { }
 //    public static function setStdin($fd) { }
 
