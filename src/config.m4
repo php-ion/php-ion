@@ -31,8 +31,8 @@ if test "$PHP_ION" != "no"; then
     AC_DEFINE_UNQUOTED(ION_VERSION, "$VERSION", [Current git version])
 
     EVENT_DIR="deps/libevent"
-    PHP_ADD_INCLUDE(/Volumes/Data/Dev/php-ion/src/deps/libevent/include)
-    PHP_ADD_INCLUDE(/Volumes/Data/Dev/php-ion/src/deps/libevent/)
+    PHP_ADD_INCLUDE($EVENT_DIR/include)
+    PHP_ADD_INCLUDE($EVENT_DIR)
     AC_DEFINE(HAVE_LIBEVENT, 1, ['libevent"])
     AC_DEFINE([ION_EVENT_ENGINE], ["libevent"], [ Event engine used ])
 
