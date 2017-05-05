@@ -160,9 +160,13 @@ CLASS_METHOD(ION_Listener, __construct) {
             zend_throw_exception_ex(ion_class_entry(InvalidArgumentException), 0, ERR_ION_LISTENER_INVALID_FORMAT, listen_address->val);
             return;
         }
-        listener->listener = evconnlistener_new_bind(GION(base), _ion_listener_accept, listener,
-                                                     LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_EXEC, (int)back_log,
-                                                     (struct sockaddr *)&sock, sock_len);
+        listener->listener = evconnlistener_new_bind(
+            GION(base),
+            _ion_listener_accept,
+            listener,
+            LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE | LEV_OPT_REUSEABLE_PORT | LEV_OPT_CLOSE_ON_EXEC,
+            (int)back_log,
+            (struct sockaddr *)&sock, sock_len);
         if(listener->listener) {
             pion_net_sock_name(evconnlistener_get_fd(listener->listener), PION_NET_NAME_LOCAL, &listener->name);
         }

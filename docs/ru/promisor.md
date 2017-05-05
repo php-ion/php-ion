@@ -322,5 +322,72 @@ ION::promise(function () {
 });
 ```
 
-Тем не менее корутины не разделяются на классы Promise, Deferred или Sequence.
+# ION::promise()
 
+Универасльный метод `ION::promise()` который всегда возвращает промис на основании аргументов. 
+Таким образом если не уверены какие данные получаете можете их пропустить через метод `ION::promise()`.
+
+* Объект `ION\Promise` и его производные. 
+```php
+ION::promise(FS::readFile("configs/app.cert"))->then('var_dump');
+
+// результатом будет содержимое файла configs/app.cert
+```
+* Колбек Closure. Завершит промис когда будет выполнен колбек или брошено исключение. Колбек поддерживает корутины. 
+
+    ```php
+    ION::promise(function () {
+        $result = [];
+        $result["cert"] = yield FS::readFile("configs/app.cert");
+        $result["pkey"] = yield FS::readFile("configs/app.pkey");
+        return $result;
+    )->then('var_dump');
+    
+    // результатом будет 
+    array(
+        "cert" => "содержание файла configs/app.cert",
+        "pkey" => "содержание файла configs/app.pkey"
+    )
+    ```
+    
+* Генератор. Переберает генератор выполняя промисы. Результат генератора будет результатом промиса.
+
+    ```php
+    function read_certs() {
+        $result = [];
+        $result["cert"] = yield FS::readFile("configs/app.cert");
+        $result["pkey"] = yield FS::readFile("configs/app.pkey");
+        return $result;
+    )
+    ION::promise(read_certs())->then('var_dump');
+    // результатом будет 
+    array(
+        "cert" => "содержание файла configs/app.cert",
+        "pkey" => "содержание файла configs/app.pkey"
+    )
+    ```
+    
+* Массив. Переберет массив и если значение объект ION\Promise и его производные то дождется их выполнения и заменит результатом
+
+    ```php
+    ION::promise([
+        "cert" => FS::readFile("configs/app.cert"),
+        "pkey" => FS::readFile("configs/app.pkey"),
+        "domain" => "example.com"
+    ])->then('var_dump');
+    
+    // результатом будет 
+    array(
+        "cert" => "содержание файл configs/app.cert",
+        "pkey" => "содержание файл configs/app.pkey",
+        "domain" => "example.com"
+    )
+    ```
+    
+* Другие значения. Вренет завершенный промис, где резальтатом будет переданное значение
+
+    ```php
+    ION::promise(5)->then('var_dump');
+    
+    // результатом будет 5
+    ```
