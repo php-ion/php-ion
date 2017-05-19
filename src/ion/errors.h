@@ -12,10 +12,25 @@
 // class ION/Sequence
 
 // class ION\Stream
-#define ERR_ION_STREAM_WRITE_FAILED       "Failed to write data"
-#define ERR_ION_STREAM_READ_FAILED        "Stream buffer is unreachable"
-#define ERR_ION_STREAM_SET_ENCRYPT_FAILED "Failed to setup SSL/TLS handler"
-#define ERR_ION_STREAM_ALREADY_ENCRYPTED  "Stream already encrypted"
+#define ERR_ION_STREAM_RESOURCE_INVALID        "Argument must be either valid PHP stream resource"
+#define ERR_ION_STREAM_RESOURCE_DUP_FAILED     "Failed to duplicate fd: %s"
+#define ERR_ION_STREAM_CREATE_BUFFER_CORRUPTED "Failed to create Stream: buffer corrupted"
+#define ERR_ION_STREAM_CRYPTO_FAILED           "Failed to setup SSL/TLS handler for stream %s"
+#define ERR_ION_STREAM_HOST_INVALID            "Host or socket %s is not well-formed"
+#define ERR_ION_STREAM_WRITE_FAILED            "Failed to write data"
+#define ERR_ION_STREAM_READ_FAILED             "Stream buffer is unreachable"
+#define ERR_ION_STREAM_SET_ENCRYPT_FAILED      "Failed to setup SSL/TLS handler"
+#define ERR_ION_STREAM_ALREADY_ENCRYPTED       "Stream already encrypted"
+#define ERR_ION_STREAM_CONNECT_FAILED          "Failed to connect to %s: %s"
+#define ERR_ION_STREAM_PATH_TOO_LONG           "Path %s too long"
+#define ERR_ION_STREAM_PATH_INVALID            "Failed to open socket %s: No such directory"
+#define ERR_ION_STREAM_PRIORITY_INVALID        "Invalid priority value"
+#define ERR_ION_STREAM_NEGATIVE                "The number of bytes cannot be negative"
+#define ERR_ION_STREAM_TOKEN_EMPTY             "Empty token string"
+#define ERR_ION_STREAM_SEARCH_FAILED           "Failed to get internal buffer pointer for token_length/offset"
+#define ERR_ION_STREAM_BUFFER_ID_INVALID       "Invalid buffer identify"
+#define ERR_ION_STREAM_BUFFER_CORRUPTED        "Stream buffer is corrupted"
+#define ERR_ION_STREAM_READ_LOCKED             "Stream locked for reading: already in the process of reading"
 
 // class ION\Listener
 #define ERR_ION_LISTENER_UNSUPPORTED_ADDRESS  "Address family %d not supported by protocol family"

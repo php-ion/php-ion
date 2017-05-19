@@ -101,6 +101,10 @@ class BuildRunner {
             'short' => '',
             'desc'  => 'Only runs tests from the dev group. Alias of --group=dev.'
         ],
+        'no-ini' => [
+            'short' => 'n',
+            'desc'  => 'No configuration (ini) files will be used'
+        ],
         'ci' => [
             'desc'  => 'Alias: --debug --coverage --system --clean-deps --clean --prepare --make --info --test'
         ],
@@ -309,7 +313,12 @@ class BuildRunner {
      */
 	public function run() {
 	    $this->selectIncludes();
+        $php_flags = "";
+        if($this->hasOption("no-ini")) {
+            $php_flags .= "-n ";
+        }
 
+        $php_flags = trim($php_flags);
         if($this->hasOption("ci")) {
             $this->setOption('debug');
             $this->setOption('coverage');
@@ -430,7 +439,8 @@ class BuildRunner {
 		}
 
 		if($this->hasOption('info')) {
-			$this->exec($this->getBin('php') . ' -e -dextension=./src/modules/ion.so '.__FILE__." --diagnostic", false, $gdb);
+			$this->exec($this->getBin('php') . ' -e ' . $php_flags . ' -dextension=./src/modules/ion.so '
+                .__FILE__." --diagnostic", false, $gdb);
 		}
 
 		if($this->hasOption("dev")) {
@@ -444,7 +454,7 @@ class BuildRunner {
 			} else {
 				$group = "";
 			}
-			$phpunit = $this->getBin('php')." -e -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --colors=always $group ".$this->getOption('test', '');
+			$phpunit = $this->getBin('php')." -e {$php_flags} -dextension=./src/modules/ion.so ".$this->getBin('phpunit')." --colors=always $group ".$this->getOption('test', '');
 			$this->exec($phpunit, false, $gdb);
             if($this->hasOption('coverage')) {
                 $this->exec($this->getBin('lcov')." --directory . --capture --output-file coverage.info");
@@ -730,7 +740,7 @@ Information:
 ".$this->compileHelp(["info", "system"], 20)."
 
 Testing:
-".$this->compileHelp(["test", "group", "dev", "debug", "ci", "ide", "gdb", "gdb-server"], 20)."
+".$this->compileHelp(["test", "group", "dev", "no-ini", "debug", "ci", "ide", "gdb", "gdb-server"], 20)."
 
 Environment:
 ";

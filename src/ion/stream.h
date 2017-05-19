@@ -123,7 +123,6 @@ typedef struct _ion_stream_token {
 } ion_stream_token;
 
 typedef struct _ion_stream {
-    zend_object        std;
     zend_ulong         id;
     uint32_t           state;   // flags
     ion_buffer       * buffer;  // input/output buffer
@@ -141,9 +140,8 @@ typedef struct _ion_stream {
     zend_string      * name_remote;
 
     zend_object      * error;
-    zend_object      * storage; // stream from storage
 
-    ion_storage_stream_bucket * bucket;
+    zend_object        php_object;
 } ion_stream;
 
 zend_object * ion_storage_init(zend_class_entry * ce);

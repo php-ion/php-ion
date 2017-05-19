@@ -91,11 +91,12 @@ static void _ion_listener_accept(ion_evlistener * l, evutil_socket_t fd, struct 
             } else {
                 stream = ion_stream_new(buffer, state);
             }
+            istream = ION_ZOBJ_OBJECT(stream, ion_stream);
             if(listener->encrypt) {
                 obj_add_ref(listener->encrypt);
-                ion_stream_store_encrypt(stream, listener->encrypt);
+                istream->encrypt = listener->encrypt;
             }
-            istream = get_object_instance(stream, ion_stream);
+
             if(listener->name) {
                 istream->name_self = zend_string_copy(listener->name);
             }

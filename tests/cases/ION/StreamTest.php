@@ -44,7 +44,7 @@ class StreamTest extends TestCase {
     public function providerSocketFailures() {
         return [
             ["tcp://127.0.0.1:80", "Failed to open socket tcp://127.0.0.1:80: No such directory"],
-            ["?query", "Host ?query is not well-formed"],
+            ["?query", "Host or socket ?query is not well-formed"],
         ];
     }
 
@@ -53,6 +53,7 @@ class StreamTest extends TestCase {
      * @param string $url
      * @param string $message
      * @param int $code
+     * @memcheck
      */
     public function testSocketFailures($url, $message, $code = 0) {
         try  {

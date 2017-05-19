@@ -90,10 +90,10 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_Process_IPC_Message);
     STARTUP_MODULE(ION_Process_ChildProcess);
     STARTUP_MODULE(ION_URI);
-    STARTUP_MODULE(ION_Stream_StorageAbstract);
-    STARTUP_MODULE(ION_Stream_Storage);
-    STARTUP_MODULE(ION_Stream_Server);
-    STARTUP_MODULE(ION_Stream_Client);
+//    STARTUP_MODULE(ION_Stream_StorageAbstract);
+//    STARTUP_MODULE(ION_Stream_Storage);
+//    STARTUP_MODULE(ION_Stream_Server);
+//    STARTUP_MODULE(ION_Stream_Client);
     STARTUP_MODULE(ION_HTTP_Message);
     STARTUP_MODULE(ION_HTTP_Request);
     STARTUP_MODULE(ION_HTTP_Response);

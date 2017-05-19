@@ -36,6 +36,7 @@ set(ION_SOURCE_FILES
     src/ion/exceptions.c
     src/ion/debug.c
     src/ion/callback.c
+    src/ion/zion.c
     src/ion/engine.c
     src/ion/deferred_queue.c
     src/ion/dns.h
@@ -67,11 +68,6 @@ set(ION_SOURCE_FILES
 
     src/classes/ION/FS.c
     src/classes/ION/Crypto.c
-
-    src/classes/ION/Stream/StorageAbstract.c
-    src/classes/ION/Stream/Storage.c
-    src/classes/ION/Stream/Server.c
-    src/classes/ION/Stream/Client.c
 
     src/classes/ION/HTTP/Message.c
     src/classes/ION/HTTP.c

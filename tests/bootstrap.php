@@ -8,10 +8,10 @@ define('ION_VAR', __DIR__ . "/var");
 ini_set('date.timezone', 'Europe/Moscow');
 
 if (!defined('ION_TEST_SERVER_HOST')) {
-    define('ION_TEST_SERVER_HOST', "127.0.0.1:8976");
+    define('ION_TEST_SERVER_HOST', "127.0.0.1:8977");
 }
 if (!defined('ION_TEST_SERVER_IPV4')) {
-    define('ION_TEST_SERVER_IPV4', "127.0.0.1:8976");
+    define('ION_TEST_SERVER_IPV4', "127.0.0.1:8977");
 }
 if (!defined('ION_TEST_SERVER_IPV6')) {
     define('ION_TEST_SERVER_IPV6', "[::1]:8976");

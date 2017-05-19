@@ -60,6 +60,7 @@ if test "$PHP_ION" != "no"; then
     ion/memory.c
     ion/exceptions.c
     ion/callback.c
+    ion/zion.c
     ion/engine.c
     ion/promisor.c
     ion/net.c
@@ -86,11 +87,6 @@ if test "$PHP_ION" != "no"; then
     classes/ION/Process/IPC.c
     classes/ION/Process/IPC/Message.c
     classes/ION/Process/ChildProcess.c
-
-    classes/ION/Stream/StorageAbstract.c
-    classes/ION/Stream/Storage.c
-    classes/ION/Stream/Server.c
-    classes/ION/Stream/Client.c
 
     classes/ION/URI.c
     classes/ION/HTTP/Message.c
