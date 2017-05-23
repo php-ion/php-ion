@@ -1,7 +1,4 @@
-#include "init.h"
-#include "promisor.h"
-#include "fs.h"
-#include "errors.h"
+#include "ion.h"
 
 
 #if defined(HAVE_INOTIFY)

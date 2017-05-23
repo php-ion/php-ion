@@ -9,7 +9,14 @@
 #define ERR_ION_AWAIT_FAILED        "Unable to add event to queue"
 #define ERR_ION_REINIT_FAILED       "Some events could not be restarted"
 
-// class ION/Sequence
+// class ION\Promise, ION\Deferred, ION\ResolvablePromise, ION\Sequence
+#define ERR_ION_PROMISE_ITSELF         "Can not promise itself"
+#define ERR_ION_PROMISE_CANT           "Can't promise"
+#define ERR_ION_PROMISE_ONLY_PROMISES  "Handler should be a valid promise-like object or string"
+#define ERR_ION_PROMISE_CLONE_INTERNAL "Trying to clone an internal promisor"
+#define ERR_ION_PROMISE_YIELDED        "Promisor in progress"
+#define ERR_ION_PROMISE_ALREADY_FINISHED "Deferred has been finished"
+#define ERR_ION_PROMISE_FINISH_INTERNAL "Internal promisor could not be finished from userspace"
 
 // class ION\Stream
 #define ERR_ION_STREAM_RESOURCE_INVALID        "Argument must be either valid PHP stream resource"

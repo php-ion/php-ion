@@ -32,7 +32,6 @@ class PromiseTest extends TestCase {
     }
 
     /**
-     *
      * @memcheck
      */
     public function testThen() {
@@ -138,7 +137,6 @@ class PromiseTest extends TestCase {
     }
 
     /**
-     *
      * @memcheck
      */
     public function testSimpleChain() {
@@ -231,6 +229,7 @@ class PromiseTest extends TestCase {
     }
 
     /**
+     * @group dev
      * @memcheck
      */
     public function testAwaitSuccessDeferred() {

@@ -4,9 +4,9 @@ zend_object_handlers ion_oh_ION_Promise;
 zend_class_entry * ion_ce_ION_Promise;
 
 zend_object * ion_promise_init(zend_class_entry * ce) {
-    ion_promisor * promise = ecalloc(1, sizeof(ion_promisor));
+    ion_promisor * promise = ion_alloc_object(ce, ion_promisor);
     promise->flags |= ION_PROMISOR_TYPE_PROMISE;
-    RETURN_INSTANCE(ION_Promise, promise);
+    return ion_init_object(ION_OBJECT_ZOBJ(promise), ce, &ion_oh_ION_Promise);
 }
 
 /** public function ION\Promise::__construct(callable $done = null, callable $fail = null) : int */
@@ -38,9 +38,10 @@ CLASS_METHOD(ION_Promise, then) {
         Z_PARAM_ZVAL_EX(done, 1, 0)
         Z_PARAM_ZVAL_EX(fail, 1, 0)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
     if(done && Z_ISPROMISE_P(done)) {
         if(Z_OBJ_P(done) == Z_OBJ_P(getThis())) {
-            zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can not promise itself", 0);
+            zend_throw_exception(ion_ce_InvalidArgumentException, ERR_ION_PROMISE_ITSELF, 0);
             return;
         }
         handler = Z_OBJ_P(done);
@@ -51,7 +52,7 @@ CLASS_METHOD(ION_Promise, then) {
         handler = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), done, fail);
         if(handler == NULL) {
             if(!EG(exception)) {
-                zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
+                zend_throw_exception(ion_ce_InvalidArgumentException, ERR_ION_PROMISE_CANT, 0);
             }
             return;
         }
@@ -76,7 +77,7 @@ CLASS_METHOD(ION_Promise, forget) {
     } else if(Z_TYPE_P(handler) == IS_STRING) {
         ion_promisor_remove_named(Z_OBJ_P(getThis()), Z_STR_P(handler));
     } else {
-        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Handler should be a valid promise-like object or string", 0);
+        zend_throw_exception(ion_ce_InvalidArgumentException, ERR_ION_PROMISE_ONLY_PROMISES, 0);
         return;
     }
 }
@@ -93,9 +94,10 @@ CLASS_METHOD(ION_Promise, onDone) {
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_ZVAL(callback)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
     promise = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), callback, NULL);
     if(promise == NULL) {
-        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
+        zend_throw_exception(ion_ce_InvalidArgumentException, ERR_ION_PROMISE_CANT, 0);
         return;
     }
     RETURN_OBJ(promise);
@@ -116,7 +118,7 @@ CLASS_METHOD(ION_Promise, onFail) {
 
     promise = ion_promisor_push_callbacks(Z_OBJ_P(getThis()), NULL, callback);
     if(promise == NULL) {
-        zend_throw_exception(ion_class_entry(InvalidArgumentException), "Can't promise", 0);
+        zend_throw_exception(ion_class_entry(InvalidArgumentException), ERR_ION_PROMISE_CANT, 0);
         return;
     }
     RETURN_OBJ(promise);
@@ -128,7 +130,7 @@ METHOD_ARGS_END();
 
 /** public function ION\Promise::getState() : string */
 CLASS_METHOD(ION_Promise, getState) {
-    ion_promisor * promise = get_this_instance(ion_promisor);
+    ion_promisor * promise = ION_THIS_OBJECT(ion_promisor);
     zend_string * state;
     if(promise->flags & ION_PROMISOR_DONE) {
         state = ION_STR(ION_STR_DONE);
@@ -149,7 +151,7 @@ METHOD_WITHOUT_ARGS(ION_Promise, getState)
 
 /** public function ION\Promise::getFlags() : string */
 CLASS_METHOD(ION_Promise, getFlags) {
-    ion_promisor * promise = get_this_instance(ion_promisor);
+    ion_promisor * promise = ION_THIS_OBJECT(ion_promisor);
     RETURN_LONG(promise->flags);
 }
 
@@ -157,7 +159,7 @@ METHOD_WITHOUT_ARGS(ION_Promise, getFlags)
 
 /** public function ION\Promise::setUID(int $uid) : self */
 CLASS_METHOD(ION_Promise, setName) {
-    ion_promisor * promise = get_this_instance(ion_promisor);
+    ion_promisor * promise = ION_THIS_OBJECT(ion_promisor);
     zend_string  * name = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
@@ -187,6 +189,8 @@ PHP_MINIT_FUNCTION(ION_Promise) {
     pion_init_std_object_handlers(ION_Promise);
     pion_set_object_handler(ION_Promise, free_obj, ion_promisor_free);
     pion_set_object_handler(ION_Promise, clone_obj, ion_promisor_clone_obj);
+    ion_class_set_offset(ion_oh_ION_Promise, ion_promisor);
+
 
     PION_CLASS_CONST_LONG(ION_Promise, "DONE",      ION_PROMISOR_DONE);
     PION_CLASS_CONST_LONG(ION_Promise, "FAILED",    ION_PROMISOR_FAILED);

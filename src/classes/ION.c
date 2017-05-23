@@ -76,9 +76,9 @@ METHOD_ARGS_END()
 
 static void _timer_done(evutil_socket_t fd, short flags, void * arg) {
     ION_CB_BEGIN();
-    ion_promisor * deferred = get_object_instance(arg, ion_promisor);
+    ion_promisor * deferred = ION_ZOBJ_OBJECT(arg, ion_promisor);
 //    zval * zdeferred = (zval * )arg;
-    ion_promisor_done_true(&deferred->std);
+    ion_promisor_done_true(ION_OBJECT_ZOBJ(deferred));
 
 //    zval_ptr_dtor(&zdeferred);
     ION_CB_END();
@@ -88,7 +88,7 @@ static void _timer_dtor(ion_promisor * deferred) {
     ion_event * timer = (ion_event *) deferred->object;
     event_del(timer);
     event_free(timer);
-    zend_object_release(&deferred->std);
+    zend_object_release(ION_OBJECT_ZOBJ(deferred));
 }
 
 /** public function ION::await(double $time) : ION\Deferred */
@@ -112,7 +112,7 @@ CLASS_METHOD(ION, await) {
     if(event_add(timer, &tv) == FAILURE) {
         event_del(timer);
         event_free(timer);
-        obj_ptr_dtor(deferred);
+        zend_object_release(deferred);
         zend_throw_exception(ion_class_entry(ION_RuntimeException), ERR_ION_AWAIT_FAILED, 0);
         return;
     } else {

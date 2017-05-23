@@ -132,7 +132,7 @@ CLASS_METHOD(ION_Process_IPC, whenIncoming) {
     ion_process_ipc * ipc = get_this_instance(ion_process_ipc);
 
     if(!ipc->on_message) {
-        ipc->on_message = ION_OBJ(ion_promisor_sequence_ex(0));
+        ipc->on_message = ION_OBJECT_ZOBJ(ion_promisor_sequence_ex(0));
     }
     zend_object_addref(ipc->on_message);
     RETURN_OBJ(ipc->on_message);
@@ -145,7 +145,7 @@ CLASS_METHOD(ION_Process_IPC, whenDisconnected) {
     ion_process_ipc * ipc = get_this_instance(ion_process_ipc);
 
     if(!ipc->on_disconnect) {
-        ipc->on_disconnect = ION_OBJ(ion_promisor_promise());
+        ipc->on_disconnect = ION_OBJECT_ZOBJ(ion_promisor_promise());
     }
     zend_object_addref(ipc->on_disconnect);
     RETURN_OBJ(ipc->on_disconnect);

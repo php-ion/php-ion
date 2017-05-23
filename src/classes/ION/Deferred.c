@@ -4,17 +4,16 @@ zend_object_handlers ion_oh_ION_Deferred;
 zend_class_entry * ion_ce_ION_Deferred;
 
 zend_object * ion_deferred_init(zend_class_entry * ce) {
-    ion_promisor * deferred = emalloc(sizeof(ion_promisor));
-    memset(deferred, 0, sizeof(ion_promisor));
+    ion_promisor * deferred = ion_alloc_object(ce, ion_promisor);
     deferred->flags |= ION_PROMISOR_TYPE_DEFERRED;
-    RETURN_INSTANCE(ION_Deferred, deferred);
+    return ion_init_object(ION_OBJECT_ZOBJ(deferred), ce, &ion_oh_ION_Deferred);
 }
 
 /** public function ION\Deferred::__construct(callable $canceler = null, bool $protected = true) : self */
 CLASS_METHOD(ION_Deferred, __construct) {
-    ion_promisor * deferred = get_this_instance(ion_promisor);
-    zval                 * canceler = NULL;
-    zend_bool              protected = true;
+    ion_promisor * deferred = ION_THIS_OBJECT(ion_promisor);
+    zval         * canceler = NULL;
+    zend_bool      protected = true;
     ZEND_PARSE_PARAMETERS_START(0, 2)
         Z_PARAM_OPTIONAL
         Z_PARAM_ZVAL_DEREF_EX(canceler, 1, 0)
@@ -37,10 +36,10 @@ METHOD_ARGS_END();
 
 /** public function ION\Deferred::cancel(string $reason) : self */
 CLASS_METHOD(ION_Deferred, cancel) {
-    ion_promisor * deferred = get_this_instance(ion_promisor);
-    zend_string * message = NULL;
+    ion_promisor * deferred = ION_THIS_OBJECT(ion_promisor);
+    zend_string  * message = NULL;
     if(deferred->flags & ION_PROMISOR_FINISHED) {
-        zend_throw_exception(ion_class_entry(ION_InvalidUsageException), "Deferred has been finished", 0);
+        zend_throw_exception(ion_ce_ION_InvalidUsageException, ERR_ION_PROMISE_ALREADY_FINISHED, 0);
         return;
     }
 
@@ -66,6 +65,7 @@ PHP_MINIT_FUNCTION(ION_Deferred) {
     pion_init_std_object_handlers(ION_Deferred);
     pion_set_object_handler(ION_Deferred, free_obj, ion_promisor_free);
     pion_set_object_handler(ION_Deferred, clone_obj, ion_promisor_clone_obj);
+    ion_class_set_offset(ion_oh_ION_Deferred, ion_promisor);
 //    PION_REGISTER_EXTENDED_CLASS(ION_Deferred, ION_ResolvablePromise, "ION\\Deferred");
 //    CE(ION_Deferred)->ce_flags |= ZEND_ACC_FINAL_CLASS;
 //    PION_CLASS_CONST_LONG(ION_Deferred, "RESOLVED", ION_DEFERRED_DONE);

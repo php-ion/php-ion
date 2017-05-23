@@ -5,15 +5,15 @@ zend_class_entry * ion_ce_ION_Sequence;
 
 
 zend_object * ion_sequence_init(zend_class_entry * ce) {
-    ion_promisor * promise = emalloc(sizeof(ion_promisor));
-    memset(promise, 0, sizeof(ion_promisor));
+
+    ion_promisor * promise = ion_alloc_object(ce, ion_promisor);
     promise->flags |= ION_PROMISOR_TYPE_PROMISE | ION_PROMISOR_TYPE_SEQUENCE | ION_PROMISOR_PROTOTYPE;
-    RETURN_INSTANCE(ION_Sequence, promise);
+    return ion_init_object(ION_OBJECT_ZOBJ(promise), ce, &ion_oh_ION_Sequence);
 }
 
 /** public function ION\Sequence::__construct(callable $starter = null, callable $release = null) */
 CLASS_METHOD(ION_Sequence, __construct) {
-    ion_promisor * sequence = get_this_instance(ion_promisor);
+    ion_promisor * sequence = ION_THIS_OBJECT(ion_promisor);
     zval         * starter = NULL;
     zval         * release = NULL;
 
@@ -23,7 +23,7 @@ CLASS_METHOD(ION_Sequence, __construct) {
         Z_PARAM_ZVAL_DEREF_EX(release, 1, 0)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
     if(starter) {
-        ion_promisor_set_initial_callback(ION_OBJ(sequence), starter);
+        ion_promisor_set_initial_callback(ION_OBJECT_ZOBJ(sequence), starter);
     }
     if(release) {
         ion_promisor_set_php_cb(&sequence->canceler, pion_cb_create_from_zval(release));
@@ -71,6 +71,7 @@ PHP_MINIT_FUNCTION(ION_Sequence) {
     pion_init_std_object_handlers(ION_Sequence);
     pion_set_object_handler(ION_Sequence, free_obj, ion_promisor_free);
     pion_set_object_handler(ION_Sequence, clone_obj, ion_promisor_clone_obj);
+    ion_class_set_offset(ion_oh_ION_Sequence, ion_promisor);
 
     return SUCCESS;
 }

@@ -6,18 +6,18 @@ zend_object_handlers ion_oh_ION_ResolvablePromise;
 
 /** public function ION\ResolvablePromise::done(mixed $data) : self */
 CLASS_METHOD(ION_ResolvablePromise, done) {
-    ion_promisor * promise = get_this_instance(ion_promisor);
+    ion_promisor * promise = ION_THIS_OBJECT(ion_promisor);
     zval * data = NULL;
     if(promise->flags & ION_PROMISOR_FINISHED) {
-        zend_throw_error(ion_class_entry(ION_InvalidUsageException), "Promisor has been finished");
+        zend_throw_error(ion_ce_ION_InvalidUsageException, ERR_ION_PROMISE_ALREADY_FINISHED);
         return;
     }
     if(promise->flags & ION_PROMISOR_INTERNAL) {
-        zend_throw_error(ion_class_entry(ION_InvalidUsageException), "Internal promisor could not be finished from userspace");
+        zend_throw_error(ion_ce_ION_InvalidUsageException, ERR_ION_PROMISE_FINISH_INTERNAL);
         return;
     }
     if(promise->await || promise->generator) {
-        zend_throw_error(ion_class_entry(ION_InvalidUsageException), "Promisor already in progress");
+        zend_throw_error(ion_ce_ION_InvalidUsageException, ERR_ION_PROMISE_YIELDED);
         return;
     }
     if(promise->scope) {
@@ -37,18 +37,18 @@ METHOD_ARGS_END()
 
 /** public function ION\ResolvablePromise::fail(Throwable $error) : self */
 CLASS_METHOD(ION_ResolvablePromise, fail) {
-    ion_promisor * promise = get_this_instance(ion_promisor);
+    ion_promisor * promise = ION_THIS_OBJECT(ion_promisor);
     zval * error = NULL;
     if(promise->flags & ION_PROMISOR_FINISHED) {
-        zend_throw_exception(ion_class_entry(ION_InvalidUsageException), "Promisor has been finished", 0);
+        zend_throw_error(ion_ce_ION_InvalidUsageException, ERR_ION_PROMISE_ALREADY_FINISHED);
         return;
     }
     if(promise->flags & ION_PROMISOR_INTERNAL) {
-        zend_throw_exception(ion_class_entry(ION_InvalidUsageException), "Internal promisor could not be finished from userspace", 0);
+        zend_throw_error(ion_ce_ION_InvalidUsageException, ERR_ION_PROMISE_FINISH_INTERNAL);
         return;
     }
     if(promise->await || promise->generator) {
-        zend_throw_exception(ion_class_entry(ION_InvalidUsageException), "Promisor already in progress", 0);
+        zend_throw_error(ion_ce_ION_InvalidUsageException, ERR_ION_PROMISE_YIELDED);
         return;
     }
     if(promise->scope) {
@@ -77,5 +77,6 @@ PHP_MINIT_FUNCTION(ION_ResolvablePromise) {
     pion_init_std_object_handlers(ION_ResolvablePromise);
     pion_set_object_handler(ION_ResolvablePromise, free_obj, ion_promisor_free);
     pion_set_object_handler(ION_ResolvablePromise, clone_obj, ion_promisor_clone_obj);
+    ion_class_set_offset(ion_oh_ION_ResolvablePromise, ion_promisor);
     return SUCCESS;
 }
