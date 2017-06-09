@@ -17,6 +17,7 @@
 #define ERR_ION_PROMISE_YIELDED        "Promisor in progress"
 #define ERR_ION_PROMISE_ALREADY_FINISHED "Deferred has been finished"
 #define ERR_ION_PROMISE_FINISH_INTERNAL "Internal promisor could not be finished from userspace"
+#define ERR_ION_PROMISE_INVALID_CONSEQ  "Promise expects a valid callbacks"
 
 // class ION\Stream
 #define ERR_ION_STREAM_RESOURCE_INVALID        "Argument must be either valid PHP stream resource"
@@ -92,7 +93,7 @@
 
 // class ION\Process
 #define ERR_ION_PROCESS_SIGNAL_EVENT_FAIL  "Failed to listening signal %d"
-#define ERR_ION_PROCESS_SIGNAL_STORE_FAIL  "Failed to store signal (%d) handler"
+#define ERR_ION_PROCESS_SIGNAL_STORE_FAIL  "Failed to register signal (%d) handler"
 #define ERR_ION_PROCESS_INVALID_UID        "Invalid user identifier"
 #define ERR_ION_PROCESS_INVALID_GID        "Invalid group identifier"
 #define ERR_ION_PROCESS_NO_USER_INFO_NAMED "Failed to get info by user name %s: %s"

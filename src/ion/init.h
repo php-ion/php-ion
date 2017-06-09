@@ -7,6 +7,7 @@
 
 #include <php.h>
 #include <event.h>
+#include <ion.h>
 #include "callback.h"
 
 #ifdef PHP_WIN32
@@ -77,7 +78,7 @@ ZEND_BEGIN_MODULE_GLOBALS(ion)
     ion_event_base   * base;    // event base
     ion_event_config * config;  // event config
     uint               flags;
-    HashTable        * timers;  // array of timers
+    zend_array       * timers;  // array of timers
 
     // Stats
     zend_bool  stats_enabled;
@@ -97,24 +98,24 @@ ZEND_BEGIN_MODULE_GLOBALS(ion)
     // DNS
     ion_evdns_base * evdns;      // event dns base
     zend_bool        adns_enabled;
-    HashTable      * resolvers;  // resolve requests
+    zend_array     * resolvers;  // resolve requests
     char           * resolv_conf;
     zend_long        resolv_options;
     char           * hosts_file;
 
     // Process
-    zend_array  * signals;      // registered signals
-    zend_array  * proc_execs;   // exec processes
-    zend_array  * proc_childs;  // spawned child processes
-    zend_array  * workers;      // spawned workers
-    zend_array  * disconnected; // list of disconnected workers
-    zend_object * parent_ipc;   // link to IPC of parent process
-    ion_event   * sigchld;
+    zend_array      * signals;      // registered signals
+    zend_array      * proc_execs;   // exec processes
+    zend_array      * proc_childs;  // spawned child processes
+    zend_array      * workers;      // spawned workers
+    zend_array      * disconnected; // list of disconnected workers
+    ion_process_ipc * parent_ipc;   // link to IPC of parent process
+    ion_event       * sigchld;
 
     // FS
-    int         watch_fd;    // inotify or kqueue file descriptor
-    ion_event * watch_event; // watch_fd listener
-    HashTable * watchers;    // list of listened filenames
+    int          watch_fd;    // inotify or kqueue file descriptor
+    ion_event  * watch_event; // watch_fd listener
+    zend_array * watchers;    // list of listened filenames
 
     // SSL
     int ssl_index;

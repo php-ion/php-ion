@@ -4,10 +4,11 @@ zend_object_handlers ion_oh_ION_Sequence;
 zend_class_entry * ion_ce_ION_Sequence;
 
 
-zend_object * ion_sequence_init(zend_class_entry * ce) {
+zend_object * ion_sequence_zend_init(zend_class_entry * ce) {
 
     ion_promisor * promise = ion_alloc_object(ce, ion_promisor);
     promise->flags |= ION_PROMISOR_TYPE_PROMISE | ION_PROMISOR_TYPE_SEQUENCE | ION_PROMISOR_PROTOTYPE;
+    ZVAL_UNDEF(&promise->object);
     return ion_init_object(ION_OBJECT_ZOBJ(promise), ce, &ion_oh_ION_Sequence);
 }
 
@@ -23,7 +24,7 @@ CLASS_METHOD(ION_Sequence, __construct) {
         Z_PARAM_ZVAL_DEREF_EX(release, 1, 0)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
     if(starter) {
-        ion_promisor_set_initial_callback(ION_OBJECT_ZOBJ(sequence), starter);
+        ion_promisor_set_initial_callback(sequence, starter);
     }
     if(release) {
         ion_promisor_set_php_cb(&sequence->canceler, pion_cb_create_from_zval(release));
@@ -38,8 +39,9 @@ METHOD_ARGS_END()
 
 /** public function ION\Sequence::__invoke(mixed ...$data) : void */
 CLASS_METHOD(ION_Sequence, __invoke) {
-    zval * data = NULL;
-    int    count = 0;
+    zval * data        = NULL;
+    int    count       = 0;
+    ion_promisor * seq = ION_THIS_OBJECT(ion_promisor);
 
     ZEND_PARSE_PARAMETERS_START(0, 255)
         Z_PARAM_VARIADIC('*', data, count);
@@ -48,11 +50,11 @@ CLASS_METHOD(ION_Sequence, __invoke) {
     if(!count) {
         zval nil;
         ZVAL_NULL(&nil);
-        ion_promisor_sequence_invoke(Z_OBJ_P(getThis()), &nil);
+        ion_promisor_sequence_invoke(seq, &nil);
     } else if(count == 1) {
-        ion_promisor_sequence_invoke(Z_OBJ_P(getThis()), data);
+        ion_promisor_sequence_invoke(seq, data);
     } else {
-        ion_promisor_sequence_invoke_args(Z_OBJ_P(getThis()), data, count);
+        ion_promisor_sequence_invoke_args(seq, data, count);
     }
 }
 
@@ -67,10 +69,10 @@ CLASS_METHODS_START(ION_Sequence)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Sequence) {
-    pion_register_extended_class(ION_Sequence, ion_class_entry(ION_Promise), "ION\\Sequence", ion_sequence_init, CLASS_METHODS(ION_Sequence));
+    pion_register_extended_class(ION_Sequence, ion_ce_ION_Promise, "ION\\Sequence", ion_sequence_zend_init, CLASS_METHODS(ION_Sequence));
     pion_init_std_object_handlers(ION_Sequence);
-    pion_set_object_handler(ION_Sequence, free_obj, ion_promisor_free);
-    pion_set_object_handler(ION_Sequence, clone_obj, ion_promisor_clone_obj);
+    pion_set_object_handler(ION_Sequence, free_obj, ion_promisor_zend_free);
+    pion_set_object_handler(ION_Sequence, clone_obj, ion_promisor_zend_clone);
     ion_class_set_offset(ion_oh_ION_Sequence, ion_promisor);
 
     return SUCCESS;

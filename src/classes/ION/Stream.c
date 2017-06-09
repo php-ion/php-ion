@@ -215,7 +215,7 @@ void _ion_stream_input(ion_buffer * bev, void * ctx) {
         input = bufferevent_get_input(stream->buffer);
         if(stream->token) { // readLine()
             if(ion_stream_search_token(bufferevent_get_input(stream->buffer), stream->token) == FAILURE) {
-                ion_promisor_exception_eg(
+                ion_promisor_rethrow(
                         stream->read,
                         ion_ce_ION_StreamException,
                         "Stream corrupted: failed to read token from buffer", 0
@@ -293,7 +293,7 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
             } else { // readAll
                 zend_string * data = ion_stream_read(stream, ion_stream_input_length(stream));
                 if(!data) {
-                    ion_promisor_exception_eg(
+                    ion_promisor_rethrow(
                             stream->read,
                             ion_ce_ION_StreamException,
                             "Stream corrupted: failed to read data from buffer", 0

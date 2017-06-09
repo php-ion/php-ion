@@ -4,30 +4,30 @@ zend_object_handlers ion_oh_ION_Process_ChildProcess;
 zend_class_entry * ion_ce_ION_Process_ChildProcess;
 
 zend_object * ion_process_child_init(zend_class_entry * ce) {
-    ion_process_child * child = ecalloc(1, sizeof(ion_process_child));
+    ion_process_child * child = ion_alloc_object(ce, ion_process_child);
     child->exit_status = -1;
     child->ppid = getpid();
 
-    RETURN_INSTANCE(ION_Process_ChildProcess, child);
+    return ion_init_object(ION_OBJECT_ZOBJ(child), ce, &ion_oh_ION_Process_ChildProcess);
 }
 
 
 void ion_process_child_free(zend_object * object) {
     ion_process_child * child = get_object_instance(object, ion_process_child);
     if(child->prom_exit) {
-        zend_object_release(child->prom_exit);
+        ion_object_release(child->prom_exit);
         child->prom_exit = NULL;
     }
     if(child->prom_started) {
-        zend_object_release(child->prom_started);
+        ion_object_release(child->prom_started);
         child->prom_started = NULL;
     }
     if(child->ipc_parent) {
-        zend_object_release(ION_OBJ(child->ipc_parent));
+        ion_object_release(child->ipc_parent);
         child->ipc_parent = NULL;
     }
     if(child->ipc_child) {
-        zend_object_release(ION_OBJ(child->ipc_child));
+        ion_object_release(child->ipc_child);
         child->ipc_child = NULL;
     }
     if(child->on_start) {
@@ -52,17 +52,17 @@ void ion_process_child_spawn(ion_process_child * worker) {
     } else if(pid) { // in parent
         worker->flags |= ION_PROCESS_STARTED;
         worker->pid = pid;
-        zend_object_release(ION_OBJ(worker->ipc_child));
+        ion_object_release(worker->ipc_child);
         worker->ipc_child = NULL;
         bufferevent_enable(worker->ipc_parent->buffer, EV_READ | EV_WRITE);
-        zend_object_addref(ION_OBJ(worker));
-        ZVAL_OBJ(&w, ION_OBJ(worker));
+        ion_object_addref(worker);
+        ZVAL_OBJ(&w, ION_OBJECT_ZOBJ(worker));
         zend_hash_index_add(GION(proc_childs), (zend_ulong) pid, &w);
         if(worker->prom_started) {
             // use "weak" ref
             zval chld;
             ZVAL_NEW_EMPTY_REF(&chld);
-            ZVAL_OBJ(Z_REFVAL(chld), ION_OBJ(worker));
+            ZVAL_OBJ(Z_REFVAL(chld), ION_OBJECT_ZOBJ(worker));
             ion_promisor_done(worker->prom_started, &chld);
             zval_ptr_dtor(&chld);
         }
@@ -73,26 +73,26 @@ void ion_process_child_spawn(ion_process_child * worker) {
         }
 
         if(worker->on_start) {
-            ZVAL_OBJ(&ipc, ION_OBJ(worker->ipc_child));
+            ZVAL_OBJ(&ipc, ION_OBJECT_ZOBJ(worker->ipc_child));
             pion_cb_call_with_1_arg(worker->on_start, &ipc);
 
         }
-        zend_object_release(ION_OBJ(worker->ipc_child));
+        ion_object_release(worker->ipc_child);
         if(GION(parent_ipc)) {
-            zend_object_release(GION(parent_ipc));
-            GION(parent_ipc) = ION_OBJ(worker->ipc_parent);
-            zend_object_addref(GION(parent_ipc));
+            ion_object_release(GION(parent_ipc));
+            GION(parent_ipc) = worker->ipc_parent;
+            ion_object_addref(GION(parent_ipc));
         }
         bufferevent_enable(worker->ipc_child->buffer, EV_READ | EV_WRITE);
         worker->ipc_child = NULL;
-        zend_object_release(ION_OBJ(worker));
+        ion_object_release(worker);
 
     }
 }
 
 
 void ion_process_child_exit(zend_object * w, int status) {
-    ion_process_child * child = get_object_instance(w, ion_process_child);
+    ion_process_child * child = ION_ZOBJ_OBJECT(w, ion_process_child);
 
     if(child->ppid != getpid()) {
         return;
@@ -124,7 +124,7 @@ void ion_process_child_exit(zend_object * w, int status) {
 
 /** public function ION\Process\ChildProcess::__construct() : void */
 CLASS_METHOD(ION_Process_ChildProcess, __construct) {
-    ion_process_child * child = get_this_instance(ion_process_child);
+    ion_process_child * child = ION_THIS_OBJECT(ion_process_child);
     zval ipc_parent;
     zval ipc_child;
     zval context;
@@ -140,8 +140,8 @@ CLASS_METHOD(ION_Process_ChildProcess, __construct) {
         return;
     }
 
-    child->ipc_parent = get_object_instance(Z_OBJ(ipc_parent), ion_process_ipc);
-    child->ipc_child = get_object_instance(Z_OBJ(ipc_child), ion_process_ipc);
+    child->ipc_parent = ION_ZVAL_OBJECT(ipc_parent, ion_process_ipc);
+    child->ipc_child  = ION_ZVAL_OBJECT(ipc_child, ion_process_ipc);
     bufferevent_disable(child->ipc_parent->buffer, EV_READ | EV_WRITE);
     bufferevent_disable(child->ipc_child->buffer, EV_READ | EV_WRITE);
 
@@ -151,7 +151,7 @@ METHOD_WITHOUT_ARGS(ION_Process_ChildProcess, __construct);
 
 /** public function ION\Process\ChildProcess::getStartedTime() : float */
 CLASS_METHOD(ION_Process_ChildProcess, getStartedTime) {
-    ion_process_child * worker = get_this_instance(ion_process_child);
+    ion_process_child * worker = ION_THIS_OBJECT(ion_process_child);
 
     double time = worker->started_time.tv_sec;
     time += worker->started_time.tv_usec / 1e6;
@@ -163,7 +163,7 @@ METHOD_WITHOUT_ARGS(ION_Process_ChildProcess, getStartedTime);
 
 /** public function ION\Process\ChildProcess::getPID() : int */
 CLASS_METHOD(ION_Process_ChildProcess, getPID) {
-    ion_process_child * worker = get_this_instance(ion_process_child);
+    ion_process_child * worker = ION_THIS_OBJECT(ion_process_child);
     RETURN_LONG(worker->pid);
 }
 
@@ -171,7 +171,7 @@ METHOD_WITHOUT_ARGS(ION_Process_ChildProcess, getPID);
 
 /** public function ION\Process\ChildProcess::isAlive() : bool */
 CLASS_METHOD(ION_Process_ChildProcess, isAlive) {
-    ion_process_child * worker = get_this_instance(ion_process_child);
+    ion_process_child * worker = ION_THIS_OBJECT(ion_process_child);
     if((worker->flags & ION_PROCESS_FINISHED) || !(worker->flags & ION_PROCESS_STARTED)) {
         RETURN_FALSE;
     } else {
@@ -183,7 +183,7 @@ METHOD_WITHOUT_ARGS(ION_Process_ChildProcess, isAlive);
 
 /** public function ION\Process\ChildProcess::isFinished() : bool */
 CLASS_METHOD(ION_Process_ChildProcess, isFinished) {
-    ion_process_child * worker = get_this_instance(ion_process_child);
+    ion_process_child * worker = ION_THIS_OBJECT(ion_process_child);
     if(worker->flags & ION_PROCESS_FINISHED) {
         RETURN_TRUE;
     } else {
@@ -196,7 +196,7 @@ METHOD_WITHOUT_ARGS(ION_Process_ChildProcess, isFinished);
 
 /** public function ION\Process\ChildProcess::isSignaled() : bool */
 CLASS_METHOD(ION_Process_ChildProcess, isSignaled) {
-    ion_process_child * worker = get_this_instance(ion_process_child);
+    ion_process_child * worker = ION_THIS_OBJECT(ion_process_child);
     if(worker->flags & ION_PROCESS_SIGNALED) {
         RETURN_TRUE;
     } else {
@@ -208,7 +208,7 @@ METHOD_WITHOUT_ARGS(ION_Process_ChildProcess, isSignaled);
 
 /** public function ION\Process\ChildProcess::isStarted() : int */
 CLASS_METHOD(ION_Process_ChildProcess, isStarted) {
-    ion_process_child * worker = get_this_instance(ion_process_child);
+    ion_process_child * worker = ION_THIS_OBJECT(ion_process_child);
     if(worker->flags & ION_PROCESS_STARTED) {
         RETURN_TRUE;
     } else {
@@ -220,7 +220,7 @@ METHOD_WITHOUT_ARGS(ION_Process_ChildProcess, isStarted);
 
 /** public function ION\Process\ChildProcess::getSignal() : int */
 CLASS_METHOD(ION_Process_ChildProcess, getSignal) {
-    ion_process_child * worker = get_this_instance(ion_process_child);
+    ion_process_child * worker = ION_THIS_OBJECT(ion_process_child);
 
     RETURN_LONG(worker->signal);
 }
@@ -229,7 +229,7 @@ METHOD_WITHOUT_ARGS(ION_Process_ChildProcess, getSignal);
 
 /** public function ION\Process\ChildProcess::getExitStatus() : int */
 CLASS_METHOD(ION_Process_ChildProcess, getExitStatus) {
-    ion_process_child * worker = get_this_instance(ion_process_child);
+    ion_process_child * worker = ION_THIS_OBJECT(ion_process_child);
 
     RETURN_LONG(worker->exit_status);
 }
@@ -238,11 +238,11 @@ METHOD_WITHOUT_ARGS(ION_Process_ChildProcess, getExitStatus);
 
 /** public function ION\Process\ChildProcess::getIPC() : IPC */
 CLASS_METHOD(ION_Process_ChildProcess, getIPC) {
-    ion_process_child * worker = get_this_instance(ion_process_child);
+    ion_process_child * worker = ION_THIS_OBJECT(ion_process_child);
 
     if(worker->ipc_parent) {
-        zend_object_addref(ION_OBJ(worker->ipc_parent));
-        RETURN_OBJ(ION_OBJ(worker->ipc_parent));
+        ion_object_addref(worker->ipc_parent);
+        RETURN_ION_OBJ(worker->ipc_parent);
     } else {
         RETURN_NULL();
     }
@@ -252,26 +252,26 @@ METHOD_WITHOUT_ARGS(ION_Process_ChildProcess, getIPC);
 
 /** public function ION\Process\ChildProcess::whenExit() : ION\Promise */
 CLASS_METHOD(ION_Process_ChildProcess, whenExit) {
-    ion_process_child * worker = get_this_instance(ion_process_child);
+    ion_process_child * worker = ION_THIS_OBJECT(ion_process_child);
 
     if(!worker->prom_exit) {
         worker->prom_exit = ion_promisor_promise_new(NULL, NULL);
     }
-    zend_object_addref(worker->prom_exit);
-    RETURN_OBJ(worker->prom_exit);
+    ion_object_addref(worker->prom_exit);
+    RETURN_ION_OBJ(worker->prom_exit);
 }
 
 METHOD_WITHOUT_ARGS(ION_Process_ChildProcess, whenExit);
 
 /** public function ION\Process\ChildProcess::whenStarted() : ION|Promise */
 CLASS_METHOD(ION_Process_ChildProcess, whenStarted) {
-    ion_process_child * worker = get_this_instance(ion_process_child);
+    ion_process_child * worker = ION_THIS_OBJECT(ion_process_child);
 
     if(!worker->prom_started) {
         worker->prom_started = ion_promisor_promise_new(NULL, NULL);
     }
-    zend_object_addref(worker->prom_started);
-    RETURN_OBJ(worker->prom_started);
+    ion_object_addref(worker->prom_started);
+    RETURN_ION_OBJ(worker->prom_started);
 }
 
 METHOD_WITHOUT_ARGS(ION_Process_ChildProcess, whenStarted);
@@ -279,7 +279,7 @@ METHOD_WITHOUT_ARGS(ION_Process_ChildProcess, whenStarted);
 
 /** public function ION\Process\ChildProcess::start(callable $callback) : self */
 CLASS_METHOD(ION_Process_ChildProcess, start) {
-    ion_process_child * worker = get_this_instance(ion_process_child);
+    ion_process_child * worker = ION_THIS_OBJECT(ion_process_child);
     pion_cb * worker_spawn_method = NULL;
     zval * callback = NULL;
 
@@ -302,7 +302,7 @@ METHOD_WITHOUT_ARGS(ION_Process_ChildProcess, start);
 
 
 CLASS_METHOD(ION_Process_ChildProcess, _spawn) {
-    ion_process_child_spawn(get_this_instance(ion_process_child));
+    ion_process_child_spawn(ION_THIS_OBJECT(ion_process_child));
 }
 
 METHOD_WITHOUT_ARGS(ION_Process_ChildProcess, _spawn);
@@ -329,23 +329,15 @@ PHP_MINIT_FUNCTION(ION_Process_ChildProcess) {
     pion_init_std_object_handlers(ION_Process_ChildProcess);
     pion_set_object_handler(ION_Process_ChildProcess, free_obj, ion_process_child_free);
     pion_set_object_handler(ION_Process_ChildProcess, clone_obj, NULL);
+    ion_class_set_offset(ion_oh_ION_Process_ChildProcess, ion_process_child);
 
     return SUCCESS;
 }
 
 PHP_RINIT_FUNCTION(ION_Process_ChildProcess) {
-//    ALLOC_HASHTABLE(GION(workers));
-//    zend_hash_init(GION(workers), 128, NULL, zval_ptr_dtor_wrapper, 0);
     return SUCCESS;
 }
 
 PHP_RSHUTDOWN_FUNCTION(ION_Process_ChildProcess) {
-//    zend_hash_clean(GION(workers));
-//    zend_hash_destroy(GION(workers));
-//    FREE_HASHTABLE(GION(workers));
-
-//    if(GION(master)) {
-//        zend_object_release(GION(master));
-//    }
     return SUCCESS;
 }

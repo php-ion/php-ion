@@ -28,7 +28,7 @@ void ion_fs_pair_close_two(ion_buffer * two, short what, void * ctx) {
         ion_promisor_done_string(deferred, data, 0);
         zend_string_release(data);
     } else if(what &  BEV_EVENT_ERROR) {
-        ion_promisor_exception(deferred, ion_class_entry(ION_RuntimeException), ERR_ION_FS_READ_BROKEN_PIPE, 0);
+        ion_promisor_throw(deferred, ion_class_entry(ION_RuntimeException), ERR_ION_FS_READ_BROKEN_PIPE, 0);
     }
     bufferevent_disable(two, EV_READ);
     zend_object_release(deferred);
@@ -89,7 +89,7 @@ CLASS_METHOD(ION_FS, readFile) {
     evbuffer_set_flags(evbuffer, EVBUFFER_FLAG_DRAINS_TO_FD);
     if(evbuffer_add_file(evbuffer, fd, (ev_off_t)offset, (ev_off_t)length) == FAILURE) {
         close(fd);
-        ion_promisor_free(deferred);
+        ion_promisor_zend_free(deferred);
         zend_throw_exception(ion_class_entry(ION_RuntimeException), ERR_ION_FS_READ_SENDFILE_FAILED, 0);
         return;
     }

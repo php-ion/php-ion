@@ -4,6 +4,8 @@
 #ifndef ION_ZION_H
 #define ION_ZION_H
 
+#define ION_API
+
 /** Classes **/
 #define ion_class_set_offset(handler, struct_object) handler.offset  = (int)XtOffsetOf(struct_object, php_object);
 /** End Classes  **/
@@ -16,6 +18,13 @@ ION_API zend_object * ion_init_object(zend_object * php_object, zend_class_entry
 #define ION_ZVAL_OBJECT_P(pzv, struct_object) ION_ZOBJ_OBJECT(Z_OBJ_P(pzv), struct_object)
 #define ION_ZVAL_OBJECT(zv, struct_object) ION_ZOBJ_OBJECT(Z_OBJ(zv), struct_object)
 #define ION_THIS_OBJECT(struct_object) ION_ZVAL_OBJECT_P(getThis(), struct_object)
+#define RETURN_ION_OBJ(object) RETURN_OBJ(ION_OBJECT_ZOBJ(object))
+
+// same as zend_object_release() but only for ion objects
+#define ion_object_release(obj) zend_object_release(ION_OBJECT_ZOBJ(obj));
+#define ion_object_addref(obj) zend_object_addref(ION_OBJECT_ZOBJ(obj));
+
+#define
 /** End Objects **/
 
 #endif //ION_ZION_H

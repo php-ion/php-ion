@@ -27,7 +27,7 @@ CLASS_METHOD(ION_ResolvablePromise, done) {
         Z_PARAM_ZVAL(data)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    ion_promisor_done(Z_OBJ_P(getThis()), data);
+    ion_promisor_done(promise, data);
     RETURN_THIS();
 }
 
@@ -58,7 +58,7 @@ CLASS_METHOD(ION_ResolvablePromise, fail) {
         Z_PARAM_ZVAL(error)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    ion_promisor_fail(Z_OBJ_P(getThis()), error);
+    ion_promisor_fail(promise, error);
     RETURN_THIS();
 }
 
@@ -73,10 +73,10 @@ CLASS_METHODS_START(ION_ResolvablePromise)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_ResolvablePromise) {
-    pion_register_extended_class(ION_ResolvablePromise, ion_class_entry(ION_Promise), "ION\\ResolvablePromise", ion_promise_init, CLASS_METHODS(ION_ResolvablePromise));
+    pion_register_extended_class(ION_ResolvablePromise, ion_class_entry(ION_Promise), "ION\\ResolvablePromise", ion_promise_zend_init, CLASS_METHODS(ION_ResolvablePromise));
     pion_init_std_object_handlers(ION_ResolvablePromise);
-    pion_set_object_handler(ION_ResolvablePromise, free_obj, ion_promisor_free);
-    pion_set_object_handler(ION_ResolvablePromise, clone_obj, ion_promisor_clone_obj);
+    pion_set_object_handler(ION_ResolvablePromise, free_obj, ion_promisor_zend_free);
+    pion_set_object_handler(ION_ResolvablePromise, clone_obj, ion_promisor_zend_clone);
     ion_class_set_offset(ion_oh_ION_ResolvablePromise, ion_promisor);
     return SUCCESS;
 }

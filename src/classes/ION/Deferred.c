@@ -3,9 +3,10 @@
 zend_object_handlers ion_oh_ION_Deferred;
 zend_class_entry * ion_ce_ION_Deferred;
 
-zend_object * ion_deferred_init(zend_class_entry * ce) {
+zend_object * ion_deferred_zend_init(zend_class_entry * ce) {
     ion_promisor * deferred = ion_alloc_object(ce, ion_promisor);
     deferred->flags |= ION_PROMISOR_TYPE_DEFERRED;
+    ZVAL_UNDEF(&deferred->object);
     return ion_init_object(ION_OBJECT_ZOBJ(deferred), ce, &ion_oh_ION_Deferred);
 }
 
@@ -46,7 +47,7 @@ CLASS_METHOD(ION_Deferred, cancel) {
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_STR(message)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
-    ion_promisor_cancel(Z_OBJ_P(getThis()), message->val);
+    ion_promisor_cancel(deferred, message->val);
     RETURN_THIS();
 }
 
@@ -61,10 +62,10 @@ CLASS_METHODS_START(ION_Deferred)
 CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Deferred) {
-    pion_register_extended_class(ION_Deferred, ion_ce_ION_ResolvablePromise, "ION\\Deferred", ion_deferred_init, CLASS_METHODS(ION_Deferred));
+    pion_register_extended_class(ION_Deferred, ion_ce_ION_ResolvablePromise, "ION\\Deferred", ion_deferred_zend_init, CLASS_METHODS(ION_Deferred));
     pion_init_std_object_handlers(ION_Deferred);
-    pion_set_object_handler(ION_Deferred, free_obj, ion_promisor_free);
-    pion_set_object_handler(ION_Deferred, clone_obj, ion_promisor_clone_obj);
+    pion_set_object_handler(ION_Deferred, free_obj, ion_promisor_zend_free);
+    pion_set_object_handler(ION_Deferred, clone_obj, ion_promisor_zend_clone);
     ion_class_set_offset(ion_oh_ION_Deferred, ion_promisor);
 //    PION_REGISTER_EXTENDED_CLASS(ION_Deferred, ION_ResolvablePromise, "ION\\Deferred");
 //    CE(ION_Deferred)->ce_flags |= ZEND_ACC_FINAL_CLASS;

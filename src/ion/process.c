@@ -3,7 +3,7 @@
 
 void ion_process_sigchld(evutil_socket_t signal, short flags, void * arg) {
     ION_CB_BEGIN();
-    IONF("SIGCHLD received: check execs and workers");
+    IONF("SIGCHLD received: check execs and childs");
     int status;
     pid_t pid = waitpid(-1, &status, WNOHANG | WUNTRACED);
     zval * found = NULL;
@@ -37,7 +37,7 @@ void ion_process_exec_exit(zend_object * exec, int status) {
     zval result;
     zend_string * out;
     zend_string * err;
-    ion_process_exec * e = get_object_instance(exec, ion_process_exec);
+    ion_process_exec * e = ION_ZOBJ_OBJECT(exec, ion_process_exec);
 
 
     ZVAL_OBJ(&result, exec);
@@ -62,7 +62,7 @@ void ion_process_exec_exit(zend_object * exec, int status) {
         zend_string_release(err);
     }
     ion_promisor_done(e->deferred, &result);
-    zend_object_release(e->deferred);
+    ion_object_release(e->deferred);
     e->deferred = NULL;
     zval_ptr_dtor(&result);
 }
@@ -96,7 +96,7 @@ int ion_process_ipc_message_end(websocket_parser * parser) {
         zend_update_property_str(ion_class_entry(ION_Process_IPC_Message), &message, STRARGS("data"), zend_string_copy(ipc->frame_body));
         zend_update_property(ion_class_entry(ION_Process_IPC_Message), &message, STRARGS("context"), &ipc->ctx);
 
-        ion_promisor_sequence_invoke(ipc->on_message, &message);
+        ion_promisor_done(ipc->on_message, &message);
 
         zval_ptr_dtor(&ipc->ctx);
         zend_string_release(ipc->frame_body);

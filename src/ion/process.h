@@ -2,7 +2,7 @@
 #define ION_CORE_PROCESS_H
 
 #include <deps/websocket-parser/websocket_parser.h>
-#include "callback.h"
+#include "init.h"
 
 BEGIN_EXTERN_C();
 
@@ -18,14 +18,16 @@ extern ION_API struct passwd * ion_get_pw_by_zval(zval * zuser);
 
 // IPC object instance
 typedef struct _ion_process_ipc {
-    zend_object   std;
-    uint32_t      flags;
-    zval          ctx;
-    ion_buffer  * buffer;
-    zend_object * on_message;
-    zend_object * on_disconnect;
+//    zend_object   std;
+    uint32_t       flags;
+    zval           ctx;
+    ion_buffer   * buffer;
+    ion_promisor * on_message;
+    ion_promisor * on_disconnect;
     websocket_parser * parser;
-    zend_string * frame_body;
+    zend_string  * frame_body;
+
+    zend_object    php_object;
 } ion_process_ipc;
 
 
@@ -42,31 +44,40 @@ enum ion_process_flags {
 };
 
 typedef struct _ion_process_exec {
-    zend_object   std;
+//    zend_object   std;
     uint          flags;
     pid_t         pid;
-    ion_buffer  * out;
-    ion_buffer  * err;
-    ion_buffer  * in;
-    zend_object * deferred;
-    int           cancel_signal;
+    ion_buffer   * out;
+    ion_buffer   * err;
+    ion_buffer   * in;
+    ion_promisor * deferred;
+    int            cancel_signal;
+
+    zend_object    php_object;
 } ion_process_exec;
 
 typedef struct _ion_process_child {
-    zend_object   std;
-    uint          flags;
-    pid_t         pid;
-    pid_t         ppid; // parent pid for validation
-    int           exit_status;
-    ion_time      started_time;
+//    zend_object   std;
+    uint           flags;
+    pid_t          pid;
+    pid_t          ppid; // parent pid for validation
+    int            exit_status;
+    ion_time       started_time;
     ion_process_ipc * ipc_parent;
     ion_process_ipc * ipc_child;
-    int           signal;
-    pion_cb     * on_start;
-    zend_object * prom_exit;
-    zend_object * prom_started;
+    int            signal;
+    pion_cb      * on_start;
+    ion_promisor * prom_exit;
+    ion_promisor * prom_started;
+
+    zend_object   php_object;
 } ion_process_child;
 
+typedef struct _ion_process_signal {
+    zend_long      signo;
+    ion_event    * event;
+    ion_promisor * sequence;
+} ion_process_signal;
 
 #define ION_IPC_CONNECTED 0x1
 #define ION_IPC_CTX_RELEASE 0x2
@@ -75,22 +86,18 @@ typedef struct _ion_process_child {
 // reserve
 //#define ION_IPC_STREAM  WS_OP_TEXT
 //#define ION_IPC_FD      WS_OP_BINARY
-// WS_OP_CLOSE    = 0x8,
-// WS_OP_PING     = 0x9,
-//#define ION_IPC_LISTENER  0x10
-// WS_OP_PONG     = 0xA,
 
 // marks
 #define ION_IPC_FIN  WS_FINAL_FRAME
 
-#define ion_process_exec_object(pz) object_init_ex(pz, ion_ce_ION_Process_Exec)
-#define ion_process_is_exec(obj) (get_object_instance(obj, ion_process_child)->flags & ION_PROCESS_EXEC)
+//#define ion_process_exec_object(pz) object_init_ex(pz, ion_ce_ION_Process_Exec)
+//#define ion_process_is_exec(obj) (get_object_instance(obj, ion_process_child)->flags & ION_PROCESS_EXEC)
 
 void ion_process_sigchld(evutil_socket_t signal, short flags, void * arg);
 void ion_process_exec_exit(zend_object * exec, int status);
 void ion_process_child_exit(zend_object * worker, int status);
 
-// IPC
+// IPC via websocket protocol
 int ion_process_ipc_message_begin(websocket_parser * parser);
 int ion_process_ipc_message_body(websocket_parser * parser, const char * at, size_t length);
 int ion_process_ipc_message_end(websocket_parser * parser);
