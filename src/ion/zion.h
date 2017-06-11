@@ -8,6 +8,13 @@
 
 /** Classes **/
 #define ion_class_set_offset(handler, struct_object) handler.offset  = (int)XtOffsetOf(struct_object, php_object);
+
+#define ion_class_declare_property_long(ce, prop_name, value, access) \
+    zend_declare_property_long(ce, prop_name, sizeof(prop_name)-1, (long)value, access)
+#define ion_class_declare_property_string(ce, prop_name, value, access) \
+    zend_declare_property_string(ce, prop_name, sizeof(prop_name)-1, (long)value, access)
+#define ion_class_declare_property_bool(ce, prop_name, value, access) \
+    zend_declare_property_bool(ce, prop_name, sizeof(prop_name)-1, (long)value, access)
 /** End Classes  **/
 
 /** Objects  **/
