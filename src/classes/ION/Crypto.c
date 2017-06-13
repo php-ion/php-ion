@@ -35,16 +35,14 @@ zend_object_handlers   ion_oh_ION_CryptoException;
 #endif
 #endif
 
-ION_API SSL * ion_crypto_server_stream_handler(zend_object * ssl) {
-    ion_crypto * issl = get_object_instance(ssl, ion_crypto);
+ION_API SSL * ion_crypto_server_stream_handler(ion_crypto * issl) {
     if(!(issl->flags & ION_CRYPTO_IS_CLIENT)) {
         return SSL_new(issl->ctx);
     }
     return NULL;
 }
 
-ION_API SSL * ion_crypto_client_stream_handler(zend_object * ssl) {
-    ion_crypto * issl = get_object_instance(ssl, ion_crypto);
+ION_API SSL * ion_crypto_client_stream_handler(ion_crypto * issl) {
     if(issl->flags & ION_CRYPTO_IS_CLIENT) {
         return SSL_new(issl->ctx);
     }
@@ -57,7 +55,7 @@ static const SSL_METHOD * ion_crypto_select_crypto_method(zend_long method_value
 #ifdef HAVE_SSL2
         return is_client ? (SSL_METHOD *)SSLv2_client_method() : (SSL_METHOD *)SSLv2_server_method();
 #else
-        zend_throw_exception(ion_ce_ION_CryptoException, "SSLv2 unavailable in the OpenSSL library against which PHP is linked", 0);
+        zend_throw_exception(ion_ce_ION_CryptoException, ERR_ION_CRYPTO_SSL2_DISABLED, 0);
         return NULL;
 #endif
     } else if (method_value == ION_CRYPTO_METHOD_SSLv3) {
@@ -84,7 +82,7 @@ static const SSL_METHOD * ion_crypto_select_crypto_method(zend_long method_value
         return NULL;
 #endif
     } else {
-        zend_throw_exception(ion_ce_ION_CryptoException, "Invalid crypto method", 0);
+        zend_throw_exception(ion_ce_ION_CryptoException, ERR_ION_CRYPTO_INVALID_METHOD, 0);
         return NULL;
     }
 }
@@ -164,13 +162,13 @@ static int ion_crypto_passwd_cb(char * buf, int num, int verify, void * data) {
 }
 
 zend_object * ion_crypto_init(zend_class_entry * ce) {
-    ion_crypto * ssl = ecalloc(1, sizeof(ion_crypto));
+    ion_crypto * ssl = ion_alloc_object(ce, ion_crypto);
     ssl->verify_depth = -1;
-    RETURN_INSTANCE(ION_Crypto, ssl);
+    return ion_init_object(ION_OBJECT_ZOBJ(ssl), ce, &ion_oh_ION_Crypto);
 }
 
 void ion_crypto_free(zend_object * object) {
-    ion_crypto * ssl = get_object_instance(object, ion_crypto);
+    ion_crypto * ssl = ION_ZOBJ_OBJECT(object, ion_crypto);
     if(ssl->ctx) {
         SSL_CTX_free(ssl->ctx);
         ssl->ctx = NULL;
@@ -191,7 +189,7 @@ zend_object * ion_crypto_factory(zend_long flags) {
     const SSL_METHOD * method;
 
     object_init_ex(&zssl, ion_ce_ION_Crypto);
-    ssl = get_instance(&zssl, ion_crypto);
+    ssl = ION_ZVAL_OBJECT(zssl, ion_crypto);
     ssl->flags |= flags;
 
     if (has_one_bit(crypt_method)) { // use a specific crypto method
@@ -199,7 +197,7 @@ zend_object * ion_crypto_factory(zend_long flags) {
         method = ion_crypto_select_crypto_method(crypt_method, is_client);
         if (method == NULL) {
             if(!EG(exception)) {
-                zend_throw_exception(ion_ce_ION_CryptoException, "Invalid crypt method", 0);
+                zend_throw_exception(ion_ce_ION_CryptoException, ERR_ION_CRYPTO_INVALID_METHOD, 0);
             }
             return NULL;
         }
@@ -208,11 +206,11 @@ zend_object * ion_crypto_factory(zend_long flags) {
         ssl_ctx_options = SSL_OP_ALL;
         ssl_ctx_options = ion_crypto_get_crypto_method_ctx_flags(crypt_method);
         if (ssl_ctx_options == -1) {
-            zend_throw_exception(ion_ce_ION_CryptoException, "Invalid crypt method", 0);
+            zend_throw_exception(ion_ce_ION_CryptoException, ERR_ION_CRYPTO_INVALID_METHOD, 0);
             return NULL;
         }
     } else {
-        zend_throw_exception(ion_ce_InvalidArgumentException, "No method is specified", 0);
+        zend_throw_exception(ion_ce_InvalidArgumentException, ERR_ION_CRYPTO_NO_METHOD, 0);
         return NULL;
     }
 #if OPENSSL_VERSION_NUMBER >= 0x10001001L
@@ -224,7 +222,7 @@ zend_object * ion_crypto_factory(zend_long flags) {
 
     if (ssl->ctx == NULL) {
         zval_ptr_dtor(&zssl);
-        zend_throw_exception(ion_ce_ION_CryptoException, "SSL/TLS context creation failure", 0);
+        zend_throw_exception(ion_ce_ION_CryptoException, ERR_ION_CRYPTO_INIT_FAILED, 0);
         return NULL;
     }
 
@@ -240,8 +238,7 @@ zend_object * ion_crypto_factory(zend_long flags) {
     SSL_CTX_set_verify(ssl->ctx, SSL_VERIFY_PEER, ion_crypto_verify_cb);
 
     if ((ssl->flags & ION_CRYPTO_IS_CLIENT) && !SSL_CTX_set_default_verify_paths(ssl->ctx)) {
-        zend_throw_exception(ion_ce_ION_CryptoException,
-                             "Unable to set default verify locations", 0);
+        zend_throw_exception(ion_ce_ION_CryptoException, ERR_ION_CRYPTO_DEF_VERIFY_FAILED, 0);
         return NULL;
     }
 
@@ -295,7 +292,7 @@ METHOD_WITHOUT_ARGS(ION_Crypto, __construct)
 
 CLASS_METHOD(ION_Crypto, ticket) {
     zend_bool   status = 0;
-    ion_crypto * ssl = get_this_instance(ion_crypto);
+    ion_crypto * ssl = ION_THIS_OBJECT(ion_crypto);
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
         Z_PARAM_OPTIONAL
@@ -319,7 +316,7 @@ METHOD_ARGS_END()
 
 CLASS_METHOD(ION_Crypto, compression) {
     zend_bool   status = 0;
-    ion_crypto * ssl = get_this_instance(ion_crypto);
+    ion_crypto * ssl = ION_THIS_OBJECT(ion_crypto);
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
         Z_PARAM_OPTIONAL
@@ -344,7 +341,7 @@ METHOD_ARGS_END()
 /* public function ION\SSL::verifyPeer(bool $status = true) : self */
 CLASS_METHOD(ION_Crypto, verifyPeer) {
     zend_bool   status = 0;
-    ion_crypto * ssl = get_this_instance(ion_crypto);
+    ion_crypto * ssl = ION_THIS_OBJECT(ion_crypto);
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
         Z_PARAM_OPTIONAL
@@ -367,7 +364,7 @@ METHOD_ARGS_END()
 /* public function ION\SSL::verifyDepth(int $depth = -1) : self */
 CLASS_METHOD(ION_Crypto, verifyDepth) {
     zend_long   depth = -1;
-    ion_crypto * ssl = get_this_instance(ion_crypto);
+    ion_crypto * ssl = ION_THIS_OBJECT(ion_crypto);
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
         Z_PARAM_OPTIONAL
@@ -387,7 +384,7 @@ METHOD_ARGS_END()
 CLASS_METHOD(ION_Crypto, localCert) {
     zend_string * local_cert = NULL;
     zend_string * local_pk = NULL;
-    ion_crypto * ssl = get_this_instance(ion_crypto);
+    ion_crypto * ssl = ION_THIS_OBJECT(ion_crypto);
 
     ZEND_PARSE_PARAMETERS_START(1,2)
         Z_PARAM_STR(local_cert)
@@ -405,26 +402,23 @@ CLASS_METHOD(ION_Crypto, localCert) {
         }
         /* a certificate to use for authentication */
         if (SSL_CTX_use_certificate_chain_file(ssl->ctx, resolved_path_buff) != 1) {
-            zend_throw_exception_ex(ion_ce_ION_CryptoException, 0,
-                "Unable to set local cert chain file '%s'; Check that your cafile/capath settings include details of your certificate and its issuer", local_cert->val);
+            zend_throw_exception_ex(ion_ce_ION_CryptoException, 0, ERR_ION_CRYPTO_CERT_CHAIN_FAILED, local_cert->val);
             return;
         }
         if (local_pk) {
             char resolved_path_buff_pk[MAXPATHLEN];
             if (VCWD_REALPATH(local_pk->val, resolved_path_buff_pk)) {
                 if (SSL_CTX_use_PrivateKey_file(ssl->ctx, resolved_path_buff_pk, SSL_FILETYPE_PEM) != 1) {
-                    zend_throw_exception_ex(ion_ce_ION_CryptoException,0,
-                        "Unable to set private key file '%s'%s", resolved_path_buff_pk,
-                        (ssl->flags & ION_CRYPTO_PASSPHRASE_REQUESTED) ? " (passphrase required; set passphrase before)" : ""
+                    zend_throw_exception_ex(ion_ce_ION_CryptoException,0, ERR_ION_CRYPTO_PKEY_FAILED, resolved_path_buff_pk,
+                        (ssl->flags & ION_CRYPTO_PASSPHRASE_REQUESTED) ? ERR_ION_CRYPTO_PKEY_FAILED_PASSPHRASE : ""
                     );
                     return;
                 }
             }
         } else {
             if (SSL_CTX_use_PrivateKey_file(ssl->ctx, resolved_path_buff, SSL_FILETYPE_PEM) != 1) {
-                zend_throw_exception_ex(ion_ce_ION_CryptoException, 0,
-                    "Unable to set private key file '%s'%s", resolved_path_buff,
-                    (ssl->flags & ION_CRYPTO_PASSPHRASE_REQUESTED) ? " (passphrase required; set passphrase before)" : ""
+                zend_throw_exception_ex(ion_ce_ION_CryptoException, 0, ERR_ION_CRYPTO_PKEY_FAILED, resolved_path_buff,
+                    (ssl->flags & ION_CRYPTO_PASSPHRASE_REQUESTED) ? ERR_ION_CRYPTO_PKEY_FAILED_PASSPHRASE: ""
                 );
                 return;
             }
@@ -447,7 +441,7 @@ CLASS_METHOD(ION_Crypto, localCert) {
 			} while (0);
 #endif
         if (!SSL_CTX_check_private_key(ssl->ctx)) {
-            zend_throw_exception(ion_ce_ION_CryptoException, "Private key does not match certificate!", 0);
+            zend_throw_exception(ion_ce_ION_CryptoException, ERR_ION_CRYPTO_PKEY_MISSED, 0);
             return;
         }
     }
@@ -463,7 +457,7 @@ METHOD_ARGS_END()
 /* public function ION\SSL::passPhrase(string $phrase) : self */
 CLASS_METHOD(ION_Crypto, passPhrase) {
     zend_string * phrase = NULL;
-    ion_crypto * ssl = get_this_instance(ion_crypto);
+    ion_crypto * ssl = ION_THIS_OBJECT(ion_crypto);
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_STR(phrase)
@@ -490,7 +484,7 @@ METHOD_ARGS_END()
 /* public function ION\SSL::allowSelfSigned(bool $state = true) : self */
 CLASS_METHOD(ION_Crypto, allowSelfSigned) {
     zend_bool   state = true;
-    ion_crypto * ssl = get_this_instance(ion_crypto);
+    ion_crypto * ssl = ION_THIS_OBJECT(ion_crypto);
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
         Z_PARAM_OPTIONAL
@@ -516,7 +510,7 @@ CLASS_METHOD(ION_Crypto, ca) {
     zend_string * capath = NULL;
     char * cafile_str = NULL;
     char * capath_str = NULL;
-    ion_crypto * ssl = get_this_instance(ion_crypto);
+    ion_crypto * ssl = ION_THIS_OBJECT(ion_crypto);
 
     ZEND_PARSE_PARAMETERS_START(0, 2)
         Z_PARAM_OPTIONAL
@@ -532,7 +526,7 @@ CLASS_METHOD(ION_Crypto, ca) {
             if (cert_names != NULL) {
                 SSL_CTX_set_client_CA_list(ssl->ctx, cert_names);
             } else {
-                zend_throw_exception_ex(ion_ce_ION_CryptoException, 0, "Failed loading CA names from cafile %s", cafile->val);
+                zend_throw_exception_ex(ion_ce_ION_CryptoException, 0, ERR_ION_CRYPTO_CAFILE_FAILED, cafile->val);
                 return;
             }
         }
@@ -544,7 +538,7 @@ CLASS_METHOD(ION_Crypto, ca) {
 
     if (cafile || capath) {
         if (!SSL_CTX_load_verify_locations(ssl->ctx, cafile_str, capath_str)) {
-            zend_throw_exception_ex(ion_ce_ION_CryptoException, 0, "Unable to load verify locations %s, %s", cafile_str, capath_str);
+            zend_throw_exception_ex(ion_ce_ION_CryptoException, 0, ERR_ION_CRYPTO_LOAD_VERIFY_FAILED, cafile_str, capath_str);
             return;
         }
     }
@@ -582,7 +576,7 @@ PHP_MINIT_FUNCTION(ION_Crypto) {
     OpenSSL_add_all_algorithms();
     /* We MUST have entropy, or else there's no point to crypto. */
     if (!RAND_poll()) {
-        zend_error(E_ERROR, "Crypto: failed to generate entropy");
+        zend_error(E_ERROR, ERR_ION_CRYPTO_ENTROPY_FAILED);
         return FAILURE;
     }
 
@@ -592,6 +586,7 @@ PHP_MINIT_FUNCTION(ION_Crypto) {
     pion_init_std_object_handlers(ION_Crypto);
     pion_set_object_handler(ION_Crypto, free_obj, ion_crypto_free);
     pion_set_object_handler(ION_Crypto, clone_obj, NULL);
+    ion_class_set_offset(ion_oh_ION_Crypto, ion_crypto);
 
 #ifdef HAVE_SSL2
     methods |= ION_CRYPTO_METHOD_SSLv2;

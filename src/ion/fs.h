@@ -19,13 +19,13 @@ extern ION_API zend_class_entry * ion_ce_ION_FSException;
 //         https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man2/kqueue.2.html#//apple_ref/c/func/kqueue
 //         https://developer.apple.com/library/mac/documentation/Darwin/Conceptual/FSEvents_ProgGuide/KernelQueues/KernelQueues.html
 
-typedef struct _ion_fs_watcher {
+struct _ion_fs_watcher {
     zend_object * sequence;
     zend_string * pathname;
     int           flags;
     int           fd;
     ion_event   * event;
-} ion_fs_watcher;
+};
 
 #ifdef HAVE_INOTIFY
 # include <sys/inotify.h>

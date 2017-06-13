@@ -17,8 +17,7 @@ extern ION_API struct passwd * ion_get_pw_by_zval(zval * zuser);
 
 
 // IPC object instance
-typedef struct _ion_process_ipc {
-//    zend_object   std;
+struct _ion_process_ipc {
     uint32_t       flags;
     zval           ctx;
     ion_buffer   * buffer;
@@ -28,7 +27,7 @@ typedef struct _ion_process_ipc {
     zend_string  * frame_body;
 
     zend_object    php_object;
-} ion_process_ipc;
+};
 
 
 enum ion_process_flags {
@@ -43,7 +42,7 @@ enum ion_process_flags {
     ION_PROCESS_FINISHED     = ION_PROCESS_DONE | ION_PROCESS_FAILED | ION_PROCESS_SIGNALED | ION_PROCESS_ABORT,
 };
 
-typedef struct _ion_process_exec {
+struct _ion_process_exec {
 //    zend_object   std;
     uint          flags;
     pid_t         pid;
@@ -54,9 +53,9 @@ typedef struct _ion_process_exec {
     int            cancel_signal;
 
     zend_object    php_object;
-} ion_process_exec;
+};
 
-typedef struct _ion_process_child {
+struct _ion_process_child {
 //    zend_object   std;
     uint           flags;
     pid_t          pid;
@@ -71,13 +70,13 @@ typedef struct _ion_process_child {
     ion_promisor * prom_started;
 
     zend_object   php_object;
-} ion_process_child;
+};
 
-typedef struct _ion_process_signal {
+struct _ion_process_signal {
     zend_long      signo;
     ion_event    * event;
     ion_promisor * sequence;
-} ion_process_signal;
+};
 
 #define ION_IPC_CONNECTED 0x1
 #define ION_IPC_CTX_RELEASE 0x2

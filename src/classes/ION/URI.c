@@ -5,12 +5,12 @@ zend_object_handlers ion_oh_ION_URI;
 zend_class_entry * ion_ce_ION_URI;
 
 zend_object * ion_uri_init(zend_class_entry * ce) {
-    ion_uri * theuri = ecalloc(1, sizeof(ion_uri));
-    RETURN_INSTANCE(ION_URI, theuri);
+    ion_uri * theuri = ion_alloc_object(ce, ion_uri);
+    return ion_init_object(ION_OBJECT_ZOBJ(theuri), ce, &ion_oh_ION_URI);
 }
 
 void ion_uri_free(zend_object * object) {
-    ion_uri * theuri = get_object_instance(object, ion_uri);
+    ion_uri * theuri = ION_ZOBJ_OBJECT(object, ion_uri);
     zend_object_std_dtor(object);
     if(theuri->scheme) {
         zend_string_release(theuri->scheme);
@@ -35,8 +35,7 @@ void ion_uri_free(zend_object * object) {
     }
 }
 
-zend_string * ion_uri_stringify(zend_object * uri, unsigned short parts) {
-    ion_uri     * theuri = get_object_instance(uri, ion_uri);
+zend_string * ion_uri_stringify(ion_uri * theuri, unsigned short parts) {
     zend_string * buf;
     size_t        length = 0;
     size_t        pos = 0;
@@ -129,7 +128,7 @@ zend_string * ion_uri_stringify(zend_object * uri, unsigned short parts) {
 /**
  * uri_string may be NULL
  */
-zend_object * ion_uri_parse(zend_string * uri_string) {
+ion_uri * ion_uri_parse(zend_string * uri_string) {
     zend_object * uri_object = NULL;
     ion_uri     * uri = NULL;
     php_url     * parsed_url = NULL;
@@ -137,12 +136,12 @@ zend_object * ion_uri_parse(zend_string * uri_string) {
     if(uri_string) {
         parsed_url = php_url_parse_ex(uri_string->val, uri_string->len);
         if(!parsed_url) {
-            zend_throw_exception(ion_ce_InvalidArgumentException, "URI could not be parsed", 0);
+            zend_throw_exception(ion_ce_InvalidArgumentException, ERR_ION_URI_PARSE_FAILED, 0);
             return NULL;
         }
     }
     uri_object = pion_new_object_arg_0(ion_ce_ION_URI);
-    uri = get_object_instance(uri_object, ion_uri);
+    uri = ION_ZOBJ_OBJECT(uri_object, ion_uri);
     if(uri_string) {
         if(parsed_url->scheme) {
             uri->scheme = zend_string_init(parsed_url->scheme, strlen(parsed_url->scheme), 0);
@@ -176,13 +175,13 @@ zend_object * ion_uri_parse(zend_string * uri_string) {
 }
 
 zend_object * ion_uri_clone(zend_object * proto_obj) {
-    ion_uri * proto = get_object_instance(proto_obj, ion_uri);
-    ion_uri * clone = ecalloc(1, sizeof(ion_uri));
+    ion_uri * proto = ION_ZOBJ_OBJECT(proto_obj, ion_uri);
+    ion_uri * clone = ion_alloc_object(proto->php_object.ce, ion_uri);
 
-    zend_object_std_init(&clone->std, proto->std.ce);
-    object_properties_init(&clone->std, proto->std.ce);
-    clone->std.handlers = proto->std.handlers;
-    zend_object * clone_obj = &clone->std;
+//    zend_object_std_init(&clone->std, proto->std.ce);
+//    object_properties_init(&clone->std, proto->std.ce);
+    clone->php_object.handlers = proto->php_object.handlers;
+    zend_object * clone_obj = &clone->php_object;
     zend_objects_clone_members(clone_obj, proto_obj);
 
     if(proto->scheme) {
@@ -218,7 +217,7 @@ zend_object * ion_uri_clone_handler(zval * object) {
 }
 
 CLASS_METHOD(ION_URI, parse) {
-    zend_object * uri_object = NULL;
+    ion_uri * uri_object = NULL;
     zend_string * uri_string = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
@@ -227,7 +226,7 @@ CLASS_METHOD(ION_URI, parse) {
 
     uri_object = ion_uri_parse(uri_string);
     if(uri_object) {
-        RETURN_OBJ(uri_object);
+        RETURN_ION_OBJ(uri_object);
     }
 }
 
@@ -261,7 +260,7 @@ CLASS_METHOD(ION_URI, factory) {
     if(!uri) {
         return;
     }
-    theuri = get_object_instance(uri, ion_uri);
+    theuri = ION_ZOBJ_OBJECT(uri, ion_uri);
     if(options) {
         ZEND_HASH_FOREACH_NUM_KEY_VAL(options, opt, option) {
             switch (opt) {
@@ -306,7 +305,7 @@ METHOD_ARGS_END();
 
 
 CLASS_METHOD(ION_URI, hasScheme) {
-    ion_uri * uri = get_this_instance(ion_uri);
+    ion_uri * uri = ION_THIS_OBJECT(ion_uri);
     if(uri->scheme) {
         RETURN_TRUE;
     } else {
@@ -317,7 +316,7 @@ CLASS_METHOD(ION_URI, hasScheme) {
 METHOD_WITHOUT_ARGS(ION_URI, hasScheme);
 
 CLASS_METHOD(ION_URI, getScheme) {
-    ion_uri * uri = get_this_instance(ion_uri);
+    ion_uri * uri = ION_THIS_OBJECT(ion_uri);
     if(uri->scheme) {
         RETURN_STR(zend_string_copy(uri->scheme));
     } else {
@@ -337,7 +336,7 @@ CLASS_METHOD(ION_URI, withScheme) {
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     uri = ion_uri_clone(Z_OBJ_P(getThis()));
-    theuri = get_object_instance(uri, ion_uri);
+    theuri = ION_ZOBJ_OBJECT(uri, ion_uri);
 
     if(theuri->scheme) {
         zend_string_release(theuri->scheme);
@@ -352,9 +351,9 @@ METHOD_ARGS_BEGIN(ION_URI, withScheme, 1)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_URI, getAuthority) {
-    ion_uri * theuri = get_this_instance(ion_uri);
+    ion_uri * theuri = ION_THIS_OBJECT(ion_uri);
     if(theuri->host) {
-        RETURN_STR(ion_uri_stringify(Z_OBJ_P(getThis()), URI_USER_NAME | URI_USER_PASS | URI_HOST | URI_PORT));
+        RETURN_STR(ion_uri_stringify(theuri, URI_USER_NAME | URI_USER_PASS | URI_HOST | URI_PORT));
     } else {
         RETURN_EMPTY_STRING();
     }
@@ -363,11 +362,11 @@ CLASS_METHOD(ION_URI, getAuthority) {
 METHOD_WITHOUT_ARGS(ION_URI, getAuthority);
 
 CLASS_METHOD(ION_URI, hasUserInfo) {
-    ion_uri * uri = get_this_instance(ion_uri);
+    ion_uri * uri = ION_THIS_OBJECT(ion_uri);
     if(uri->user) {
         RETURN_TRUE;
     } else {
-        RETURN_FALSE
+        RETURN_FALSE;
     }
 }
 
@@ -375,7 +374,7 @@ METHOD_WITHOUT_ARGS(ION_URI, hasUserInfo);
 
 
 CLASS_METHOD(ION_URI, getUserInfo) {
-    ion_uri     * theuri = get_this_instance(ion_uri);
+    ion_uri     * theuri = ION_THIS_OBJECT(ion_uri);
     zend_string * buff = NULL;
     if(theuri->user) {
         if(theuri->pass) {
@@ -383,7 +382,7 @@ CLASS_METHOD(ION_URI, getUserInfo) {
             if(buff) {
                 RETURN_STR(buff);
             } else {
-                zend_throw_exception(ion_ce_RuntimeException, "Failed to generate user info", 0);
+                zend_throw_exception(ion_ce_RuntimeException, ERR_ION_URI_USER_INFO_FAILED, 0);
                 return;
             }
         } else {
@@ -397,7 +396,7 @@ CLASS_METHOD(ION_URI, getUserInfo) {
 METHOD_WITHOUT_ARGS(ION_URI, getUserInfo);
 
 CLASS_METHOD(ION_URI, getUserName) {
-    ion_uri * theuri = get_this_instance(ion_uri);
+    ion_uri * theuri = ION_THIS_OBJECT(ion_uri);
     if(theuri->user) {
         RETURN_STR(zend_string_copy(theuri->user));
     } else {
@@ -408,7 +407,7 @@ CLASS_METHOD(ION_URI, getUserName) {
 METHOD_WITHOUT_ARGS(ION_URI, getUserName);
 
 CLASS_METHOD(ION_URI, hasUserPassword) {
-    ion_uri * uri = get_this_instance(ion_uri);
+    ion_uri * uri = ION_THIS_OBJECT(ion_uri);
     if(uri->pass) {
         RETURN_TRUE;
     } else {
@@ -419,7 +418,7 @@ CLASS_METHOD(ION_URI, hasUserPassword) {
 METHOD_WITHOUT_ARGS(ION_URI, hasUserPassword);
 
 CLASS_METHOD(ION_URI, getUserPassword) {
-    ion_uri * theuri = get_this_instance(ion_uri);
+    ion_uri * theuri = ION_THIS_OBJECT(ion_uri);
     if(theuri->pass) {
         RETURN_STR(zend_string_copy(theuri->pass));
     } else {
@@ -442,7 +441,7 @@ CLASS_METHOD(ION_URI, withUserInfo) {
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     uri = ion_uri_clone(Z_OBJ_P(getThis()));
-    theuri = get_object_instance(uri, ion_uri);
+    theuri = ION_ZOBJ_OBJECT(uri, ion_uri);
 
     if(theuri->user) {
         zend_string_release(theuri->user);
@@ -466,7 +465,7 @@ METHOD_ARGS_END();
 
 
 CLASS_METHOD(ION_URI, hasHost) {
-    ion_uri * theuri = get_this_instance(ion_uri);
+    ion_uri * theuri = ION_THIS_OBJECT(ion_uri);
     if(theuri->host) {
         RETURN_TRUE;
     } else {
@@ -477,7 +476,7 @@ CLASS_METHOD(ION_URI, hasHost) {
 METHOD_WITHOUT_ARGS(ION_URI, hasHost);
 
 CLASS_METHOD(ION_URI, getHost) {
-    ion_uri * theuri = get_this_instance(ion_uri);
+    ion_uri * theuri = ION_THIS_OBJECT(ion_uri);
     if(theuri->host) {
         RETURN_STR(zend_string_copy(theuri->host));
     } else {
@@ -497,7 +496,7 @@ CLASS_METHOD(ION_URI, withHost) {
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     uri = ion_uri_clone(Z_OBJ_P(getThis()));
-    theuri = get_object_instance(uri, ion_uri);
+    theuri = ION_ZOBJ_OBJECT(uri, ion_uri);
 
     if(theuri->host) {
         zend_string_release(theuri->host);
@@ -513,7 +512,7 @@ METHOD_ARGS_END();
 
 
 CLASS_METHOD(ION_URI, hasPort) {
-    ion_uri * theuri = get_this_instance(ion_uri);
+    ion_uri * theuri = ION_THIS_OBJECT(ion_uri);
     if(theuri->port) {
         RETURN_TRUE;
     } else {
@@ -524,7 +523,7 @@ CLASS_METHOD(ION_URI, hasPort) {
 METHOD_WITHOUT_ARGS(ION_URI, hasPort);
 
 CLASS_METHOD(ION_URI, getPort) {
-    ion_uri * theuri = get_this_instance(ion_uri);
+    ion_uri * theuri = ION_THIS_OBJECT(ion_uri);
     if(theuri->port) {
         RETURN_LONG(theuri->port);
     } else {
@@ -543,13 +542,8 @@ CLASS_METHOD(ION_URI, withPort) {
         Z_PARAM_LONG(port)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    if(port > 0xFFFF) {
-        zend_throw_exception(ion_ce_ION_InvalidUsageException, "Port size should be between 0 and 65535", 0);
-        return;
-    }
-
     uri = ion_uri_clone(Z_OBJ_P(getThis()));
-    theuri = get_object_instance(uri, ion_uri);
+    theuri = ION_ZOBJ_OBJECT(uri, ion_uri);
 
     theuri->port = (unsigned short)port;
 
@@ -562,7 +556,7 @@ METHOD_ARGS_END();
 
 
 CLASS_METHOD(ION_URI, hasPath) {
-    ion_uri * theuri = get_this_instance(ion_uri);
+    ion_uri * theuri = ION_THIS_OBJECT(ion_uri);
     if(theuri->path) {
         RETURN_TRUE;
     } else {
@@ -573,7 +567,7 @@ CLASS_METHOD(ION_URI, hasPath) {
 METHOD_WITHOUT_ARGS(ION_URI, hasPath);
 
 CLASS_METHOD(ION_URI, getPath) {
-    ion_uri * theuri = get_this_instance(ion_uri);
+    ion_uri * theuri = ION_THIS_OBJECT(ion_uri);
     if(theuri->path) {
         RETURN_STR(zend_string_copy(theuri->path));
     } else {
@@ -593,7 +587,7 @@ CLASS_METHOD(ION_URI, withPath) {
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     uri = ion_uri_clone(Z_OBJ_P(getThis()));
-    theuri = get_object_instance(uri, ion_uri);
+    theuri = ION_ZOBJ_OBJECT(uri, ion_uri);
 
     if(theuri->path) {
         zend_string_release(theuri->path);
@@ -609,7 +603,7 @@ METHOD_ARGS_END();
 
 
 CLASS_METHOD(ION_URI, hasQuery) {
-    ion_uri * theuri = get_this_instance(ion_uri);
+    ion_uri * theuri = ION_THIS_OBJECT(ion_uri);
     if(theuri->query) {
         RETURN_TRUE;
     } else {
@@ -620,7 +614,7 @@ CLASS_METHOD(ION_URI, hasQuery) {
 METHOD_WITHOUT_ARGS(ION_URI, hasQuery);
 
 CLASS_METHOD(ION_URI, getQuery) {
-    ion_uri * theuri = get_this_instance(ion_uri);
+    ion_uri * theuri = ION_THIS_OBJECT(ion_uri);
     if(theuri->query) {
         RETURN_STR(zend_string_copy(theuri->query));
     } else {
@@ -640,7 +634,7 @@ CLASS_METHOD(ION_URI, withQuery) {
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     uri = ion_uri_clone(Z_OBJ_P(getThis()));
-    theuri = get_object_instance(uri, ion_uri);
+    theuri = ION_ZOBJ_OBJECT(uri, ion_uri);
 
     if(theuri->query) {
         zend_string_release(theuri->query);
@@ -655,7 +649,7 @@ METHOD_ARGS_BEGIN(ION_URI, withQuery, 1)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_URI, hasFragment) {
-    ion_uri * theuri = get_this_instance(ion_uri);
+    ion_uri * theuri = ION_THIS_OBJECT(ion_uri);
     if(theuri->fragment) {
         RETURN_TRUE;
     } else {
@@ -666,7 +660,7 @@ CLASS_METHOD(ION_URI, hasFragment) {
 METHOD_WITHOUT_ARGS(ION_URI, hasFragment);
 
 CLASS_METHOD(ION_URI, getFragment) {
-    ion_uri * theuri = get_this_instance(ion_uri);
+    ion_uri * theuri = ION_THIS_OBJECT(ion_uri);
     if(theuri->fragment) {
         RETURN_STR(zend_string_copy(theuri->fragment));
     } else {
@@ -686,7 +680,7 @@ CLASS_METHOD(ION_URI, withFragment) {
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     uri = ion_uri_clone(Z_OBJ_P(getThis()));
-    theuri = get_object_instance(uri, ion_uri);
+    theuri = ION_ZOBJ_OBJECT(uri, ion_uri);
 
     if(theuri->fragment) {
         zend_string_release(theuri->fragment);
@@ -701,7 +695,7 @@ METHOD_ARGS_BEGIN(ION_URI, withFragment, 1)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_URI, __toString) {
-    RETURN_STR(ion_uri_stringify(Z_OBJ_P(getThis()), URI_ALL));
+    RETURN_STR(ion_uri_stringify(ION_THIS_OBJECT(ion_uri), URI_ALL));
 }
 
 METHOD_WITHOUT_ARGS(ION_URI, __toString);
@@ -762,6 +756,7 @@ PHP_MINIT_FUNCTION(ION_URI) {
     pion_init_std_object_handlers(ION_URI);
     pion_set_object_handler(ION_URI, free_obj, ion_uri_free);
     pion_set_object_handler(ION_URI, clone_obj, ion_uri_clone_handler);
+    ion_class_set_offset(ion_oh_ION_URI, ion_uri);
 
     return SUCCESS;
 }

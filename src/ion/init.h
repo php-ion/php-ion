@@ -31,6 +31,7 @@ END_EXTERN_C()
 ZEND_TSRMLS_CACHE_EXTERN();
 #endif
 
+// external typedef
 typedef struct event          ion_event;
 typedef struct evconnlistener ion_evlistener;
 typedef struct evbuffer       ion_evbuffer;
@@ -43,7 +44,36 @@ typedef struct ev_token_bucket_cfg          ion_rate_limit_cfg;
 typedef struct bufferevent_rate_limit_group ion_rate_limit;
 typedef struct skiplist       ion_skiplist;
 
+// core typedef
 typedef struct _ion_global_queue ion_global_queue;
+
+// internal typedef
+typedef struct _ion_promisor ion_promisor;
+typedef struct _ion_promisor_action_cb ion_promisor_action_cb;
+
+typedef struct _ion_crypto ion_crypto;
+typedef struct _ion_listener ion_listener;
+typedef struct _ion_stream_token ion_stream_token;
+typedef struct _ion_stream ion_stream;
+
+typedef struct _ion_process_ipc ion_process_ipc;
+typedef struct _ion_process_exec ion_process_exec;
+typedef struct _ion_process_child ion_process_child;
+typedef struct _ion_process_signal ion_process_signal;
+
+typedef struct _ion_fs_watcher ion_fs_watcher;
+
+typedef struct _ion_dns_addr_request ion_dns_addr_request;
+
+typedef struct _ion_uri ion_uri;
+typedef struct _ion_http_parser ion_http_parser;
+typedef struct _ion_http_message ion_http_message;
+typedef struct _ion_http_request ion_http_request;
+typedef struct _ion_http_response ion_http_response;
+typedef struct _ion_http_websocket_frame ion_http_websocket_frame;
+typedef struct _ion_http_multi_parted_parser ion_http_multi_parted_parser;
+typedef struct _ion_websocket_parser ion_websocket_parser;
+typedef struct _ion_http_body_parser ion_http_body_parser;
 
 #ifndef true
 # define true 1

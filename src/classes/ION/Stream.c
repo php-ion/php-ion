@@ -33,19 +33,19 @@ zend_object * ion_stream_init(zend_class_entry * ce) {
 void ion_stream_free(zend_object * php_stream) {
     ion_stream * stream = ION_ZOBJ_OBJECT(php_stream, ion_stream);
     if(stream->read) {
-        zend_object_release(stream->read);
+        ion_object_release(stream->read);
     }
     if(stream->connect) {
-        zend_object_release(stream->connect);
+        ion_object_release(stream->connect);
     }
     if(stream->shutdown) {
-        zend_object_release(stream->shutdown);
+        ion_object_release(stream->shutdown);
     }
     if(stream->flush) {
-        zend_object_release(stream->flush);
+        ion_object_release(stream->flush);
     }
     if(stream->incoming) {
-        zend_object_release(stream->incoming);
+        ion_object_release(stream->incoming);
     }
     if(stream->buffer) {
         if(stream->state & ION_STREAM_STATE_ENABLED) {
@@ -55,7 +55,7 @@ void ion_stream_free(zend_object * php_stream) {
             SSL *ctx = bufferevent_openssl_get_ssl(stream->buffer);
             SSL_set_shutdown(ctx, SSL_RECEIVED_SHUTDOWN);
             SSL_shutdown(ctx);
-            zend_object_release(stream->encrypt);
+            ion_object_release(stream->encrypt);
         }
         bufferevent_free(stream->buffer);
     }
@@ -69,138 +69,6 @@ void ion_stream_free(zend_object * php_stream) {
         zend_string_release(stream->name_remote);
     }
 
-}
-
-zend_string * ion_stream_get_name_self(zend_object * stream_obj) {
-    ion_stream * stream = ION_ZOBJ_OBJECT(stream_obj, ion_stream);
-    int type   = 0;
-    evutil_socket_t socket;
-    if(stream->name_self == NULL) {
-        socket = bufferevent_getfd(stream->buffer);
-        if(socket == -1) {
-            return NULL;
-        } else {
-            type = pion_net_sock_name(socket, PION_NET_NAME_LOCAL, &stream->name_self);
-            if(type == PION_NET_NAME_IPV6) {
-                stream->state |= ION_STREAM_NAME_IPV6;
-            } else if(type == PION_NET_NAME_UNIX) {
-                stream->state |= ION_STREAM_NAME_UNIX;
-            } else if(type == PION_NET_NAME_UNKNOWN || type == FAILURE) {
-                return NULL;
-            } else {
-                stream->state |= ION_STREAM_NAME_IPV4;
-            }
-        }
-    }
-    return zend_string_copy(stream->name_self);
-}
-
-zend_string * ion_stream_get_name_remote(zend_object * stream_obj) {
-    ion_stream * stream = ION_ZOBJ_OBJECT(stream_obj, ion_stream);
-    int type   = 0;
-    evutil_socket_t socket;
-    if(stream->name_remote == NULL) {
-        socket = bufferevent_getfd(stream->buffer);
-        if(socket == -1) {
-            return NULL;
-        } else {
-            type = pion_net_sock_name(socket, PION_NET_NAME_REMOTE, &stream->name_remote);
-            if(type == PION_NET_NAME_UNKNOWN || type == FAILURE) {
-                return NULL;
-            }
-        }
-    }
-    return zend_string_copy(stream->name_remote);
-}
-
-zend_string * ion_stream_describe(zend_object * stream_object) {
-    // todo optimize for ion_stream
-    ion_stream * stream = ION_ZOBJ_OBJECT(stream_object, ion_stream);
-    zend_string * describe = NULL;
-    zend_string * address_remote;
-    zend_string * address_local;
-
-    if(stream->buffer == NULL) {
-        return zend_string_init(STRARGS("Stream"), 0);
-    }
-    if (stream->state & ION_STREAM_RESERVED) {
-        switch(bufferevent_getfd(stream->buffer)) {
-            case STDIN_FILENO:
-                return zend_string_init(STRARGS("Stream(stdin)"), 0);
-            case STDOUT_FILENO:
-                return zend_string_init(STRARGS("Stream(stdout)"), 0);
-            case STDERR_FILENO:
-                return zend_string_init(STRARGS("Stream(stderr)"), 0);
-            default:
-                ZEND_ASSERT(0);
-        }
-    }
-    if(stream->state & ION_STREAM_STATE_SOCKET) {
-        if(ion_stream_is_valid_fd(stream)) {
-            return zend_string_init(STRARGS("Stream"), 0);
-        }
-        address_local   = ion_stream_get_name_self(stream_object);
-        address_remote  = ion_stream_get_name_remote(stream_object);
-        if(address_remote == NULL) {
-            address_remote = zend_string_init(STRARGS("undefined"), 0);
-        }
-        if(address_local == NULL) {
-            address_remote = zend_string_init(STRARGS("undefined"), 0);
-        }
-
-        if(stream->state & ION_STREAM_FROM_PEER) {
-            describe = strpprintf(MAX_DOMAIN_LENGTH, "Stream(%s<-%s)", address_local->val, address_remote->val);
-        } else if(stream->state & ION_STREAM_FROM_ME) {
-            describe = strpprintf(MAX_DOMAIN_LENGTH, "Stream(%s->%s)", address_local->val, address_remote->val);
-        } else {
-            describe = strpprintf(MAX_DOMAIN_LENGTH, "Stream(%s<->%s)", address_local->val, address_remote->val);
-        }
-        zend_string_release(address_local);
-        zend_string_release(address_remote);
-        return describe;
-    } else if(stream->state & ION_STREAM_STATE_PAIR) {
-        return zend_string_init(STRARGS("Stream(twin)"), 0);
-    } else {
-        return zend_string_init(STRARGS("Stream(pipe)"), 0);
-    }
-}
-
-long ion_stream_search_token(struct evbuffer * buffer, ion_stream_token * token) {
-    struct evbuffer_ptr ptr_end;
-    struct evbuffer_ptr ptr_start;
-    struct evbuffer_ptr ptr_result;
-    size_t current_size = evbuffer_get_length(buffer);
-    size_t end = (size_t)token->offset + (size_t)token->length - 1;
-    size_t length = (size_t)token->length;
-    if(current_size == 0) {
-        token->position = -1;
-        return SUCCESS;
-    }
-    if(token->offset >= current_size || ZSTR_LEN(token->token) > current_size) {
-        token->position = -1;
-        return SUCCESS;
-    }
-    if(end >= current_size - 1) { // libevent bug? if <end> is last element - evbuffer_search_range can't find token
-        length = 0;
-    }
-
-    if(evbuffer_ptr_set(buffer, &ptr_start, (size_t)token->offset, EVBUFFER_PTR_SET) == FAILURE) {
-        return FAILURE;
-    }
-    if(length) {
-        if(evbuffer_ptr_set(buffer, &ptr_end, end, EVBUFFER_PTR_SET) == FAILURE) {
-            return FAILURE;
-        }
-        ptr_result = evbuffer_search_range(buffer, ZSTR_VAL(token->token), ZSTR_LEN(token->token), &ptr_start, &ptr_end);
-    } else {
-        ptr_result = evbuffer_search(buffer, ZSTR_VAL(token->token), ZSTR_LEN(token->token), &ptr_start);
-    }
-    if(token->length > 0 && current_size >= token->length) {
-        token->flags |= ION_STREAM_TOKEN_LIMIT;
-    }
-    token->offset = (zend_long)(current_size - ZSTR_LEN(token->token) + 1);
-    token->position = (long)ptr_result.pos;
-    return SUCCESS;
 }
 
 void _ion_stream_input(ion_buffer * bev, void * ctx) {
@@ -309,37 +177,10 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
             ion_promisor_done_object(stream->shutdown, ION_OBJECT_ZOBJ(stream));
         }
     } else if(what & BEV_EVENT_ERROR) {
-//        PHPDBG("ERROR %d", what);
         stream->state |= ION_STREAM_STATE_ERROR;
         if(stream->connect || stream->read || stream->flush) {
-            zend_ulong    error_ulong = 0;
-            int           error_int = 0;
-            const char  * error_message;
-            zend_object * exception;
             zval          zex;
-            zend_class_entry * exception_ce;
-            zend_string * desc = ion_stream_describe(ION_OBJECT_ZOBJ(stream));
-
-            if((error_ulong =  bufferevent_get_openssl_error(bev))) { // problem with openssl connection
-//                ERR_get_error()
-                error_message = ERR_error_string(error_ulong, NULL);
-                exception_ce = ion_ce_ION_CryptoException;
-            } else if((error_int =  bufferevent_socket_get_dns_error(bev))) { // DNS problem
-                error_message = evutil_gai_strerror(error_int);
-                exception_ce = ion_ce_ION_DNSException;
-            } else if((error_int = EVUTIL_SOCKET_ERROR())) { // socket problem
-                error_message = evutil_socket_error_to_string(error_int);
-                exception_ce = ion_ce_ION_StreamException;
-            } else { // magic problem
-                error_message = "stream corrupted";
-                exception_ce = ion_ce_ION_StreamException;
-            }
-
-            exception = pion_exception_new_ex(
-                exception_ce, 0,
-                "%s error: %s", desc->val, error_message
-            );
-            zend_string_release(desc);
+            zend_object * exception = ion_stream_get_exception(stream, bev);
             stream->error = exception;
             ZVAL_OBJ(&zex, exception);
             if(stream->connect) {
@@ -357,10 +198,8 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
             ion_promisor_done_object(stream->shutdown, ION_OBJECT_ZOBJ(stream));
         }
     } else if(what & BEV_EVENT_TIMEOUT) {
-//        PHPDBG("TIMEOUT");
-        // we do not use this feature yet
+        // we do not use this feature
     } else if(what & BEV_EVENT_CONNECTED) {
-//        PHPDBG("CONNECTED");
         stream->state |= ION_STREAM_STATE_CONNECTED;
         if(stream->name_remote) {
             zend_string_release(stream->name_remote);
@@ -373,7 +212,7 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
     } else {
         zend_error(E_WARNING, "Unknown type notification: %d", what);
     }
-    zend_object_release(ION_OBJECT_ZOBJ(stream));
+    ion_object_release(stream);
 
     ION_CB_END();
 }
@@ -677,7 +516,7 @@ CLASS_METHOD(ION_Stream, socket) {
     istream = ION_ZOBJ_OBJECT(stream, ion_stream);
     if(encrypt) {
         zval_add_ref(encrypt);
-        istream->encrypt = Z_OBJ_P(encrypt);
+        istream->encrypt = ION_ZVAL_OBJECT_P(encrypt, ion_crypto);
     }
     istream->name_remote = zend_string_copy(host);
 
@@ -802,10 +641,10 @@ CLASS_METHOD(ION_Stream, disable) {
 
 METHOD_WITHOUT_ARGS(ION_Stream, disable)
 
-void _ion_stream_connect_dtor(ion_promisor * deferred) {
-    ion_stream * stream = deferred->object;
+void _ion_stream_connect_dtor(zval * ptr) {
+    ion_stream * stream = Z_PTR_P(ptr);
     if(stream->connect) {
-        zend_object_release(stream->connect);
+        ion_object_release(stream->connect);
         stream->connect = NULL;
     }
 }
@@ -819,42 +658,18 @@ CLASS_METHOD(ION_Stream, connect) {
     if(stream->state & ION_STREAM_STATE_CONNECTED) {
         RETURN_TRUE;
     } else {
-        zend_object * deferred = ion_promisor_deferred_new_ex(NULL);
-        ion_promisor_store(deferred, stream);
-        ion_promisor_dtor(deferred, _ion_stream_connect_dtor);
-        stream->connect = deferred;
-        obj_add_ref(deferred);
-        RETURN_OBJ(deferred);
+        ion_promisor * deferred = ion_promisor_deferred_new_ex(NULL);
+        ion_promisor_set_object_ptr(deferred, stream, _ion_stream_connect_dtor);
+//        ion_promisor_store(deferred, stream);
+//        ion_promisor_dtor(deferred, _ion_stream_connect_dtor);
+//        stream->connect = deferred;
+        ion_object_addref(deferred);
+        RETURN_ION_OBJ(deferred);
     }
 }
 
 METHOD_WITHOUT_ARGS(ION_Stream, connect)
 
-/** public function ION\Stream::setTimeouts(double $read_timeout, double $write_timeout) : self */
-//CLASS_METHOD(ION_Stream, setTimeouts) {
-//    ion_stream * stream = ION_THIS_OBJECT(ion_stream);
-//    double read_timeout = 0.0, write_timeout = 0.0;
-//    struct timeval read_tv = { 0, 0 }, write_tv = { 0, 0 };
-//
-//    CHECK_STREAM_BUFFER(stream);
-//    ZEND_PARSE_PARAMETERS_START(2,2)
-//        Z_PARAM_DOUBLE(read_timeout)
-//        Z_PARAM_DOUBLE(write_timeout)
-//    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
-//    if(read_timeout < 0 || write_timeout < 0) {
-//        zend_throw_exception(ion_ce_InvalidArgumentException, "timeout should be unsigned", 0);
-//        return;
-//    }
-//    SET_TIMEVAL(read_tv, read_timeout);
-//    SET_TIMEVAL(write_tv, write_timeout);
-//    bufferevent_set_timeouts(stream->buffer, &read_tv, &write_tv);
-//    RETURN_THIS();
-//}
-
-//METHOD_ARGS_BEGIN(ION_Stream, setTimeouts, 2)
-//    METHOD_ARG_DOUBLE(read_timeout, 0)
-//    METHOD_ARG_DOUBLE(write_timeout, 0)
-//METHOD_ARGS_END()
 
 /** public function ION\Stream::setPriority(int $priority) : self */
 CLASS_METHOD(ION_Stream, setPriority) {
@@ -976,10 +791,10 @@ METHOD_ARGS_BEGIN(ION_Stream, sendFile, 1)
     METHOD_ARG_LONG(length, 0)
 METHOD_ARGS_END()
 
-void _ion_stream_flush_dtor(ion_promisor * promisor) {
-    ion_stream * stream = promisor->object;
+void _ion_stream_flush_dtor(zval * ptr) {
+    ion_stream * stream = Z_PTR_P(ptr);
     if(stream->flush) {
-        zend_object_release(stream->flush);
+        ion_object_release(stream->flush);
         stream->flush = NULL;
     }
 }
@@ -990,8 +805,8 @@ CLASS_METHOD(ION_Stream, flush) {
 
 //    CHECK_STREAM(stream);
     if(stream->flush) {
-        zend_object_addref(stream->flush);
-        RETURN_OBJ(stream->flush);
+        ion_object_addref(stream->flush);
+        RETURN_ION_OBJ(stream->flush);
     }
 
     CHECK_STREAM_BUFFER(stream);
@@ -999,12 +814,13 @@ CLASS_METHOD(ION_Stream, flush) {
     if(stream->state & ION_STREAM_STATE_FLUSHED) {
         RETURN_TRUE;
     } else {
-        zend_object * deferred = ion_promisor_deferred_new_ex(NULL);
-        ion_promisor_store(deferred, stream);
-        ion_promisor_dtor(deferred, _ion_stream_flush_dtor);
+        ion_promisor * deferred = ion_promisor_deferred_new_ex(NULL);
+        ion_promisor_set_object_ptr(deferred, stream, _ion_stream_flush_dtor);
+//        ion_promisor_store(deferred, stream);
+//        ion_promisor_dtor(deferred, _ion_stream_flush_dtor);
         stream->flush = deferred;
-        obj_add_ref(deferred);
-        RETURN_OBJ(deferred);
+        ion_object_addref(deferred);
+        RETURN_ION_OBJ(deferred);
     }
 }
 
@@ -1159,15 +975,15 @@ METHOD_ARGS_BEGIN(ION_Stream, getLine, 1)
     METHOD_ARG_LONG(max_length, 0)
 METHOD_ARGS_END()
 
-void _ion_stream_read_dtor(ion_promisor * promisor) {
-    ion_stream * stream = promisor->object;
+void _ion_stream_read_dtor(zval * ptr) {
+    ion_stream * stream = Z_PTR_P(ptr);
     if(stream->read) {
         if(stream->token) {
             zend_string_release(stream->token->token);
             efree(stream->token);
             stream->token = NULL;
         }
-        zend_object_release(stream->read);
+        ion_object_release(stream->read);
         stream->read = NULL;
     }
 }
@@ -1187,8 +1003,8 @@ CLASS_METHOD(ION_Stream, read) {
 
     if(stream->read) {
         if(stream->length == length && !stream->token) { // read same count bytes
-            obj_add_ref(stream->read);
-            RETURN_OBJ(stream->read);
+            ion_object_addref(stream->read);
+            RETURN_ION_OBJ(stream->read);
         } else {
             zend_throw_exception(ion_ce_ION_InvalidUsageException, ERR_ION_STREAM_READ_LOCKED, 0);
             return;
@@ -1204,14 +1020,15 @@ CLASS_METHOD(ION_Stream, read) {
         }
         RETURN_STR(data);
     } else {
-        zend_object * deferred = ion_promisor_deferred_new_ex(NULL);
-        ion_promisor_store(deferred, stream);
-        ion_promisor_dtor(deferred, _ion_stream_read_dtor);
+        ion_promisor * deferred = ion_promisor_deferred_new_ex(NULL);
+        ion_promisor_set_object_ptr(deferred, stream, _ion_stream_read_dtor);
+//        ion_promisor_store(deferred, stream);
+//        ion_promisor_dtor(deferred, _ion_stream_read_dtor);
         stream->read = deferred;
         stream->length = (size_t)length;
         bufferevent_setwatermark(stream->buffer, EV_READ, (size_t)length, (stream->input_size >= length) ? stream->input_size : (size_t)length);
-        obj_add_ref(deferred);
-        RETURN_OBJ(deferred);
+        ion_object_addref(deferred);
+        RETURN_ION_OBJ(deferred);
     }
 }
 
@@ -1244,8 +1061,8 @@ CLASS_METHOD(ION_Stream, readLine) {
            && zend_string_equals(stream->token->token, token.token)
            && (stream->token->flags & ION_STREAM_TOKEN_MODE_MASK) == token.flags
            && stream->token->length == token.length) {
-            obj_add_ref(stream->read);
-            RETURN_OBJ(stream->read);
+            ion_object_addref(stream->read);
+            RETURN_ION_OBJ(stream->read);
         } else {
             zend_throw_exception(ion_ce_ION_InvalidUsageException, ERR_ION_STREAM_READ_LOCKED, 0);
             return;
@@ -1261,15 +1078,16 @@ CLASS_METHOD(ION_Stream, readLine) {
         if(token.flags & ION_STREAM_TOKEN_LIMIT) {
             RETURN_FALSE;
         } else {
-            zend_object * deferred = ion_promisor_deferred_new_ex(NULL);
-            ion_promisor_store(deferred, stream);
-            ion_promisor_dtor(deferred, _ion_stream_read_dtor);
+            ion_promisor * deferred = ion_promisor_deferred_new_ex(NULL);
+            ion_promisor_set_object_ptr(deferred, stream, _ion_stream_read_dtor);
+//            ion_promisor_store(deferred, stream);
+//            ion_promisor_dtor(deferred, _ion_stream_read_dtor);
             stream->read = deferred;
             stream->token = emalloc(sizeof(ion_stream_token));
             memcpy(stream->token, &token, sizeof(ion_stream_token));
             stream->token->token = zend_string_copy(token.token);
-            obj_add_ref(deferred);
-            RETURN_OBJ(deferred);
+            ion_object_addref(deferred);
+            RETURN_ION_OBJ(deferred);
         }
     } else {
         data = ion_stream_read_token(stream, &token);
@@ -1297,8 +1115,8 @@ CLASS_METHOD(ION_Stream, readAll) {
     CHECK_STREAM_BUFFER(stream);
     if(stream->read) {
         if(!stream->token && !stream->length) {
-            obj_add_ref(stream->read);
-            RETURN_OBJ(stream->read);
+            ion_object_addref(stream->read);
+            RETURN_ION_OBJ(stream->read);
         } else {
             zend_throw_exception(ion_ce_ION_InvalidUsageException, ERR_ION_STREAM_READ_LOCKED, 0);
             return;
@@ -1318,13 +1136,14 @@ CLASS_METHOD(ION_Stream, readAll) {
             RETURN_EMPTY_STRING();
         }
     } else {
-        zend_object * deferred = ion_promisor_deferred_new_ex(NULL);
-        ion_promisor_store(deferred, stream);
-        ion_promisor_dtor(deferred, _ion_stream_read_dtor);
+        ion_promisor * deferred = ion_promisor_deferred_new_ex(NULL);
+        ion_promisor_set_object_ptr(deferred, stream, _ion_stream_read_dtor);
+//        ion_promisor_store(deferred, stream);
+//        ion_promisor_dtor(deferred, _ion_stream_read_dtor);
         stream->read = deferred;
         stream->length = 0;
-        obj_add_ref(deferred);
-        RETURN_OBJ(deferred);
+        ion_object_addref(deferred);
+        RETURN_ION_OBJ(deferred);
     }
 }
 
@@ -1365,33 +1184,33 @@ CLASS_METHOD(ION_Stream, incoming) {
     if(!stream->incoming) {
         stream->incoming = ion_promisor_sequence_new(NULL);
     }
-    obj_add_ref(stream->incoming);
-    RETURN_OBJ(stream->incoming);
+    ion_object_addref(stream->incoming);
+    RETURN_ION_OBJ(stream->incoming);
 }
 METHOD_WITHOUT_ARGS(ION_Stream, incoming)
 
 /** public function ION\Stream::suspend() : self */
-//CLASS_METHOD(ION_Stream, suspend) {
-//    ion_stream * stream = ION_THIS_OBJECT(ion_stream);
-//    ion_stream_suspend(stream);
-//    RETURN_THIS();
-//}
-//
-//METHOD_WITHOUT_ARGS(ION_Stream, suspend)
-//
-///** public function ION\Stream::resume() : self */
-//CLASS_METHOD(ION_Stream, resume) {
-//    ion_stream * stream = ION_THIS_OBJECT(ion_stream);
-//    ion_stream_resume(stream);
-//    RETURN_THIS();
-//}
-//
-//METHOD_WITHOUT_ARGS(ION_Stream, resume)
+CLASS_METHOD(ION_Stream, suspend) {
+    ion_stream * stream = ION_THIS_OBJECT(ion_stream);
+    ion_stream_suspend(stream);
+    RETURN_THIS();
+}
 
-void _deferred_stream_closing_dtor(ion_promisor * deferred) {
-    ion_stream * stream = deferred->object;
+METHOD_WITHOUT_ARGS(ION_Stream, suspend)
+
+///** public function ION\Stream::resume() : self */
+CLASS_METHOD(ION_Stream, resume) {
+    ion_stream * stream = ION_THIS_OBJECT(ion_stream);
+    ion_stream_resume(stream);
+    RETURN_THIS();
+}
+
+METHOD_WITHOUT_ARGS(ION_Stream, resume)
+
+void _deferred_stream_closing_dtor(zval * ptr) {
+    ion_stream * stream = Z_PTR_P(ptr);
     if(stream->shutdown) {
-        zend_object_release(stream->shutdown);
+        ion_object_release(stream->shutdown);
         stream->shutdown = NULL;
     }
 }
@@ -1402,18 +1221,19 @@ CLASS_METHOD(ION_Stream, closed) {
 
     CHECK_STREAM_BUFFER(stream);
     if(stream->shutdown) {
-        obj_add_ref(stream->shutdown);
-        RETURN_OBJ(stream->shutdown);
+        ion_object_addref(stream->shutdown);
+        RETURN_ION_OBJ(stream->shutdown);
     }
     if(stream->state & ION_STREAM_STATE_CLOSED) {
         RETURN_THIS();
     } else {
-        zend_object * deferred = ion_promisor_deferred_new_ex(NULL);
-        ion_promisor_dtor(deferred, _deferred_stream_closing_dtor);
-        ion_promisor_store(deferred, stream);
+        ion_promisor * deferred = ion_promisor_deferred_new_ex(NULL);
+        ion_promisor_set_object_ptr(deferred, stream, _deferred_stream_closing_dtor);
+//        ion_promisor_dtor(deferred, _deferred_stream_closing_dtor);
+//        ion_promisor_store(deferred, stream);
         stream->shutdown = deferred;
-        obj_add_ref(deferred);
-        RETURN_OBJ(deferred);
+        ion_object_addref(deferred);
+        RETURN_ION_OBJ(deferred);
     }
 }
 
@@ -1457,7 +1277,7 @@ CLASS_METHOD(ION_Stream, encrypt) {
     }
     stream->state |= ION_STREAM_ENCRYPTED | ION_STREAM_HAS_UNDERLYING;
     zval_add_ref(encrypt);
-    stream->encrypt = Z_OBJ_P(encrypt);
+    stream->encrypt = ION_ZVAL_OBJECT_P(encrypt, ion_crypto);
 //    ion_stream_store_encrypt(stream, Z_OBJ_P(encrypt));
     SSL_set_ex_data(ssl_handler, GION(ssl_index), Z_OBJ_P(encrypt));
 
@@ -1492,8 +1312,8 @@ CLASS_METHOD(ION_Stream, isEnabled) {
 
 METHOD_WITHOUT_ARGS(ION_Stream, isEnabled)
 
-/** public function ION\Stream::isReading() : bool */
-CLASS_METHOD(ION_Stream, isReading) {
+/** public function ION\Stream::hasReading() : bool */
+CLASS_METHOD(ION_Stream, hasReading) {
     ion_stream * stream = ION_THIS_OBJECT(ion_stream);
     if(stream->read) {
         RETURN_TRUE;
@@ -1502,7 +1322,7 @@ CLASS_METHOD(ION_Stream, isReading) {
     }
 }
 
-METHOD_WITHOUT_ARGS(ION_Stream, isReading)
+METHOD_WITHOUT_ARGS(ION_Stream, hasReading)
 
 /** public function ION\Stream::hasData() : bool */
 CLASS_METHOD(ION_Stream, hasData) {
@@ -1586,14 +1406,14 @@ CLASS_METHOD(ION_Stream, __debugInfo) {
     add_assoc_long(return_value, "input_bytes",  (zend_long)ion_stream_input_length(stream));
     add_assoc_long(return_value, "output_bytes", (zend_long)ion_stream_output_length(stream));
 
-    address = ion_stream_get_name_self(ION_OBJECT_ZOBJ(stream));
+    address = ion_stream_get_name_self(stream);
     if(address) {
         add_assoc_str(return_value,  "local_name", address);
     } else {
         add_assoc_bool(return_value, "local_name", 0);
     }
 
-    address = ion_stream_get_name_remote(ION_OBJECT_ZOBJ(stream));
+    address = ion_stream_get_name_remote(stream);
     if(address) {
         add_assoc_str(return_value,  "remote_peer", address);
     } else {
@@ -1645,20 +1465,7 @@ METHOD_WITHOUT_ARGS(ION_Stream, __debugInfo)
 
 /** public function ION\Stream::__destruct() : void */
 CLASS_METHOD(ION_Stream, __destruct) {
-//    ion_stream * stream = ION_THIS_OBJECT(ion_stream);
-//    if(stream->flush) {
-//        ion_deferred_cancel(stream->flush, "The stream shutdown by the destructor");
-//    }
-//    if(stream->read) {
-//        ion_deferred_cancel(stream->read, "The stream shutdown by the destructor");
-//    }
-//    if(stream->connect) {
-//        ion_deferred_cancel(stream->connect, "The stream shutdown by the destructor");
-//    }
-//    if(stream->state & ION_STREAM_STATE_ENABLED) {
-//        bufferevent_disable(stream->buffer, EV_READ | EV_WRITE);
-//        stream->state &= ~ION_STREAM_STATE_ENABLED;
-//    }
+
 }
 
 METHOD_WITHOUT_ARGS(ION_Stream, __destruct)
@@ -1678,7 +1485,7 @@ CLASS_METHOD(ION_Stream, getPeerName) {
         if(stream->state & ION_STREAM_STATE_PAIR) {
             RETURN_STRING("twin");
         }
-        remote_name = ion_stream_get_name_remote(Z_OBJ_P(getThis()));
+        remote_name = ion_stream_get_name_remote(ION_THIS_OBJECT(ion_stream));
         if(remote_name) {
             RETURN_STR(remote_name);
         } else {
@@ -1705,7 +1512,7 @@ CLASS_METHOD(ION_Stream, getLocalName) {
         if(stream->state & ION_STREAM_STATE_PAIR) {
             RETURN_STRING("twin")
         }
-        local_name = ion_stream_get_name_self(Z_OBJ_P(getThis()));
+        local_name = ion_stream_get_name_self(ION_THIS_OBJECT(ion_stream));
         if(local_name) {
             RETURN_STR(local_name);
         } else {
@@ -1856,13 +1663,13 @@ CLASS_METHODS_START(ION_Stream)
 
     // Handle incoming data
     METHOD(ION_Stream, incoming,           ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, suspend,            ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, resume,             ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, suspend,            ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, resume,             ZEND_ACC_PUBLIC)
 
     // Check states
     METHOD(ION_Stream, isEnabled,          ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, isConnected,        ZEND_ACC_PUBLIC)
-    METHOD(ION_Stream, isReading,          ZEND_ACC_PUBLIC)
+    METHOD(ION_Stream, hasReading,         ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, hasData,            ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, isFlushed,          ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, hasError,           ZEND_ACC_PUBLIC)
@@ -1872,13 +1679,7 @@ CLASS_METHODS_START(ION_Stream)
 
     // Misc
     METHOD(ION_Stream, __destruct,         ZEND_ACC_PUBLIC)
-
-    // Storage
-//    METHOD(ION_Stream, hasStorage,         ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, getStorage,         ZEND_ACC_PUBLIC)
-//    METHOD(ION_Stream, release,            ZEND_ACC_PUBLIC)
-
-CLASS_METHODS_END;
+        CLASS_METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Stream) {
     pion_register_class(ION_Stream, "ION\\Stream", ion_stream_init, CLASS_METHODS(ION_Stream));

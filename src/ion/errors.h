@@ -10,14 +10,32 @@
 #define ERR_ION_REINIT_FAILED       "Some events could not be restarted"
 
 // class ION\Promise, ION\Deferred, ION\ResolvablePromise, ION\Sequence
-#define ERR_ION_PROMISE_ITSELF         "Can not promise itself"
-#define ERR_ION_PROMISE_CANT           "Can't promise"
-#define ERR_ION_PROMISE_ONLY_PROMISES  "Handler should be a valid promise-like object or string"
-#define ERR_ION_PROMISE_CLONE_INTERNAL "Trying to clone an internal promisor"
-#define ERR_ION_PROMISE_YIELDED        "Promisor in progress"
+#define ERR_ION_PROMISE_ITSELF           "Can not promise itself"
+#define ERR_ION_PROMISE_CANT             "Can't promise"
+#define ERR_ION_PROMISE_ONLY_PROMISES    "Handler should be a valid promise-like object or string"
+#define ERR_ION_PROMISE_CLONE_INTERNAL   "Trying to clone an internal promisor"
+#define ERR_ION_PROMISE_YIELDED          "Promisor in progress"
 #define ERR_ION_PROMISE_ALREADY_FINISHED "Deferred has been finished"
-#define ERR_ION_PROMISE_FINISH_INTERNAL "Internal promisor could not be finished from userspace"
-#define ERR_ION_PROMISE_INVALID_CONSEQ  "Promise expects a valid callbacks"
+#define ERR_ION_PROMISE_FINISH_INTERNAL  "Internal promisor could not be finished from userspace"
+#define ERR_ION_PROMISE_INVALID_CONSEQ   "Promise expects a valid callbacks"
+
+// class ION\URI
+#define ERR_ION_URI_PARSE_FAILED     "URI could not be parsed"
+#define ERR_ION_URI_USER_INFO_FAILED "Failed to generate user info"
+
+// class ION\Crypto
+#define ERR_ION_CRYPTO_SSL2_DISABLED          "SSLv2 unavailable in the OpenSSL library against which PHP is linked"
+#define ERR_ION_CRYPTO_INVALID_METHOD         "Invalid crypt method"
+#define ERR_ION_CRYPTO_NO_METHOD              "No method is specified"
+#define ERR_ION_CRYPTO_INIT_FAILED            "SSL/TLS context creation failure"
+#define ERR_ION_CRYPTO_DEF_VERIFY_FAILED      "Unable to set default verify locations"
+#define ERR_ION_CRYPTO_CERT_CHAIN_FAILED      "Unable to set local cert chain file '%s'; Check that your cafile/capath settings include details of your certificate and its issuer"
+#define ERR_ION_CRYPTO_PKEY_FAILED            "Unable to set private key file '%s'%s"
+#define ERR_ION_CRYPTO_PKEY_FAILED_PASSPHRASE " (passphrase required; set passphrase before)"
+#define ERR_ION_CRYPTO_PKEY_MISSED            "Private key does not match certificate!"
+#define ERR_ION_CRYPTO_CAFILE_FAILED          "Failed loading CA names from cafile %s"
+#define ERR_ION_CRYPTO_LOAD_VERIFY_FAILED     "Unable to load verify locations %s, %s"
+#define ERR_ION_CRYPTO_ENTROPY_FAILED         "Crypto: failed to generate entropy"
 
 // class ION\Stream
 #define ERR_ION_STREAM_RESOURCE_INVALID        "Argument must be either valid PHP stream resource"

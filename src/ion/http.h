@@ -51,8 +51,8 @@ enum ion_http_parser_type {
 
 #define URI_ALL (URI_SCHEME | URI_USER_NAME | URI_USER_PASS | URI_HOST | URI_PORT | URI_PATH | URI_QUERY | URI_FRAGMENT)
 
-typedef struct _ion_uri {
-    zend_object   std;
+struct _ion_uri {
+//    zend_object   std;
     zend_string * scheme;
     zend_string * user;
     zend_string * pass;
@@ -61,16 +61,18 @@ typedef struct _ion_uri {
     zend_string * path;
     zend_string * query;
     zend_string * fragment;
-} ion_uri;
 
-typedef struct _ion_http_parser {
+    zend_object   php_object;
+};
+
+struct _ion_http_parser {
     http_parser      * parser;
     multipart_parser * mp_parser;
     zend_string      * buffer;
-} ion_http_parser;
+};
 
-typedef struct _ion_http_message {
-    zend_object       std;
+struct _ion_http_message {
+//    zend_object       std;
     uint8_t           type;
     uint8_t           flags;
     zend_array      * headers;
@@ -89,10 +91,12 @@ typedef struct _ion_http_message {
     zend_string     * method;
     zend_string     * reason;
     zend_string     * target;
-} ion_http_message;
 
-typedef struct _ion_http_request {
-    zend_object       std;
+    zend_object   php_object;
+};
+
+struct _ion_http_request {
+//    zend_object       std;
     uint8_t           type;
     uint8_t           flags;
     zend_array      * headers;
@@ -104,11 +108,13 @@ typedef struct _ion_http_request {
     zend_object     * uri;
     zend_string     * method;
     zend_string     * target;
-} ion_http_request;
+
+    zend_object   php_object;
+};
 
 
-typedef struct _ion_http_response {
-    zend_object       std;
+struct _ion_http_response {
+//    zend_object       std;
     uint8_t           type;
     uint8_t           flags;
     zend_array      * headers;
@@ -119,29 +125,35 @@ typedef struct _ion_http_response {
 
     uint32_t          code;
     zend_string     * reason;
-} ion_http_response;
 
-typedef struct _ion_http_websocket_frame {
-    zend_object   std;
+    zend_object   php_object;
+};
+
+struct _ion_http_websocket_frame {
+//    zend_object   std;
     websocket_flags flags;
     zend_string *   body;
     char            mask[4];
-} ion_http_websocket_frame;
 
-typedef struct _ion_http_multi_parted_parser {
-    zend_object   std;
+    zend_object   php_object;
+};
+
+struct _ion_http_multi_parted_parser {
+//    zend_object   std;
     multipart_parser * parser;
-} ion_http_mp_parser;
 
-typedef struct _ion_websocket_parser {
+    zend_object   php_object;
+};
+
+struct _ion_websocket_parser {
     websocket_parser p;
     zend_object * on_frame;
     ion_http_websocket_frame * frame;
     zend_ulong    frames_num;
-} ion_websocket_parser;
+};
 
-typedef struct _ion_http_body_parser {
-    zend_object   std;
+struct _ion_http_body_parser {
+//    zend_object   std;
     uint8_t       type;
     uint32_t      flags;
     union {
@@ -155,10 +167,12 @@ typedef struct _ion_http_body_parser {
         multipart_parser_settings * multipart;
         websocket_parser_settings * websocket;
     } settings;
-} ion_http_body_parser;
 
-extern ION_API zend_string * ion_uri_stringify(zend_object * uri, unsigned short parts);
-extern ION_API zend_object * ion_uri_parse(zend_string * uri_string);
+    zend_object   php_object;
+};
+
+extern ION_API zend_string * ion_uri_stringify(ion_uri * uri, unsigned short parts);
+extern ION_API ion_uri     * ion_uri_parse(zend_string * uri_string);
 
 extern ION_API zend_object * ion_http_message_init(zend_class_entry * ce);
 extern ION_API void ion_http_message_free(zend_object * zo_message);

@@ -16,11 +16,11 @@ extern ION_API zend_class_entry * ion_ce_ION_DNSException;
 
 #define ION_DNS_RECORD_BASE    (ION_DNS_RECORD_A | ION_DNS_RECORD_AAAA | ION_DNS_RECORD_CNAME)
 
-typedef struct _ion_dns_addr_request {
+struct _ion_dns_addr_request {
     struct evdns_getaddrinfo_request * request;
-    zend_string * domain;
-    zend_object * deferred;
-} ion_dns_addr_request;
+    zend_string  * domain;
+    ion_promisor * deferred;
+};
 
 END_EXTERN_C();
 

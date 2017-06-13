@@ -51,8 +51,6 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Promise_CancelException;
 #define ion_ce_Generator zend_ce_generator
 #define ion_ce_Closure   zend_ce_closure
 
-typedef struct _ion_promisor ion_promisor;
-
 typedef void (* promisor_dtor_t)(zval * data);
 typedef zval (* promisor_action_t)(ion_promisor * promisor, zval * data);
 
@@ -63,13 +61,13 @@ enum ion_promisor_cb_type {
 };
 
 
-typedef struct _ion_promisor_action_cb {
+struct _ion_promisor_action_cb {
     zend_uchar type;
     union {
         pion_cb * php;
         promisor_action_t internal;
     } cb;
-} ion_promisor_action_cb;
+};
 
 struct _ion_promisor {
     uint32_t            flags;
