@@ -13,11 +13,11 @@ zend_class_entry * ion_ce_ION_HTTP_Request;
 #define ION_HTTP_REQUEST_BODY    6
 
 zend_object * ion_http_request_init(zend_class_entry * ce) {
-    ion_http_message * message = ecalloc(1, sizeof(ion_http_message));
+    ion_http_message * message = ion_alloc_object(ce, ion_http_message);
     message->type = ion_http_type_request;
     ALLOC_HASHTABLE(message->headers);
     zend_hash_init(message->headers, 8, NULL, ZVAL_PTR_DTOR, 0);
-    RETURN_INSTANCE(ION_HTTP_Request, message);
+    return ion_init_object(ION_OBJECT_ZOBJ(message), ce, &ion_oh_ION_HTTP_Request);
 }
 
 CLASS_METHOD(ION_HTTP_Request, parse) {
@@ -50,7 +50,7 @@ CLASS_METHOD(ION_HTTP_Request, factory) {
     if(!request) {
         return;
     }
-    message = get_object_instance(request, ion_http_message);
+    message = ION_ZOBJ_OBJECT(request, ion_http_message);
     ZEND_HASH_FOREACH_NUM_KEY_VAL(options, opt, option) {
         switch(opt) {
             case ION_HTTP_REQUEST_URI:
@@ -59,10 +59,10 @@ CLASS_METHOD(ION_HTTP_Request, factory) {
                     return;
                 }
                 if(message->uri) {
-                    zend_object_release(message->uri);
+                    ion_object_release(message->uri);
                 }
                 zval_add_ref(option);
-                message->uri = Z_OBJ_P(option);
+                message->uri = ION_ZVAL_OBJECT_P(option, ion_uri);
                 break;
             case ION_HTTP_REQUEST_TARGET:
                 zval_add_ref(option);
@@ -134,17 +134,17 @@ METHOD_ARGS_END();
 
 /** public function ION\HTTP\Request::getURI() : ION\URI */
 CLASS_METHOD(ION_HTTP_Request, getURI) {
-    ion_http_message * message = get_this_instance(ion_http_message);
+    ion_http_message * message = ION_THIS_OBJECT(ion_http_message);
 
-    zend_object_addref(message->uri);
-    RETURN_OBJ(message->uri);
+    ion_object_addref(message->uri);
+    RETURN_ION_OBJ(message->uri);
 }
 
 METHOD_WITHOUT_ARGS(ION_HTTP_Request, getURI)
 
 /** public function ION\HTTP\Request::getMethod() : ION\URI */
 CLASS_METHOD(ION_HTTP_Request, getMethod) {
-    ion_http_message * message = get_this_instance(ion_http_message);
+    ion_http_message * message = ION_THIS_OBJECT(ion_http_message);
 
     if(message->method) {
         zend_string_addref(message->method);
@@ -158,7 +158,7 @@ METHOD_WITHOUT_ARGS(ION_HTTP_Request, getMethod)
 
 /** public function ION\HTTP\Request::withMethod() : ION\URI */
 CLASS_METHOD(ION_HTTP_Request, withMethod) {
-    ion_http_message * message = get_this_instance(ion_http_message);
+    ion_http_message * message = ION_THIS_OBJECT(ion_http_message);
     zend_string      * method = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
@@ -181,7 +181,7 @@ METHOD_ARGS_END();
 
 /** public function ION\HTTP\Request::getRequestTarget() : ION\URI */
 CLASS_METHOD(ION_HTTP_Request, getRequestTarget) {
-    ion_http_message * message = get_this_instance(ion_http_message);
+    ion_http_message * message = ION_THIS_OBJECT(ion_http_message);
 
     if(message->target) {
         zend_string_addref(message->target);
@@ -195,7 +195,7 @@ METHOD_WITHOUT_ARGS(ION_HTTP_Request, getRequestTarget)
 
 /** public function ION\HTTP\Request::withRequestTarget() : ION\URI */
 CLASS_METHOD(ION_HTTP_Request, withRequestTarget) {
-    ion_http_message * message = get_this_instance(ion_http_message);
+    ion_http_message * message = ION_THIS_OBJECT(ion_http_message);
     zend_string      * target = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
@@ -255,6 +255,7 @@ PHP_MINIT_FUNCTION(ION_HTTP_Request) {
     pion_init_std_object_handlers(ION_HTTP_Request);
     pion_set_object_handler(ION_HTTP_Request, free_obj, ion_http_message_free);
     pion_set_object_handler(ION_HTTP_Request, clone_obj, NULL);
+    ion_class_set_offset(ion_oh_ION_HTTP_Request, ion_http_message);
 
     return SUCCESS;
 }

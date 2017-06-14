@@ -1,4 +1,3 @@
-#include <ion/http.h>
 #include "ion.h"
 
 zend_object_handlers ion_oh_ION_HTTP_WebSocketParser;
@@ -38,18 +37,16 @@ int ion_http_ws_message_end(websocket_parser * p) {
     ion_http_body_parser * parser = p->data;
     ZEND_ASSERT(parser->parser.websocket->frame);
     if(parser->parser.websocket->on_frame) {
-        zval zframe;
-        ZVAL_OBJ(&zframe, ION_OBJ(parser->parser.websocket->frame));
-        ion_promisor_sequence_invoke(parser->parser.websocket->on_frame, &zframe);
+        ion_promisor_done_object(parser->parser.websocket->on_frame, ION_OBJECT_ZOBJ(parser->parser.websocket->frame));
     }
-    zend_object_release(ION_OBJ(parser->parser.websocket->frame));
+    ion_object_release(parser->parser.websocket->frame);
     parser->parser.websocket->frame = NULL;
     parser->parser.websocket->frames_num++;
     return 0;
 }
 
 zend_object * ion_http_websocket_parser_init(zend_class_entry * ce) {
-    ion_http_body_parser * parser = ecalloc(1, sizeof(ion_http_body_parser));
+    ion_http_body_parser * parser = ion_alloc_object(ce, ion_http_body_parser);
     parser->type = ion_http_type_websocket;
     parser->settings.websocket = ecalloc(1, sizeof(websocket_parser_settings));
     parser->settings.websocket->on_frame_header = ion_http_ws_message_begin;
@@ -58,13 +55,13 @@ zend_object * ion_http_websocket_parser_init(zend_class_entry * ce) {
     parser->parser.websocket = ecalloc(1, sizeof(ion_websocket_parser));
     websocket_parser_init(&parser->parser.websocket->p);
     parser->parser.websocket->p.data = parser;
-    RETURN_INSTANCE(ION_HTTP_WebSocketParser, parser);
+    return ion_init_object(ION_OBJECT_ZOBJ(parser), ce, &ion_oh_ION_HTTP_WebSocketParser);
 }
 
 void ion_http_websocket_parser_free(zend_object * obj) {
-    ion_http_body_parser * parser = get_object_instance(obj, ion_http_body_parser);
+    ion_http_body_parser * parser = ION_ZOBJ_OBJECT(obj, ion_http_body_parser);
     if(parser->parser.websocket->on_frame) {
-        zend_object_release(parser->parser.websocket->on_frame);
+        ion_object_release(parser->parser.websocket->on_frame);
     }
     efree(parser->settings.websocket);
     efree(parser->parser.websocket);
@@ -73,15 +70,15 @@ void ion_http_websocket_parser_free(zend_object * obj) {
 
 /** public function ION\HTTP\WebSocketParser::frame() : ION\Sequence */
 CLASS_METHOD(ION_HTTP_WebSocketParser, frame) {
-    ion_http_body_parser * parser = get_this_instance(ion_http_body_parser);
+    ion_http_body_parser * parser = ION_THIS_OBJECT(ion_http_body_parser);
 
     if(!parser->parser.websocket->on_frame) {
         parser->parser.websocket->on_frame = ion_promisor_sequence_new(NULL);
-        ion_promisor_store(parser->parser.websocket->on_frame, parser);
+        ion_promisor_set_object_ptr(parser->parser.websocket->on_frame, parser, NULL);
     }
 
-    zend_object_addref(parser->parser.websocket->on_frame);
-    RETURN_OBJ(parser->parser.websocket->on_frame);
+    ion_object_addref(parser->parser.websocket->on_frame);
+    RETURN_ION_OBJ(parser->parser.websocket->on_frame);
 }
 
 
@@ -89,7 +86,7 @@ METHOD_WITHOUT_ARGS(ION_HTTP_WebSocketParser, frame)
 
 /** public function ION\HTTP\WebSocketParser::getParsedCount() : int */
 CLASS_METHOD(ION_HTTP_WebSocketParser, getParsedCount) {
-    ion_http_body_parser * parser = get_this_instance(ion_http_body_parser);
+    ion_http_body_parser * parser = ION_THIS_OBJECT(ion_http_body_parser);
 
     RETURN_LONG(parser->parser.websocket->frames_num);
 }
@@ -99,7 +96,7 @@ METHOD_WITHOUT_ARGS(ION_HTTP_WebSocketParser, getParsedCount)
 
 /** public function ION\HTTP\WebSocketParser::hasUnparsedFrame() : bool */
 CLASS_METHOD(ION_HTTP_WebSocketParser, hasUnparsedFrame) {
-    ion_http_body_parser * parser = get_this_instance(ion_http_body_parser);
+    ion_http_body_parser * parser = ION_THIS_OBJECT(ion_http_body_parser);
 
     if(parser->parser.websocket->frame) {
         RETURN_TRUE;
@@ -113,7 +110,7 @@ METHOD_WITHOUT_ARGS(ION_HTTP_WebSocketParser, hasUnparsedFrame)
 
 /** public function ION\HTTP\WebSocketParser::__invoke() : mixed */
 CLASS_METHOD(ION_HTTP_WebSocketParser, __invoke) {
-    ion_http_body_parser * parser = get_this_instance(ion_http_body_parser);
+    ion_http_body_parser * parser = ION_THIS_OBJECT(ion_http_body_parser);
     zend_string          * raw = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
@@ -147,6 +144,7 @@ CLASS_METHODS_END;
 PHP_MINIT_FUNCTION(ION_HTTP_WebSocketParser) {
     pion_register_class(ION_HTTP_WebSocketParser, "ION\\HTTP\\WebSocketParser", ion_http_websocket_parser_init, CLASS_METHODS(ION_HTTP_WebSocketParser));
     pion_init_std_object_handlers(ION_HTTP_WebSocketParser);
+    ion_class_set_offset(ion_oh_ION_HTTP_WebSocketParser, ion_http_body_parser);
 
     PION_CLASS_CONST_STRING(ION_HTTP_WebSocketParser, "UUID",  WEBSOCKET_UUID);
 

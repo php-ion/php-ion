@@ -4,7 +4,9 @@
 #ifndef ION_ZION_H
 #define ION_ZION_H
 
+#ifndef ION_API
 #define ION_API
+#endif
 
 /** Classes **/
 #define ion_class_set_offset(handler, struct_object) handler.offset  = (int)XtOffsetOf(struct_object, php_object);

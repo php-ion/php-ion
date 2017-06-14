@@ -86,7 +86,7 @@ struct _ion_http_message {
     } parser;
     zend_string     * body;
 
-    zend_object     * uri;
+    ion_uri         * uri;
     uint16_t          status;
     zend_string     * method;
     zend_string     * reason;
@@ -146,10 +146,10 @@ struct _ion_http_multi_parted_parser {
 };
 
 struct _ion_websocket_parser {
-    websocket_parser p;
-    zend_object * on_frame;
+    websocket_parser  p;
+    ion_promisor    * on_frame;
     ion_http_websocket_frame * frame;
-    zend_ulong    frames_num;
+    zend_ulong        frames_num;
 };
 
 struct _ion_http_body_parser {

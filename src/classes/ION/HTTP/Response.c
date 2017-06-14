@@ -11,11 +11,11 @@ zend_class_entry * ion_ce_ION_HTTP_Response;
 #define ION_HTTP_RESPONSE_BODY    5
 
 zend_object * ion_http_response_init(zend_class_entry * ce) {
-    ion_http_message * message = ecalloc(1, sizeof(ion_http_message));
+    ion_http_message * message = ion_alloc_object(ce, ion_http_message);
     message->type = ion_http_type_response;
     ALLOC_HASHTABLE(message->headers);
     zend_hash_init(message->headers, 8, NULL, ZVAL_PTR_DTOR, 0);
-    RETURN_INSTANCE(ION_HTTP_Response, message);
+    return ion_init_object(ION_OBJECT_ZOBJ(message), ce, &ion_oh_ION_HTTP_Response);
 }
 
 /** public static function ION\HTTP\Response::parse() : self */
@@ -49,7 +49,7 @@ CLASS_METHOD(ION_HTTP_Response, factory) {
     if(!request) {
         return;
     }
-    message = get_object_instance(request, ion_http_message);
+    message = ION_ZOBJ_OBJECT(request, ion_http_message);
     if(options) {
         ZEND_HASH_FOREACH_NUM_KEY_VAL(options, opt, option) {
             switch (opt) {
@@ -133,7 +133,7 @@ METHOD_ARGS_END();
 
 /** public static function ION\HTTP\Response::withStatus(int $code, $reason_phrase = '') : self */
 CLASS_METHOD(ION_HTTP_Response, withStatus) {
-    ion_http_message * message = get_this_instance(ion_http_message);
+    ion_http_message * message = ION_THIS_OBJECT(ion_http_message);
     zend_long          status = 0;
     zend_string      * reason = NULL;
 
@@ -168,7 +168,7 @@ METHOD_ARGS_END();
 
 /** public function ION\HTTP\Response::getStatusCode() : int */
 CLASS_METHOD(ION_HTTP_Response, getStatusCode) {
-    ion_http_message * message = get_this_instance(ion_http_message);
+    ion_http_message * message = ION_THIS_OBJECT(ion_http_message);
 
     RETURN_LONG(message->status);
 }
@@ -177,7 +177,7 @@ METHOD_WITHOUT_ARGS(ION_HTTP_Response, getStatusCode)
 
 /** public function ION\HTTP\Response::getReasonPhrase() : string */
 CLASS_METHOD(ION_HTTP_Response, getReasonPhrase) {
-    ion_http_message * message = get_this_instance(ion_http_message);
+    ion_http_message * message = ION_THIS_OBJECT(ion_http_message);
     zend_string      * default_reason = NULL;
 
     if(message->reason) {

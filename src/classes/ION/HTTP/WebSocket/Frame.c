@@ -4,15 +4,15 @@ zend_object_handlers ion_oh_ION_HTTP_WebSocket_Frame;
 zend_class_entry * ion_ce_ION_HTTP_WebSocket_Frame;
 
 zend_object * ion_http_websocket_frame_init(zend_class_entry * ce) {
-    ion_http_websocket_frame * frame = ecalloc(1, sizeof(ion_http_websocket_frame));
+    ion_http_websocket_frame * frame = ion_alloc_object(ce, ion_http_websocket_frame);
 
-    RETURN_INSTANCE(ION_HTTP_WebSocket_Frame, frame);
+    return ion_init_object(ION_OBJECT_ZOBJ(frame), ce, &ion_oh_ION_HTTP_WebSocket_Frame);
 }
 
 void ion_http_websocket_frame_free(zend_object * object) {
     zend_object_std_dtor(object);
 
-    ion_http_websocket_frame * frame = get_object_instance(object, ion_http_websocket_frame);
+    ion_http_websocket_frame * frame = ION_ZOBJ_OBJECT(object, ion_http_websocket_frame);
     if(frame->body) {
         zend_string_release(frame->body);
     }
@@ -54,7 +54,7 @@ CLASS_METHOD(ION_HTTP_WebSocket_Frame, parse) {
     if(!frame_object) {
         return;
     }
-    frame = get_object_instance(frame_object, ion_http_websocket_frame);
+    frame = ION_ZOBJ_OBJECT(frame_object, ion_http_websocket_frame);
 
     websocket_parser_settings_init(&settings);
     settings.on_frame_header = ion_websocket_frame_header;
@@ -104,7 +104,7 @@ CLASS_METHOD(ION_HTTP_WebSocket_Frame, withOpcode) {
         Z_PARAM_LONG(opcode)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    get_instance(getThis(), ion_http_websocket_frame)->flags = opcode & WS_OP_MASK;
+    ION_THIS_OBJECT(ion_http_websocket_frame)->flags = (websocket_flags)(opcode & WS_OP_MASK);
 
     RETURN_THIS();
 }
@@ -115,7 +115,7 @@ METHOD_ARGS_END();
 
 /** public function ION\HTTP\Message::getOpcode() : int */
 CLASS_METHOD(ION_HTTP_WebSocket_Frame, getOpcode) {
-    RETURN_LONG(get_instance(getThis(), ion_http_websocket_frame)->flags & WS_OP_MASK);
+    RETURN_LONG(ION_THIS_OBJECT(ion_http_websocket_frame)->flags & WS_OP_MASK);
 }
 
 METHOD_WITHOUT_ARGS(ION_HTTP_WebSocket_Frame, getOpcode);
@@ -123,7 +123,7 @@ METHOD_WITHOUT_ARGS(ION_HTTP_WebSocket_Frame, getOpcode);
 /** public function ION\HTTP\Message::withBody(string $body) : static */
 CLASS_METHOD(ION_HTTP_WebSocket_Frame, withBody) {
     zend_string * body = NULL;
-    ion_http_websocket_frame * frame = get_this_instance(ion_http_websocket_frame);
+    ion_http_websocket_frame * frame = ION_THIS_OBJECT(ion_http_websocket_frame);
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_STR(body)
@@ -143,7 +143,7 @@ METHOD_ARGS_END();
 
 /** public function ION\HTTP\Message::getBody() : string */
 CLASS_METHOD(ION_HTTP_WebSocket_Frame, getBody) {
-    ion_http_websocket_frame * frame = get_this_instance(ion_http_websocket_frame);
+    ion_http_websocket_frame * frame = ION_THIS_OBJECT(ion_http_websocket_frame);
 
     if(frame->body) {
         RETURN_STR(zend_string_copy(frame->body));
@@ -157,7 +157,7 @@ METHOD_WITHOUT_ARGS(ION_HTTP_WebSocket_Frame, getBody);
 /** public function ION\HTTP\Message::withFinalFlag(bool $flag) : static */
 CLASS_METHOD(ION_HTTP_WebSocket_Frame, withFinalFlag) {
     zend_bool flag = true;
-    ion_http_websocket_frame * frame = get_this_instance(ion_http_websocket_frame);
+    ion_http_websocket_frame * frame = ION_THIS_OBJECT(ion_http_websocket_frame);
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_BOOL(flag)
@@ -178,7 +178,7 @@ METHOD_ARGS_END();
 
 /** public function ION\HTTP\Message::getFinalFlag() : bool */
 CLASS_METHOD(ION_HTTP_WebSocket_Frame, getFinalFlag) {
-    ion_http_websocket_frame * frame = get_this_instance(ion_http_websocket_frame);
+    ion_http_websocket_frame * frame = ION_THIS_OBJECT(ion_http_websocket_frame);
 
     if(frame->flags & WS_FIN) {
         RETURN_TRUE;
@@ -191,7 +191,7 @@ METHOD_WITHOUT_ARGS(ION_HTTP_WebSocket_Frame, getFinalFlag);
 
 /** public function ION\HTTP\Message::hasMasking() : bool */
 CLASS_METHOD(ION_HTTP_WebSocket_Frame, hasMasking) {
-    ion_http_websocket_frame * frame = get_this_instance(ion_http_websocket_frame);
+    ion_http_websocket_frame * frame = ION_THIS_OBJECT(ion_http_websocket_frame);
 
     if(frame->flags & WS_HAS_MASK) {
         RETURN_TRUE;
@@ -204,7 +204,7 @@ METHOD_WITHOUT_ARGS(ION_HTTP_WebSocket_Frame, hasMasking);
 
 /** public function ION\HTTP\Message::getMasking() : int */
 CLASS_METHOD(ION_HTTP_WebSocket_Frame, getMasking) {
-    ion_http_websocket_frame * frame = get_this_instance(ion_http_websocket_frame);
+    ion_http_websocket_frame * frame = ION_THIS_OBJECT(ion_http_websocket_frame);
 
     if(frame->flags & WS_HAS_MASK) {
         RETURN_STRINGL(frame->mask, 4);
@@ -218,7 +218,7 @@ METHOD_WITHOUT_ARGS(ION_HTTP_WebSocket_Frame, getMasking);
 /** public function ION\HTTP\Message::withMasking(string $mask = null) : bool */
 CLASS_METHOD(ION_HTTP_WebSocket_Frame, withMasking) {
     zend_string * mask = NULL;
-    ion_http_websocket_frame * frame = get_this_instance(ion_http_websocket_frame);
+    ion_http_websocket_frame * frame = ION_THIS_OBJECT(ion_http_websocket_frame);
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
         Z_PARAM_OPTIONAL
@@ -244,7 +244,7 @@ METHOD_ARGS_END();
 
 /** public function ION\HTTP\Message::withoutMasking() : int */
 CLASS_METHOD(ION_HTTP_WebSocket_Frame, withoutMasking) {
-    ion_http_websocket_frame * frame = get_this_instance(ion_http_websocket_frame);
+    ion_http_websocket_frame * frame = ION_THIS_OBJECT(ion_http_websocket_frame);
 
     frame->flags &= ~WS_HAS_MASK;
     RETURN_THIS();
@@ -254,7 +254,7 @@ METHOD_WITHOUT_ARGS(ION_HTTP_WebSocket_Frame, withoutMasking);
 
 /** public function ION\HTTP\WebSocket\Frame::parse(string $raw) */
 CLASS_METHOD(ION_HTTP_WebSocket_Frame, build) {
-    ion_http_websocket_frame * frame = get_this_instance(ion_http_websocket_frame);
+    ion_http_websocket_frame * frame = ION_THIS_OBJECT(ion_http_websocket_frame);
     zend_string * raw;
     size_t        len = websocket_calc_frame_size(frame->flags, frame->body->len);
     size_t        raw_len;
@@ -291,6 +291,7 @@ PHP_MINIT_FUNCTION(ION_HTTP_WebSocket_Frame) {
     pion_register_class(ION_HTTP_WebSocket_Frame, "ION\\HTTP\\WebSocket\\Frame", ion_http_websocket_frame_init, CLASS_METHODS(ION_HTTP_WebSocket_Frame));
     pion_init_std_object_handlers(ION_HTTP_WebSocket_Frame);
     pion_set_object_handler(ION_HTTP_WebSocket_Frame, free_obj, ion_http_websocket_frame_free);
+    ion_class_set_offset(ion_oh_ION_HTTP_WebSocket_Frame, ion_http_websocket_frame);
 
     PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "OP_CONT",  WS_OP_CONTINUE);
     PION_CLASS_CONST_LONG(ION_HTTP_WebSocket_Frame, "OP_TEXT",  WS_OP_TEXT);
