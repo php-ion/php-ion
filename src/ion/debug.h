@@ -11,6 +11,10 @@
 
 #define ZVAL_DUMP_PP(zvar)  ZVAL_DUMP_P(*zvar)
 
+#define DUMP_MEMADR(what) \
+    fprintf(stderr, # what); \
+    fprintf(stderr, ": %llx ... %llx\n", what, what + sizeof(what));
+
 #define ZVAL_DUMP_P(zvar)  \
     php_printf("DUMP: "); \
     php_var_dump(&(zvar), 1);

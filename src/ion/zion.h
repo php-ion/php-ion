@@ -14,9 +14,9 @@
 #define ion_class_declare_property_long(ce, prop_name, value, access) \
     zend_declare_property_long(ce, prop_name, sizeof(prop_name)-1, (long)value, access)
 #define ion_class_declare_property_string(ce, prop_name, value, access) \
-    zend_declare_property_string(ce, prop_name, sizeof(prop_name)-1, (long)value, access)
+    zend_declare_property_string(ce, prop_name, sizeof(prop_name)-1, value, access)
 #define ion_class_declare_property_bool(ce, prop_name, value, access) \
-    zend_declare_property_bool(ce, prop_name, sizeof(prop_name)-1, (long)value, access)
+    zend_declare_property_bool(ce, prop_name, sizeof(prop_name)-1, (int)value, access)
 /** End Classes  **/
 
 /** Objects  **/
@@ -33,7 +33,7 @@ ION_API zend_object * ion_init_object(zend_object * php_object, zend_class_entry
 #define ion_object_release(obj) zend_object_release(ION_OBJECT_ZOBJ(obj));
 #define ion_object_addref(obj) zend_object_addref(ION_OBJECT_ZOBJ(obj));
 
-#define
+//#define
 /** End Objects **/
 
 #endif //ION_ZION_H

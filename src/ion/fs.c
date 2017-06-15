@@ -98,7 +98,7 @@ void ion_fs_watch_cb(evutil_socket_t fd, short what, void * arg) {
         watcher = (ion_fs_watcher *)event.udata;
         array_init(&result);
         add_assoc_long(&result, watcher->pathname->val, event.fflags);
-        ion_promisor_sequence_invoke(watcher->sequence, &result);
+        ion_promisor_done(watcher->sequence, &result);
         zval_ptr_dtor(&result);
     }
 }
@@ -140,13 +140,14 @@ ion_fs_watcher * ion_fs_watcher_add(const char * pathname, zend_long flags) {
     watcher->sequence = ion_promisor_sequence_new(NULL);
     watcher->fd = fd;
     watcher->pathname = zend_string_init(pathname, strlen(pathname), 0);
-    ion_promisor_store(watcher->sequence, watcher);
-    ion_promisor_dtor(watcher->sequence, ion_fs_watcher_dtor);
+    ion_promisor_set_object_ptr(watcher->sequence, watcher, ion_fs_watcher_dtor);
+//    ion_promisor_store(watcher->sequence, watcher);
+//    ion_promisor_dtor(watcher->sequence, ion_fs_watcher_dtor);
 
     memset(&event, 0, sizeof(event));
     EV_SET(&event, fd, EVFILT_VNODE, EV_ADD | EV_CLEAR, ION_FS_WATCH_EVENTS, 0, watcher);
     if (kevent(GION(watch_fd), &event, 1, NULL, 0, &timeout) == -1) {
-        zend_object_release(watcher->sequence);
+        ion_object_release(watcher->sequence);
         zend_throw_exception(ion_ce_ION_FSException, ERR_ION_FS_EVENT_CANT_ADD_EVENT, 0);
         return NULL;
     }
@@ -168,8 +169,8 @@ void ion_fs_watcher_remove(ion_fs_watcher * watcher) {
 
 #endif
 
-void ion_fs_watcher_dtor(ion_promisor * sequence) {
-    ion_fs_watcher * watcher = sequence->object;
+void ion_fs_watcher_dtor(zval * ptr) {
+    ion_fs_watcher * watcher = Z_PTR_P(ptr);
     if(watcher) {
         ion_fs_watcher_remove(watcher);
     }
@@ -177,5 +178,5 @@ void ion_fs_watcher_dtor(ion_promisor * sequence) {
 
 void ion_fs_watcher_clean(zval * zr) {
     ion_fs_watcher * watcher = Z_PTR_P(zr);
-    zend_object_release(watcher->sequence);
+    ion_object_release(watcher->sequence);
 }

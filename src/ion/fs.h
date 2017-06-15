@@ -20,11 +20,11 @@ extern ION_API zend_class_entry * ion_ce_ION_FSException;
 //         https://developer.apple.com/library/mac/documentation/Darwin/Conceptual/FSEvents_ProgGuide/KernelQueues/KernelQueues.html
 
 struct _ion_fs_watcher {
-    zend_object * sequence;
-    zend_string * pathname;
-    int           flags;
-    int           fd;
-    ion_event   * event;
+    ion_promisor * sequence;
+    zend_string  * pathname;
+    int            flags;
+    int            fd;
+    ion_event    * event;
 };
 
 #ifdef HAVE_INOTIFY
@@ -49,7 +49,7 @@ void ion_fs_watch_cb(evutil_socket_t fd, short what, void * arg);
 ion_fs_watcher * ion_fs_watcher_add(const char * pathname, zend_long flags);
 void ion_fs_watcher_remove(ion_fs_watcher * watcher);
 
-void ion_fs_watcher_dtor(ion_promisor * sequence);
+void ion_fs_watcher_dtor(zval * ptr);
 void ion_fs_watcher_clean(zval * zr);
 
 #endif //ION_CORE_FS_H

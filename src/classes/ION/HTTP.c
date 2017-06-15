@@ -63,7 +63,7 @@ CLASS_METHOD(ION_HTTP, request) {
         RETVAL_OBJ(resp);
         zval_ptr_dtor(&result);
     } else if(Z_TYPE(result) == IS_OBJECT) {
-        ion_promisor_set_internal_done(Z_OBJ(result), ion_http_response_incoming);
+//        ion_promisor_set_internal_done(ION_ZVAL_OBJECT_P(result), ion_http_response_incoming); // ????????
         RETVAL_OBJ(Z_OBJ(result));
     }
 }

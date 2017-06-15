@@ -18,7 +18,7 @@ void ion_fs_pair_close_one(ion_buffer * one, short what, void * ctx) {
 }
 
 void ion_fs_pair_close_two(ion_buffer * two, short what, void * ctx) {
-    zend_object  * deferred = (zend_object *) ctx;
+    ion_promisor  * deferred = ctx;
 
     if(what & BEV_EVENT_EOF) {
         size_t size = evbuffer_get_length( bufferevent_get_input(two) );
@@ -31,18 +31,18 @@ void ion_fs_pair_close_two(ion_buffer * two, short what, void * ctx) {
         ion_promisor_throw(deferred, ion_class_entry(ION_RuntimeException), ERR_ION_FS_READ_BROKEN_PIPE, 0);
     }
     bufferevent_disable(two, EV_READ);
-    zend_object_release(deferred);
+    ion_object_release(deferred);
 
 }
 
-void ion_fs_read_file_dtor(ion_promisor * deferred) {
-    ion_buffer   * two = deferred->object;
+void ion_fs_read_file_dtor(zval * ptr) {
+    ion_buffer   * two = Z_PTR_P(ptr);
     bufferevent_free(two);
 }
 
 /** public static function ION\FS::readFile(string $filename, int $offset = 0, int $length = -1) : Deferred */
 CLASS_METHOD(ION_FS, readFile) {
-    zend_object     * deferred     = NULL;
+    ion_promisor    * deferred     = NULL;
     zend_string     * filename     = NULL;
     zend_long         offset       = 0;
     zend_long         length       = -1;
@@ -60,12 +60,12 @@ CLASS_METHOD(ION_FS, readFile) {
 
     fd = open(filename->val, O_RDONLY | O_CLOEXEC | O_NONBLOCK);
     if(fd == -1) {
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_FS_READ_CANT_OPEN, filename->val, strerror(errno));
+        zend_throw_exception_ex(ion_ce_ION_FSException, 0, ERR_ION_FS_READ_CANT_OPEN, filename->val, strerror(errno));
         return;
     }
     if (fstat(fd, &st) == FAILURE) {
         close(fd);
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_FS_READ_CANT_STAT, filename->val, strerror(errno));
+        zend_throw_exception_ex(ion_ce_ION_FSException, 0, ERR_ION_FS_READ_CANT_STAT, filename->val, strerror(errno));
         return;
     }
     if(length < 0 || length > st.st_size) {
@@ -82,22 +82,21 @@ CLASS_METHOD(ION_FS, readFile) {
     bufferevent_enable(two, EV_READ);
 //    bufferevent_setwatermark(two, EV_READ, (size_t)length + 1, (size_t)length + 10);
     deferred = ion_promisor_deferred_new_ex(NULL);
-    ion_promisor_store(deferred, two);
-    ion_promisor_dtor(deferred, ion_fs_read_file_dtor);
 
     evbuffer = bufferevent_get_output(one);
     evbuffer_set_flags(evbuffer, EVBUFFER_FLAG_DRAINS_TO_FD);
     if(evbuffer_add_file(evbuffer, fd, (ev_off_t)offset, (ev_off_t)length) == FAILURE) {
         close(fd);
-        ion_promisor_zend_free(deferred);
-        zend_throw_exception(ion_class_entry(ION_RuntimeException), ERR_ION_FS_READ_SENDFILE_FAILED, 0);
+        ion_object_release(deferred);
+        zend_throw_exception(ion_ce_ION_FSException, ERR_ION_FS_READ_SENDFILE_FAILED, 0);
         return;
     }
+    ion_promisor_set_object_ptr(deferred, two, ion_fs_read_file_dtor);
 //    bufferevent_write(one, "\0", 1);
     bufferevent_setcb(one, NULL, ion_fs_file_sent_one, ion_fs_pair_close_one, NULL);
     bufferevent_setcb(two, NULL, NULL, ion_fs_pair_close_two, deferred);
-    obj_add_ref(deferred);
-    RETURN_OBJ(deferred);
+    ion_object_addref(deferred);
+    RETURN_ION_OBJ(deferred);
 }
 
 METHOD_ARGS_BEGIN(ION_FS, readFile, 1)
@@ -126,8 +125,8 @@ CLASS_METHOD(ION_FS, watch) {
 
     watcher = zend_hash_str_find_ptr(GION(watchers), realpath, strlen(realpath));
     if(watcher) {
-        zend_object_addref(watcher->sequence);
-        RETURN_OBJ(watcher->sequence);
+        ion_object_addref(watcher->sequence);
+        RETURN_ION_OBJ(watcher->sequence);
     }
 
     watcher = ion_fs_watcher_add(realpath, flags);
@@ -135,12 +134,12 @@ CLASS_METHOD(ION_FS, watch) {
         return; // exception has been thrown
     }
     if(!zend_hash_str_add_ptr(GION(watchers), realpath, strlen(realpath), watcher)) {
-        zend_object_release(watcher->sequence);
+        ion_object_release(watcher->sequence);
         zend_throw_exception(ion_ce_ION_FSException, ERR_ION_FS_EVENT_CANT_STORE_WATCHER, 0);
         return;
     }
-    zend_object_addref(watcher->sequence);
-    RETURN_OBJ(watcher->sequence);
+    ion_object_addref(watcher->sequence);
+    RETURN_ION_OBJ(watcher->sequence);
 }
 
 METHOD_ARGS_BEGIN(ION_FS, watch, 1)

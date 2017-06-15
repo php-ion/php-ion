@@ -7,8 +7,7 @@
 
 #include <php.h>
 #include <event.h>
-#include <ion.h>
-#include "callback.h"
+//#include "callback.h"
 
 #ifdef PHP_WIN32
 # define ION_API __declspec(dllexport)

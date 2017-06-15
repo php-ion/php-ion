@@ -55,7 +55,7 @@ static zend_always_inline void ion_promisor_release(ion_promisor * promisor) {
     if(promisor->dtor && Z_TYPE(promisor->object) == IS_PTR) {
         promisor->dtor(&promisor->object);
         promisor->dtor   = NULL;
-        promisor->object = NULL;
+        ZVAL_UNDEF(&promisor->object);
     }
     if(promisor->done.type == ION_PROMISOR_CB_PHP) {
         pion_cb_free(promisor->done.cb.php);
@@ -72,8 +72,7 @@ static zend_always_inline void ion_promisor_release(ion_promisor * promisor) {
 }
 
 
-void ion_promisor_resolve(ion_promisor * php_promise, zval * data, uint32_t type) {
-    ion_promisor * promise = ION_ZOBJ_OBJECT(php_promise, ion_promisor);
+void ion_promisor_resolve(ion_promisor * promise, zval * data, uint32_t type) {
     zval           zpromise;
     zval           retval;
     zval           result;
@@ -86,7 +85,7 @@ void ion_promisor_resolve(ion_promisor * php_promise, zval * data, uint32_t type
         return;
     }
 
-    ZVAL_OBJ(&zpromise, php_promise);
+    ZVAL_OBJ(&zpromise, ION_OBJECT_ZOBJ(promise));
     Z_ADDREF(zpromise);
     ZVAL_UNDEF(&retval);
     ZVAL_UNDEF(&result);
@@ -190,7 +189,7 @@ void ion_promisor_resolve(ion_promisor * php_promise, zval * data, uint32_t type
                         goto watch_result;
                     } else {
                         promise->await = ION_ZVAL_OBJECT(result, ion_promisor);
-                        PION_ARRAY_PUSH(await->handlers, await->handler_count, php_promise);
+                        PION_ARRAY_PUSH(await->handlers, await->handler_count, promise);
                         zval_add_ref(&zpromise);
                         resolved = 0;
                     }
@@ -538,7 +537,6 @@ void ion_promisor_cancel(ion_promisor * promisor, const char *message) {
 
 ion_promisor * ion_promisor_clone(ion_promisor * proto) {
     ion_promisor * clone = ion_alloc_object(proto->php_object.ce, ion_promisor);
-    memset(clone, 0, sizeof(ion_promisor));
     ZVAL_UNDEF(&clone->object);
     clone->flags = proto->flags & ~ION_PROMISOR_PROTOTYPE;
     ZVAL_UNDEF(&clone->result);
@@ -580,7 +578,7 @@ ion_promisor * ion_promisor_clone(ion_promisor * proto) {
         ion_promisor * handler;
         ushort         extern_handlers = 0;
         clone->handler_count = 0;
-        clone->handlers = emalloc(sizeof(zend_object *) * proto->handler_count);
+        clone->handlers = emalloc(sizeof(ion_promisor *) * proto->handler_count);
         for(ushort i = 0; i<proto->handler_count; i++) {
             handler = proto->handlers[i];
             if((proto->flags & ION_PROMISOR_PROTOTYPE) && !(handler->flags & ION_PROMISOR_PROTOTYPE)) { // has external promisor
@@ -600,7 +598,7 @@ ion_promisor * ion_promisor_clone(ion_promisor * proto) {
         }
         if(clone->handler_count) {
             if(clone->handler_count != proto->handler_count) {
-                clone->handlers = erealloc(clone->handlers, sizeof(zend_object *) * clone->handler_count);
+                clone->handlers = erealloc(clone->handlers, sizeof(ion_promisor *) * clone->handler_count);
             }
         } else {
             efree(clone->handlers);

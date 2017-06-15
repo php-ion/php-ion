@@ -73,20 +73,6 @@ METHOD_ARGS_BEGIN(ION, stop, 0)
     METHOD_ARG_DOUBLE(timeout, 0)
 METHOD_ARGS_END()
 
-static void _timer_done(evutil_socket_t fd, short flags, void * arg) {
-    ION_CB_BEGIN();
-    ion_promisor_done_true((ion_promisor *)arg);
-
-    ION_CB_END();
-}
-
-static void _timer_dtor(ion_promisor * deferred) {
-    ion_event * timer = (ion_event *) Z_PTR(deferred->object);
-    event_del(timer);
-    event_free(timer);
-    ion_object_release(deferred);
-}
-
 static void _ion_interval_free(ion_interval * interval) {
     if(interval->timer) {
         event_del(interval->timer);
@@ -107,14 +93,14 @@ static void _ion_interval_free(ion_interval * interval) {
     efree(interval);
 }
 
-static void _ion_interval_invoke(evutil_socket_t fd, short flags, void * arg) {
+static void _ion_interval_invoke(evutil_socket_t __unused fd, short __unused flags, void * arg) {
     ION_CB_BEGIN();
     ion_interval * interval = (ion_interval *) arg;
 
     if(interval->name) {
         ion_promisor_done_string(interval->promisor, interval->name, 1);
     } else {
-        ion_promisor_done_empty_string(interval->promisor);
+        ion_promisor_done_true(interval->promisor);
     }
     if(interval->repeat) {
         if(event_add(interval->timer, &interval->tv) == FAILURE) {
@@ -169,7 +155,7 @@ ion_promisor * _ion_timer_ctor(double timeout, zend_bool repeat, zend_string * n
         return NULL;
     } else {
         ion_object_addref(interval->promisor);
-        ion_promisor_set_object_ptr(interval->promisor, interval, _ion_interval_dtor);
+        ion_promisor_set_object_ptr(interval->promisor, interval, NULL);
         return promisor;
     }
 }
@@ -186,7 +172,7 @@ CLASS_METHOD(ION, await) {
         zend_throw_exception(ion_ce_InvalidArgumentException, ERR_ION_AWAIT_INVALID_TIME, 0);
         return;
     }
-    deferred = _ion_timer_ctor(timeout, true, NULL);
+    deferred = _ion_timer_ctor(timeout, false, NULL);
     if(deferred) {
         RETURN_OBJ(ION_OBJECT_ZOBJ(deferred));
     }

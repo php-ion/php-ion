@@ -171,7 +171,7 @@ ion_uri * ion_uri_parse(zend_string * uri_string) {
         php_url_free(parsed_url);
     }
 
-    return uri_object;
+    return uri;
 }
 
 zend_object * ion_uri_clone(zend_object * proto_obj) {

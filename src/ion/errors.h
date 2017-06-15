@@ -57,6 +57,7 @@
 #define ERR_ION_STREAM_BUFFER_ID_INVALID       "Invalid buffer identify"
 #define ERR_ION_STREAM_BUFFER_CORRUPTED        "Stream buffer is corrupted"
 #define ERR_ION_STREAM_READ_LOCKED             "Stream locked for reading: already in the process of reading"
+#define ERR_ION_STREAM_APPEND_FAILED           "Failed to append data to input"
 
 // class ION\Listener
 #define ERR_ION_LISTENER_UNSUPPORTED_ADDRESS  "Address family %d not supported by protocol family"

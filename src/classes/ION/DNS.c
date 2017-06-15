@@ -8,8 +8,8 @@ zend_object_handlers ion_oh_ION_DNSException;
 
 void _ion_dns_getaddrinfo_callback(int errcode, struct evutil_addrinfo * addr, void * d) {
     zval result, A, AAAA;
-    zend_object * deferred = d;
-    ion_dns_addr_request * req = ion_promisor_store_get(deferred);
+    ion_promisor * deferred = d;
+    ion_dns_addr_request * req = Z_PTR(deferred->object);
     if (!errcode) {
         array_init(&result);
         array_init(&A);
@@ -38,17 +38,17 @@ void _ion_dns_getaddrinfo_callback(int errcode, struct evutil_addrinfo * addr, v
         evutil_freeaddrinfo(addr);
         ion_promisor_done(deferred, &result);
     } else {
-        zend_object * exception = pion_exception_new_ex(ion_get_class(ION_RuntimeException), 0, ERR_ION_DNS_RESOLVE_FAILED, evutil_gai_strerror(errcode));
+        zend_object * exception = pion_exception_new_ex(ion_ce_ION_DNSException, 0, ERR_ION_DNS_RESOLVE_FAILED, evutil_gai_strerror(errcode));
         ZVAL_OBJ(&result, exception);
         ion_promisor_fail(deferred, &result);
     }
     zval_ptr_dtor(&result);
-    zend_object_release(deferred);
+    ion_object_release(deferred);
 }
 
-void ion_dns_request_dtor(ion_promisor * promisor) {
-    if(promisor->object) {
-        ion_dns_addr_request *req = promisor->object;
+void ion_dns_request_dtor(zval * ptr) {
+//    if(promisor->object) {
+        ion_dns_addr_request *req = Z_PTR_P(ptr);
         if(req->request) {
             evdns_getaddrinfo_cancel(req->request);
         }
@@ -57,19 +57,19 @@ void ion_dns_request_dtor(ion_promisor * promisor) {
             zend_error(E_ERROR, ERR_ION_DNS_RESOLVE_NOT_CLEANED);
         }
         efree(req);
-        promisor->object = NULL;
-    }
+//        promisor->object = NULL;
+//    }
 }
 
 /** public static function ION\DNS::resolve(string $domain, int $flags = self::ADDR_IP_ANY) : Deferred */
 CLASS_METHOD(ION_DNS, resolve) {
-    zend_string * domain   = NULL;
-    zend_long     flags    = ION_DNS_RECORD_BASE;
-    ion_dns_addr_request * req;
-    struct evutil_addrinfo hints;
-    zend_object * deferred = NULL;
-    zval          val;
-    zval        * found;
+    zend_string  * domain   = NULL;
+    zend_long      flags    = ION_DNS_RECORD_BASE;
+    ion_promisor * deferred = NULL;
+    zval           val;
+    zval         * found;
+    ion_dns_addr_request   * req;
+    struct evutil_addrinfo   hints;
 
     ZEND_PARSE_PARAMETERS_START(1,2)
         Z_PARAM_STR(domain)
@@ -82,8 +82,8 @@ CLASS_METHOD(ION_DNS, resolve) {
     }
 
     deferred = ion_promisor_deferred_new_ex(NULL);
-    ZVAL_OBJ(&val, deferred);
-    obj_promisor_set_dtor(deferred, ion_dns_request_dtor);
+    ZVAL_OBJ(&val, ION_OBJECT_ZOBJ(deferred));
+//    obj_promisor_set_dtor(deferred, ion_dns_request_dtor);
     memset(&hints, 0, sizeof(hints));
     if((flags & ION_DNS_RECORDS_A_AAAA) == ION_DNS_RECORDS_A_AAAA || (flags & ION_DNS_RECORDS_A_AAAA) == 0) {
         hints.ai_family = PF_UNSPEC;
@@ -102,15 +102,16 @@ CLASS_METHOD(ION_DNS, resolve) {
     memset(req, 0, sizeof(ion_dns_addr_request));
     req->domain = zend_string_copy(domain);
     req->request = evdns_getaddrinfo(GION(evdns), domain->val, NULL, &hints, _ion_dns_getaddrinfo_callback, deferred);
-    ion_promisor_store(deferred, req);
+//    ion_promisor_store(deferred, req);
 
     if(!zend_hash_add(GION(resolvers), domain, &val)) {
-        zend_object_release(deferred);
-        zend_throw_exception(ion_class_entry(ION_RuntimeException), ERR_ION_DNS_RESOLVE_NOT_STORED, 0);
+        ion_object_release(deferred);
+        zend_throw_exception(ion_ce_ION_RuntimeException, ERR_ION_DNS_RESOLVE_NOT_STORED, 0);
         return;
     }
-    zend_object_addref(deferred);
-    RETURN_OBJ(deferred);
+    ion_promisor_set_object_ptr(deferred, req, ion_dns_request_dtor);
+    ion_object_addref(deferred);
+    RETURN_ION_OBJ(deferred);
 }
 
 METHOD_ARGS_BEGIN(ION_DNS, resolve, 1)
@@ -138,7 +139,6 @@ PHP_MINIT_FUNCTION(ION_DNS) {
     PION_REGISTER_VOID_EXTENDED_CLASS(ION_DNSException, ion_ce_ION_RuntimeException, "ION\\DNSException");
 
     if(!GION(adns_enabled)) {
-        PHPDBG("no adns");
         return SUCCESS;
     }
     GION(evdns) = evdns_base_new(GION(base), 1);

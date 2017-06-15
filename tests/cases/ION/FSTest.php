@@ -20,8 +20,7 @@ class FSTest extends TestCase {
 	}
 
 	/**
-     * @group dev
-	 * @memc heck
+	 * @memcheck
 	 */
 	public function testWatch() {
 		$file = ION_VAR."/iddqd";

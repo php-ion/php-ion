@@ -60,7 +60,7 @@ CLASS_METHOD(ION_Promise, then) {
             return;
         }
     }
-    RETURN_OBJ(handler);
+    RETURN_ION_OBJ(handler);
 }
 
 METHOD_ARGS_BEGIN(ION_Promise, then, 0)

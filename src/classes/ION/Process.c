@@ -447,7 +447,7 @@ CLASS_METHOD(ION_Process, exec) {
         close(out_pipes[1]);
         close(err_pipes[1]);
 
-        ion_process_exec_object(&zexec);
+        object_init_ex(&zexec, ion_ce_ION_Process_Exec);
 
         zend_hash_index_add(GION(proc_execs), (zend_ulong) pid, &zexec);
 
@@ -462,9 +462,9 @@ CLASS_METHOD(ION_Process, exec) {
         bufferevent_enable(exec->out, EV_READ);
         bufferevent_enable(exec->err, EV_READ);
         exec->deferred = ion_promisor_deferred_new_ex(NULL);
-        ion_promisor_store(exec->deferred, exec);
-        zend_object_addref(exec->deferred);
-        RETURN_OBJ(exec->deferred);
+        ion_promisor_set_object_ptr(exec->deferred, exec, NULL);
+        ion_object_addref(exec->deferred);
+        RETURN_ION_OBJ(exec->deferred);
     } else {  // child
         if (dup2( out_pipes[1], 1 ) < 0 ) {
             perror(strerror(errno));
@@ -565,8 +565,8 @@ METHOD_WITHOUT_ARGS_RETURN_BOOL(ION_Process, hasParentIPC)
 /** public function ION\Process::getParentIPC() : ION\Process\IPC */
 CLASS_METHOD(ION_Process, getParentIPC) {
     if(GION(parent_ipc)) {
-        zend_object_addref(GION(parent_ipc));
-        RETURN_OBJ(GION(parent_ipc));
+        ion_object_addref(GION(parent_ipc));
+        RETURN_ION_OBJ(GION(parent_ipc));
     } else {
         RETURN_NULL();
     }
@@ -722,7 +722,7 @@ PHP_RSHUTDOWN_FUNCTION(ION_Process) {
     evsignal_del(GION(sigchld));
 
     if(GION(parent_ipc)) {
-        zend_object_release(GION(parent_ipc));
+        ion_object_release(GION(parent_ipc));
     }
 
     zend_hash_clean(GION(proc_childs));

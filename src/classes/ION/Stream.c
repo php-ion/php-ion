@@ -1,8 +1,5 @@
 #include "ion.h"
-#include <ext/standard/url.h>
-#include <sys/fcntl.h>
 #include <event2/bufferevent_ssl.h>
-#include <openssl/err.h>
 
 #ifndef O_NOATIME
 # define O_NOATIME 0
@@ -264,7 +261,7 @@ zend_object * ion_stream_new_ex(ion_buffer * buffer, int flags, zend_class_entry
     }
     object_init_ex(&zstream, cls);
     stream = ION_ZVAL_OBJECT(zstream, ion_stream);
-    stream->id = GION(stream_index)++;
+//    stream->id = GION(stream_index)++;
     stream->buffer = buffer;
     stream->state |= flags;
     if(flags & ION_STREAM_FROM_PEER) {
@@ -486,7 +483,7 @@ CLASS_METHOD(ION_Stream, socket) {
     errno = 0;
 
     if(encrypt) {
-        SSL * ssl_handler = ion_crypto_client_stream_handler(Z_OBJ_P(encrypt));
+        SSL * ssl_handler = ion_crypto_client_stream_handler(ION_ZVAL_OBJECT_P(encrypt, ion_crypto));
         if(!ssl_handler) {
             zend_throw_exception_ex(ion_ce_ION_StreamException, 0, ERR_ION_STREAM_CRYPTO_FAILED, host->val);
             return;
@@ -1256,10 +1253,10 @@ CLASS_METHOD(ION_Stream, encrypt) {
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     if(ion_crypto_check_is_client(Z_OBJ_P(encrypt))) {
-        ssl_handler = ion_crypto_client_stream_handler(Z_OBJ_P(encrypt));
+        ssl_handler = ion_crypto_client_stream_handler(ION_ZVAL_OBJECT_P(encrypt, ion_crypto));
         ssl_state   = BUFFEREVENT_SSL_CONNECTING;
     } else {
-        ssl_handler = ion_crypto_server_stream_handler(Z_OBJ_P(encrypt));
+        ssl_handler = ion_crypto_server_stream_handler(ION_ZVAL_OBJECT_P(encrypt, ion_crypto));
         ssl_state   = BUFFEREVENT_SSL_ACCEPTING;
     }
 
@@ -1574,7 +1571,7 @@ METHOD_WITHOUT_ARGS(ION_Stream, getType)
 
 /** public function ION\Stream::__toString() : string */
 CLASS_METHOD(ION_Stream, __toString) {
-    RETURN_STR(ion_stream_describe(Z_OBJ_P(getThis())));
+    RETURN_STR(ion_stream_describe(ION_THIS_OBJECT(ion_stream)));
 }
 
 METHOD_WITHOUT_ARGS(ION_Stream, __toString)
@@ -1598,7 +1595,7 @@ CLASS_METHOD(ION_Stream, appendToInput) {
 
     evbuffer_unfreeze(input, 0);
     if(evbuffer_add(input, (const void *)data->val, (size_t)data->len)) {
-        zend_throw_exception(ion_ce_ION_StreamException, "Failed to append data to input", 0);
+        zend_throw_exception(ion_ce_ION_StreamException, ERR_ION_STREAM_APPEND_FAILED, 0);
         return;
     }
     stream->state &= ~ION_STREAM_STATE_FLUSHED;

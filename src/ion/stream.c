@@ -1,5 +1,4 @@
-//#include "stream.h"
-#include "init.h"
+#include "ion.h"
 #include <event2/bufferevent_ssl.h>
 #include <openssl/err.h>
 
