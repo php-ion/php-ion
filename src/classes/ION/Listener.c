@@ -229,7 +229,7 @@ METHOD_ARGS_END();
 
 /** public function ION\Listener::whenAccepted() : ION\Sequence */
 CLASS_METHOD(ION_Listener, whenAccepted) {
-    ion_listener * listener = get_this_instance(ion_listener);
+    ion_listener * listener = ION_THIS_OBJECT(ion_listener);
 
     if(!listener->accept) {
         listener->accept = ion_promisor_sequence_new(NULL);
@@ -244,7 +244,7 @@ METHOD_WITHOUT_ARGS(ION_Listener, whenAccepted);
 
 /** public function ION\Listener::encrypt(ION\Crypto $ssl) : self */
 CLASS_METHOD(ION_Listener, encrypt) {
-    ion_listener * listener = get_this_instance(ion_listener);
+    ion_listener * listener = ION_THIS_OBJECT(ion_listener);
     zval         * zssl = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)

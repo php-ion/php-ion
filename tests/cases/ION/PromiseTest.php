@@ -108,7 +108,6 @@ class PromiseTest extends TestCase {
 
     /**
      * @memcheck
-     * @group dev
      */
     public function testCloneable() {
         $promise = new ResolvablePromise(function() {}, function() {});
@@ -118,6 +117,8 @@ class PromiseTest extends TestCase {
 
         $clone = clone $promise;
         $this->assertEquals($promise->a, $clone->a);
+        $clone->a = 2;
+        $this->assertNotEquals($promise->a, $clone->a);
         $clone->done(1);
         $promise->done(1);
 

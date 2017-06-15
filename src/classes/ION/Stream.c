@@ -175,11 +175,12 @@ void _ion_stream_notify(ion_buffer * bev, short what, void * ctx) {
         }
     } else if(what & BEV_EVENT_ERROR) {
         stream->state |= ION_STREAM_STATE_ERROR;
+        stream->error = ion_stream_get_exception(stream, bev);
         if(stream->connect || stream->read || stream->flush) {
             zval          zex;
-            zend_object * exception = ion_stream_get_exception(stream, bev);
-            stream->error = exception;
-            ZVAL_OBJ(&zex, exception);
+
+
+            ZVAL_OBJ(&zex, stream->error);
             if(stream->connect) {
                 ion_promisor_fail(stream->connect, &zex);
             }
@@ -659,7 +660,7 @@ CLASS_METHOD(ION_Stream, connect) {
         ion_promisor_set_object_ptr(deferred, stream, _ion_stream_connect_dtor);
 //        ion_promisor_store(deferred, stream);
 //        ion_promisor_dtor(deferred, _ion_stream_connect_dtor);
-//        stream->connect = deferred;
+        stream->connect = deferred;
         ion_object_addref(deferred);
         RETURN_ION_OBJ(deferred);
     }
