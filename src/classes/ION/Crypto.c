@@ -504,7 +504,7 @@ METHOD_ARGS_BEGIN(ION_Crypto, allowSelfSigned, 0)
     METHOD_ARG_BOOL(state, 0)
 METHOD_ARGS_END()
 
-/* public function ION\SSL::ca(string $cafile, string $path) : self */
+/* public function ION\SSL::ca(string $cafile, string $capath) : self */
 CLASS_METHOD(ION_Crypto, ca) {
     zend_string * cafile = NULL;
     zend_string * capath = NULL;

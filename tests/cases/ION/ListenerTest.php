@@ -100,10 +100,12 @@ class ListenerTest extends TestCase {
         $listener = new Listener(ION_TEST_SERVER_HOST);
         $server_ssl = Crypto::server(Crypto::METHOD_TLSv12)
             ->passPhrase('unittest')
+            ->verifyPeer(false)
             ->localCert(ION_RESOURCES.'/cacert.pem', ION_RESOURCES.'/cakey.pem')
             ->allowSelfSigned();
 
         $client_ssl = Crypto::client(Crypto::METHOD_TLSv12)
+            ->verifyPeer(false)
             ->allowSelfSigned();
 
         $listener->encrypt($server_ssl);
@@ -126,6 +128,9 @@ class ListenerTest extends TestCase {
         }, false);
 
         $this->loop();
+
+        $this->assertArrayNotHasKey("error", $this->data, "Errors: ".var_export($this->data, 1));
+        $this->assertArrayNotHasKey("server.error", $this->data, "Errors: ".var_export($this->data, 1));
 
         $this->assertEquals([
             "connect" => [
