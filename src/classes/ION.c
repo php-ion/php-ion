@@ -93,7 +93,7 @@ static void _ion_interval_free(ion_interval * interval) {
     efree(interval);
 }
 
-static void _ion_interval_invoke(evutil_socket_t __unused fd, short __unused flags, void * arg) {
+static void _ion_interval_invoke(evutil_socket_t fd, short flags, void * arg) {
     ION_CB_BEGIN();
     ion_interval * interval = (ion_interval *) arg;
 
