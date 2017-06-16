@@ -109,6 +109,8 @@
 #define ERR_ION_FS_EVENT_CANT_ADD_EVENT     "Failed to add fsnotify event"
 #define ERR_ION_FS_EVENT_CANT_DELETE_EVENT  "FS watcher: Could not remove watcher from queue: %s"
 #define ERR_ION_FS_EVENT_ERROR              "FS watcher: An error occurred: %s"
+#define ERR_ION_FS_INOTIFY_INIT_FAILED      "Failed to init inotify for file %s: %s"
+#define ERR_ION_FS_INOTIFY_ADD_FAILED       "Failed to listen of %s"
 
 // class ION\Process
 #define ERR_ION_PROCESS_SIGNAL_EVENT_FAIL  "Failed to listening signal %d"

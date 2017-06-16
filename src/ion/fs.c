@@ -18,24 +18,23 @@ ion_fs_watcher * ion_fs_watcher_add(const char * pathname, zend_long flags) {
 
     fd = inotify_init();
     if(fd < 0) {
-        zend_throw_exception_ex(ion_ce_ION_RuntimeException, 0 , "Failed to init inotify for file %s: %s", pathname, strerror(errno));
+        zend_throw_exception_ex(ion_ce_ION_RuntimeException, 0 , ERR_ION_FS_INOTIFY_INIT_FAILED, pathname, strerror(errno));
         return NULL;
     }
     watcher = ecalloc(1, sizeof(ion_fs_watcher));
     watcher->sequence = ion_promisor_sequence_new(NULL);
     watcher->fd = fd;
     watcher->pathname = zend_string_init(pathname, strlen(pathname), 0);
-    ion_promisor_store(watcher->sequence, watcher);
-    ion_promisor_dtor(watcher->sequence, ion_fs_watcher_dtor);
+    ion_promisor_set_object_ptr(watcher->sequence, watcher, ion_fs_watcher_dtor);
     watcher->event = event_new(GION(base), fd, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, ion_fs_watch_cb, watcher);
     if(event_add(watcher->event, NULL) == FAILURE) {
-        zend_object_release(watcher->sequence);
-        zend_throw_exception_ex(ion_ce_ION_RuntimeException, 0 , "Could not activate listener of %s", pathname);
+        ion_object_release(watcher->sequence);
+        zend_throw_exception_ex(ion_ce_ION_RuntimeException, 0 , ERR_ION_FS_EVENT_NO_QUEUE, pathname);
         return NULL;
     }
     if(inotify_add_watch(fd, pathname, ION_FS_WATCH_EVENTS) < 0) {
-        zend_object_release(watcher->sequence);
-        zend_throw_exception_ex(ion_ce_ION_RuntimeException, 0 , "Failed to listen of %s", pathname);
+        ion_object_release(watcher->sequence);
+        zend_throw_exception_ex(ion_ce_ION_RuntimeException, 0 , ERR_ION_FS_INOTIFY_ADD_FAILED, pathname);
         return NULL;
     }
 
@@ -76,7 +75,7 @@ void ion_fs_watch_cb(evutil_socket_t fd, short what, void * arg) {
             add_assoc_long(&result, watcher->pathname->val, event.mask);
         }
     }
-    ion_promisor_sequence_invoke(watcher->sequence, &result);
+    ion_promisor_done(watcher->sequence, &result);
     zval_ptr_dtor(&result);
 }
 
