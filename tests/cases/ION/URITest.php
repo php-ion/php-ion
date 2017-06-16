@@ -92,6 +92,7 @@ class URITest extends TestCase {
 
 	/**
 	 * @memcheck
+     * @group dev
 	 */
 	public function testClone() {
 		$complete_uri = "http://root:123@example.com:8080/fake/index.html?param=val#anchor";

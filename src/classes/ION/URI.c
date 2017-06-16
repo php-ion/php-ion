@@ -178,6 +178,7 @@ zend_object * ion_uri_clone(zend_object * proto_obj) {
     ion_uri * proto = ION_ZOBJ_OBJECT(proto_obj, ion_uri);
     ion_uri * clone = ion_alloc_object(proto->php_object.ce, ion_uri);
 
+    ion_init_object(ION_OBJECT_ZOBJ(clone), proto->php_object.ce, (zend_object_handlers *)proto->php_object.handlers);
 //    zend_object_std_init(&clone->std, proto->std.ce);
 //    object_properties_init(&clone->std, proto->std.ce);
     clone->php_object.handlers = proto->php_object.handlers;
