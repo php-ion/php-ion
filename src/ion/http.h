@@ -87,7 +87,7 @@ struct _ion_http_message {
     zend_string     * body;
 
     ion_uri         * uri;
-    uint16_t          status;
+    unsigned int      status;
     zend_string     * method;
     zend_string     * reason;
     zend_string     * target;

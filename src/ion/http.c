@@ -127,7 +127,7 @@ int pion_http_message_complete(http_parser * parser) {
 
 zend_object * pion_http_parse_request(zend_string * request_string, zend_class_entry * ce) {
     zend_object          * request = pion_new_object_arg_0(ce ? ce : ion_ce_ION_HTTP_Request);
-    ion_http_message     * message = get_object_instance(request, ion_http_message);
+    ion_http_message     * message = ION_ZOBJ_OBJECT(request, ion_http_message);
     http_parser_settings   settings;
     size_t                 nparsed;
     http_parser          * parser;
@@ -169,7 +169,7 @@ zend_object * pion_http_parse_request(zend_string * request_string, zend_class_e
 
 zend_object * pion_http_parse_response(zend_string * response_string, zend_class_entry * ce) {
     zend_object          * response = pion_new_object_arg_0(ce ? ce : ion_ce_ION_HTTP_Response);
-    ion_http_message     * message = get_object_instance(response, ion_http_message);
+    ion_http_message     * message = ION_ZOBJ_OBJECT(response, ion_http_message);
     http_parser_settings   settings;
     size_t                 nparsed;
     http_parser          * parser;
@@ -201,7 +201,7 @@ zend_object * pion_http_parse_response(zend_string * response_string, zend_class
 zend_string * pion_http_message_build(zend_object * message_object) {
     USE_ION_CACHE;
 
-    ion_http_message * message = get_object_instance(message_object, ion_http_message);
+    ion_http_message * message = ION_ZOBJ_OBJECT(message_object, ion_http_message);
     zend_string     ** pipe = emalloc(sizeof(zend_string *) * 32);
     size_t             pipe_size = 32;
     size_t             pipe_pos  = 0;

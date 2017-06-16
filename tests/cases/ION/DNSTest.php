@@ -33,6 +33,6 @@ class DNSTest extends TestCase {
         });
         $this->loop();
         $this->assertTrue(isset($this->data['error']));
-        $this->assertEquals('ION\RuntimeException', $this->data['error']["exception"]);
+        $this->assertEquals('ION\DNSException', $this->data['error']["exception"]);
     }
 }

@@ -265,7 +265,6 @@ class StreamTest extends TestCase {
 
     /**
      * @memcheck
-     * @group dev
      */
     public function testConnect() {
         $listener = $this->listener(ION_TEST_SERVER_IPV4, function (Stream $connect) {

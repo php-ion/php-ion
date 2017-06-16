@@ -9,7 +9,7 @@ int ion_http_ws_message_begin(websocket_parser * p) {
     ion_http_body_parser * parser = p->data;
 
     object_init_ex(&zframe, ion_ce_ION_HTTP_WebSocket_Frame);
-    frame = get_instance(&zframe, ion_http_websocket_frame);
+    frame = ION_ZVAL_OBJECT(zframe, ion_http_websocket_frame);
     frame->flags = p->flags;
     frame->body = zend_string_alloc(p->length, 0);
     memcpy(frame->mask, p->mask, 4);

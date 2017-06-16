@@ -28,8 +28,8 @@
     ((type *)(obj))
 //    (type *)((char*)(obj) - XtOffsetOf(type, std))
 
-#define get_instance(pz, type) \
-    get_object_instance(Z_OBJ_P(pz), type)
+//#define get_instance(pz, type) \
+//    get_object_instance(Z_OBJ_P(pz), type)
 
 #define get_this_instance(type) \
     get_instance(getThis(), type)
@@ -38,11 +38,6 @@
 
 #define ION_OBJ_HANDLERS(p) (p)->std.handlers
 
-#define Z_ISTRUE(zval)				(Z_TYPE(zval) == IS_TRUE)
-#define Z_ISTRUE_P(zval_p)			Z_ISTRUE(*(zval_p))
-
-#define Z_ISFALSE(zval)				(Z_TYPE(zval) == IS_FALSE)
-#define Z_ISFALSE_P(zval_p)			Z_ISFALSE(*(zval_p))
 
 #define Z_BVAL_P(z) (zend_bool)Z_LVAL_P(z)
 

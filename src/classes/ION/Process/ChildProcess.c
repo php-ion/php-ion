@@ -13,7 +13,7 @@ zend_object * ion_process_child_init(zend_class_entry * ce) {
 
 
 void ion_process_child_free(zend_object * object) {
-    ion_process_child * child = get_object_instance(object, ion_process_child);
+    ion_process_child * child = ION_ZOBJ_OBJECT(object, ion_process_child);
     if(child->prom_exit) {
         ion_object_release(child->prom_exit);
         child->prom_exit = NULL;

@@ -92,7 +92,7 @@ void ion_promisor_resolve(ion_promisor * promise, zval * data, uint32_t type) {
     if(promise->await) {
         result_type = type & ION_PROMISOR_FINISHED;
         ZVAL_COPY(&result, data);
-        zend_object_release(ION_OBJECT_ZOBJ(promise->await));
+        ion_object_release(promise->await);
         promise->await = NULL;
         if(promise->generator) {
             resolved = 0;

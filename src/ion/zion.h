@@ -36,4 +36,13 @@ ION_API zend_object * ion_init_object(zend_object * php_object, zend_class_entry
 //#define
 /** End Objects **/
 
+/** Zval **/
+
+#define Z_ISTRUE(zval)				(Z_TYPE(zval) == IS_TRUE)
+#define Z_ISTRUE_P(zval_p)			Z_ISTRUE(*(zval_p))
+
+#define Z_ISFALSE(zval)				(Z_TYPE(zval) == IS_FALSE)
+#define Z_ISFALSE_P(zval_p)			Z_ISFALSE(*(zval_p))
+
+/** End Zval **/
 #endif //ION_ZION_H

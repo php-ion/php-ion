@@ -161,6 +161,5 @@ int    ion_stream_close_fd(ion_stream * stream);
 
 ION_API void ion_listener_enable(zend_object * listener_obj, zend_bool state);
 ION_API zend_bool ion_listener_default_handler(zend_object * listener, zend_object * connect);
-#define ion_listener_set_storage(listener, strg) get_object_instance(listener, ion_listener)->storage = strg
 
 #endif //PION_STREAM_H

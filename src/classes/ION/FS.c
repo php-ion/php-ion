@@ -28,7 +28,7 @@ void ion_fs_pair_close_two(ion_buffer * two, short what, void * ctx) {
         ion_promisor_done_string(deferred, data, 0);
         zend_string_release(data);
     } else if(what &  BEV_EVENT_ERROR) {
-        ion_promisor_throw(deferred, ion_class_entry(ION_RuntimeException), ERR_ION_FS_READ_BROKEN_PIPE, 0);
+        ion_promisor_throw(deferred, ion_ce_ION_RuntimeException, ERR_ION_FS_READ_BROKEN_PIPE, 0);
     }
     bufferevent_disable(two, EV_READ);
     ion_object_release(deferred);

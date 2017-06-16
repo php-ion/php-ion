@@ -34,7 +34,7 @@ CLASS_METHOD(ION_HTTP, request) {
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
 
-    stream = get_object_instance(connect, ion_stream);
+    stream = ION_ZOBJ_OBJECT(connect, ion_stream);
     if(stream->state & ION_STREAM_STATE_CLOSED) {
         zend_throw_exception(ion_ce_InvalidArgumentException, ERR_ION_HTTP_REQUEST_INVALID_STREAM, 0);
         return;

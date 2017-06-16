@@ -20,7 +20,7 @@
 ION_API SSL * ion_crypto_server_stream_handler(ion_crypto * ssl);
 ION_API SSL * ion_crypto_client_stream_handler(ion_crypto * ssl);
 
-#define ion_crypto_check_is_client(obj) (get_object_instance(obj, ion_crypto)->flags & ION_CRYPTO_IS_CLIENT)
+#define ion_crypto_check_is_client(zobj) (ION_ZOBJ_OBJECT(zobj, ion_crypto)->flags & ION_CRYPTO_IS_CLIENT)
 
 struct _ion_crypto {
 //    zend_object   std;

@@ -10,14 +10,12 @@ use ION\Test\TestCase;
 class ProcessTest extends TestCase {
 
     /**
-     *
      * @memcheck
      */
     public function testPids() {
         $this->assertSame(getmypid(), Process::getPid());
         $this->assertSame(posix_getppid(), Process::getParentPid());
     }
-
 
 
 	/**
@@ -30,9 +28,10 @@ class ProcessTest extends TestCase {
 
 		$this->promise(function () {
 			yield \ION::await(0.01);
-			Process::kill(SIGHUP, getmypid());
-			yield \ION::await(0.01);
-		});
+            Process::kill(SIGHUP, getmypid());
+            yield \ION::await(0.01);
+
+        });
 		$this->loop();
         Process::signal(SIGHUP)->forget('test');
 		$this->assertEquals([

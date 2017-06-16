@@ -63,30 +63,35 @@ METHOD_ARGS_BEGIN(ION_Process, kill, 2)
     METHOD_ARG_BOOL(to_group, 0)
 METHOD_ARGS_END()
 
-void _ion_process_signal_free(ion_event * event) {
-    ion_promisor  * sequence = event_get_callback_arg(event);
-    ion_promisor_remove_object(sequence);
-    ion_object_release(sequence);
-    event_del(event);
-    event_free(event);
+void _ion_process_signal_free(ion_process_signal * signal) {
+    if(signal->sequence) {
+        ion_promisor_remove_object(signal->sequence);
+        ion_object_release(signal->sequence);
+        signal->sequence = NULL;
+    }
+    if(signal->event) {
+        event_del(signal->event);
+        event_free(signal->event);
+        signal->event = NULL;
+    }
+    efree(signal);
 }
 
-void _ion_process_signal_dtor(zval * object) {
-    _ion_process_signal_free(Z_PTR_P(object));
+void _ion_process_signal_dtor(zval * ptr) {
+    _ion_process_signal_free(Z_PTR_P(ptr));
 }
-
 
 void _ion_process_signal(int signo, short flags, void * ctx) {
     ION_CB_BEGIN();
-
-    ion_promisor_done_long((ion_promisor *) ctx, signo);
+    ion_process_signal * signal = ctx;
+    ion_promisor_done_long(signal->sequence, signo);
 
     ION_CB_END();
 }
 
 /** public function ION\Process::signal(int $signo) : Sequence */
 CLASS_METHOD(ION_Process, signal) {
-    zend_long      signo    = 0;
+    zend_long            signo  = 0;
     ion_process_signal * signal = NULL;
 //    ion_event    * event;
 
@@ -97,7 +102,7 @@ CLASS_METHOD(ION_Process, signal) {
     signal = zend_hash_index_find_ptr(GION(signals), (zend_ulong)signo);
     if(signal) {
         ion_object_addref(signal->sequence);
-        RETURN_OBJ(ION_OBJECT_ZOBJ(signal->sequence));
+        RETURN_ION_OBJ(signal->sequence);
     }
     signal = ecalloc(1, sizeof(ion_process_signal));
     signal->signo = signo;
@@ -106,20 +111,21 @@ CLASS_METHOD(ION_Process, signal) {
     signal->event = evsignal_new(GION(base), (int)signo, _ion_process_signal, signal);
     if(evsignal_add(signal->event, NULL) == FAILURE) {
         ion_object_release(signal->sequence);
+        _ion_process_signal_free(signal);
         zend_throw_exception_ex(ion_ce_ION_RuntimeException, signo, ERR_ION_PROCESS_SIGNAL_EVENT_FAIL, signo);
         return;
     }
-    ion_promisor_set_object_ptr(signal->sequence, signal->event, _ion_process_signal_dtor);
     zval * pz;
     pz = zend_hash_index_add_ptr(GION(signals), (zend_ulong)signo, (void *)signal);
     if(!pz) {
         ion_object_release(signal->sequence);
+        _ion_process_signal_free(signal);
         zend_throw_exception_ex(ion_ce_ION_RuntimeException, signo, ERR_ION_PROCESS_SIGNAL_STORE_FAIL, signo);
         return;
     }
 
     ion_object_addref(signal->sequence);
-    RETURN_OBJ(ION_OBJECT_ZOBJ(signal->sequence));
+    RETURN_ION_OBJ(signal->sequence);
 }
 
 METHOD_ARGS_BEGIN(ION_Process, signal, 1)
@@ -452,7 +458,7 @@ CLASS_METHOD(ION_Process, exec) {
         zend_hash_index_add(GION(proc_execs), (zend_ulong) pid, &zexec);
 
         pion_update_property_str(ION_Process_Exec, &zexec, "command", zend_string_copy(command));
-        exec            = get_instance(&zexec, ion_process_exec);
+        exec            = ION_ZVAL_OBJECT(zexec, ion_process_exec);
 
         exec->pid       = pid;
         exec->err       = bufferevent_socket_new(GION(base), err_pipes[0], BEV_OPT_CLOSE_ON_FREE);
@@ -705,7 +711,7 @@ PHP_MINIT_FUNCTION(ION_Process) {
 
 PHP_RINIT_FUNCTION(ION_Process) {
     ALLOC_HASHTABLE(GION(signals));
-    zend_hash_init(GION(signals), 128, NULL, NULL, 0);
+    zend_hash_init(GION(signals), 128, NULL, _ion_process_signal_dtor, 0);
 
     ALLOC_HASHTABLE(GION(proc_childs));
     zend_hash_init(GION(proc_childs), 32, NULL, zval_ptr_dtor_wrapper, 0);
@@ -733,7 +739,6 @@ PHP_RSHUTDOWN_FUNCTION(ION_Process) {
     zend_hash_destroy(GION(proc_execs));
     FREE_HASHTABLE(GION(proc_execs));
 
-    GION(signals)->pDestructor = _ion_process_signal_dtor;
     zend_hash_clean(GION(signals));
     zend_hash_destroy(GION(signals));
     FREE_HASHTABLE(GION(signals));

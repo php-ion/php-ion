@@ -10,6 +10,13 @@ class ResponseTest extends TestCase {
     /**
      * @memcheck
      */
+    public function testInstance() {
+        $resp = new Response();
+    }
+
+    /**
+     * @memcheck
+     */
     public function testParse() {
         $resp = Response::parse(implode("\r\n", [
             "HTTP/1.1 404 Not Exists",

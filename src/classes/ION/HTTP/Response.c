@@ -220,6 +220,8 @@ PHP_MINIT_FUNCTION(ION_HTTP_Response) {
     pion_init_std_object_handlers(ION_HTTP_Response);
     pion_set_object_handler(ION_HTTP_Response, free_obj, ion_http_message_free);
     pion_set_object_handler(ION_HTTP_Response, clone_obj, NULL);
+    ion_class_set_offset(ion_oh_ION_HTTP_Response, ion_http_message);
+
 
     return SUCCESS;
 }
