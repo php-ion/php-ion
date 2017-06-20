@@ -33,7 +33,7 @@ CLASS_METHOD(ION_Sequence, __construct) {
 }
 
 METHOD_ARGS_BEGIN(ION_Sequence, __construct, 0)
-    METHOD_ARG_CALLBACK(handler, 0, 0)
+    ARGUMENT(handler, IS_CALLABLE)
 METHOD_ARGS_END()
 
 
@@ -59,21 +59,21 @@ CLASS_METHOD(ION_Sequence, __invoke) {
 }
 
 METHOD_ARGS_BEGIN(ION_Sequence, __invoke, 1)
-   METHOD_ARG(data, 0)
+   ARGUMENT(data, IS_MIXED | ARG_IS_VARIADIC)
 METHOD_ARGS_END()
 
 
-CLASS_METHODS_START(ION_Sequence)
+METHODS_START(methods_ION_Sequence)
     METHOD(ION_Sequence, __construct, ZEND_ACC_PUBLIC)
     METHOD(ION_Sequence, __invoke,    ZEND_ACC_PUBLIC)
-CLASS_METHODS_END;
+METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Sequence) {
-    pion_register_extended_class(ION_Sequence, ion_ce_ION_Promise, "ION\\Sequence", ion_sequence_zend_init, CLASS_METHODS(ION_Sequence));
-    pion_init_std_object_handlers(ION_Sequence);
-    pion_set_object_handler(ION_Sequence, free_obj, ion_promisor_zend_free);
-    pion_set_object_handler(ION_Sequence, clone_obj, ion_promisor_zend_clone);
-    ion_class_set_offset(ion_oh_ION_Sequence, ion_promisor);
+    ion_register_class_ex(&ion_ce_ION_Sequence, ion_ce_ION_Promise, "ION\\Sequence", ion_sequence_zend_init, methods_ION_Sequence);
+    ion_init_object_handlers(ion_oh_ION_Sequence);
+    ion_oh_ION_Sequence.free_obj = ion_promisor_zend_free;
+    ion_oh_ION_Sequence.clone_obj = ion_promisor_zend_clone;
+    ion_oh_ION_Sequence.offset = ion_offset(ion_promisor);
 
     return SUCCESS;
 }

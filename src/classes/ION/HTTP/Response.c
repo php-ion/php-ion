@@ -30,7 +30,7 @@ CLASS_METHOD(ION_HTTP_Response, parse) {
 }
 
 METHOD_ARGS_BEGIN(ION_HTTP_Response, parse, 1)
-    METHOD_ARG_STRING(response, 0)
+    ARGUMENT(response, IS_STRING)
 METHOD_ARGS_END();
 
 /** public static function ION\HTTP\Response::factory(array $options = []) : static */
@@ -127,7 +127,7 @@ CLASS_METHOD(ION_HTTP_Response, factory) {
 }
 
 METHOD_ARGS_BEGIN(ION_HTTP_Response, factory, 1)
-    METHOD_ARG_ARRAY(options, 0, 0)
+                ARGUMENT(options, IS_ARRAY)
 METHOD_ARGS_END();
 
 
@@ -163,7 +163,7 @@ CLASS_METHOD(ION_HTTP_Response, withStatus) {
 }
 
 METHOD_ARGS_BEGIN(ION_HTTP_Response, withStatus, 1)
-    METHOD_ARG_STRING(response, 0)
+                ARGUMENT(response, IS_STRING)
 METHOD_ARGS_END();
 
 /** public function ION\HTTP\Response::getStatusCode() : int */
@@ -198,30 +198,29 @@ CLASS_METHOD(ION_HTTP_Response, __toString) {
 
 METHOD_WITHOUT_ARGS(ION_HTTP_Response, __toString)
 
-CLASS_METHODS_START(ION_HTTP_Response)
+METHODS_START(methods_ION_HTTP_Response)
     METHOD(ION_HTTP_Response, parse,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_HTTP_Response, factory,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_HTTP_Response, withStatus,      ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_Response, getStatusCode,   ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_Response, getReasonPhrase, ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_Response, __toString,      ZEND_ACC_PUBLIC)
-CLASS_METHODS_END;
+METHODS_END;
 
 
 PHP_MINIT_FUNCTION(ION_HTTP_Response) {
-    pion_register_extended_class(ION_HTTP_Response, ion_ce_ION_HTTP_Message, "ION\\HTTP\\Response", ion_http_response_init, CLASS_METHODS(ION_HTTP_Response));
+    ion_register_class_ex(&ion_ce_ION_HTTP_Response, ion_ce_ION_HTTP_Message, "ION\\HTTP\\Response", ion_http_response_init, methods_ION_HTTP_Response);
 
-    PION_CLASS_CONST_LONG(ION_HTTP_Response, "VERSION", ION_HTTP_RESPONSE_VERSION);
-    PION_CLASS_CONST_LONG(ION_HTTP_Response, "STATUS",  ION_HTTP_RESPONSE_STATUS);
-    PION_CLASS_CONST_LONG(ION_HTTP_Response, "REASON",  ION_HTTP_RESPONSE_REASON);
-    PION_CLASS_CONST_LONG(ION_HTTP_Response, "HEADERS", ION_HTTP_RESPONSE_HEADERS);
-    PION_CLASS_CONST_LONG(ION_HTTP_Response, "BODY",    ION_HTTP_RESPONSE_BODY);
+    ion_class_declare_constant_long(ion_ce_ION_HTTP_Response, "VERSION", ION_HTTP_RESPONSE_VERSION);
+    ion_class_declare_constant_long(ion_ce_ION_HTTP_Response, "STATUS",  ION_HTTP_RESPONSE_STATUS);
+    ion_class_declare_constant_long(ion_ce_ION_HTTP_Response, "REASON",  ION_HTTP_RESPONSE_REASON);
+    ion_class_declare_constant_long(ion_ce_ION_HTTP_Response, "HEADERS", ION_HTTP_RESPONSE_HEADERS);
+    ion_class_declare_constant_long(ion_ce_ION_HTTP_Response, "BODY",    ION_HTTP_RESPONSE_BODY);
 
-    pion_init_std_object_handlers(ION_HTTP_Response);
-    pion_set_object_handler(ION_HTTP_Response, free_obj, ion_http_message_free);
-    pion_set_object_handler(ION_HTTP_Response, clone_obj, NULL);
-    ion_class_set_offset(ion_oh_ION_HTTP_Response, ion_http_message);
-
+    ion_init_object_handlers(ion_oh_ION_HTTP_Response);
+    ion_oh_ION_HTTP_Response.free_obj = ion_http_message_free;
+    ion_oh_ION_HTTP_Response.clone_obj = NULL;
+    ion_oh_ION_HTTP_Response.offset = ion_offset(ion_http_message);
 
     return SUCCESS;
 }

@@ -1,6 +1,4 @@
-#include "callback.h"
-#include "deferred_queue.h"
-#include "engine.h"
+#include "ion.h"
 
 ion_global_queue * ion_deferred_queue_init() {
     ion_global_queue * queue = ecalloc(1, sizeof(ion_global_queue));

@@ -55,21 +55,19 @@ if test "$PHP_ION" != "no"; then
     deps/http-parser/http_parser.c
     deps/multipart-parser-c/multipart_parser.c
     deps/websocket-parser/websocket_parser.c
-    ion/debug.c
-    ion/strings.c
-    ion/memory.c
-    ion/exceptions.c
-    ion/callback.c
-    ion/zion.c
-    ion/engine.c
-    ion/promisor.c
-    ion/net.c
-    ion/stream.c
-    ion/deferred_queue.c
-    ion/process.c
-    ion/fs.c
-    ion/http.c
-
+    ion/ion_debug.c
+    ion/ion_strings.c
+    ion/ion_memory.c
+    ion/ion_exceptions.c
+    ion/ion_callback.c
+    ion/ion_zend.c
+    ion/ion_promisor.c
+    ion/ion_net.c
+    ion/ion_stream.c
+    ion/ion_deferred_queue.c
+    ion/ion_process.c
+    ion/ion_fs.c
+    ion/ion_http.c
     classes/ION/Debug.c
     classes/ION/Promise.c
     classes/ION/ResolvablePromise.c
@@ -81,21 +79,18 @@ if test "$PHP_ION" != "no"; then
     classes/ION/FS.c
     classes/ION/Listener.c
     classes/ION/Stream.c
-
     classes/ION/Process.c
     classes/ION/Process/Exec.c
     classes/ION/Process/IPC.c
     classes/ION/Process/IPC/Message.c
     classes/ION/Process/ChildProcess.c
-
     classes/ION/URI.c
     classes/ION/HTTP/Message.c
     classes/ION/HTTP/Request.c
     classes/ION/HTTP/Response.c
     classes/ION/HTTP/WebSocket/Frame.c
     classes/ION/HTTP/WebSocketParser.c
-    classes/ION/HTTP.c
-    "
+    classes/ION/HTTP.c"
 
     PHP_NEW_EXTENSION(ion, $ion_src, $ext_shared,, "$CFLAGS -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1 -DSKIPLIST_LOCAL_INCLUDE=\"<ion_skiplist_config.h>\" ")
 fi

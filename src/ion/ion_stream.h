@@ -1,7 +1,7 @@
 #ifndef PION_STREAM_H
 #define PION_STREAM_H
 
-#include "init.h"
+#include "ion_init.h"
 
 extern ZEND_API zend_class_entry * ion_ce_ION_Listener;
 extern ZEND_API zend_class_entry * ion_ce_ION_ListenerException;

@@ -1,5 +1,5 @@
-#include "strings.h"
-#include "init.h"
+#include "ion_strings.h"
+#include "ion_init.h"
 
 void ion_interned_strings_ctor(void) {
     zend_ion_global_cache * cache = GION(cache);

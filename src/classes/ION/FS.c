@@ -1,9 +1,7 @@
 #include "ion.h"
 
 zend_class_entry * ion_ce_ION_FS;
-zend_object_handlers ion_oh_ION_FS;
 zend_class_entry * ion_ce_ION_FSException;
-zend_object_handlers ion_oh_ION_FSException;
 
 void ion_fs_file_sent_one(ion_buffer * one, void * ctx) {
     bufferevent_disable(one, EV_READ | EV_WRITE);
@@ -100,9 +98,9 @@ CLASS_METHOD(ION_FS, readFile) {
 }
 
 METHOD_ARGS_BEGIN(ION_FS, readFile, 1)
-    METHOD_ARG_STRING(filename, 0)
-    METHOD_ARG_LONG(offset, 0)
-    METHOD_ARG_LONG(length, 0)
+    ARGUMENT(filename, IS_STRING)
+    ARGUMENT(offset, IS_LONG)
+    ARGUMENT(length, IS_LONG)
 METHOD_ARGS_END()
 
 /** public static function ION\FS::watch(string $filename, int $events = 0) : Sequence */
@@ -143,8 +141,8 @@ CLASS_METHOD(ION_FS, watch) {
 }
 
 METHOD_ARGS_BEGIN(ION_FS, watch, 1)
-    METHOD_ARG_STRING(filename, 0)
-    METHOD_ARG_LONG(events, 0)
+    ARGUMENT(filename, IS_STRING)
+    ARGUMENT(events, IS_LONG)
 METHOD_ARGS_END()
 
 CLASS_METHOD(ION_FS, unwatchAll) {
@@ -153,17 +151,17 @@ CLASS_METHOD(ION_FS, unwatchAll) {
 
 METHOD_WITHOUT_ARGS(ION_FS, unwatchAll);
 
-CLASS_METHODS_START(ION_FS)
+METHODS_START(methods_ION_FS)
     METHOD(ION_FS, readFile,   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_FS, watch,      ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_FS, unwatchAll, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-CLASS_METHODS_END;
+METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_FS) {
-    PION_REGISTER_STATIC_CLASS(ION_FS, "ION\\FS");
-    PION_REGISTER_VOID_EXTENDED_CLASS(ION_FSException, ion_ce_ION_RuntimeException, "ION\\FSException");
+    ion_register_static_class(ion_ce_ION_FS, "ION\\FS", methods_ION_FS);
+    ion_register_exception(ion_ce_ION_FSException, ion_ce_ION_RuntimeException, "ION\\FSException");
 
-    PION_CLASS_CONST_LONG(ION_FS, "WATCH_MODIFY", 1);
+    ion_class_declare_constant_long(ion_ce_ION_FS, "WATCH_MODIFY", 1);
 
     return ion_fs_watch_init();
 }

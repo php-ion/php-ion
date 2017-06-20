@@ -179,8 +179,6 @@ zend_object * ion_uri_clone(zend_object * proto_obj) {
     ion_uri * clone = ion_alloc_object(proto->php_object.ce, ion_uri);
 
     ion_init_object(ION_OBJECT_ZOBJ(clone), proto->php_object.ce, (zend_object_handlers *)proto->php_object.handlers);
-//    zend_object_std_init(&clone->std, proto->std.ce);
-//    object_properties_init(&clone->std, proto->std.ce);
     clone->php_object.handlers = proto->php_object.handlers;
     zend_object * clone_obj = &clone->php_object;
     zend_objects_clone_members(clone_obj, proto_obj);
@@ -232,7 +230,7 @@ CLASS_METHOD(ION_URI, parse) {
 }
 
 METHOD_ARGS_BEGIN(ION_URI, parse, 1)
-    METHOD_ARG_STRING(uri, 0)
+    ARGUMENT(uri, IS_STRING)
 METHOD_ARGS_END();
 
 #define ION_UPDATE_OPTION(uri, option, value) \
@@ -301,7 +299,7 @@ CLASS_METHOD(ION_URI, factory) {
 }
 
 METHOD_ARGS_BEGIN(ION_URI, factory, 1)
-    METHOD_ARG_ARRAY(options, 0, 0)
+    ARGUMENT(options, IS_ARRAY)
 METHOD_ARGS_END();
 
 
@@ -348,7 +346,7 @@ CLASS_METHOD(ION_URI, withScheme) {
 }
 
 METHOD_ARGS_BEGIN(ION_URI, withScheme, 1)
-    METHOD_ARG_STRING(scheme, 0)
+    ARGUMENT(scheme, IS_STRING)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_URI, getAuthority) {
@@ -460,8 +458,8 @@ CLASS_METHOD(ION_URI, withUserInfo) {
 }
 
 METHOD_ARGS_BEGIN(ION_URI, withUserInfo, 1)
-    METHOD_ARG_STRING(user, 0)
-    METHOD_ARG_STRING(password, 0)
+    ARGUMENT(user, IS_STRING)
+    ARGUMENT(password, IS_STRING)
 METHOD_ARGS_END();
 
 
@@ -508,7 +506,7 @@ CLASS_METHOD(ION_URI, withHost) {
 }
 
 METHOD_ARGS_BEGIN(ION_URI, withHost, 1)
-    METHOD_ARG_STRING(host, 0)
+    ARGUMENT(host, IS_STRING)
 METHOD_ARGS_END();
 
 
@@ -552,7 +550,7 @@ CLASS_METHOD(ION_URI, withPort) {
 }
 
 METHOD_ARGS_BEGIN(ION_URI, withPort, 1)
-    METHOD_ARG_LONG(port, 0)
+    ARGUMENT(port, IS_LONG)
 METHOD_ARGS_END();
 
 
@@ -599,7 +597,7 @@ CLASS_METHOD(ION_URI, withPath) {
 }
 
 METHOD_ARGS_BEGIN(ION_URI, withPath, 1)
-    METHOD_ARG_STRING(path, 0)
+    ARGUMENT(path, IS_STRING)
 METHOD_ARGS_END();
 
 
@@ -646,7 +644,7 @@ CLASS_METHOD(ION_URI, withQuery) {
 }
 
 METHOD_ARGS_BEGIN(ION_URI, withQuery, 1)
-    METHOD_ARG_STRING(query, 0)
+    ARGUMENT(query, IS_STRING)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_URI, hasFragment) {
@@ -692,7 +690,7 @@ CLASS_METHOD(ION_URI, withFragment) {
 }
 
 METHOD_ARGS_BEGIN(ION_URI, withFragment, 1)
-    METHOD_ARG_STRING(fragment, 0)
+    ARGUMENT(fragment, IS_STRING)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_URI, __toString) {
@@ -701,7 +699,7 @@ CLASS_METHOD(ION_URI, __toString) {
 
 METHOD_WITHOUT_ARGS(ION_URI, __toString);
 
-CLASS_METHODS_START(ION_URI)
+METHODS_START(methods_ION_URI)
     METHOD(ION_URI, parse,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_URI, factory,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 
@@ -739,25 +737,25 @@ CLASS_METHODS_START(ION_URI)
     METHOD(ION_URI, withFragment,    ZEND_ACC_PUBLIC)
 
     METHOD(ION_URI, __toString,      ZEND_ACC_PUBLIC)
-CLASS_METHODS_END;
+METHODS_END;
 
 
 PHP_MINIT_FUNCTION(ION_URI) {
-    pion_register_class(ION_URI, "ION\\URI", ion_uri_init, CLASS_METHODS(ION_URI));
+    ion_register_class(ion_ce_ION_URI, "ION\\URI", ion_uri_init, methods_ION_URI);
 
-    PION_CLASS_CONST_LONG(ION_URI, "SCHEME",    URI_SCHEME);
-    PION_CLASS_CONST_LONG(ION_URI, "USER_NAME", URI_USER_NAME);
-    PION_CLASS_CONST_LONG(ION_URI, "USER_PASS", URI_USER_PASS);
-    PION_CLASS_CONST_LONG(ION_URI, "HOST",      URI_HOST);
-    PION_CLASS_CONST_LONG(ION_URI, "PORT",      URI_PORT);
-    PION_CLASS_CONST_LONG(ION_URI, "PATH",      URI_PATH);
-    PION_CLASS_CONST_LONG(ION_URI, "QUERY",     URI_QUERY);
-    PION_CLASS_CONST_LONG(ION_URI, "FRAGMENT",  URI_FRAGMENT);
+    ion_class_declare_constant_bool(ion_ce_ION_URI, "SCHEME",    URI_SCHEME);
+    ion_class_declare_constant_bool(ion_ce_ION_URI, "USER_NAME", URI_USER_NAME);
+    ion_class_declare_constant_bool(ion_ce_ION_URI, "USER_PASS", URI_USER_PASS);
+    ion_class_declare_constant_bool(ion_ce_ION_URI, "HOST",      URI_HOST);
+    ion_class_declare_constant_bool(ion_ce_ION_URI, "PORT",      URI_PORT);
+    ion_class_declare_constant_bool(ion_ce_ION_URI, "PATH",      URI_PATH);
+    ion_class_declare_constant_bool(ion_ce_ION_URI, "QUERY",     URI_QUERY);
+    ion_class_declare_constant_bool(ion_ce_ION_URI, "FRAGMENT",  URI_FRAGMENT);
 
-    pion_init_std_object_handlers(ION_URI);
-    pion_set_object_handler(ION_URI, free_obj, ion_uri_free);
-    pion_set_object_handler(ION_URI, clone_obj, ion_uri_clone_handler);
-    ion_class_set_offset(ion_oh_ION_URI, ion_uri);
+    ion_init_object_handlers(ion_oh_ION_URI);
+    ion_oh_ION_URI.free_obj = ion_uri_free;
+    ion_oh_ION_URI.clone_obj = ion_uri_clone_handler;
+    ion_oh_ION_URI.offset = ion_offset(ion_uri);
 
     return SUCCESS;
 }

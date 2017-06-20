@@ -131,7 +131,7 @@ void _ion_stream_output(ion_buffer * bev, void *ctx) {
     ION_CB_BEGIN();
     ion_stream * stream = (ion_stream *) ctx;
 
-    obj_add_ref(ION_OBJECT_ZOBJ(stream));
+    ion_object_addref(stream);
     if(stream->flush) {
         ion_promisor_done_true(stream->flush);
         stream->flush = NULL;
@@ -258,7 +258,7 @@ zend_object * ion_stream_new_ex(ion_buffer * buffer, int flags, zend_class_entry
     ion_stream * stream;
     zval         zstream;
     if(!cls) {
-        cls = ion_class_entry(ION_Stream);
+        cls = ion_ce_ION_Stream;
     }
     object_init_ex(&zstream, cls);
     stream = ION_ZVAL_OBJECT(zstream, ion_stream);
@@ -320,7 +320,7 @@ zend_string * ion_stream_read_token(ion_stream * stream, ion_stream_token * toke
     if(token->position == 0) {
         if(token->flags & (ION_STREAM_MODE_WITH_TOKEN | ION_STREAM_MODE_TRIM_TOKEN)) {
             if(evbuffer_drain(bufferevent_get_input(stream->buffer), token->token->len) == FAILURE) {
-                zend_throw_exception(ion_class_entry(ION_RuntimeException), "Failed to drain token", 0);
+                zend_throw_exception(ion_ce_ION_StreamException, ERR_ION_STREAM_DRAIN_FAILED, 0);
                 return NULL;
             }
         }
@@ -341,7 +341,7 @@ zend_string * ion_stream_read_token(ion_stream * stream, ion_stream_token * toke
         if(token->flags & ION_STREAM_MODE_TRIM_TOKEN) {
             if(evbuffer_drain(bufferevent_get_input(stream->buffer), token->token->len) == FAILURE) {
                 zend_string_release(data);
-                zend_throw_exception(ion_class_entry(ION_RuntimeException), "Failed to drain token", 0);
+                zend_throw_exception(ion_ce_ION_StreamException, ERR_ION_STREAM_DRAIN_FAILED, 0);
                 return NULL;
             }
         }
@@ -400,7 +400,7 @@ CLASS_METHOD(ION_Stream, resource) {
         if(php_stream_cast(stream_resource, PHP_STREAM_AS_FD | PHP_STREAM_CAST_INTERNAL | PHP_STREAM_AS_SOCKETD, (void *) &fd, 0) == SUCCESS) {
             state = ION_STREAM_STATE_SOCKET;
         } else if (php_stream_cast(stream_resource, PHP_STREAM_AS_FD_FOR_SELECT | PHP_STREAM_CAST_INTERNAL, (void *) &fd, 0) == FAILURE) {
-            zend_throw_exception(ion_class_entry(InvalidArgumentException), ERR_ION_STREAM_RESOURCE_INVALID, 0);
+            zend_throw_exception(ion_ce_InvalidArgumentException, ERR_ION_STREAM_RESOURCE_INVALID, 0);
             return;
         }
     }
@@ -442,7 +442,7 @@ CLASS_METHOD(ION_Stream, resource) {
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, resource, 1)
-    METHOD_ARG(resource, 0)
+    ARGUMENT(resource, IS_MIXED)
 METHOD_ARGS_END()
 
 /** public static function ION\Stream::pair() : self[] */
@@ -572,8 +572,8 @@ CLASS_METHOD(ION_Stream, socket) {
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, socket, 1)
-    METHOD_ARG_STRING(host, 0)
-    METHOD_ARG_OBJECT(encrypt, ION\\Crypto, 0, 0)
+    ARGUMENT(host, IS_STRING)
+    ARGUMENT_OBJECT(encrypt, ION\\Crypto, 0)
 METHOD_ARGS_END()
 
 /** private function ION\Stream::_input() : void */
@@ -689,7 +689,7 @@ CLASS_METHOD(ION_Stream, setPriority) {
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, setPriority, 1)
-    METHOD_ARG_LONG(priority, 0)
+    ARGUMENT(priority, IS_LONG)
 METHOD_ARGS_END()
 
 /** public function ION\Stream::setInputMaxSize(int $bytes) : self */
@@ -711,7 +711,7 @@ CLASS_METHOD(ION_Stream, setInputMaxSize) {
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, setInputMaxSize, 1)
-    METHOD_ARG_LONG(bytes, 0)
+                ARGUMENT(bytes, IS_LONG)
 METHOD_ARGS_END()
 
 /** public function ION\Stream::write(string $data) : self */
@@ -738,7 +738,7 @@ CLASS_METHOD(ION_Stream, write) {
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, write, 1)
-    METHOD_ARG_STRING(data, 0)
+                ARGUMENT(data, IS_STRING)
 METHOD_ARGS_END()
 
 /** public function ION\Stream::sendFile(string $filename, int $offset = 0, int $length = -1) : bool */
@@ -784,9 +784,9 @@ CLASS_METHOD(ION_Stream, sendFile) {
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, sendFile, 1)
-    METHOD_ARG_STRING(filename, 0)
-    METHOD_ARG_LONG(offset, 0)
-    METHOD_ARG_LONG(length, 0)
+                ARGUMENT(filename, IS_STRING)
+    ARGUMENT(offset, IS_LONG)
+    ARGUMENT(length, IS_LONG)
 METHOD_ARGS_END()
 
 void _ion_stream_flush_dtor(zval * ptr) {
@@ -853,9 +853,9 @@ CLASS_METHOD(ION_Stream, search) {
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, search, 1)
-    METHOD_ARG_STRING(token, 0)
-    METHOD_ARG_LONG(length, 0)
-    METHOD_ARG_LONG(offset, 0)
+                ARGUMENT(token, IS_STRING)
+    ARGUMENT(length, IS_LONG)
+    ARGUMENT(offset, IS_LONG)
 METHOD_ARGS_END()
 
 /** public function ION\Stream::getSize(int $type = self::INPUT) : string|bool */
@@ -883,7 +883,7 @@ CLASS_METHOD(ION_Stream, getSize) {
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, getSize, 0)
-    METHOD_ARG_LONG(type, 0)
+                ARGUMENT(type, IS_LONG)
 METHOD_ARGS_END()
 
 
@@ -912,7 +912,7 @@ CLASS_METHOD(ION_Stream, get) {
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, get, 0)
-    METHOD_ARG_LONG(bytes, 0)
+                ARGUMENT(bytes, IS_LONG)
 METHOD_ARGS_END()
 
 /** public function ION\Stream::getAll() : string */
@@ -968,9 +968,9 @@ CLASS_METHOD(ION_Stream, getLine) {
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, getLine, 1)
-    METHOD_ARG_STRING(token, 0)
-    METHOD_ARG_LONG(mode, 0)
-    METHOD_ARG_LONG(max_length, 0)
+                ARGUMENT(token, IS_STRING)
+    ARGUMENT(mode, IS_LONG)
+    ARGUMENT(max_length, IS_LONG)
 METHOD_ARGS_END()
 
 void _ion_stream_read_dtor(zval * ptr) {
@@ -1031,7 +1031,7 @@ CLASS_METHOD(ION_Stream, read) {
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, read, 1)
-    METHOD_ARG_LONG(bytes, 0)
+                ARGUMENT(bytes, IS_LONG)
 METHOD_ARGS_END()
 
 /** public function ION\Stream::readLine(string $token, $mode = self::MODE_TRIM_TOKEN, $max_length = 0) : ION\Deferred */
@@ -1099,9 +1099,9 @@ CLASS_METHOD(ION_Stream, readLine) {
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, readLine, 1)
-    METHOD_ARG_STRING(token, 0)
-    METHOD_ARG_LONG(mode, 0)
-    METHOD_ARG_LONG(max_length, 0)
+                ARGUMENT(token, IS_STRING)
+    ARGUMENT(mode, IS_LONG)
+    ARGUMENT(max_length, IS_LONG)
 METHOD_ARGS_END()
 
 /** public function ION\Stream::readAll() : ION\Deferred|string */
@@ -1171,7 +1171,7 @@ CLASS_METHOD(ION_Stream, shutdown) {
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, shutdown, 0)
-    METHOD_ARG_BOOL(force, 0)
+    ARGUMENT(force, IS_BOOLEAN)
 METHOD_ARGS_END()
 
 /** public function ION\Stream::incoming() : Sequence */
@@ -1240,6 +1240,7 @@ METHOD_WITHOUT_ARGS(ION_Stream, closed)
 /** public function ION\Stream::encrypt(ION\Crypto $encrypt) : self */
 CLASS_METHOD(ION_Stream, encrypt) {
     ion_stream * stream = ION_THIS_OBJECT(ion_stream);
+    ion_crypto * crypto = NULL;
     zval       * encrypt = NULL;
     SSL        * ssl_handler = NULL;
     enum bufferevent_ssl_state ssl_state;
@@ -1253,11 +1254,13 @@ CLASS_METHOD(ION_Stream, encrypt) {
         Z_PARAM_OBJECT(encrypt)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
-    if(ion_crypto_check_is_client(Z_OBJ_P(encrypt))) {
-        ssl_handler = ion_crypto_client_stream_handler(ION_ZVAL_OBJECT_P(encrypt, ion_crypto));
+    crypto = ION_ZVAL_OBJECT_P(encrypt, ion_crypto);
+
+    if(crypto->flags & ION_CRYPTO_IS_CLIENT) {
+        ssl_handler = ion_crypto_client_stream_handler(crypto);
         ssl_state   = BUFFEREVENT_SSL_CONNECTING;
     } else {
-        ssl_handler = ion_crypto_server_stream_handler(ION_ZVAL_OBJECT_P(encrypt, ion_crypto));
+        ssl_handler = ion_crypto_server_stream_handler(crypto);
         ssl_state   = BUFFEREVENT_SSL_ACCEPTING;
     }
 
@@ -1283,7 +1286,7 @@ CLASS_METHOD(ION_Stream, encrypt) {
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, encrypt, 1)
-    METHOD_ARG_OBJECT(ssl, ION\\Crypto, 0, 0)
+                ARGUMENT_OBJECT(ssl, ION\\Crypto, 0)
 METHOD_ARGS_END()
 
 /** public function ION\Stream::isClosed() : int */
@@ -1461,13 +1464,6 @@ CLASS_METHOD(ION_Stream, __debugInfo) {
 
 METHOD_WITHOUT_ARGS(ION_Stream, __debugInfo)
 
-/** public function ION\Stream::__destruct() : void */
-CLASS_METHOD(ION_Stream, __destruct) {
-
-}
-
-METHOD_WITHOUT_ARGS(ION_Stream, __destruct)
-
 
 /** public function ION\Stream::getPeerName() : string */
 CLASS_METHOD(ION_Stream, getPeerName) {
@@ -1604,11 +1600,11 @@ CLASS_METHOD(ION_Stream, appendToInput) {
 }
 
 METHOD_ARGS_BEGIN(ION_Stream, appendToInput, 1)
-    METHOD_ARG_STRING(data, 0)
+                ARGUMENT(data, IS_STRING)
 METHOD_ARGS_END()
 
 
-CLASS_METHODS_START(ION_Stream)
+METHODS_START(methods_ION_Stream)
     // Factories
     METHOD(ION_Stream, resource,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Stream, pair,               ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
@@ -1674,30 +1670,27 @@ CLASS_METHODS_START(ION_Stream)
     METHOD(ION_Stream, hasEOF,             ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, isClosed,           ZEND_ACC_PUBLIC)
     METHOD(ION_Stream, wasShutdown,        ZEND_ACC_PUBLIC)
-
-    // Misc
-    METHOD(ION_Stream, __destruct,         ZEND_ACC_PUBLIC)
-        CLASS_METHODS_END;
+METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Stream) {
-    pion_register_class(ION_Stream, "ION\\Stream", ion_stream_init, CLASS_METHODS(ION_Stream));
-    pion_init_std_object_handlers(ION_Stream);
-    pion_set_object_handler(ION_Stream, free_obj, ion_stream_free);
-    pion_set_object_handler(ION_Stream, clone_obj, NULL);
-    ion_class_set_offset(ion_oh_ION_Stream, ion_stream);
+    ion_register_class(ion_ce_ION_Stream, "ION\\Stream", ion_stream_init, methods_ION_Stream);
+    ion_init_object_handlers(ion_oh_ION_Stream);
+    ion_oh_ION_Stream.free_obj = ion_stream_free;
+    ion_oh_ION_Stream.clone_obj= NULL;
+    ion_oh_ION_Stream.offset = ion_offset(ion_stream);
 
-    PION_CLASS_CONST_LONG(ION_Stream, "MODE_TRIM_TOKEN",    ION_STREAM_MODE_TRIM_TOKEN);
-    PION_CLASS_CONST_LONG(ION_Stream, "MODE_WITH_TOKEN",    ION_STREAM_MODE_WITH_TOKEN);
-    PION_CLASS_CONST_LONG(ION_Stream, "MODE_WITHOUT_TOKEN", ION_STREAM_MODE_WITHOUT_TOKEN);
+    ion_class_declare_constant_long(ion_ce_ION_Stream, "MODE_TRIM_TOKEN",    ION_STREAM_MODE_TRIM_TOKEN);
+    ion_class_declare_constant_long(ion_ce_ION_Stream, "MODE_WITH_TOKEN",    ION_STREAM_MODE_WITH_TOKEN);
+    ion_class_declare_constant_long(ion_ce_ION_Stream, "MODE_WITHOUT_TOKEN", ION_STREAM_MODE_WITHOUT_TOKEN);
 
 //    PION_CLASS_CONST_LONG(ION_Stream, "FROM_PEER",   ION_STREAM_FROM_PEER);
 //    PION_CLASS_CONST_LONG(ION_Stream, "FROM_ME",     ION_STREAM_FROM_ME);
 
-    PION_CLASS_CONST_LONG(ION_Stream, "INPUT",  EV_READ);
-    PION_CLASS_CONST_LONG(ION_Stream, "OUTPUT", EV_WRITE);
-    PION_CLASS_CONST_LONG(ION_Stream, "BOTH",   EV_WRITE | EV_READ);
+    ion_class_declare_constant_long(ion_ce_ION_Stream, "INPUT",  EV_READ);
+    ion_class_declare_constant_long(ion_ce_ION_Stream, "OUTPUT", EV_WRITE);
+    ion_class_declare_constant_long(ion_ce_ION_Stream, "BOTH",   EV_WRITE | EV_READ);
 
-    PION_REGISTER_VOID_EXTENDED_CLASS(ION_StreamException, ion_ce_ION_RuntimeException, "ION\\StreamException");
+    ion_register_exception(ion_ce_ION_StreamException, ion_ce_ION_RuntimeException, "ION\\StreamException");
 
     return SUCCESS;
 }

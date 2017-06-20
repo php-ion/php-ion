@@ -58,15 +58,16 @@ void ion_process_exec_free(zend_object * object) {
 }
 
 
-CLASS_METHODS_START(ION_Process_Exec)
-CLASS_METHODS_END;
+METHODS_START(methods_ION_Process_Exec)
+METHODS_END;
 
 
 PHP_MINIT_FUNCTION(ION_Process_Exec) {
-    pion_register_class(ION_Process_Exec, "ION\\Process\\Exec", ion_process_exec_init, CLASS_METHODS(ION_Process_Exec));
-    pion_init_std_object_handlers(ION_Process_Exec);
-    pion_set_object_handler(ION_Process_Exec, free_obj, ion_process_exec_free);
+    ion_register_class(ion_ce_ION_Process_Exec, "ION\\Process\\Exec", ion_process_exec_init, methods_ION_Process_Exec);
+    ion_init_object_handlers(ion_oh_ION_Process_Exec);
     ion_oh_ION_Process_Exec.free_obj = ion_process_exec_free;
+    ion_oh_ION_Process_Exec.offset = ion_offset(ion_process_exec);
+
     ion_class_declare_property_string(ion_ce_ION_Process_Exec, "command", "", ZEND_ACC_PUBLIC);
     ion_class_declare_property_long(ion_ce_ION_Process_Exec, "pid", 0, ZEND_ACC_PUBLIC);
     ion_class_declare_property_bool(ion_ce_ION_Process_Exec, "signaled", 0, ZEND_ACC_PUBLIC);
@@ -74,6 +75,6 @@ PHP_MINIT_FUNCTION(ION_Process_Exec) {
     ion_class_declare_property_long(ion_ce_ION_Process_Exec, "status", 0, ZEND_ACC_PUBLIC);
     ion_class_declare_property_string(ion_ce_ION_Process_Exec, "stdout", "", ZEND_ACC_PUBLIC);
     ion_class_declare_property_string(ion_ce_ION_Process_Exec, "stderr", "", ZEND_ACC_PUBLIC);
-    ion_class_set_offset(ion_oh_ION_Process_Exec, ion_process_exec);
+
     return SUCCESS;
 }

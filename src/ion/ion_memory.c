@@ -1,5 +1,5 @@
-#include "init.h"
-#include "memory.h"
+#include "ion_init.h"
+#include "ion_memory.h"
 
 BEGIN_EXTERN_C()
 

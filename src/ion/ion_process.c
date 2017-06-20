@@ -43,22 +43,22 @@ void ion_process_exec_exit(zend_object * exec, int status) {
     ZVAL_OBJ(&result, exec);
     zval_add_ref(&result);
 
-    pion_update_property_long(ION_Process_Exec, &result, "pid", e->pid);
+    ion_update_property_long(ion_ce_ION_Process_Exec, &result, "pid", e->pid);
     if(WIFSIGNALED(status)) {
-        pion_update_property_bool(ION_Process_Exec, &result, "signaled", 1);
-        pion_update_property_long(ION_Process_Exec, &result, "signal", WTERMSIG(status));
-        pion_update_property_long(ION_Process_Exec, &result, "status", status);
+        ion_update_property_bool(ion_ce_ION_Process_Exec, &result, "signaled", 1);
+        ion_update_property_long(ion_ce_ION_Process_Exec, &result, "signal", WTERMSIG(status));
+        ion_update_property_long(ion_ce_ION_Process_Exec, &result, "status", status);
     } else {
-        pion_update_property_long(ION_Process_Exec, &result, "status", WEXITSTATUS(status));
+        ion_update_property_long(ion_ce_ION_Process_Exec, &result, "status", WEXITSTATUS(status));
     }
     out = ion_buffer_read_all(e->out);
     if(out) {
-        pion_update_property_str(ION_Process_Exec, &result, "stdout", out);
+        ion_update_property_str(ion_ce_ION_Process_Exec, &result, "stdout", out);
         zend_string_release(out);
     }
     err = ion_buffer_read_all(e->err);
     if(err) {
-        pion_update_property_str(ION_Process_Exec, &result, "stderr", err);
+        ion_update_property_str(ion_ce_ION_Process_Exec, &result, "stderr", err);
         zend_string_release(err);
     }
     ion_promisor_done(e->deferred, &result);
@@ -91,10 +91,10 @@ int ion_process_ipc_message_end(websocket_parser * parser) {
             ZSTR_VAL(ipc->frame_body)[ZSTR_LEN(ipc->frame_body)] = '\0';
         }
         zval message;
-        object_init_ex(&message, ion_class_entry(ION_Process_IPC_Message));
+        object_init_ex(&message, ion_ce_ION_Process_IPC_Message);
         zval_add_ref(&ipc->ctx);
-        zend_update_property_str(ion_class_entry(ION_Process_IPC_Message), &message, STRARGS("data"), zend_string_copy(ipc->frame_body));
-        zend_update_property(ion_class_entry(ION_Process_IPC_Message), &message, STRARGS("context"), &ipc->ctx);
+        zend_update_property_str(ion_ce_ION_Process_IPC_Message, &message, STRARGS("data"), zend_string_copy(ipc->frame_body));
+        zend_update_property(ion_ce_ION_Process_IPC_Message, &message, STRARGS("context"), &ipc->ctx);
 
         ion_promisor_done(ipc->on_message, &message);
 

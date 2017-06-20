@@ -2,7 +2,7 @@
 #define ION_CORE_PROCESS_H
 
 #include <deps/websocket-parser/websocket_parser.h>
-#include "init.h"
+#include "ion_init.h"
 
 BEGIN_EXTERN_C();
 

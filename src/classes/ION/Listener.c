@@ -206,8 +206,8 @@ CLASS_METHOD(ION_Listener, __construct) {
 }
 
 METHOD_ARGS_BEGIN(ION_Listener, __construct, 1)
-    METHOD_ARG_STRING(listen, 0)
-    METHOD_ARG_LONG(back_log, 0)
+    ARGUMENT(listen, IS_STRING)
+    ARGUMENT(back_log, IS_LONG)
 METHOD_ARGS_END();
 
 /** public function ION\Listener::setStreamClass(string $classname) : self */
@@ -258,7 +258,7 @@ CLASS_METHOD(ION_Listener, encrypt) {
 }
 
 METHOD_ARGS_BEGIN(ION_Listener, encrypt, 1)
-    METHOD_ARG_OBJECT(ssl, ION\\Crypto, 0, 0)
+    ARGUMENT_OBJECT(ssl, ION\\Crypto, 0)
 METHOD_ARGS_END()
 
 
@@ -310,7 +310,7 @@ CLASS_METHOD(ION_Listener, getName) {
 METHOD_WITHOUT_ARGS(ION_Listener, getName);
 
 
-CLASS_METHODS_START(ION_Listener)
+METHODS_START(methods_ION_Listener)
     METHOD(ION_Listener, __construct,    ZEND_ACC_PUBLIC)
     METHOD(ION_Listener, setStreamClass, ZEND_ACC_PUBLIC)
     METHOD(ION_Listener, encrypt,        ZEND_ACC_PUBLIC)
@@ -320,17 +320,17 @@ CLASS_METHODS_START(ION_Listener)
     METHOD(ION_Listener, shutdown,       ZEND_ACC_PUBLIC)
     METHOD(ION_Listener, getName,        ZEND_ACC_PUBLIC)
     METHOD(ION_Listener, __toString,     ZEND_ACC_PUBLIC)
-CLASS_METHODS_END;
+METHODS_END;
 
 
 PHP_MINIT_FUNCTION(ION_Listener) {
-    pion_register_class(ION_Listener, "ION\\Listener", ion_listener_init, CLASS_METHODS(ION_Listener));
-    pion_init_std_object_handlers(ION_Listener);
-    pion_set_object_handler(ION_Listener, free_obj, ion_listener_free);
-    pion_set_object_handler(ION_Listener, clone_obj, NULL);
-    ion_class_set_offset(ion_oh_ION_Listener, ion_listener);
+    ion_register_class(ion_ce_ION_Listener, "ION\\Listener", ion_listener_init, methods_ION_Listener);
+    ion_init_object_handlers(ion_oh_ION_Listener);
+    ion_oh_ION_Listener.free_obj = ion_listener_free;
+    ion_oh_ION_Listener.clone_obj = NULL;
+    ion_oh_ION_Listener.offset = ion_offset(ion_listener);
 
-    PION_REGISTER_VOID_EXTENDED_CLASS(ION_ListenerException, ion_ce_ION_RuntimeException, "ION\\ListenerException");
+    ion_register_exception(ion_ce_ION_ListenerException, ion_ce_ION_RuntimeException, "ION\\ListenerException");
 
     return SUCCESS;
 }

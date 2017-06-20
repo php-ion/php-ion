@@ -1,6 +1,6 @@
-#include "net.h"
-#include "init.h"
-#include "stream.h"
+#include "ion_net.h"
+#include "ion_init.h"
+#include "ion_stream.h"
 #include <php_network.h>
 #include <arpa/inet.h>
 #include <sys/un.h>

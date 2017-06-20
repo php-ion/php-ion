@@ -666,6 +666,8 @@ class StreamTest extends TestCase {
         $socket = Stream::socket("example.com:443");
         $this->promise(function () use ($socket) {
             $ctx = Crypto::client();
+            $ctx->allowSelfSigned();
+//            $ctx->verifyPeer(false);
             $socket->encrypt($ctx);
             yield $socket->connect();
             yield $socket->flush();

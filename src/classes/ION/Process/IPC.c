@@ -16,6 +16,7 @@ zend_object * ion_process_ipc_init(zend_class_entry * ce) {
 
 void ion_process_ipc_free(zend_object * object) {
     ion_process_ipc * ipc = ION_ZOBJ_OBJECT(object, ion_process_ipc);
+    zend_object_std_dtor(object);
     if(ipc->on_message) {
         ion_object_release(ipc->on_message);
     }
@@ -193,21 +194,21 @@ CLASS_METHOD(ION_Process_IPC, getContext) {
 
 METHOD_WITHOUT_ARGS_RETURN(ION_Process_IPC, getContext, RET_REF);
 
-CLASS_METHODS_START(ION_Process_IPC)
+METHODS_START(methods_ION_Process_IPC)
     METHOD(ION_Process_IPC, create,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Process_IPC, isConnected,    ZEND_ACC_PUBLIC)
     METHOD(ION_Process_IPC, whenIncoming,       ZEND_ACC_PUBLIC)
     METHOD(ION_Process_IPC, whenDisconnected,   ZEND_ACC_PUBLIC)
     METHOD(ION_Process_IPC, send,           ZEND_ACC_PUBLIC)
     METHOD(ION_Process_IPC, getContext,     ZEND_ACC_PUBLIC)
-CLASS_METHODS_END;
+METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Process_IPC) {
-    pion_register_class(ION_Process_IPC, "ION\\Process\\IPC", ion_process_ipc_init, CLASS_METHODS(ION_Process_IPC));
-    pion_init_std_object_handlers(ION_Process_IPC);
-    pion_set_object_handler(ION_Process_IPC, free_obj, ion_process_ipc_free);
-    pion_set_object_handler(ION_Process_IPC, clone_obj, NULL);
-    ion_class_set_offset(ion_oh_ION_Process_IPC, ion_process_ipc);
+    ion_register_class(ion_ce_ION_Process_IPC, "ION\\Process\\IPC", ion_process_ipc_init, methods_ION_Process_IPC);
+    ion_init_object_handlers(ion_oh_ION_Process_IPC);
+    ion_oh_ION_Process_IPC.free_obj = ion_process_ipc_free;
+    ion_oh_ION_Process_IPC.clone_obj = NULL;
+    ion_oh_ION_Process_IPC.offset = ion_offset(ion_process_ipc);
 
     return SUCCESS;
 }

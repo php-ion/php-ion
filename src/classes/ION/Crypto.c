@@ -1,5 +1,6 @@
 #include "ion.h"
 #include <openssl/rand.h>
+#include <openssl/conf.h>
 
 zend_class_entry     * ion_ce_ION_Crypto;
 zend_object_handlers   ion_oh_ION_Crypto;
@@ -169,6 +170,7 @@ zend_object * ion_crypto_init(zend_class_entry * ce) {
 
 void ion_crypto_free(zend_object * object) {
     ion_crypto * ssl = ION_ZOBJ_OBJECT(object, ion_crypto);
+    zend_object_std_dtor(object);
     if(ssl->ctx) {
         SSL_CTX_free(ssl->ctx);
         ssl->ctx = NULL;
@@ -264,7 +266,7 @@ CLASS_METHOD(ION_Crypto, server) {
 }
 
 METHOD_ARGS_BEGIN(ION_Crypto, server, 0)
-    METHOD_ARG_LONG(method, 0)
+    ARGUMENT(method, IS_LONG)
 METHOD_ARGS_END()
 
 CLASS_METHOD(ION_Crypto, client) {
@@ -283,7 +285,7 @@ CLASS_METHOD(ION_Crypto, client) {
 }
 
 METHOD_ARGS_BEGIN(ION_Crypto, client, 0)
-    METHOD_ARG_LONG(method, 0)
+                ARGUMENT(method, IS_LONG)
 METHOD_ARGS_END()
 
 CLASS_METHOD(ION_Crypto, __construct) {}
@@ -311,7 +313,7 @@ CLASS_METHOD(ION_Crypto, ticket) {
 }
 
 METHOD_ARGS_BEGIN(ION_Crypto, ticket, 0)
-    METHOD_ARG_BOOL(status, 0)
+    ARGUMENT(status, IS_BOOLEAN)
 METHOD_ARGS_END()
 
 CLASS_METHOD(ION_Crypto, compression) {
@@ -335,7 +337,7 @@ CLASS_METHOD(ION_Crypto, compression) {
 }
 
 METHOD_ARGS_BEGIN(ION_Crypto, compression, 0)
-    METHOD_ARG_BOOL(status, 0)
+    ARGUMENT(status, IS_BOOLEAN)
 METHOD_ARGS_END()
 
 /* public function ION\SSL::verifyPeer(bool $status = true) : self */
@@ -358,7 +360,7 @@ CLASS_METHOD(ION_Crypto, verifyPeer) {
 }
 
 METHOD_ARGS_BEGIN(ION_Crypto, verifyPeer, 0)
-    METHOD_ARG_BOOL(status, 0)
+    ARGUMENT(status, IS_BOOLEAN)
 METHOD_ARGS_END()
 
 /* public function ION\SSL::verifyDepth(int $depth = -1) : self */
@@ -377,7 +379,7 @@ CLASS_METHOD(ION_Crypto, verifyDepth) {
 }
 
 METHOD_ARGS_BEGIN(ION_Crypto, verifyDepth, 0)
-    METHOD_ARG_BOOL(depth, 0)
+    ARGUMENT(depth, IS_BOOLEAN)
 METHOD_ARGS_END()
 
 /* public function ION\SSL::localCert(string $local_cert, string $local_pk = null) : self */
@@ -450,8 +452,8 @@ CLASS_METHOD(ION_Crypto, localCert) {
 }
 
 METHOD_ARGS_BEGIN(ION_Crypto, localCert, 1)
-    METHOD_ARG_STRING(local_cert, 0)
-    METHOD_ARG_STRING(local_pk, 0)
+    ARGUMENT(local_cert, IS_STRING)
+    ARGUMENT(local_pk, IS_STRING)
 METHOD_ARGS_END()
 
 /* public function ION\SSL::passPhrase(string $phrase) : self */
@@ -478,7 +480,7 @@ CLASS_METHOD(ION_Crypto, passPhrase) {
 }
 
 METHOD_ARGS_BEGIN(ION_Crypto, passPhrase, 1)
-    METHOD_ARG_STRING(phrase, 0)
+                ARGUMENT(phrase, IS_STRING)
 METHOD_ARGS_END()
 
 /* public function ION\SSL::allowSelfSigned(bool $state = true) : self */
@@ -501,7 +503,7 @@ CLASS_METHOD(ION_Crypto, allowSelfSigned) {
 }
 
 METHOD_ARGS_BEGIN(ION_Crypto, allowSelfSigned, 0)
-    METHOD_ARG_BOOL(state, 0)
+    ARGUMENT(state, IS_BOOLEAN)
 METHOD_ARGS_END()
 
 /* public function ION\SSL::ca(string $cafile, string $capath) : self */
@@ -547,12 +549,12 @@ CLASS_METHOD(ION_Crypto, ca) {
 }
 
 METHOD_ARGS_BEGIN(ION_Crypto, ca, 1)
-    METHOD_ARG_STRING(cafile, 0)
-    METHOD_ARG_STRING(capath, 0)
+    ARGUMENT(cafile, IS_STRING)
+    ARGUMENT(capath, IS_STRING)
 METHOD_ARGS_END()
 
 
-CLASS_METHODS_START(ION_Crypto)
+METHODS_START(methods_ION_Crypto)
     METHOD(ION_Crypto, server,          ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Crypto, client,          ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Crypto, __construct,     ZEND_ACC_PRIVATE)
@@ -564,7 +566,7 @@ CLASS_METHODS_START(ION_Crypto)
     METHOD(ION_Crypto, passPhrase,      ZEND_ACC_PUBLIC)
     METHOD(ION_Crypto, allowSelfSigned, ZEND_ACC_PUBLIC)
     METHOD(ION_Crypto, ca,              ZEND_ACC_PUBLIC)
-CLASS_METHODS_END;
+METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Crypto) {
     zend_long  methods = 0;
@@ -582,11 +584,15 @@ PHP_MINIT_FUNCTION(ION_Crypto) {
 
     GION(ssl_index) = SSL_get_ex_new_index(0, "PHP ION index", NULL, NULL, NULL);
 
-    pion_register_class(ION_Crypto, "ION\\Crypto", ion_crypto_init, CLASS_METHODS(ION_Crypto));
-    pion_init_std_object_handlers(ION_Crypto);
-    pion_set_object_handler(ION_Crypto, free_obj, ion_crypto_free);
-    pion_set_object_handler(ION_Crypto, clone_obj, NULL);
-    ion_class_set_offset(ion_oh_ION_Crypto, ion_crypto);
+    if (false) {
+//        OPENSSL_config();
+    }
+
+    ion_register_class(ion_ce_ION_Crypto, "ION\\Crypto", ion_crypto_init, methods_ION_Crypto);
+    ion_init_object_handlers(ion_oh_ION_Crypto);
+    ion_oh_ION_Crypto.free_obj = ion_crypto_free;
+    ion_oh_ION_Crypto.clone_obj = NULL;
+    ion_oh_ION_Crypto.offset = ion_offset(ion_crypto);
 
 #ifdef HAVE_SSL2
     methods |= ION_CRYPTO_METHOD_SSLv2;
@@ -602,16 +608,15 @@ PHP_MINIT_FUNCTION(ION_Crypto) {
     methods |= ION_CRYPTO_METHOD_TLSv12;
 #endif
 
-    PION_CLASS_CONST_LONG(ION_Crypto, "SUPPORTED_METHODS",  methods);
+    ion_class_declare_constant_long(ion_ce_ION_Crypto, "SUPPORTED_METHODS",  methods);
 
-    PION_CLASS_CONST_LONG(ION_Crypto, "METHOD_SSLv2",  ION_CRYPTO_METHOD_SSLv2);
-    PION_CLASS_CONST_LONG(ION_Crypto, "METHOD_SSLv3",  ION_CRYPTO_METHOD_SSLv3);
-    PION_CLASS_CONST_LONG(ION_Crypto, "METHOD_TLSv10",   ION_CRYPTO_METHOD_TLSv10);
-    PION_CLASS_CONST_LONG(ION_Crypto, "METHOD_TLSv11",   ION_CRYPTO_METHOD_TLSv11);
-    PION_CLASS_CONST_LONG(ION_Crypto, "METHOD_TLSv12",   ION_CRYPTO_METHOD_TLSv12);
+    ion_class_declare_constant_long(ion_ce_ION_Crypto, "METHOD_SSLv2",  ION_CRYPTO_METHOD_SSLv2);
+    ion_class_declare_constant_long(ion_ce_ION_Crypto, "METHOD_SSLv3",  ION_CRYPTO_METHOD_SSLv3);
+    ion_class_declare_constant_long(ion_ce_ION_Crypto, "METHOD_TLSv10",   ION_CRYPTO_METHOD_TLSv10);
+    ion_class_declare_constant_long(ion_ce_ION_Crypto, "METHOD_TLSv11",   ION_CRYPTO_METHOD_TLSv11);
+    ion_class_declare_constant_long(ion_ce_ION_Crypto, "METHOD_TLSv12",   ION_CRYPTO_METHOD_TLSv12);
 
-    PION_REGISTER_VOID_EXTENDED_CLASS(ION_CryptoException, ion_ce_ION_RuntimeException, "ION\\CryptoException");
-
+    ion_register_exception(ion_ce_ION_CryptoException, ion_ce_ION_RuntimeException, "ION\\CryptoException");
 
     return SUCCESS;
 }

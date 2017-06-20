@@ -31,7 +31,7 @@ CLASS_METHOD(ION_HTTP_Request, parse) {
 }
 
 METHOD_ARGS_BEGIN(ION_HTTP_Request, parse, 1)
-    METHOD_ARG_STRING(request, 0)
+    ARGUMENT(request, IS_STRING)
 METHOD_ARGS_END();
 
 /** public function ION\HTTP\Request::factory() : static */
@@ -129,7 +129,7 @@ CLASS_METHOD(ION_HTTP_Request, factory) {
 }
 
 METHOD_ARGS_BEGIN(ION_HTTP_Request, factory, 1)
-    METHOD_ARG_ARRAY(options, 0, 0)
+                ARGUMENT(options, IS_ARRAY)
 METHOD_ARGS_END();
 
 /** public function ION\HTTP\Request::getURI() : ION\URI */
@@ -175,7 +175,7 @@ CLASS_METHOD(ION_HTTP_Request, withMethod) {
 }
 
 METHOD_ARGS_BEGIN(ION_HTTP_Request, withMethod, 1)
-    METHOD_ARG_STRING(method, 0)
+                ARGUMENT(method, IS_STRING)
 METHOD_ARGS_END();
 
 
@@ -212,7 +212,7 @@ CLASS_METHOD(ION_HTTP_Request, withRequestTarget) {
 }
 
 METHOD_ARGS_BEGIN(ION_HTTP_Request, withRequestTarget, 1)
-    METHOD_ARG_STRING(target, 0)
+                ARGUMENT(target, IS_STRING)
 METHOD_ARGS_END();
 
 /** public function ION\HTTP\Request::__toString() : string */
@@ -229,7 +229,7 @@ CLASS_METHOD(ION_HTTP_Request, build) {
 
 METHOD_WITHOUT_ARGS(ION_HTTP_Request, build)
 
-CLASS_METHODS_START(ION_HTTP_Request)
+METHODS_START(methods_ION_HTTP_Request)
     METHOD(ION_HTTP_Request, parse,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_HTTP_Request, factory,     ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_HTTP_Request, getURI,      ZEND_ACC_PUBLIC)
@@ -239,23 +239,23 @@ CLASS_METHODS_START(ION_HTTP_Request)
     METHOD(ION_HTTP_Request, getRequestTarget,   ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_Request, __toString,  ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_Request, build,  ZEND_ACC_PUBLIC)
-CLASS_METHODS_END;
+METHODS_END;
 
 
 PHP_MINIT_FUNCTION(ION_HTTP_Request) {
-    pion_register_extended_class(ION_HTTP_Request, ion_ce_ION_HTTP_Message, "ION\\HTTP\\Request", ion_http_request_init, CLASS_METHODS(ION_HTTP_Request));
+    ion_register_class_ex(&ion_ce_ION_HTTP_Request, ion_ce_ION_HTTP_Message, "ION\\HTTP\\Request", ion_http_request_init, methods_ION_HTTP_Request);
 
-    PION_CLASS_CONST_LONG(ION_HTTP_Request, "URI",     ION_HTTP_REQUEST_URI);
-    PION_CLASS_CONST_LONG(ION_HTTP_Request, "TARGET",  ION_HTTP_REQUEST_TARGET);
-    PION_CLASS_CONST_LONG(ION_HTTP_Request, "VERSION", ION_HTTP_REQUEST_VERSION);
-    PION_CLASS_CONST_LONG(ION_HTTP_Request, "METHOD",  ION_HTTP_REQUEST_METHOD);
-    PION_CLASS_CONST_LONG(ION_HTTP_Request, "HEADERS", ION_HTTP_REQUEST_HEADERS);
-    PION_CLASS_CONST_LONG(ION_HTTP_Request, "BODY",    ION_HTTP_REQUEST_BODY);
+    ion_class_declare_constant_long(ion_ce_ION_HTTP_Request, "URI",     ION_HTTP_REQUEST_URI);
+    ion_class_declare_constant_long(ion_ce_ION_HTTP_Request, "TARGET",  ION_HTTP_REQUEST_TARGET);
+    ion_class_declare_constant_long(ion_ce_ION_HTTP_Request, "VERSION", ION_HTTP_REQUEST_VERSION);
+    ion_class_declare_constant_long(ion_ce_ION_HTTP_Request, "METHOD",  ION_HTTP_REQUEST_METHOD);
+    ion_class_declare_constant_long(ion_ce_ION_HTTP_Request, "HEADERS", ION_HTTP_REQUEST_HEADERS);
+    ion_class_declare_constant_long(ion_ce_ION_HTTP_Request, "BODY",    ION_HTTP_REQUEST_BODY);
 
-    pion_init_std_object_handlers(ION_HTTP_Request);
-    pion_set_object_handler(ION_HTTP_Request, free_obj, ion_http_message_free);
-    pion_set_object_handler(ION_HTTP_Request, clone_obj, NULL);
-    ion_class_set_offset(ion_oh_ION_HTTP_Request, ion_http_message);
+    ion_init_object_handlers(ion_oh_ION_HTTP_Request);
+    ion_oh_ION_HTTP_Request.free_obj = ion_http_message_free;
+    ion_oh_ION_HTTP_Request.clone_obj = NULL;
+    ion_oh_ION_HTTP_Request.offset = ion_offset(ion_http_message);
 
     return SUCCESS;
 }

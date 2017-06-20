@@ -28,26 +28,25 @@ set(ION_SOURCE_FILES
     src/deps/multipart-parser-c/multipart_parser.c
     src/deps/websocket-parser/websocket_parser.c
     src/php_ion.c
-    src/ion/init.h
-    src/ion/errors.h
-    src/ion/strings.c
-    src/ion/memory.c
-    src/ion/crypto.h
-    src/ion/exceptions.c
-    src/ion/debug.c
-    src/ion/callback.c
-    src/ion/zion.c
-    src/ion/engine.c
-    src/ion/deferred_queue.c
-    src/ion/dns.h
-    src/ion/timers.h
-    src/ion/net.c
-    src/ion/promisor.c
-    src/ion/stream.c
-    src/ion/process.c
-    src/ion/fs.h
-    src/ion/fs.c
-    src/ion/http.c
+    src/ion/ion_init.h
+    src/ion/ion_errors.h
+    src/ion/ion_strings.c
+    src/ion/ion_memory.c
+    src/ion/ion_crypto.h
+    src/ion/ion_exceptions.c
+    src/ion/ion_debug.c
+    src/ion/ion_callback.c
+    src/ion/ion_zend.c
+    src/ion/ion_deferred_queue.c
+    src/ion/ion_dns.h
+    src/ion/ion_timers.h
+    src/ion/ion_net.c
+    src/ion/ion_promisor.c
+    src/ion/ion_stream.c
+    src/ion/ion_process.c
+    src/ion/ion_fs.h
+    src/ion/ion_fs.c
+    src/ion/ion_http.c
     src/ion.h
 
     src/classes/ION/Debug.c

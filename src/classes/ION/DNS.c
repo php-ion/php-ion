@@ -2,9 +2,7 @@
 #include <event2/dns.h>
 
 zend_class_entry * ion_ce_ION_DNS;
-zend_object_handlers ion_oh_ION_DNS;
 zend_class_entry * ion_ce_ION_DNSException;
-zend_object_handlers ion_oh_ION_DNSException;
 
 void _ion_dns_getaddrinfo_callback(int errcode, struct evutil_addrinfo * addr, void * d) {
     zval result, A, AAAA;
@@ -115,14 +113,13 @@ CLASS_METHOD(ION_DNS, resolve) {
 }
 
 METHOD_ARGS_BEGIN(ION_DNS, resolve, 1)
-    METHOD_ARG_STRING(domain, 0)
-    METHOD_ARG_LONG(flags, 0)
+    ARGUMENT(domain, IS_STRING)
+    ARGUMENT(flags, IS_LONG)
 METHOD_ARGS_END()
 
-
-CLASS_METHODS_START(ION_DNS)
+METHODS_START(methods_ION_DNS)
     METHOD(ION_DNS, resolve,   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-CLASS_METHODS_END;
+METHODS_END;
 
 ZEND_INI_BEGIN()
     STD_PHP_INI_BOOLEAN("ion.dns.async", "1", PHP_INI_SYSTEM, OnUpdateBool, adns_enabled, zend_ion_globals, ion_globals)
@@ -132,11 +129,11 @@ ZEND_INI_END()
 
 PHP_MINIT_FUNCTION(ION_DNS) {
     REGISTER_INI_ENTRIES();
-    PION_REGISTER_STATIC_CLASS(ION_DNS, "ION\\DNS");
-    PION_CLASS_CONST_LONG(ION_DNS, "RECORD_A", ION_DNS_RECORD_A);
-    PION_CLASS_CONST_LONG(ION_DNS, "RECORD_AAAA", ION_DNS_RECORD_AAAA);
-    PION_CLASS_CONST_LONG(ION_DNS, "RECORD_CNAME", ION_DNS_RECORD_CNAME);
-    PION_REGISTER_VOID_EXTENDED_CLASS(ION_DNSException, ion_ce_ION_RuntimeException, "ION\\DNSException");
+    ion_register_static_class(ion_ce_ION_DNS, "ION\\DNS", methods_ION_DNS);
+    ion_class_declare_constant_long(ion_ce_ION_DNS, "RECORD_A", ION_DNS_RECORD_A);
+    ion_class_declare_constant_long(ion_ce_ION_DNS, "RECORD_AAAA", ION_DNS_RECORD_AAAA);
+    ion_class_declare_constant_long(ion_ce_ION_DNS, "RECORD_CNAME", ION_DNS_RECORD_CNAME);
+    ion_register_exception(ion_ce_ION_DNSException, ion_ce_ION_RuntimeException, "ION\\DNSException");
 
     if(!GION(adns_enabled)) {
         return SUCCESS;

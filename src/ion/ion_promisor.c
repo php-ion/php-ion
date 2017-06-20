@@ -11,7 +11,7 @@ zend_object_handlers ion_oh_ION_Promise_CancelException;
 zend_class_entry * ion_ce_ION_Promise_TimeoutException;
 zend_object_handlers ion_oh_ION_Promise_TimeoutException;
 
-#define Z_ISGENERATOR(zv) (Z_TYPE(zv) == IS_OBJECT && Z_OBJCE(result) == ion_class_entry(Generator))
+#define Z_ISGENERATOR(zv) (Z_TYPE(zv) == IS_OBJECT && Z_OBJCE(result) == ion_ce_Generator)
 #define PION_ARRAY_PUSH(array, counter, elem)                 \
     if(counter) {                                             \
         array = erealloc(array, sizeof(elem) * ++counter);    \
@@ -24,8 +24,8 @@ zend_object_handlers ion_oh_ION_Promise_TimeoutException;
 
 
 PHP_MINIT_FUNCTION(promisor) {
-    PION_REGISTER_VOID_EXTENDED_CLASS(ION_Promise_CancelException, zend_exception_get_default(), "ION\\Promise\\CancelException");
-    PION_REGISTER_VOID_EXTENDED_CLASS(ION_Promise_TimeoutException, ion_class_entry(ION_Promise_CancelException), "ION\\Promise\\TimeoutException");
+    ion_register_exception(ion_ce_ION_Promise_CancelException, zend_exception_get_default(), "ION\\Promise\\CancelException");
+    ion_register_exception(ion_ce_ION_Promise_TimeoutException, ion_ce_ION_Promise_CancelException, "ION\\Promise\\TimeoutException");
     return SUCCESS;
 }
 
@@ -621,7 +621,7 @@ void ion_promisor_zend_free(zend_object * promisor_obj) {
     ion_promisor * promisor = ION_ZOBJ_OBJECT(promisor_obj, ion_promisor);
 
     zend_object_std_dtor(promisor_obj);
-    ion_promisor_release(promisor);
+    ion_promisor_release(promisor); // @todo ???????
     if(promisor->name) {
         zend_string_release(promisor->name);
         promisor->name = NULL;

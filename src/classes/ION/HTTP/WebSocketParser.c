@@ -58,8 +58,9 @@ zend_object * ion_http_websocket_parser_init(zend_class_entry * ce) {
     return ion_init_object(ION_OBJECT_ZOBJ(parser), ce, &ion_oh_ION_HTTP_WebSocketParser);
 }
 
-void ion_http_websocket_parser_free(zend_object * obj) {
-    ion_http_body_parser * parser = ION_ZOBJ_OBJECT(obj, ion_http_body_parser);
+void ion_http_websocket_parser_free(zend_object * object) {
+    ion_http_body_parser * parser = ION_ZOBJ_OBJECT(object, ion_http_body_parser);
+    zend_object_std_dtor(object);
     if(parser->parser.websocket->on_frame) {
         ion_object_release(parser->parser.websocket->on_frame);
     }
@@ -128,28 +129,27 @@ CLASS_METHOD(ION_HTTP_WebSocketParser, __invoke) {
 
 
 METHOD_ARGS_BEGIN(ION_HTTP_WebSocketParser, __invoke, 1)
-    METHOD_ARG_STRING(frame, 0)
+    ARGUMENT(frame, IS_STRING)
 METHOD_ARGS_END();
 
 
 
-CLASS_METHODS_START(ION_HTTP_WebSocketParser)
+METHODS_START(methods_ION_HTTP_WebSocketParser)
     METHOD(ION_HTTP_WebSocketParser, frame,            ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_WebSocketParser, getParsedCount,   ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_WebSocketParser, hasUnparsedFrame, ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_WebSocketParser, __invoke,         ZEND_ACC_PUBLIC)
-CLASS_METHODS_END;
+METHODS_END;
 
 
 PHP_MINIT_FUNCTION(ION_HTTP_WebSocketParser) {
-    pion_register_class(ION_HTTP_WebSocketParser, "ION\\HTTP\\WebSocketParser", ion_http_websocket_parser_init, CLASS_METHODS(ION_HTTP_WebSocketParser));
-    pion_init_std_object_handlers(ION_HTTP_WebSocketParser);
-    ion_class_set_offset(ion_oh_ION_HTTP_WebSocketParser, ion_http_body_parser);
+    ion_register_class(ion_ce_ION_HTTP_WebSocketParser, "ION\\HTTP\\WebSocketParser", ion_http_websocket_parser_init, methods_ION_HTTP_WebSocketParser);
+    ion_init_object_handlers(ion_oh_ION_HTTP_WebSocketParser);
+    ion_oh_ION_HTTP_WebSocketParser.free_obj = ion_http_websocket_parser_free;
+    ion_oh_ION_HTTP_WebSocketParser.clone_obj = NULL;
+    ion_oh_ION_HTTP_WebSocketParser.offset = ion_offset(ion_http_body_parser);
 
-    PION_CLASS_CONST_STRING(ION_HTTP_WebSocketParser, "UUID",  WEBSOCKET_UUID);
-
-    pion_set_object_handler(ION_HTTP_WebSocketParser, free_obj, ion_http_websocket_parser_free);
-    pion_set_object_handler(ION_HTTP_WebSocketParser, clone_obj, NULL);
+    ion_class_declare_constant_string(ion_ce_ION_HTTP_WebSocketParser, "UUID",  WEBSOCKET_UUID);
 
     return SUCCESS;
 }

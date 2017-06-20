@@ -2,7 +2,6 @@
 #include "config.h"
 
 zend_class_entry * ion_ce_ION;
-zend_object_handlers ion_oh_ION;
 
 /** public function ION::reinit() : bool */
 CLASS_METHOD(ION, reinit) {
@@ -46,11 +45,11 @@ CLASS_METHOD(ION, dispatch) {
     }
 }
 
-METHOD_ARGS_BEGIN(ION, dispatch, 1)
-    METHOD_ARG_LONG(flags, 0)
+METHOD_ARGS_BEGIN_RETURN_BOOL(ION, dispatch, 1)
+    ARGUMENT(flags, IS_LONG)
 METHOD_ARGS_END()
 
-/** public function ION::stop(double $timeout = -1) : self */
+/** public function ION::stop(double $timeout = -1) : void */
 CLASS_METHOD(ION, stop) {
     double timeout = -1.0;
     struct timeval time;
@@ -69,8 +68,8 @@ CLASS_METHOD(ION, stop) {
     }
 }
 
-METHOD_ARGS_BEGIN(ION, stop, 0)
-    METHOD_ARG_DOUBLE(timeout, 0)
+METHOD_ARGS_BEGIN_RETURN_VOID(ION, stop, 0)
+    ARGUMENT(timeout, IS_DOUBLE)
 METHOD_ARGS_END()
 
 static void _ion_interval_free(ion_interval * interval) {
@@ -113,11 +112,11 @@ static void _ion_interval_invoke(evutil_socket_t fd, short flags, void * arg) {
     ION_CB_END();
 }
 
-static void _ion_interval_dtor(zval * dest) {
+static void _ion_timer_dtor(zval * dest) {
     _ion_interval_free(Z_PTR_P(dest));
 }
 
-static zval _ion_interval_cancel(ion_promisor * promise, zval * ex) {
+static zval _ion_timer_cancel(ion_promisor * promise, zval * ex) {
     zval ret;
     ZVAL_UNDEF(&ret);
     _ion_interval_free(Z_PTR_P(&promise->object));
@@ -134,7 +133,7 @@ ion_promisor * _ion_timer_ctor(double timeout, zend_bool repeat, zend_string * n
     if(repeat) {
         promisor = ion_promisor_sequence_new(NULL);
     } else {
-        promisor = ion_promisor_deferred_new_ex(_ion_interval_cancel);
+        promisor = ion_promisor_deferred_new_ex(_ion_timer_cancel);
     }
     interval->promisor   = promisor;
     interval->tv.tv_usec = ((int)(timeout*1000000) % 1000000);
@@ -174,12 +173,12 @@ CLASS_METHOD(ION, await) {
     }
     deferred = _ion_timer_ctor(timeout, false, NULL);
     if(deferred) {
-        RETURN_OBJ(ION_OBJECT_ZOBJ(deferred));
+        RETURN_ION_OBJ(deferred);
     }
 }
 
 METHOD_ARGS_BEGIN(ION, await, 1)
-    METHOD_ARG_FLOAT(time, 0)
+    ARGUMENT(time, IS_DOUBLE)
 METHOD_ARGS_END()
 
 /** public function ION::interval(double $time, string $name = NULL) : ION\Sequence */
@@ -199,13 +198,13 @@ CLASS_METHOD(ION, interval) {
     }
     sequence = _ion_timer_ctor(timeout, true, ZSTR_LEN(name) ? name : NULL);
     if(sequence) {
-        RETURN_OBJ(ION_OBJECT_ZOBJ(sequence));
+        RETURN_ION_OBJ(sequence);
     }
 }
 
 METHOD_ARGS_BEGIN(ION, interval, 1)
-    METHOD_ARG_DOUBLE(time, 0)
-    METHOD_ARG_STRING(name, 0)
+    ARGUMENT(time, IS_DOUBLE)
+    ARGUMENT(name, IS_STRING)
 METHOD_ARGS_END()
 
 /** public function ION::cancelInterval(string $name) : bool */
@@ -227,7 +226,7 @@ CLASS_METHOD(ION, cancelInterval) {
 }
 
 METHOD_ARGS_BEGIN_RETURN_BOOL(ION, cancelInterval, 1)
-    METHOD_ARG_STRING(name, 0)
+    ARGUMENT(name, IS_STRING)
 METHOD_ARGS_END()
 
 /** public function ION::promise(mixed $resolver) : ION\Promise */
@@ -258,7 +257,7 @@ CLASS_METHOD(ION, promise) {
 }
 
 METHOD_ARGS_BEGIN(ION, promise, 1)
-    METHOD_ARG(resolver, 0)
+    ARGUMENT(resolver, IS_MIXED)
 METHOD_ARGS_END()
 
 /** public function ION::getStats(bool $reset = true) : array */
@@ -290,7 +289,7 @@ METHOD_ARGS_BEGIN(ION, getStats, 0)
 METHOD_ARGS_END()
 
 
-CLASS_METHODS_START(ION)
+METHODS_START(methods_ION)
     METHOD(ION, reinit,         ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION, dispatch,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION, stop,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
@@ -299,7 +298,7 @@ CLASS_METHODS_START(ION)
     METHOD(ION, cancelInterval, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION, promise,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION, getStats,       ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-CLASS_METHODS_END;
+METHODS_END;
 
 ZEND_INI_BEGIN()
     STD_PHP_INI_BOOLEAN("ion.metrics", "On", PHP_INI_SYSTEM, OnUpdateBool, define_metrics, zend_ion_globals, ion_globals)
@@ -308,30 +307,30 @@ ZEND_INI_END()
 
 PHP_MINIT_FUNCTION(ION) {
     REGISTER_INI_ENTRIES();
-    PION_REGISTER_STATIC_CLASS(ION, "ION");
-    PION_CLASS_CONST_STRING(ION, "VERSION",        ION_VERSION);
-    PION_CLASS_CONST_STRING(ION, "ENGINE",         ION_EVENT_ENGINE);
-    PION_CLASS_CONST_STRING(ION, "ENGINE_VERSION", event_get_version());
-    PION_CLASS_CONST_LONG(ION, "LOOP_ONCE",        EVLOOP_ONCE);
-    PION_CLASS_CONST_LONG(ION, "LOOP_NONBLOCK",    EVLOOP_NONBLOCK);
+    ion_register_static_class(ion_ce_ION, "ION", methods_ION);
+    ion_class_declare_constant_string(ion_ce_ION, "VERSION",        ION_VERSION);
+    ion_class_declare_constant_string(ion_ce_ION, "ENGINE",         ION_EVENT_ENGINE);
+    ion_class_declare_constant_string(ion_ce_ION, "ENGINE_VERSION", event_get_version());
+    ion_class_declare_constant_long(ion_ce_ION, "LOOP_ONCE",        EVLOOP_ONCE);
+    ion_class_declare_constant_long(ion_ce_ION, "LOOP_NONBLOCK",    EVLOOP_NONBLOCK);
 
-    PION_CLASS_CONST_LONG(ION, "EV_READ",            EV_READ);
-    PION_CLASS_CONST_LONG(ION, "EV_WRITE",           EV_WRITE);
-    PION_CLASS_CONST_LONG(ION, "EV_TIMEOUT",         EV_TIMEOUT);
-    PION_CLASS_CONST_LONG(ION, "EV_SIGNAL",          EV_SIGNAL);
-    PION_CLASS_CONST_LONG(ION, "EV_PERSIST",         EV_PERSIST);
+    ion_class_declare_constant_long(ion_ce_ION, "EV_READ",            EV_READ);
+    ion_class_declare_constant_long(ion_ce_ION, "EV_WRITE",           EV_WRITE);
+    ion_class_declare_constant_long(ion_ce_ION, "EV_TIMEOUT",         EV_TIMEOUT);
+    ion_class_declare_constant_long(ion_ce_ION, "EV_SIGNAL",          EV_SIGNAL);
+    ion_class_declare_constant_long(ion_ce_ION, "EV_PERSIST",         EV_PERSIST);
 
-    PION_CLASS_CONST_LONG(ION, "PRIORITY_LOW",       5);
-    PION_CLASS_CONST_LONG(ION, "PRIORITY_DEFAULT",   3);
-    PION_CLASS_CONST_LONG(ION, "PRIORITY_HIGH",      1);
-    PION_CLASS_CONST_LONG(ION, "PRIORITY_URGENT",    0);
+    ion_class_declare_constant_long(ion_ce_ION, "PRIORITY_LOW",       5);
+    ion_class_declare_constant_long(ion_ce_ION, "PRIORITY_DEFAULT",   3);
+    ion_class_declare_constant_long(ion_ce_ION, "PRIORITY_HIGH",      1);
+    ion_class_declare_constant_long(ion_ce_ION, "PRIORITY_URGENT",    0);
 
-    PION_CLASS_CONST_LONG(ION, "INTERVAL_PROTECTED",  1);
-    PION_CLASS_CONST_LONG(ION, "INTERVAL_PERSISTENT", 2);
+    ion_class_declare_constant_long(ion_ce_ION, "INTERVAL_PROTECTED",  1);
+    ion_class_declare_constant_long(ion_ce_ION, "INTERVAL_PERSISTENT", 2);
 #ifdef ION_DEBUG
-    PION_CLASS_CONST_LONG(ION, "DEBUG",              1);
+    ion_class_declare_constant_bool(ion_ce_ION, "DEBUG",              1);
 #else
-    PION_CLASS_CONST_LONG(ION, "DEBUG",              0);
+    ion_class_declare_constant_bool(ion_ce_ION, "DEBUG",              0);
 #endif
     return SUCCESS;
 }
@@ -349,7 +348,7 @@ PHP_RINIT_FUNCTION(ION) {
 }
 
 PHP_RSHUTDOWN_FUNCTION(ION) {
-    GION(timers)->pDestructor = _ion_interval_dtor;
+    GION(timers)->pDestructor = _ion_timer_dtor;
     zend_hash_clean(GION(timers));
     zend_hash_destroy(GION(timers));
     FREE_HASHTABLE(GION(timers));

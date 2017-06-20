@@ -14,6 +14,7 @@ zend_object * ion_process_child_init(zend_class_entry * ce) {
 
 void ion_process_child_free(zend_object * object) {
     ion_process_child * child = ION_ZOBJ_OBJECT(object, ion_process_child);
+    zend_object_std_dtor(object);
     if(child->prom_exit) {
         ion_object_release(child->prom_exit);
         child->prom_exit = NULL;
@@ -47,7 +48,7 @@ void ion_process_child_spawn(ion_process_child * worker) {
     errno = 0;
     pid = fork();
     if(pid == -1) {
-        zend_throw_exception_ex(ion_class_entry(ION_RuntimeException), 0, ERR_ION_PROCESS_SPAWN_FAIL, strerror(errno));
+        zend_throw_exception_ex(ion_ce_ION_ProcessException, 0, ERR_ION_PROCESS_SPAWN_FAIL, strerror(errno));
         return;
     } else if(pid) { // in parent
         worker->flags |= ION_PROCESS_STARTED;
@@ -307,7 +308,7 @@ CLASS_METHOD(ION_Process_ChildProcess, _spawn) {
 
 METHOD_WITHOUT_ARGS(ION_Process_ChildProcess, _spawn);
 
-CLASS_METHODS_START(ION_Process_ChildProcess)
+METHODS_START(methods_ION_Process_ChildProcess)
     METHOD(ION_Process_ChildProcess, __construct,  ZEND_ACC_PUBLIC)
     METHOD(ION_Process_ChildProcess, getStartedTime, ZEND_ACC_PUBLIC)
     METHOD(ION_Process_ChildProcess, getPID,         ZEND_ACC_PUBLIC)
@@ -322,14 +323,14 @@ CLASS_METHODS_START(ION_Process_ChildProcess)
     METHOD(ION_Process_ChildProcess, whenStarted,    ZEND_ACC_PUBLIC)
     METHOD(ION_Process_ChildProcess, start,          ZEND_ACC_PUBLIC)
     METHOD(ION_Process_ChildProcess, _spawn,         ZEND_ACC_PRIVATE)
-CLASS_METHODS_END;
+METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Process_ChildProcess) {
-    pion_register_class(ION_Process_ChildProcess, "ION\\Process\\ChildProcess", ion_process_child_init, CLASS_METHODS(ION_Process_ChildProcess));
-    pion_init_std_object_handlers(ION_Process_ChildProcess);
-    pion_set_object_handler(ION_Process_ChildProcess, free_obj, ion_process_child_free);
-    pion_set_object_handler(ION_Process_ChildProcess, clone_obj, NULL);
-    ion_class_set_offset(ion_oh_ION_Process_ChildProcess, ion_process_child);
+    ion_register_class(ion_ce_ION_Process_ChildProcess, "ION\\Process\\ChildProcess", ion_process_child_init, methods_ION_Process_ChildProcess);
+    ion_init_object_handlers(ion_oh_ION_Process_ChildProcess);
+    ion_oh_ION_Process_ChildProcess.free_obj = ion_process_child_free;
+    ion_oh_ION_Process_ChildProcess.clone_obj = NULL;
+    ion_oh_ION_Process_ChildProcess.offset = ion_offset(ion_process_child);
 
     return SUCCESS;
 }

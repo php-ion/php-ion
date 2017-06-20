@@ -1,5 +1,5 @@
-#ifndef PION_ERRORS_H
-#define PION_ERRORS_H
+#ifndef ION_ERRORS_H
+#define ION_ERRORS_H
 
 
 // class ION
@@ -58,6 +58,7 @@
 #define ERR_ION_STREAM_BUFFER_CORRUPTED        "Stream buffer is corrupted"
 #define ERR_ION_STREAM_READ_LOCKED             "Stream locked for reading: already in the process of reading"
 #define ERR_ION_STREAM_APPEND_FAILED           "Failed to append data to input"
+#define ERR_ION_STREAM_DRAIN_FAILED            "Failed to drain token"
 
 // class ION\Listener
 #define ERR_ION_LISTENER_UNSUPPORTED_ADDRESS  "Address family %d not supported by protocol family"
@@ -68,10 +69,10 @@
 #define ERR_ION_LISTENER_SSL_ERROR            "Failed to create SSL/TLS handler for incoming connection to %s. Connection will be refused."
 
 // class ION\URI
-#define ERR_ION_HTTP_URI_FACTORY_UNKNOWN "Unknown option %d"
+#define ERR_ION_HTTP_URI_FACTORY_UNKNOWN      "Unknown option %d"
 
 // class ION\HTTP
-#define ERR_ION_HTTP_REQUEST_INVALID_STREAM "Invalid stream (closed or corrupted)"
+#define ERR_ION_HTTP_REQUEST_INVALID_STREAM   "Invalid stream (closed or corrupted)"
 
 // class ION\HTTP\Request
 #define ERR_ION_HTTP_REQUEST_FACTORY_URI     "URI should be instance of ION\\URI"
@@ -135,4 +136,4 @@
 // class ION\Process\ChildProcess
 #define ERR_ION_PROCESS_IPC_FAIL           "Failed to create IPC channel"
 
-#endif //PION_ERRORS_H
+#endif //ION_ERRORS_H

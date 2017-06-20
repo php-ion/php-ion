@@ -2,10 +2,10 @@
 #define PION_PROMISOR_H
 
 //#include <php.h>
-#include "init.h"
+#include "ion_init.h"
 //#include "../config.h"
-#include "callback.h"
-#include "exceptions.h"
+#include "ion_callback.h"
+#include "ion_exceptions.h"
 #include <Zend/zend_generators.h>
 #include <Zend/zend_closures.h>
 

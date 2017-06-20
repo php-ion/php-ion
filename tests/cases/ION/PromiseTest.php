@@ -20,7 +20,6 @@ class PromiseTest extends TestCase {
     }
 
     /**
-     *
      * @memcheck
      */
     public function testCreate() {
@@ -715,7 +714,7 @@ class PromiseTest extends TestCase {
         } else {
             $this->assertEquals([
                 "result" => $this->describe($arg)
-            ], $this->data);
+            ], $this->data, "Data: ".var_export($this->data, true));
         }
     }
 

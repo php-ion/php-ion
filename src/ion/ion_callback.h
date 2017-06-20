@@ -1,7 +1,7 @@
 #ifndef PION_CALLBACK_H
 #define PION_CALLBACK_H
 
-#include "init.h"
+#include "ion_init.h"
 
 /* PHP callback */
 typedef struct pion_cb {

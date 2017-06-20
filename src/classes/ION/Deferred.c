@@ -30,7 +30,7 @@ CLASS_METHOD(ION_Deferred, __construct) {
 }
 
 METHOD_ARGS_BEGIN(ION_Deferred, __construct, 0)
-    METHOD_ARG_TYPE(cancel_callback, IS_CALLABLE, 0, 0)
+    ARGUMENT(cancel_callback, IS_CALLABLE)
     ARGUMENT(canceleler, _IS_BOOL)
 METHOD_ARGS_END();
 
@@ -52,32 +52,23 @@ CLASS_METHOD(ION_Deferred, cancel) {
 }
 
 METHOD_ARGS_BEGIN(ION_Deferred, cancel, 1)
-    METHOD_ARG(reason, 0)
+    ARGUMENT(reason, IS_STRING)
 METHOD_ARGS_END()
 
-
-CLASS_METHODS_START(ION_Deferred)
+METHODS_START(methods_ION_Deferred)
     METHOD(ION_Deferred, __construct, ZEND_ACC_PUBLIC)
     METHOD(ION_Deferred, cancel,      ZEND_ACC_PUBLIC)
-CLASS_METHODS_END;
+METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Deferred) {
-    pion_register_extended_class(ION_Deferred, ion_ce_ION_ResolvablePromise, "ION\\Deferred", ion_deferred_zend_init, CLASS_METHODS(ION_Deferred));
-    pion_init_std_object_handlers(ION_Deferred);
-    pion_set_object_handler(ION_Deferred, free_obj, ion_promisor_zend_free);
-    pion_set_object_handler(ION_Deferred, clone_obj, ion_promisor_zend_clone);
-    ion_class_set_offset(ion_oh_ION_Deferred, ion_promisor);
-//    PION_REGISTER_EXTENDED_CLASS(ION_Deferred, ION_ResolvablePromise, "ION\\Deferred");
-//    CE(ION_Deferred)->ce_flags |= ZEND_ACC_FINAL_CLASS;
-//    PION_CLASS_CONST_LONG(ION_Deferred, "RESOLVED", ION_DEFERRED_DONE);
-//    PION_CLASS_CONST_LONG(ION_Deferred, "FAILED", ION_DEFERRED_FAILED);
-//    PION_CLASS_CONST_LONG(ION_Deferred, "FINISHED", ION_DEFERRED_FINISHED);
-//    PION_CLASS_CONST_LONG(ION_Deferred, "INTERNAL", ION_DEFERRED_INTERNAL);
-//    PION_CLASS_CONST_LONG(ION_Deferred, "TIMED_OUT", ION_DEFERRED_TIMED_OUT);
-//    PION_CLASS_CONST_LONG(ION_Deferred, "REJECTED", ION_DEFERRED_REJECTED);
+    ion_register_class_ex(&ion_ce_ION_Deferred, ion_ce_ION_ResolvablePromise, "ION\\Deferred", ion_deferred_zend_init, methods_ION_Deferred);
+    ion_init_object_handlers(ion_oh_ION_Deferred);
+    ion_oh_ION_Deferred.free_obj = ion_promisor_zend_free;
+    ion_oh_ION_Deferred.clone_obj = ion_promisor_zend_clone;
+    ion_oh_ION_Deferred.offset = ion_offset(ion_promisor);
 
-//    REGISTER_VOID_EXTENDED_CLASS(ION_Deferred_RejectException, Exception, "ION\\Deferred\\RejectException", NULL);
-//    REGISTER_VOID_EXTENDED_CLASS(ION_Deferred_TimeoutException, ION_Deferred_RejectException, "ION\\Deferred\\TimeoutException", NULL);
+//    ion_register_exception(ion_ce_ION_Deferred_RejectException, ion_ce_Exception, "ION\\Deferred\\RejectException", NULL);
+//    ion_register_exception(ion_ce_ION_Deferred_TimeoutException, ion_ce_ION_Deferred_RejectException, "ION\\Deferred\\TimeoutException", NULL);
     return SUCCESS;
 }
 

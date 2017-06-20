@@ -11,10 +11,10 @@ zend_object * ion_http_message_init(zend_class_entry * ce) {
     return ion_init_object(ION_OBJECT_ZOBJ(message), ce, &ion_oh_ION_HTTP_Message);
 }
 
-void ion_http_message_free(zend_object * zo_message) {
-    zend_object_std_dtor(zo_message);
+void ion_http_message_free(zend_object * object) {
+    zend_object_std_dtor(object);
 
-    ion_http_message * message = ION_ZOBJ_OBJECT(zo_message, ion_http_message);
+    ion_http_message * message = ION_ZOBJ_OBJECT(object, ion_http_message);
     zend_hash_clean(message->headers);
     zend_hash_destroy(message->headers);
     FREE_HASHTABLE(message->headers);
@@ -68,7 +68,7 @@ CLASS_METHOD(ION_HTTP_Message, withProtocolVersion) {
 }
 
 METHOD_ARGS_BEGIN(ION_HTTP_Message, withProtocolVersion, 1)
-    METHOD_ARG_STRING(version, 0)
+    ARGUMENT(version, IS_STRING)
 METHOD_ARGS_END();
 
 /** public function ION\HTTP\Message::getHeaders() : array */
@@ -99,7 +99,7 @@ CLASS_METHOD(ION_HTTP_Message, hasHeader) {
 }
 
 METHOD_ARGS_BEGIN(ION_HTTP_Message, hasHeader, 1)
-    METHOD_ARG_STRING(name, 0)
+                ARGUMENT(name, IS_STRING)
 METHOD_ARGS_END();
 
 /** public function ION\HTTP\Message::getHeader(string $name) : array */
@@ -124,7 +124,7 @@ CLASS_METHOD(ION_HTTP_Message, getHeader) {
 }
 
 METHOD_ARGS_BEGIN(ION_HTTP_Message, getHeader, 1)
-    METHOD_ARG_STRING(name, 0)
+                ARGUMENT(name, IS_STRING)
 METHOD_ARGS_END();
 
 /** public function ION\HTTP\Message::getHeaderLine(string $name) : string */
@@ -149,7 +149,7 @@ CLASS_METHOD(ION_HTTP_Message, getHeaderLine) {
 }
 
 METHOD_ARGS_BEGIN(ION_HTTP_Message, getHeaderLine, 1)
-    METHOD_ARG_STRING(name, 0)
+                ARGUMENT(name, IS_STRING)
 METHOD_ARGS_END();
 
 void ion_http_message_store_header_value(zend_array * header, zval * value) {
@@ -213,8 +213,8 @@ CLASS_METHOD(ION_HTTP_Message, withHeader) {
 }
 
 METHOD_ARGS_BEGIN(ION_HTTP_Message, withHeader, 1)
-    METHOD_ARG_STRING(name, 0)
-    METHOD_ARG(value, 0)
+                ARGUMENT(name, IS_STRING)
+                ARGUMENT(value, IS_MIXED)
 METHOD_ARGS_END();
 
 void ion_http_message_with_added_header(zend_array * headers, zend_string * name, zval * value) {
@@ -250,8 +250,8 @@ CLASS_METHOD(ION_HTTP_Message, withAddedHeader) {
 }
 
 METHOD_ARGS_BEGIN(ION_HTTP_Message, withAddedHeader, 1)
-    METHOD_ARG_STRING(name, 0)
-    METHOD_ARG(value, 0)
+                ARGUMENT(name, IS_STRING)
+                ARGUMENT(value, IS_MIXED)
 METHOD_ARGS_END();
 
 /** public function ION\HTTP\Message::withoutHeader(string $name) : self */
@@ -271,7 +271,7 @@ CLASS_METHOD(ION_HTTP_Message, withoutHeader) {
 }
 
 METHOD_ARGS_BEGIN(ION_HTTP_Message, withoutHeader, 1)
-    METHOD_ARG_STRING(name, 0)
+                ARGUMENT(name, IS_STRING)
 METHOD_ARGS_END();
 
 /** public function ION\HTTP\Message::withBody(string $body) : self */
@@ -291,7 +291,7 @@ CLASS_METHOD(ION_HTTP_Message, withBody) {
 }
 
 METHOD_ARGS_BEGIN(ION_HTTP_Message, withBody, 1)
-    METHOD_ARG_STRING(body, 0)
+                ARGUMENT(body, IS_STRING)
 METHOD_ARGS_END();
 
 /** public function ION\HTTP\Message::getBody() : string */
@@ -308,7 +308,7 @@ CLASS_METHOD(ION_HTTP_Message, getBody) {
 
 METHOD_WITHOUT_ARGS(ION_HTTP_Message, getBody);
 
-CLASS_METHODS_START(ION_HTTP_Message)
+METHODS_START(methods_ION_HTTP_Message)
     METHOD(ION_HTTP_Message, getProtocolVersion,  ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_Message, withProtocolVersion, ZEND_ACC_PUBLIC)
 
@@ -322,15 +322,15 @@ CLASS_METHODS_START(ION_HTTP_Message)
 
     METHOD(ION_HTTP_Message, withBody,        ZEND_ACC_PUBLIC)
     METHOD(ION_HTTP_Message, getBody,         ZEND_ACC_PUBLIC)
-CLASS_METHODS_END;
+METHODS_END;
 
 
 PHP_MINIT_FUNCTION(ION_HTTP_Message) {
-    pion_register_class(ION_HTTP_Message, "ION\\HTTP\\Message", ion_http_message_init, CLASS_METHODS(ION_HTTP_Message));
-    pion_init_std_object_handlers(ION_HTTP_Message);
-    pion_set_object_handler(ION_HTTP_Message, free_obj, ion_http_message_free);
-    pion_set_object_handler(ION_HTTP_Message, clone_obj, NULL);
-    ion_class_set_offset(ion_oh_ION_HTTP_Message, ion_http_message);
+    ion_register_class(ion_ce_ION_HTTP_Message, "ION\\HTTP\\Message", ion_http_message_init, methods_ION_HTTP_Message);
+    ion_init_object_handlers(ion_oh_ION_HTTP_Message);
+    ion_oh_ION_HTTP_Message.free_obj = ion_http_message_free;
+    ion_oh_ION_HTTP_Message.clone_obj = NULL;
+    ion_oh_ION_HTTP_Message.offset = ion_offset(ion_http_message);
 
     return SUCCESS;
 }

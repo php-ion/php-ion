@@ -24,8 +24,8 @@ CLASS_METHOD(ION_Promise, __construct) {
 }
 
 METHOD_ARGS_BEGIN(ION_Promise, __construct, 0)
-    METHOD_ARG_CALLBACK(done, 0, 1)
-    METHOD_ARG_CALLBACK(fail, 0, 1)
+    ARGUMENT(done, IS_CALLABLE | ARG_ALLOW_NULL)
+    ARGUMENT(fail, IS_CALLABLE | ARG_ALLOW_NULL)
 METHOD_ARGS_END();
 
 /** public function ION\Promise::then(callable $done = null, callable $fail = null) : ION\Promise */
@@ -64,8 +64,8 @@ CLASS_METHOD(ION_Promise, then) {
 }
 
 METHOD_ARGS_BEGIN(ION_Promise, then, 0)
-    METHOD_ARG(done, 0)
-    METHOD_ARG_CALLBACK(fail, 0, 1)
+    ARGUMENT(done, IS_MIXED | ARG_ALLOW_NULL)
+    ARGUMENT(fail, IS_CALLABLE | ARG_ALLOW_NULL)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Promise, forget) {
@@ -86,7 +86,7 @@ CLASS_METHOD(ION_Promise, forget) {
 }
 
 METHOD_ARGS_BEGIN(ION_Promise, forget, 0)
-    METHOD_ARG(handler, 0)
+    ARGUMENT(handler, IS_MIXED)
 METHOD_ARGS_END();
 
 /** public function ION\Promise::onDone(callable $callback) : ION\Promise */
@@ -107,7 +107,7 @@ CLASS_METHOD(ION_Promise, onDone) {
 }
 
 METHOD_ARGS_BEGIN(ION_Promise, onDone, 1)
-    METHOD_ARG_CALLBACK(callback, 0, 0)
+    ARGUMENT(callback, IS_CALLABLE)
 METHOD_ARGS_END();
 
 /** public function ION\Promise::onFail(callable $callback) : ION\Promise */
@@ -116,19 +116,19 @@ CLASS_METHOD(ION_Promise, onFail) {
     ion_promisor * promise = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
-            Z_PARAM_ZVAL(callback)
+        Z_PARAM_ZVAL(callback)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     promise = ion_promisor_push_callbacks(ION_THIS_OBJECT(ion_promisor), NULL, callback);
     if(promise == NULL) {
-        zend_throw_exception(ion_class_entry(InvalidArgumentException), ERR_ION_PROMISE_CANT, 0);
+        zend_throw_exception(ion_ce_InvalidArgumentException, ERR_ION_PROMISE_CANT, 0);
         return;
     }
     RETURN_OBJ(ION_OBJECT_ZOBJ(promise));
 }
 
 METHOD_ARGS_BEGIN(ION_Promise, onFail, 1)
-    METHOD_ARG_CALLBACK(callback, 0, 0)
+    ARGUMENT(name, IS_CALLABLE)
 METHOD_ARGS_END();
 
 /** public function ION\Promise::getState() : string */
@@ -173,10 +173,10 @@ CLASS_METHOD(ION_Promise, setName) {
 }
 
 METHOD_ARGS_BEGIN(ION_Promise, setName, 1)
-    METHOD_ARG_STRING(name, 0)
+    ARGUMENT(name, IS_STRING)
 METHOD_ARGS_END()
 
-CLASS_METHODS_START(ION_Promise)
+METHODS_START(methods_ION_Promise)
     METHOD(ION_Promise, __construct,   ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, then,          ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, forget,        ZEND_ACC_PUBLIC)
@@ -185,21 +185,21 @@ CLASS_METHODS_START(ION_Promise)
     METHOD(ION_Promise, getState,      ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, getFlags,      ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, setName,       ZEND_ACC_PUBLIC)
-CLASS_METHODS_END;
+METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Promise) {
-    pion_register_class(ION_Promise, "ION\\Promise", ion_promise_zend_init, CLASS_METHODS(ION_Promise));
-    pion_init_std_object_handlers(ION_Promise);
-    pion_set_object_handler(ION_Promise, free_obj, ion_promisor_zend_free);
-    pion_set_object_handler(ION_Promise, clone_obj, ion_promisor_zend_clone);
-    ion_class_set_offset(ion_oh_ION_Promise, ion_promisor);
 
+    ion_register_class(ion_ce_ION_Promise, "ION\\Promise", ion_promise_zend_init, methods_ION_Promise);
+    ion_init_object_handlers(ion_oh_ION_Promise);
+    ion_oh_ION_Promise.free_obj = ion_promisor_zend_free;
+    ion_oh_ION_Promise.clone_obj = ion_promisor_zend_clone;
+    ion_oh_ION_Promise.offset = ion_offset(ion_promisor);
 
-    PION_CLASS_CONST_LONG(ION_Promise, "DONE",      ION_PROMISOR_DONE);
-    PION_CLASS_CONST_LONG(ION_Promise, "FAILED",    ION_PROMISOR_FAILED);
-    PION_CLASS_CONST_LONG(ION_Promise, "FINISHED",  ION_PROMISOR_FINISHED);
-    PION_CLASS_CONST_LONG(ION_Promise, "INTERNAL",  ION_PROMISOR_INTERNAL);
-    PION_CLASS_CONST_LONG(ION_Promise, "TIMED_OUT", ION_PROMISOR_TIMED_OUT);
-    PION_CLASS_CONST_LONG(ION_Promise, "CANCELED",  ION_PROMISOR_CANCELED);
+    ion_class_declare_constant_long(ion_ce_ION_Promise, "DONE",      ION_PROMISOR_DONE);
+    ion_class_declare_constant_long(ion_ce_ION_Promise, "FAILED",    ION_PROMISOR_FAILED);
+    ion_class_declare_constant_long(ion_ce_ION_Promise, "FINISHED",  ION_PROMISOR_FINISHED);
+    ion_class_declare_constant_long(ion_ce_ION_Promise, "INTERNAL",  ION_PROMISOR_INTERNAL);
+    ion_class_declare_constant_long(ion_ce_ION_Promise, "TIMED_OUT", ION_PROMISOR_TIMED_OUT);
+    ion_class_declare_constant_long(ion_ce_ION_Promise, "CANCELED",  ION_PROMISOR_CANCELED);
     return SUCCESS;
 }

@@ -2,7 +2,7 @@
 #define PION_SSL_H
 
 #include <openssl/ssl.h>
-#include "init.h"
+#include "ion_init.h"
 
 #define ION_CRYPTO_IS_CLIENT        (1<<0)
 #define ION_CRYPTO_METHOD_SSLv2     (1<<1)

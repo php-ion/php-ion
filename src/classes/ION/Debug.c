@@ -2,8 +2,6 @@
 
 pion_cb * global_cb;
 zend_class_entry * ion_ce_ION_Debug;
-zend_object_handlers ion_oh_ION_Debug;
-DEFINE_CLASS(ION_Debug);
 
 CLASS_METHOD(ION_Debug, fcallVoid) {
 
@@ -37,10 +35,10 @@ CLASS_METHOD(ION_Debug, fcallVoid) {
 }
 
 METHOD_ARGS_BEGIN_RETURN_INT(ION_Debug, fcallVoid, 1)
-    METHOD_ARG_TYPE(callback, IS_CALLABLE, 0, 0)
-    METHOD_ARG(arg1, 0)
-    METHOD_ARG(arg2, 0)
-    METHOD_ARG(arg3, 0)
+    ARGUMENT(callback, IS_CALLABLE)
+    ARGUMENT(arg1, IS_MIXED)
+    ARGUMENT(arg2, IS_MIXED)
+    ARGUMENT(arg3, IS_MIXED)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, cbCallVoid) {
@@ -80,10 +78,10 @@ CLASS_METHOD(ION_Debug, cbCallVoid) {
 }
 
 METHOD_ARGS_BEGIN_RETURN_INT(ION_Debug, cbCallVoid, 1)
-    METHOD_ARG_TYPE(callback, IS_CALLABLE, 0, 0)
-    METHOD_ARG(arg1, 0)
-    METHOD_ARG(arg2, 0)
-    METHOD_ARG(arg3, 0)
+    ARGUMENT(callback, IS_CALLABLE)
+    ARGUMENT(arg1, IS_MIXED)
+    ARGUMENT(arg2, IS_MIXED)
+    ARGUMENT(arg3, IS_MIXED)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, globalCbCall) {
@@ -101,7 +99,7 @@ CLASS_METHOD(ION_Debug, globalCbCall) {
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, globalCbCall, 1)
-    METHOD_ARG(arg, 0)
+    ARGUMENT(arg, IS_MIXED)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, globalCbObjCall) {
@@ -122,8 +120,8 @@ CLASS_METHOD(ION_Debug, globalCbObjCall) {
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, globalCbObjCall, 2)
-    METHOD_ARG(obj, 0)
-    METHOD_ARG(arg, 0)
+    ARGUMENT(obj, IS_MIXED)
+    ARGUMENT(arg, IS_MIXED)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, globalCbCallVoid) {
@@ -140,7 +138,7 @@ CLASS_METHOD(ION_Debug, globalCbCallVoid) {
 }
 
 METHOD_ARGS_BEGIN_RETURN_INT(ION_Debug, globalCbCallVoid, 1)
-    METHOD_ARG(arg, 0)
+    ARGUMENT(arg, IS_MIXED)
 METHOD_ARGS_END();
 
 
@@ -155,7 +153,7 @@ CLASS_METHOD(ION_Debug, globalCbCreate) {
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, globalCbCreate, 1)
-    METHOD_ARG_CALLBACK(callback, 0, 0)
+    ARGUMENT(callback, IS_CALLABLE)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, globalCbCreateFromZval) {
@@ -168,7 +166,7 @@ CLASS_METHOD(ION_Debug, globalCbCreateFromZval) {
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, globalCbCreateFromZval, 1)
-    METHOD_ARG_CALLBACK(callback, 0, 0)
+    ARGUMENT(callback, IS_MIXED)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, globalCbFetchMethod) {
@@ -182,8 +180,8 @@ CLASS_METHOD(ION_Debug, globalCbFetchMethod) {
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, globalCbFetchMethod, 2)
-    METHOD_ARG_STRING(class_name, 0)
-    METHOD_ARG_STRING(method_name, 0)
+    ARGUMENT(class_name, IS_STRING)
+    ARGUMENT(method_name, IS_STRING)
 METHOD_ARGS_END();
 
 
@@ -197,7 +195,7 @@ CLASS_METHOD(ION_Debug, noHint) {
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, noHint, 1)
-    METHOD_ARG(val, 0)
+                ARGUMENT(val, IS_MIXED)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, intHint) {
@@ -210,7 +208,7 @@ CLASS_METHOD(ION_Debug, intHint) {
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, intHint, 1)
-    METHOD_ARG_LONG(val, 0)
+                ARGUMENT(val, IS_LONG)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, doubleHint) {
@@ -223,7 +221,7 @@ CLASS_METHOD(ION_Debug, doubleHint) {
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, doubleHint, 1)
-    METHOD_ARG_DOUBLE(val, 0)
+                ARGUMENT(val, IS_DOUBLE)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, boolHint) {
@@ -236,7 +234,7 @@ CLASS_METHOD(ION_Debug, boolHint) {
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, boolHint, 1)
-    METHOD_ARG_BOOL(val, 0)
+                ARGUMENT(val, IS_BOOLEAN)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, stringHint) {
@@ -249,7 +247,7 @@ CLASS_METHOD(ION_Debug, stringHint) {
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, stringHint, 1)
-    METHOD_ARG_STRING(val, 0)
+                ARGUMENT(val, IS_STRING)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, arrayHint) {
@@ -262,7 +260,7 @@ CLASS_METHOD(ION_Debug, arrayHint) {
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, arrayHint, 1)
-    METHOD_ARG_ARRAY(val, 0, 0)
+                ARGUMENT(val, IS_ARRAY)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, ArrayObjectHint) {
@@ -275,7 +273,7 @@ CLASS_METHOD(ION_Debug, ArrayObjectHint) {
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, ArrayObjectHint, 1)
-                METHOD_ARG_OBJECT(val, ArrayObject, 0, 0)
+                ARGUMENT_OBJECT(val, ArrayObject, 0)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, SplDoublyLinkedListHint) {
@@ -288,7 +286,7 @@ CLASS_METHOD(ION_Debug, SplDoublyLinkedListHint) {
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, SplDoublyLinkedListHint, 1)
-    METHOD_ARG_OBJECT(val, SplDoublyLinkedList, 0, 0)
+                ARGUMENT_OBJECT(val, SplDoublyLinkedList, 0)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, ArrayAccessHint) {
@@ -301,7 +299,7 @@ CLASS_METHOD(ION_Debug, ArrayAccessHint) {
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, ArrayAccessHint, 1)
-    METHOD_ARG_OBJECT(val, ArrayAccess, 0, 0)
+                ARGUMENT_OBJECT(val, ArrayAccess, 0)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, SplQueueHint) {
@@ -314,7 +312,7 @@ CLASS_METHOD(ION_Debug, SplQueueHint) {
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, SplQueueHint, 1)
-    METHOD_ARG_OBJECT(val, SplQueue, 0, 0)
+    ARGUMENT_OBJECT(val, SplQueue, 0)
 METHOD_ARGS_END();
 
 CLASS_METHOD(ION_Debug, CallableHint) {
@@ -327,7 +325,7 @@ CLASS_METHOD(ION_Debug, CallableHint) {
 }
 
 METHOD_ARGS_BEGIN(ION_Debug, CallableHint, 1)
-    METHOD_ARG_CALLBACK(val, 0, 0)
+                ARGUMENT(val, IS_CALLABLE)
 METHOD_ARGS_END();
 
 
@@ -337,7 +335,7 @@ CLASS_METHOD(ION_Debug, sandbox) {
 
 METHOD_WITHOUT_ARGS(ION_Debug, sandbox)
 
-CLASS_METHODS_START(ION_Debug)
+METHODS_START(methods_ION_Debug)
     METHOD(ION_Debug, fcallVoid,              ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, cbCallVoid,             ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, globalCbCall,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
@@ -359,9 +357,10 @@ CLASS_METHODS_START(ION_Debug)
     METHOD(ION_Debug, ArrayAccessHint,        ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, SplQueueHint,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     METHOD(ION_Debug, CallableHint,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-CLASS_METHODS_END;
+METHODS_END;
 
 PHP_MINIT_FUNCTION(ION_Debug) {
-    PION_REGISTER_STATIC_CLASS(ION_Debug, "ION\\Debug");
+
+    ion_register_static_class(ion_ce_ION_Debug, "ION\\Debug", methods_ION_Debug);
     return SUCCESS;
 }

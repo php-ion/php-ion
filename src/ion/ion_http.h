@@ -1,7 +1,7 @@
 #ifndef PION_HTTP_H
 #define PION_HTTP_H
 
-#include "init.h"
+#include "ion_init.h"
 #include "../deps/http-parser/http_parser.h"
 #include "../deps/multipart-parser-c/multipart_parser.h"
 #include "../deps/websocket-parser/websocket_parser.h"

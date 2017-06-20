@@ -1,13 +1,11 @@
-#include "exceptions.h"
+#include "ion.h"
 
 zend_class_entry * ion_ce_ION_RuntimeException;
-zend_object_handlers ion_oh_ION_RuntimeException;
 zend_class_entry * ion_ce_ION_InvalidUsageException;
-zend_object_handlers ion_oh_ION_InvalidUsageException;
 
 PHP_MINIT_FUNCTION(exceptions) {
-    PION_REGISTER_VOID_EXTENDED_CLASS(ION_RuntimeException, ion_class_entry(RuntimeException), "ION\\RuntimeException");
-    PION_REGISTER_VOID_EXTENDED_CLASS(ION_InvalidUsageException, ion_class_entry(LogicException), "ION\\InvalidUsageException");
+    ion_register_exception(ion_ce_ION_RuntimeException, ion_ce_RuntimeException, "ION\\RuntimeException");
+    ion_register_exception(ion_ce_ION_InvalidUsageException, ion_ce_LogicException, "ION\\InvalidUsageException");
     return SUCCESS;
 }
 
