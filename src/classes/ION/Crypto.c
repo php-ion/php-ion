@@ -584,9 +584,7 @@ PHP_MINIT_FUNCTION(ION_Crypto) {
 
     GION(ssl_index) = SSL_get_ex_new_index(0, "PHP ION index", NULL, NULL, NULL);
 
-    if (false) {
-//        OPENSSL_config();
-    }
+    OPENSSL_config(NULL);
 
     ion_register_class(ion_ce_ION_Crypto, "ION\\Crypto", ion_crypto_init, methods_ION_Crypto);
     ion_init_object_handlers(ion_oh_ION_Crypto);
@@ -624,6 +622,5 @@ PHP_MINIT_FUNCTION(ION_Crypto) {
 
 PHP_MSHUTDOWN_FUNCTION(ION_Crypto) {
     EVP_cleanup();
-
-    return SUCCESS;
+    return SUCCEsSS;
 }
