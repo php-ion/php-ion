@@ -622,5 +622,5 @@ PHP_MINIT_FUNCTION(ION_Crypto) {
 
 PHP_MSHUTDOWN_FUNCTION(ION_Crypto) {
     EVP_cleanup();
-    return SUCCEsSS;
+    return SUCCESS;
 }
