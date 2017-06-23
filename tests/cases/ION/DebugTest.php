@@ -131,6 +131,20 @@ class DebugTest extends TestCase {
         $this->assertEquals('retval', Debug::globalCbCall("test testCbCreateFromZval"));
         $this->assertEquals("test testCbCreateFromZval", $this->data['testCbCreate']);
     }
+
+    /**
+     * @memcheck
+     */
+    public function testCbCallArray() {
+        Debug::globalCbCreate([$this, "func1"]);
+        $this->assertEquals('retval', Debug::globalCbCall("test testCbCreateFromZval"));
+        $this->assertEquals("test testCbCreateFromZval", $this->data['testCbCreate']);
+    }
+
+    public function func1($a) {
+        $this->data['testCbCreate'] = $a;
+        return "retval";
+    }
 }
 
 class ExampleObj extends DebugTest {

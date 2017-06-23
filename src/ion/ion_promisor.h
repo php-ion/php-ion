@@ -125,11 +125,12 @@ static zend_always_inline ion_promisor * ion_promisor_new(zend_class_entry * ce,
 static zend_always_inline void ion_promisor_set_php_cb(ion_promisor_action_cb * pcb, pion_cb * cb) {
     if(pcb->type == ION_PROMISOR_CB_PHP) {
         pion_cb_free(pcb->cb.php);
-    } else {
-        pcb->type = ION_PROMISOR_CB_PHP;
+        pcb->type = ION_PROMISOR_CB_UNSET;
+        pcb->cb.php = NULL;
     }
     if(cb) {
         pcb->cb.php = cb;
+        pcb->type = ION_PROMISOR_CB_PHP;
     } else {
         pcb->type = ION_PROMISOR_CB_UNSET;
         pcb->cb.php = NULL;

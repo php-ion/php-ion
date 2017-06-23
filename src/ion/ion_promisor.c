@@ -463,15 +463,15 @@ int ion_promisor_set_initial_callback(ion_promisor * promisor, zval * initial) {
     if(initial) {
         ion_promisor_set_php_cb(&promisor->done, pion_cb_create_from_zval(initial));
         if(!promisor->done.cb.php) {
-            return FAILURE;
+            return false;
         }
         promisor->flags |= ION_PROMISOR_HAS_DONE;
 
         if(pion_cb_required_num_args(promisor->done.cb.php) > 1) {
-            return FAILURE;
+            return false;
         }
     }
-    return SUCCESS;
+    return true;
 }
 
 ion_promisor * ion_promisor_push_callbacks(ion_promisor * promisor, zval * on_done, zval * on_fail) {

@@ -1469,13 +1469,7 @@ METHOD_WITHOUT_ARGS(ION_Stream, __debugInfo)
 CLASS_METHOD(ION_Stream, getPeerName) {
     ion_stream  * stream = ION_THIS_OBJECT(ion_stream);
     zend_string * remote_name;
-    if(stream->buffer == NULL) {
-        RETURN_FALSE;
-    }
     if(stream->state & ION_STREAM_STATE_SOCKET) {
-        if(ion_stream_is_valid_fd(stream)) {
-            RETURN_FALSE;
-        }
         if(stream->state & ION_STREAM_STATE_PAIR) {
             RETURN_STRING("twin");
         }
@@ -1496,24 +1490,18 @@ METHOD_WITHOUT_ARGS(ION_Stream, getPeerName)
 CLASS_METHOD(ION_Stream, getLocalName) {
     ion_stream * stream = ION_THIS_OBJECT(ion_stream);
     zend_string * local_name;
-    if(stream->buffer == NULL) {
-        RETURN_FALSE;
-    }
     if(stream->state & ION_STREAM_STATE_SOCKET) {
-        if(ion_stream_is_valid_fd(stream)) {
-            RETURN_FALSE;
-        }
         if(stream->state & ION_STREAM_STATE_PAIR) {
             RETURN_STRING("twin")
         }
-        local_name = ion_stream_get_name_self(ION_THIS_OBJECT(ion_stream));
+        local_name = ion_stream_get_name_self(stream);
         if(local_name) {
             RETURN_STR(local_name);
         } else {
-            RETURN_FALSE;
+            RETURN_EMPTY_STRING();
         }
     } else {
-        RETURN_FALSE;
+        RETURN_EMPTY_STRING();
     }
 }
 

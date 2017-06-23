@@ -60,7 +60,6 @@ extern ZEND_API zend_class_entry * ion_ce_ION_Stream_StorageException;
 #define ION_STREAM_TOKEN_LIMIT        8
 
 struct _ion_listener {
-//    zend_object      std;
     uint               flags;
     ion_promisor     * accept;
     ion_crypto       * encrypt;

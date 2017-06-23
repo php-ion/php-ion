@@ -24,7 +24,9 @@ CLASS_METHOD(ION_Sequence, __construct) {
         Z_PARAM_ZVAL_DEREF_EX(release, 1, 0)
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
     if(starter) {
-        ion_promisor_set_initial_callback(sequence, starter);
+        if(!ion_promisor_set_initial_callback(sequence, starter)) {
+            zend_throw_exception(ion_ce_InvalidArgumentException, "Invalid callback", 0);
+        }
     }
     if(release) {
         ion_promisor_set_php_cb(&sequence->canceler, pion_cb_create_from_zval(release));
@@ -33,7 +35,7 @@ CLASS_METHOD(ION_Sequence, __construct) {
 }
 
 METHOD_ARGS_BEGIN(ION_Sequence, __construct, 0)
-    ARGUMENT(handler, IS_CALLABLE)
+    ARGUMENT(handler, IS_MIXED)
 METHOD_ARGS_END()
 
 

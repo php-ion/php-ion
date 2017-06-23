@@ -7,6 +7,9 @@ zend_string * ion_stream_get_name_self(ion_stream * stream) {
     int type   = 0;
     evutil_socket_t socket;
     if(stream->name_self == NULL) {
+        if(!stream->buffer) {
+            return NULL;
+        }
         socket = bufferevent_getfd(stream->buffer);
         if(socket == -1) {
             return NULL;
@@ -30,6 +33,9 @@ zend_string * ion_stream_get_name_remote(ion_stream * stream) {
     int type   = 0;
     evutil_socket_t socket;
     if(stream->name_remote == NULL) {
+        if(!stream->buffer) {
+            return NULL;
+        }
         socket = bufferevent_getfd(stream->buffer);
         if(socket == -1) {
             return NULL;
