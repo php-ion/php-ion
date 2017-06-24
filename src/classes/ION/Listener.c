@@ -165,8 +165,10 @@ CLASS_METHOD(ION_Listener, __construct) {
             _ion_listener_accept,
             listener,
             LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE | LEV_OPT_REUSEABLE_PORT | LEV_OPT_CLOSE_ON_EXEC,
-            (int)back_log,
-            (struct sockaddr *)&sock, sock_len);
+            (int) back_log,
+            (struct sockaddr *) &sock,
+            sock_len
+        );
         if(listener->listener) {
             pion_net_sock_name(evconnlistener_get_fd(listener->listener), PION_NET_NAME_LOCAL, &listener->name);
         }
@@ -326,9 +328,9 @@ METHODS_END;
 PHP_MINIT_FUNCTION(ION_Listener) {
     ion_register_class(ion_ce_ION_Listener, "ION\\Listener", ion_listener_init, methods_ION_Listener);
     ion_init_object_handlers(ion_oh_ION_Listener);
-    ion_oh_ION_Listener.free_obj = ion_listener_free;
+    ion_oh_ION_Listener.free_obj  = ion_listener_free;
     ion_oh_ION_Listener.clone_obj = NULL;
-    ion_oh_ION_Listener.offset = ion_offset(ion_listener);
+    ion_oh_ION_Listener.offset    = ion_offset(ion_listener);
 
     ion_register_exception(ion_ce_ION_ListenerException, ion_ce_ION_RuntimeException, "ION\\ListenerException");
 

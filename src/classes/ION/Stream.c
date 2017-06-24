@@ -1190,7 +1190,7 @@ METHOD_WITHOUT_ARGS(ION_Stream, incoming)
 /** public function ION\Stream::suspend() : self */
 CLASS_METHOD(ION_Stream, suspend) {
     ion_stream * stream = ION_THIS_OBJECT(ion_stream);
-    ion_stream_suspend(stream);
+    stream->state |= ION_STREAM_SUSPENDED;
     RETURN_THIS();
 }
 
@@ -1199,7 +1199,7 @@ METHOD_WITHOUT_ARGS(ION_Stream, suspend)
 ///** public function ION\Stream::resume() : self */
 CLASS_METHOD(ION_Stream, resume) {
     ion_stream * stream = ION_THIS_OBJECT(ion_stream);
-    ion_stream_resume(stream);
+    stream->state &= ~ION_STREAM_SUSPENDED;
     RETURN_THIS();
 }
 
@@ -1670,9 +1670,6 @@ PHP_MINIT_FUNCTION(ION_Stream) {
     ion_class_declare_constant_long(ion_ce_ION_Stream, "MODE_TRIM_TOKEN",    ION_STREAM_MODE_TRIM_TOKEN);
     ion_class_declare_constant_long(ion_ce_ION_Stream, "MODE_WITH_TOKEN",    ION_STREAM_MODE_WITH_TOKEN);
     ion_class_declare_constant_long(ion_ce_ION_Stream, "MODE_WITHOUT_TOKEN", ION_STREAM_MODE_WITHOUT_TOKEN);
-
-//    PION_CLASS_CONST_LONG(ION_Stream, "FROM_PEER",   ION_STREAM_FROM_PEER);
-//    PION_CLASS_CONST_LONG(ION_Stream, "FROM_ME",     ION_STREAM_FROM_ME);
 
     ion_class_declare_constant_long(ion_ce_ION_Stream, "INPUT",  EV_READ);
     ion_class_declare_constant_long(ion_ce_ION_Stream, "OUTPUT", EV_WRITE);

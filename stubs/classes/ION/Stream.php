@@ -217,7 +217,7 @@ class Stream {
      *
      * @return self
      */
-    public function sendFile(string $filename, int $offset = 0, int $limit = -1) : self { }
+    public function sendFile(string $filename, int $offset = 0, int $limit = -1) { }
 
     /**
      * Done deferred object when outgoing buffer is empty
@@ -232,28 +232,22 @@ class Stream {
      *
      * @return Stream
      */
-    public function shutdown(bool $force = false) : self { }
+    public function shutdown(bool $force = false) { }
 
     /**
      * @return Sequence
      */
     public function incoming() : Sequence { }
 
-    public function suspend() : self { }
+    public function suspend() { }
 
-    public function resume() : self { }
-
-    public function hasStorage() : bool { }
-
-    public function getStorage() : StorageAbstract { }
-
-    public function release() : self { }
+    public function resume() { }
 
     /**
      * Deferred to be resolved when the stream is shutdown
-     * @return Deferred|int $reason
+     * @return Deferred $reason
      */
-    public function closed() { }
+    public function closed() : Deferred { }
 
     /**
      * @return int

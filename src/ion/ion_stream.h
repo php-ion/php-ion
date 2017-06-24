@@ -154,8 +154,6 @@ int    ion_stream_close_fd(ion_stream * stream);
 #define ion_stream_set_input_size(stream, size) bufferevent_setwatermark(stream->buffer, EV_READ, 0, size)
 #define ion_stream_set_priority(stream, priority) bufferevent_priority_set(stream->buffer, (int)priority)
 #define ion_stream_set_group(stream, group) bufferevent_add_to_rate_limit_group(stream->buffer, group)
-#define ion_stream_suspend(stream) stream->state |= ION_STREAM_SUSPENDED
-#define ion_stream_resume(stream) stream->state &= ~ION_STREAM_SUSPENDED
 
 
 ION_API void ion_listener_enable(zend_object * listener_obj, zend_bool state);
