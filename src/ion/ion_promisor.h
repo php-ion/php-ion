@@ -105,12 +105,6 @@ void ion_promisor_remove(ion_promisor * container, ion_promisor * handler);
 void ion_promisor_remove_named(ion_promisor * container, zend_string * name);
 void ion_promisor_cleanup(ion_promisor * promisor, ushort removed);  // realloc promisor->handlers, remove NULL elements
 
-// Stores and destructors
-//#define ion_promisor_store(promisor, pobject)  ION_ZOBJ_OBJECT(promisor, ion_promisor)->object = (void *) pobject
-//#define ion_promisor_store_get(promisor)       ION_ZOBJ_OBJECT(promisor, ion_promisor)->object
-//#define ion_promisor_get_flags(promisor)       ION_ZOBJ_OBJECT(promisor, ion_promisor)->flags
-//#define ion_promisor_add_flags(promisor, bits) ION_ZOBJ_OBJECT(promisor, ion_promisor)->flags |= (bits)
-//#define ion_promisor_dtor(promisor, dtor_cb)   ION_ZOBJ_OBJECT(promisor, ion_promisor)->dtor = dtor_cb
 
 static zend_always_inline ion_promisor * ion_promisor_new(zend_class_entry * ce, uint32_t flags) {
     zval object;
@@ -169,10 +163,19 @@ void ion_promisor_done_empty_string(ion_promisor * promisor);
 void ion_promisor_throw(ion_promisor * promisor, zend_class_entry * ce, const char * message, long code);
 void ion_promisor_rethrow(ion_promisor * promisor, zend_class_entry * ce, const char * message, long code);
 
+ion_promisor * ion_promisor_done_long_ex(ion_promisor * promisor, long lval);
+ion_promisor * ion_promisor_done_true_ex(ion_promisor * promisor);
+ion_promisor * ion_promisor_done_false_ex(ion_promisor * promisor);
+ion_promisor * ion_promisor_done_null_ex(ion_promisor * promisor);
+ion_promisor * ion_promisor_done_object_ex(ion_promisor * promisor, zend_object * object);
+ion_promisor * ion_promisor_done_string_ex(ion_promisor * promisor, zend_string * string, int dup);
+ion_promisor * ion_promisor_done_empty_string_ex(ion_promisor * promisor);
+
 void ion_promisor_done(ion_promisor * promisor, zval * result);
+ion_promisor * ion_promisor_done_ex(ion_promisor * promisor, zval * result);
+ion_promisor * ion_promisor_done_args(ion_promisor * promisor, zval * args, int count);
 void ion_promisor_fail(ion_promisor * promisor, zval * exception);
-void ion_promisor_sequence_invoke(ion_promisor * promise, zval * arg);
-void ion_promisor_sequence_invoke_args(ion_promisor * promise, zval * args, int count);
+ion_promisor * ion_promisor_fail_ex(ion_promisor * promisor, zval * exception);
 
 // Callbacks
 int ion_promisor_set_callbacks(ion_promisor * promise, zval * done, zval * fail);

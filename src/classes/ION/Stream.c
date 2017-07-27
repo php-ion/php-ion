@@ -118,12 +118,10 @@ void _ion_stream_input(ion_buffer * bev, void * ctx) {
        && stream->incoming != NULL                       // has incoming handler
        && !(stream->state & ION_STREAM_SUSPENDED)        // not suspended
        && (stream->state & ION_STREAM_STATE_HAS_DATA)) { // has incoming data
-        zval zstream;
-        ZVAL_OBJ(&zstream, ION_OBJECT_ZOBJ(stream));
-        ion_promisor_sequence_invoke(stream->incoming, &zstream);
+        ion_promisor_done_object(stream->incoming, ION_OBJECT_ZOBJ(stream));
     }
 
-    zend_object_release(ION_OBJECT_ZOBJ(stream));
+    ion_object_release(stream);
     ION_CB_END();
 }
 

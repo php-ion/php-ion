@@ -8,7 +8,6 @@ namespace ION;
  * @package ION
  */
 class Promise {
-
     /**
      * Promise constructor.
      *

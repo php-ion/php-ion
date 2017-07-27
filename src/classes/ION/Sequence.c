@@ -44,20 +44,26 @@ CLASS_METHOD(ION_Sequence, __invoke) {
     zval * data        = NULL;
     int    count       = 0;
     ion_promisor * seq = ION_THIS_OBJECT(ion_promisor);
+    ion_promisor * res = NULL;
 
     ZEND_PARSE_PARAMETERS_START(0, 255)
         Z_PARAM_VARIADIC('*', data, count);
     ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
 
     if(!count) {
-        zval nil;
-        ZVAL_NULL(&nil);
-        ion_promisor_sequence_invoke(seq, &nil);
+        res = ion_promisor_done_null_ex(seq);
     } else if(count == 1) {
-        ion_promisor_sequence_invoke(seq, data);
+        res = ion_promisor_done_ex(seq, data);
     } else {
-        ion_promisor_sequence_invoke_args(seq, data, count);
+        res = ion_promisor_done_args(seq, data, count);
     }
+
+    if(res) {
+        RETURN_ION_OBJ(res);
+    } else {
+        zend_throw_exception(ion_ce_ION_RuntimeException, "", 0);
+    }
+
 }
 
 METHOD_ARGS_BEGIN(ION_Sequence, __invoke, 1)

@@ -243,7 +243,8 @@ CLASS_METHOD(ION, promise) {
             RETURN_ZVAL(resolver, 1, 0);
         }
         if (instanceof_function(Z_OBJCE_P(resolver), zend_ce_generator)) {
-            // todo
+            promise = ion_promisor_promise_new(NULL, NULL);
+
         }
     }
     if (zend_is_callable(resolver, IS_CALLABLE_CHECK_SILENT, NULL)) {

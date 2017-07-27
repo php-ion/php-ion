@@ -85,6 +85,8 @@ void ion_promisor_resolve(ion_promisor * promise, zval * data, uint32_t type) {
         return;
     }
 
+    ZEND_ASSERT(!(promise->flags & ION_PROMISOR_PROTOTYPE));
+
     ZVAL_OBJ(&zpromise, ION_OBJECT_ZOBJ(promise));
     Z_ADDREF(zpromise);
     ZVAL_UNDEF(&retval);
@@ -287,6 +289,41 @@ void ion_promisor_done(ion_promisor * promisor, zval * result) {
     }
 }
 
+ion_promisor * ion_promisor_done_ex(ion_promisor * promisor, zval * result) {
+    if(promisor->flags & ION_PROMISOR_PROTOTYPE) {
+        ion_promisor * clone = ion_promisor_clone(promisor);
+        ion_promisor_resolve(clone, result, ION_PROMISOR_DONE);
+        return clone;
+    } else {
+        ion_promisor_resolve(promisor, result, ION_PROMISOR_DONE);
+        return NULL;
+    }
+}
+
+ion_promisor * ion_promisor_done_args_ex(ion_promisor * promisor, zval * args, int count) {
+    if(promisor->flags & ION_PROMISOR_PROTOTYPE) {
+        ion_promisor * clone = ion_promisor_clone(promisor);
+        ion_promisor_resolve(clone, args,
+                (uint32_t) (ION_PROMISOR_DONE | ION_PROMISOR_MULTI_ARGS | (count << ION_PROMISOR_ARGS_NUM_SHIFT)));
+        return clone;
+    } else {
+        ion_promisor_resolve(promisor, args,
+                (uint32_t) (ION_PROMISOR_DONE | ION_PROMISOR_MULTI_ARGS | (count << ION_PROMISOR_ARGS_NUM_SHIFT)));
+        return NULL;
+    }
+}
+
+ion_promisor * ion_promisor_fail_ex(ion_promisor * promisor, zval * result) {
+    if(promisor->flags & ION_PROMISOR_PROTOTYPE) {
+        ion_promisor * clone = ion_promisor_clone(promisor);
+        ion_promisor_resolve(clone, result, ION_PROMISOR_FAILED);
+        return clone;
+    } else {
+        ion_promisor_resolve(promisor, result, ION_PROMISOR_FAILED);
+        return NULL;
+    }
+}
+
 void ion_promisor_fail(ion_promisor * promisor, zval * result) {
     if(promisor->flags & ION_PROMISOR_PROTOTYPE) {
         ion_promisor * clone = ion_promisor_clone(promisor);
@@ -297,40 +334,77 @@ void ion_promisor_fail(ion_promisor * promisor, zval * result) {
     }
 }
 
-
-void ion_promisor_done_long(ion_promisor * promisor, long lval) {
+ion_promisor * ion_promisor_done_long_ex(ion_promisor * promisor, long lval) {
     zval value;
     ZVAL_LONG(&value, lval);
-    ion_promisor_done(promisor, &value);
+    return ion_promisor_done_ex(promisor, &value);
+}
+
+
+void ion_promisor_done_long(ion_promisor * promisor, long lval) {
+    ion_promisor * p = ion_promisor_done_long_ex(promisor, lval);
+    if(p) {
+        ion_object_release(p);
+    }
+}
+
+ion_promisor * ion_promisor_done_true_ex(ion_promisor * promisor) {
+    zval value;
+    ZVAL_TRUE(&value);
+    return ion_promisor_done_ex(promisor, &value);
 }
 
 void ion_promisor_done_true(ion_promisor * promisor) {
+    ion_promisor * p = ion_promisor_done_true_ex(promisor);
+    if(p) {
+        ion_object_release(p);
+    }
+}
+
+
+ion_promisor * ion_promisor_done_false_ex(ion_promisor * promisor) {
     zval value;
-    ZVAL_TRUE(&value);
-    ion_promisor_done(promisor, &value);
+    ZVAL_FALSE(&value);
+    return ion_promisor_done_ex(promisor, &value);
 }
 
 void ion_promisor_done_false(ion_promisor * promisor) {
+    ion_promisor * p = ion_promisor_done_false_ex(promisor);
+    if(p) {
+        ion_object_release(p);
+    }
+}
+
+ion_promisor * ion_promisor_done_null_ex(ion_promisor * promisor) {
     zval value;
-    ZVAL_FALSE(&value);
-    ion_promisor_done(promisor, &value);
+    ZVAL_NULL(&value);
+    return ion_promisor_done_ex(promisor, &value);
 }
 
 void ion_promisor_done_null(ion_promisor * promisor) {
-    zval value;
-    ZVAL_NULL(&value);
-    ion_promisor_done(promisor, &value);
+    ion_promisor * p = ion_promisor_done_null_ex(promisor);
+    if(p) {
+        ion_object_release(p);
+    }
 }
 
-void ion_promisor_done_object(ion_promisor * promisor, zend_object * object) {
+ion_promisor * ion_promisor_done_object_ex(ion_promisor * promisor, zend_object * object) {
     zval value;
     ZVAL_OBJ(&value, object);
     zval_add_ref(&value);
-    ion_promisor_done(promisor, &value);
+    ion_promisor * res = ion_promisor_done_ex(promisor, &value);
     zval_ptr_dtor(&value);
+    return res;
 }
 
-void ion_promisor_done_string(ion_promisor * promisor, zend_string * string, int dup) {
+void ion_promisor_done_object(ion_promisor * promisor, zend_object * object) {
+    ion_promisor * p = ion_promisor_done_object_ex(promisor, object);
+    if(p) {
+        ion_object_release(p);
+    }
+}
+
+ion_promisor * ion_promisor_done_string_ex(ion_promisor * promisor, zend_string * string, int dup) {
     zval value;
     if(dup) {
         ZVAL_STR_COPY(&value, string);
@@ -338,29 +412,53 @@ void ion_promisor_done_string(ion_promisor * promisor, zend_string * string, int
         ZVAL_STR(&value, string);
         zval_add_ref(&value);
     }
-    ion_promisor_done(promisor, &value);
+    ion_promisor * res = ion_promisor_done_ex(promisor, &value);
     zval_ptr_dtor(&value);
+    return res;
 }
 
-void ion_promisor_done_empty_string(ion_promisor * promisor) {
+void ion_promisor_done_string(ion_promisor * promisor, zend_string * string, int dup) {
+    ion_promisor * p = ion_promisor_done_string_ex(promisor, string, dup);
+    if(p) {
+        ion_object_release(p);
+    }
+}
+
+ion_promisor * ion_promisor_done_empty_string_ex(ion_promisor * promisor) {
     zval value;
     zend_string * string = ZSTR_EMPTY_ALLOC();
     ZVAL_STR(&value, string);
-    ion_promisor_done(promisor, &value);
+    ion_promisor * res = ion_promisor_done_ex(promisor, &value);
     zval_ptr_dtor(&value);
+    return res;
 }
 
-void ion_promisor_throw(ion_promisor * promisor, zend_class_entry * ce, const char * message, long code) {
+void ion_promisor_done_empty_string(ion_promisor * promisor) {
+    ion_promisor * p = ion_promisor_done_empty_string_ex(promisor);
+    if(p) {
+        ion_object_release(p);
+    }
+}
+
+ion_promisor * ion_promisor_throw_ex(ion_promisor * promisor, zend_class_entry * ce, const char * message, long code) {
     zval value;
     zend_object * exception = pion_exception_new(ce, message, code);
     ZVAL_OBJ(&value, exception);
-    ion_promisor_fail(promisor, &value);
+    ion_promisor * res = ion_promisor_done_ex(promisor, &value);
     zval_ptr_dtor(&value);
+    return res;
 }
 
-void ion_promisor_rethrow(ion_promisor * promisor, zend_class_entry * ce, const char * message, long code) {
+void ion_promisor_throw(ion_promisor * promisor, zend_class_entry * ce, const char * message, long code) {
+    ion_promisor * p = ion_promisor_throw_ex(promisor, ce, message, code);
+    if(p) {
+        ion_object_release(p);
+    }
+}
+
+ion_promisor * ion_promisor_rethrow_ex(ion_promisor * promisor, zend_class_entry * ce, const char * message, long code) {
     zval value;
-    zend_object * exception;
+    zend_object * exception = NULL;
     if(ce) {
         exception = pion_exception_new(ce, message, code);
         if(EG(exception)) {
@@ -372,25 +470,22 @@ void ion_promisor_rethrow(ion_promisor * promisor, zend_class_entry * ce, const 
         exception = EG(exception);
         EG(exception) = NULL;
     } else {
-        ZEND_ASSERT("Argument ce and EG(exception) can not be NULL" == false);
-        return;
+        ZEND_ASSERT("Argument <ce> and EG(exception) can not be NULL" == false);
     }
     ZVAL_OBJ(&value, exception);
-    ion_promisor_fail(promisor, &value);
+    ion_promisor * res = ion_promisor_fail_ex(promisor, &value);
     zval_ptr_dtor(&value);
+
+    return res;
 }
 
-void ion_promisor_sequence_invoke(ion_promisor * promise, zval * args) {
-    ion_promisor * clone = ion_promisor_clone(promise);
-    ion_promisor_done(clone, args);
-    ion_object_release(clone);
+void ion_promisor_rethrow(ion_promisor * promisor, zend_class_entry * ce, const char * message, long code) {
+    ion_promisor * res = ion_promisor_rethrow_ex(promisor, ce, message, code);
+    if(res) {
+        ion_object_release(res);
+    }
 }
 
-void ion_promisor_sequence_invoke_args(ion_promisor * promise, zval * args, int count) {
-    ion_promisor * clone = ion_promisor_clone(promise);
-    ion_promisor_resolve(clone, args, (uint32_t) (ION_PROMISOR_DONE | ION_PROMISOR_MULTI_ARGS | (count << ION_PROMISOR_ARGS_NUM_SHIFT)));
-    zend_object_release(ION_OBJECT_ZOBJ(clone));
-}
 
 ion_promisor * ion_promisor_promise_new(zval * done, zval * fail) {
     ion_promisor * promise = ion_promisor_new(ion_ce_ION_Promise, 0);
