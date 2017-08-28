@@ -7,13 +7,7 @@ Install
 
 * Packages for debug: `gdb` for linux
 
-## Automatic way
-
-
-
-## Manual way
-
-Clone project and load submodules
+**Clone project and load submodules**
 ```
 git clone https://github.com/php-ion/php-ion.git # clone php-ion
 cd php-ion                                       # enter into the php-ion directory
@@ -21,8 +15,17 @@ PHP_ION_DIR=`pwd`                                # remember the php-ion director
 git submodule update --init --recursive          # fetch all submodules
 ```
 
+## Automatic way
 
-Build libevent:
+**Build php-ion**:
+
+```
+
+```
+
+## Manual way
+
+**Build libevent**:
 
 ```
 cd $PHP_ION_DIR/src/deps/libevent
@@ -38,7 +41,7 @@ Troubleshooting:
   2. add include path for configure (via CFLAGS). For example `CFLAGS="-I/usr/local/Cellar/openssl/1.0.2l/include/" ./configure ...`
 
 
-Build php-ion:
+**Build php-ion**:
 
 ```
 cd $PHP_ION_DIR/src
@@ -52,10 +55,10 @@ Troubleshooting:
 * `ld: library not found for -levent_openssl` (linker error) - build libevent again. `make clean` clean php-ion and libevent compiles 
 
 
-Install the extension
+**Install php-ion**
 
 ```
-sudo make install # hard install
+make install # hard install
 ```
 or
 ```
@@ -68,4 +71,4 @@ Don't foget copy INI file (see `php --ini` for details):
 cp $PHP_ION_DIR/stubs/ION.ini /usr/local/etc/php/.../ext-ion.ini
 ```
 
-Check extension: `php -m | grep -i ion`
+**Check extension**: `php -m | grep -i ion`
