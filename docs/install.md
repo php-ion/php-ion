@@ -20,8 +20,10 @@ git submodule update --init --recursive          # fetch all submodules
 **Build php-ion**:
 
 ```
-
+$PHP_ION_DIR/bin/ionizer.php --build=/usr/local/.../debug-zts-20160303/ion.so
 ```
+
+see `$PHP_ION_DIR/bin/ionizer.php --help` for details
 
 ## Manual way
 
