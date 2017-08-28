@@ -1,6 +1,16 @@
 Install
 =======
 
+# Packages
+
+## Ubuntu/Debian
+
+  * **PPA**: todo
+  
+## MacOS
+  
+  * **Brew**: todo 
+
 # Build from source
 
 * Required system packages: `automake`, `libtool`, `gcc`
