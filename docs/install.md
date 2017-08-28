@@ -1,6 +1,3 @@
-Install
-=======
-
 # Packages
 
 ## Ubuntu/Debian
