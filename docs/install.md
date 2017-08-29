@@ -1,17 +1,25 @@
+Install PHP-ION
+===
+
+**Table of contents**
 * [Packages](#packages)
-  * [PPA](#ubuntudebian)
+  * [PPA](#ppa)
+  * [MacOS](#macos)
+* [Build from source](#build-from-source)
+  * [Automatic way](#automatic-way)
+  * [Manual way](#manual-way)
 
 --- 
 
 # Packages
 
-## Ubuntu/Debian
+## PPA
 
-  * **PPA**: todo
+For Ubuntu, Debian, Mint: todo
   
 ## MacOS
   
-  * **Brew**: todo 
+  * **HomeBrew**: todo 
 
 # Build from source
 
