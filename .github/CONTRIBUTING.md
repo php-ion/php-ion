@@ -26,4 +26,4 @@
 
 #### **Do you want to contribute to documentation?**
 
-* ...
+* Just create MR
