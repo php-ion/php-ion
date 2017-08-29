@@ -1,7 +1,7 @@
 Testing PHP-ION
 =======
 
-Test absilable if the extension installed [from sources](./install.md#build-from-source).
+Tests available if the extension installed [from sources](./install.md#build-from-source).
 
 `$PHP_ION_DIR` - path to extension's sources (see [insallation](./install.md#build-from-source))
 
