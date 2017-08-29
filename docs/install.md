@@ -43,7 +43,10 @@ git submodule update --init --recursive          # fetch all submodules
 $PHP_ION_DIR/bin/ionizer.php --build=/usr/local/.../debug-zts-20160303/ion.so
 ```
 
-see `$PHP_ION_DIR/bin/ionizer.php --help` for details
+see `$PHP_ION_DIR/bin/ionizer.php --help` for details.
+
+
+:thumbsup: Please [run tests](./testing.md) before activating the extension.
 
 ## Manual way
 
@@ -78,6 +81,8 @@ Troubleshooting:
 
 
 **Install php-ion**
+
+:thumbsup: Please [run tests](./testing.md) before activating the extension.
 
 ```
 make install # hard install
