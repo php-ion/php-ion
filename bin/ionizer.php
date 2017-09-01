@@ -44,7 +44,8 @@ class BuildRunner {
         ],
         'debug' => [
             'short' => 'd',
-            'desc'  => 'Enable debug.'
+            'desc'  => 'Enable debug.',
+            'extra' => "[=yes/no]"
         ],
         'clean' => [
             'short' => 'c',
@@ -128,6 +129,10 @@ class BuildRunner {
         'docker-sync-rebuild' => [
             'desc'  => 'Copy extension files into docker dev directory and rebuild if .m4 or .h files has changes.',
             'extra' => '=HOST:PORT'
+        ],
+        "get-ini" => [
+            'desc' => 'Print or save INI directives by PATH',
+            'extra' => '[=PATH]'
         ]
     ];
 
@@ -144,8 +149,6 @@ class BuildRunner {
     public $cflags        = ['-std=gnu99'];
     public $ldflags       = [];
     public $nproc         = 2;
-
-    public $zend_alloc = 1;
 
     public function __construct() {
         chdir(dirname(__DIR__));
@@ -174,8 +177,11 @@ class BuildRunner {
         if($this->nproc < 1) {
             $this->nproc = 1;
         }
-        if(!PHP_ZTS) {
+//        if(!PHP_ZTS) {
 //            $this->event_confugure[] = "--disable-thread-support";
+//        }
+        if(PHP_DEBUG || ZEND_DEBUG_BUILD) {
+            $this->setOption("debug", true);
         }
     }
 
@@ -272,7 +278,12 @@ class BuildRunner {
 	public function hasOption(string $long) {
         $short = $this->getShort($long);
 		$options = getopt($short, [$long]);
-		return isset($this->opts[ $long ]) || isset($options[ $long ]) || isset($options[ $short ]);
+		$val = $this->opts[ $long ] ?? $options[ $long ] ?? $options[ $short ] ?? null;
+		if ($val && strtolower($val) === "no") {
+		    return false;
+        } else {
+		    return isset($val);
+        }
 	}
 
     /**
@@ -349,7 +360,7 @@ class BuildRunner {
         if($this->hasOption("debug")) {
             $this->cflags[]          = "-Wall -g3 -ggdb -O0";
             $this->ion_confugure[]   = "--enable-ion-debug";
-            $this->event_confugure[] = "--enable-debug-mode=no";
+            $this->event_confugure[] = "--enable-debug-mode=yes";
         }
 
         if($this->hasOption('coverage')) {
@@ -370,6 +381,11 @@ class BuildRunner {
 			$this->help();
 			return;
 		}
+
+        if($this->hasOption("get-ini")) {
+            echo file_get_contents("stubs/ION.ini");
+            return;
+        }
 
 		if($this->hasOption("build") || $this->hasOption("install")) {
 			$this->setOption("prepare");
@@ -737,7 +753,7 @@ Build:
 ".$this->compileHelp(["help", "clean", "clean-deps", "make", "coverage", "prepare", "build", "install"], 20)."
 
 Information:
-".$this->compileHelp(["info", "system"], 20)."
+".$this->compileHelp(["info", "system", "get-ini"], 20)."
 
 Testing:
 ".$this->compileHelp(["test", "group", "dev", "no-ini", "debug", "ci", "ide", "gdb", "gdb-server"], 20)."
