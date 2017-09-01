@@ -22,8 +22,8 @@
 
 #### **Do you have questions about the source code?**
 
-* Ask any question about how to use PHP ION in the [PHP ION Forum](https://groups.google.com/forum/#!forum/php-ion).
+* Ask any question about how to use PHP ION in the [Telegram Chat](https://t.me/joinchat/AAAAAAlQFyn1YV1ZoL2aSQ).
 
 #### **Do you want to contribute to documentation?**
 
-* ...
+* Just create MR
