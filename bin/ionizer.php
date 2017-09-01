@@ -481,7 +481,9 @@ class BuildRunner {
 		}
         if($this->hasOption("build") && $path = $this->getOption("build")) {
             if(file_exists("src/modules/ion.so")) {
-                $this->exec($this->getBin('strip') . " src/modules/ion.so");
+                if($this->hasOption("debug")) {
+                    $this->exec($this->getBin('strip') . " src/modules/ion.so");
+                }
                 copy("src/modules/ion.so", $path);
             } else {
                 throw new RuntimeException("Failed to copy complied extension from src/modules/ion.so to $path");
