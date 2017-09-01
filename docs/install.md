@@ -5,6 +5,7 @@ Install PHP-ION
 * [Packages](#packages)
   * [PPA](#ppa)
   * [MacOS](#macos)
+* [Download builds](#download-builds)
 * [Build from source](#build-from-source)
   * [Automatic way](#automatic-way)
   * [Manual way](#manual-way)
@@ -20,6 +21,10 @@ For Ubuntu, Debian, Mint: todo
 ## MacOS
   
   * **HomeBrew**: todo 
+
+# Download builds
+
+See **(php-ion/builds)[https://github.com/php-ion/builds]**.
 
 # Build from source
 
