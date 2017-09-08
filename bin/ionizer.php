@@ -485,9 +485,19 @@ class BuildRunner {
                     $this->exec($this->getBin('strip') . " src/modules/ion.so");
                 }
                 copy("src/modules/ion.so", $path);
+                if (!$this->hasOption("debug")) {
+                    if ($this->isMacOS()) {
+                        $this->exec($this->getBin('strip')." -x src/modules/ion.so");
+                    } elseif ($this->isLinux()) {
+                        $this->exec($this->getBin('strip')." -s src/modules/ion.so");
+                    }
+                }
+                echo "Extension: ".realpath($path)."\n";
             } else {
                 throw new RuntimeException("Failed to copy complied extension from src/modules/ion.so to $path");
             }
+        } else {
+            echo "Extension: ".getcwd()."/src/modules/ion.so\n";
         }
         if($this->hasOption("install")) {
             $this->exec("sudo " . $this->getBin('make') . " install"); // @todo do it more 'clear'
