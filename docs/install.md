@@ -12,19 +12,26 @@ Install PHP-ION
 
 --- 
 
-# Packages
+# Ionizer
 
-## PPA
+Use [composer](https://getcomposer.org/) package [php-ion/ionizer](https://github.com/php-ion/ionizer) to install extension
 
-For Ubuntu, Debian, Mint: todo
-  
-## MacOS
-  
-  * **HomeBrew**: todo 
+```
+composer global require php-ion/ionizer
+```
+
+This library automatically setup the php-ion extension. 
+Using command line you may start scripts with php ion extension without installation of package in system. 
+Also ionizer allows maintain php-ion versions and configurations.
+
+```
+ion script.php
+ion eval '/* ... php code ... */'
+```
 
 # Download builds
 
-See **(php-ion/builds)[https://github.com/php-ion/builds]**.
+See **[php-ion/builds](https://github.com/php-ion/builds)**.
 
 # Build from source
 
