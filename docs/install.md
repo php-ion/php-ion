@@ -2,9 +2,7 @@ Install PHP-ION
 ===
 
 **Table of contents**
-* [Packages](#packages)
-  * [PPA](#ppa)
-  * [MacOS](#macos)
+* [Ionizer](#ionizer)
 * [Download builds](#download-builds)
 * [Build from source](#build-from-source)
   * [Automatic way](#automatic-way)
