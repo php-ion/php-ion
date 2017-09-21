@@ -27,6 +27,8 @@ ion script.php
 ion eval '/* ... php code ... */'
 ```
 
+See `ion help` for more details. 
+
 # Download builds
 
 See **[php-ion/builds](https://github.com/php-ion/builds)**.
