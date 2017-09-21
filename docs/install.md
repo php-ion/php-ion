@@ -23,7 +23,7 @@ Using command line you may start scripts with php ion extension without installa
 Also ionizer allows maintain php-ion versions and configurations.
 
 ```
-ion script.php
+ion run script.php
 ion eval '/* ... php code ... */'
 ```
 
