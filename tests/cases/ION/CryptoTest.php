@@ -13,6 +13,7 @@ class CryptoTest extends TestCase {
     public function testFactories() {
         $client = Crypto::client();
         $server = Crypto::server();
+        $this->assertTrue(true);
     }
 
     /**
@@ -20,6 +21,7 @@ class CryptoTest extends TestCase {
      */
     public function testLoadLocalCert() {
         Crypto::server()->allowSelfSigned()->verifyPeer()->compression(false)->ticket(false)->localCert(ION_RESOURCES.'/cert', ION_RESOURCES.'/pkey');
+        $this->assertTrue(true);
     }
 
     /**
@@ -27,6 +29,6 @@ class CryptoTest extends TestCase {
      */
     public function testLoadCA() {
         Crypto::server()->ca(ION_RESOURCES.'/cacert.pem');
-
+        $this->assertTrue(true);
     }
 }

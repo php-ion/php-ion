@@ -2,9 +2,9 @@
 namespace ION\Test;
 
 use ION;
-use ION\Test\TestCase\Server;
+use PHPUnit\Util\Test;
 
-class TestCase extends \PHPUnit_Framework_TestCase {
+class TestCase extends \PHPUnit\Framework\TestCase {
 
     const SERVER_CHUNK_INTERVAL = 0.03;
     const SERVER_AWAIT_AFTER_ALL = 0.03;
@@ -25,7 +25,7 @@ class TestCase extends \PHPUnit_Framework_TestCase {
     }
 
     public function tearDown() {
-        $doc = \PHPUnit_Util_Test::parseTestMethodAnnotations(get_class($this), $this->getName(false));
+        $doc = Test::parseTestMethodAnnotations(get_class($this), $this->getName(false));
         if (isset($doc['method']['memcheck'])) {
             $memory = 0; // allocate variable
             $zero = 0; // allocate zero value

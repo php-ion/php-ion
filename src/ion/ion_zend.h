@@ -83,20 +83,22 @@ ION_API void ion_register_class_ex(zend_class_entry ** ppce, zend_class_entry * 
 
 #define ARGUMENT(name, flags)  {                   \
      #name,                                        \
-     NULL,                                         \
-     (flags) & _ARGUMENT_HINT_MASK,                \
-     ((flags) & ARG_IS_REF) ? 1 : 0,               \
-     ((flags) & ARG_ALLOW_NULL) ? 1 : 0,           \
-     ((flags) & ARG_IS_VARIADIC) ? 1 : 0           \
+     ZEND_TYPE_ENCODE(                             \
+        (flags) & _ARGUMENT_HINT_MASK,             \
+        (((flags) & ARG_ALLOW_NULL) ? 1 : 0)       \
+     ),                                            \
+     (((flags) & ARG_IS_REF) ? 1 : 0),             \
+     (((flags) & ARG_IS_VARIADIC) ? 1 : 0)         \
    },
 
 #define ARGUMENT_OBJECT(name, classname, flags)  { \
      #name,                                        \
-     #classname,                                   \
-     IS_OBJECT,                                    \
-     ((flags) & ARG_IS_REF) ? 1 : 0,               \
-     ((flags) & ARG_ALLOW_NULL) ? 1 : 0,           \
-     ((flags) & ARG_IS_VARIADIC) ? 1 : 0           \
+     ZEND_TYPE_ENCODE_CLASS_CONST(                 \
+        #classname,                                \
+        0                                          \
+     ),                                            \
+     (((flags) & ARG_IS_REF) ? 1 : 0),             \
+     (((flags) & ARG_IS_VARIADIC) ? 1 : 0)         \
    },
 
 #define RET_REF              ARG_IS_REF
@@ -105,11 +107,10 @@ ION_API void ion_register_class_ex(zend_class_entry ** ppce, zend_class_entry * 
 #define METHOD_WITHOUT_ARGS_RETURN(class_name, method_name, flags) \
         ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX( \
         	args ## class_name ## method_name,   \
-            (flags & RET_REF) ? 1 : 0,		 	 \
+            (((flags) & RET_REF) ? 1 : 0),		 \
             0, 									 \
-            flags & _ARGUMENT_HINT_MASK, 		 \
-            NULL, 								 \
-            (flags & RET_NULL) ? 1 : 0			 \
+            ((flags) & _ARGUMENT_HINT_MASK), 	 \
+            (((flags) & RET_NULL) ? 1 : 0)	     \
         )								   	     \
         ZEND_END_ARG_INFO()                      \
 
@@ -138,17 +139,17 @@ ION_API void ion_register_class_ex(zend_class_entry ** ppce, zend_class_entry * 
 #define METHOD_ARGS_BEGIN_RETURN_VOID(class_name, method_name, required_num_args) \
     ZEND_BEGIN_ARG_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args)
 #define METHOD_ARGS_BEGIN_RETURN_INT(class_name, method_name, required_num_args) \
-    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_LONG, NULL, 0)
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_LONG, 0)
 #define METHOD_ARGS_BEGIN_RETURN_CALLABLE(class_name, method_name, required_num_args) \
-    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_CALLABLE, NULL, 0)
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_CALLABLE, 0)
 #define METHOD_ARGS_BEGIN_RETURN_STRING(class_name, method_name, required_num_args) \
-    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_STRING, NULL, 0)
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_STRING, 0)
 #define METHOD_ARGS_BEGIN_RETURN_BOOL(class_name, method_name, required_num_args) \
-    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, _IS_BOOL, NULL, 0)
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, _IS_BOOL,  0)
 #define METHOD_ARGS_BEGIN_RETURN_OBJECT(class_name, method_name, required_num_args, return_class_name, allow_null) \
-    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_OBJECT, return_class_name, allow_null)
+    ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(args ## class_name ## method_name, 0, required_num_args, return_class_name, allow_null)
 #define METHOD_ARGS_BEGIN_RETURN_ARRAY(class_name, method_name, required_num_args) \
-    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_ARRAY, NULL, 0)
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_ARRAY,  0)
 
 /** End functions and methods **/
 

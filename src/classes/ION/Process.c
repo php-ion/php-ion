@@ -2,6 +2,7 @@
 #include "ext/standard/php_var.h"
 #include <signal.h>
 #include <grp.h>
+#include <Zend/zend_types.h>
 
 
 zend_class_entry * ion_ce_ION_Process;
@@ -638,7 +639,6 @@ PHP_MINIT_FUNCTION(ION_Process) {
 //    array_init(&signals);
 
     ZVAL_ARR(&signals, ht);
-    zval_add_ref(&signals);
 //    signals.value.arr = ht;
 
     ion_register_static_class(ion_ce_ION_Process, "ION\\Process", methods_ION_Process);
@@ -704,6 +704,7 @@ PHP_MINIT_FUNCTION(ION_Process) {
     add_assoc_long(&signals, "ERR",  (zend_long) SIG_ERR);
 
     ion_class_declare_constant_zval(ion_ce_ION_Process, "SIG", &signals);
+    zval_add_ref(&signals);
     return SUCCESS;
 }
 

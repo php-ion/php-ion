@@ -10,6 +10,60 @@ zend_object * ion_promise_zend_init(zend_class_entry * ce) {
     return ion_init_object(ION_OBJECT_ZOBJ(promise), ce, &ion_oh_ION_Promise);
 }
 
+zval _ion_promisor_done_aggregator(ion_promisor * promisor, zval * data) {
+    zval result;
+    ZVAL_UNDEF(&result);
+
+//    ion_promissor_aggregator * agg = promisor->object;
+
+    return result;
+}
+
+
+CLASS_METHOD(ION_Promise, some) {
+    ion_promisor * promise = ion_promisor_promise_new(NULL, NULL);
+    zval   * zpromises = NULL;
+    zend_array   * promises;
+    zend_long      done_count = 0;
+    zend_long      fail_count = 0;
+
+    ZEND_PARSE_PARAMETERS_START(0, 1)
+        Z_PARAM_ARRAY(zpromises)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_LONG(done_count)
+        Z_PARAM_LONG(fail_count)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    promises = Z_ARR_P(zpromises);
+
+    ion_promisor_set_internal_cb(&promise->done, _ion_promisor_done_aggregator);
+    ion_promisor_set_internal_cb(&promise->fail, _ion_promisor_done_aggregator);
+
+    RETURN_ION_OBJ(promise);
+}
+
+METHOD_ARGS_BEGIN(ION_Promise, some, 1)
+    ARGUMENT(promises, IS_ARRAY)
+    ARGUMENT(done_count, IS_LONG)
+    ARGUMENT(fail_count, IS_LONG)
+METHOD_ARGS_END();
+
+CLASS_METHOD(ION_Promise, any) {
+
+}
+
+METHOD_ARGS_BEGIN(ION_Promise, any, 1)
+    ARGUMENT(promises, IS_ARRAY)
+METHOD_ARGS_END();
+
+CLASS_METHOD(ION_Promise, all) {
+
+}
+
+METHOD_ARGS_BEGIN(ION_Promise, all, 1)
+    ARGUMENT(promises, IS_ARRAY)
+METHOD_ARGS_END();
+
 /** public function ION\Promise::__construct(callable $done = null, callable $fail = null) : int */
 CLASS_METHOD(ION_Promise, __construct) {
     zval * done = NULL;
@@ -177,6 +231,10 @@ METHOD_ARGS_BEGIN(ION_Promise, setName, 1)
 METHOD_ARGS_END()
 
 METHODS_START(methods_ION_Promise)
+    METHOD(ION_Promise, some,          ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Promise, any,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    METHOD(ION_Promise, all,           ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+
     METHOD(ION_Promise, __construct,   ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, then,          ZEND_ACC_PUBLIC)
     METHOD(ION_Promise, forget,        ZEND_ACC_PUBLIC)

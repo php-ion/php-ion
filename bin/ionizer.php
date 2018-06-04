@@ -16,10 +16,10 @@ class BuildRunner {
     const GDB_SERVER = 2;
 
     const POSSIBLE_INCLUDES = [
-//        '/usr', // /use/include and /usr/lib
-//        '/usr/local', // /use/local/include and /usr/local/lib
+        '/usr', // /use/include and /usr/lib
+        '/usr/local', // /use/local/include and /usr/local/lib
         '/opt/local', // default MacPorts includes /opt/local/include and /opt/local/lib
-//        '/usr/local/opt/openssl', // HomeBrew has own include for OpenSSL
+        '/usr/local/opt/openssl', // HomeBrew has own include for OpenSSL
     ];
 
 	public $binaries = [
@@ -145,6 +145,7 @@ class BuildRunner {
         '--disable-libevent-install',
         '--enable-malloc-replacement=yes',
         '--disable-libevent-regress',
+        '--disable-samples',
     ];
 
     public $cflags        = ['-std=gnu99'];

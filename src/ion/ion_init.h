@@ -82,10 +82,8 @@ typedef struct _ion_http_body_parser ion_http_body_parser;
 # define false 0
 #endif
 
-#if PHP_API_VERSION == 20151012
-# define IS_PHP70    1
-# define IS_ITERABLE 0
-# define IS_VOID	 1
+#if PHP_API_VERSION == 20160303
+# define IS_PHP71    1
 #else
 
 #endif

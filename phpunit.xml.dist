@@ -11,6 +11,7 @@
          syntaxCheck="false"
          bootstrap="tests/bootstrap.php"
          printerClass="ION\Test\Printer"
+         beStrictAboutTestsThatDoNotTestAnything="false"
         >
     <php>
         <ini name="memory_limit" value="-1"/>

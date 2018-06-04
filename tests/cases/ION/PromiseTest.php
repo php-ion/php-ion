@@ -139,6 +139,7 @@ class PromiseTest extends TestCase {
 
     /**
      * @memcheck
+     * @group dev
      */
     public function testSimpleChain() {
         $promise = new ResolvablePromise(function($x) {

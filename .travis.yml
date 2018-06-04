@@ -10,8 +10,8 @@ addons:
       - lcov
 
 php:
-  - 7.0
-  - 7.1
+#  - 7.1
+  - 7.2
 
 notifications:
   email:
@@ -27,13 +27,17 @@ env:
 
 # Build extenstion and load phpunit + another deps
 before_script:
+  - composer global install phpion/ionizer
   - gem install coveralls-lcov
-  - bin/ionizer.php --system --prepare --make --coverage --debug
-  - bin/ionizer.php --info
+  - ion info
+#  - bin/ionizer.php --system --prepare --make --coverage --debug
+  - ion build ./ --prepare --make --coverage --debug
+  - ion show ./
   - composer install --quiet
 
 # Run tests
-script: bin/ionizer.php --test --gdb
+script: ion --debug test ./
+#script: bin/ionizer.php --test --gdb
 
 # Send code coverage
 after_success:

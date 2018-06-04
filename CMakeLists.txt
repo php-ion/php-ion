@@ -52,6 +52,7 @@ set(ION_SOURCE_FILES
     src/classes/ION/Debug.c
     src/classes/ION/Promise.c
     src/classes/ION/ResolvablePromise.c
+    src/classes/ION/PromiseAggregator.c
     src/classes/ION/Deferred.c
     src/classes/ION/Sequence.c
     src/classes/ION.c
@@ -74,8 +75,7 @@ set(ION_SOURCE_FILES
     src/classes/ION/HTTP/Request.c
     src/classes/ION/HTTP/Response.c
     src/classes/ION/HTTP/WebSocketParser.c
-    src/classes/ION/HTTP/WebSocket/Frame.c
- )
+    src/classes/ION/HTTP/WebSocket/Frame.c)
 
 add_library(ion ${ION_SOURCE_FILES})
 add_dependencies(ion external_ion)
@@ -83,10 +83,10 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src/deps")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src/deps/libevent")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src/deps/libevent/include")
-#include_directories("/usr/local/include/php" "/usr/local/include/php/main" "/usr/local/include/php/Zend" "/usr/local/include/php/TSRM")
-include_directories("/opt/local/include/php71/php" "/opt/local/include/php71/php/main" "/opt/local/include/php71/php/Zend" "/opt/local/include/php71/php/TSRM"  )
+#include_directories("/Users/bzick/Dev/sources/php71-20170815-34008-ed27l6/php-7.1.8" " /Users/bzick/Dev/sources/php71-20170815-34008-ed27l6/php-7.1.8/main" " /Users/bzick/Dev/sources/php71-20170815-34008-ed27l6/php-7.1.8/Zend" " /Users/bzick/Dev/sources/php71-20170815-34008-ed27l6/php-7.1.8/TSRM")
+include_directories("/opt/local/include/php72/php" "/opt/local/include/php72/php/main" "/opt/local/include/php72/php/Zend" "/opt/local/include/php72/php/TSRM"  )
 #include_directories("/opt/local/include/php70/php" "/opt/local/include/php70/php/main" "/opt/local/include/php70/php/Zend" "/opt/local/include/php70/php/TSRM"  )
-include_directories("/opt/local/var/macports/build/_opt_local_var_macports_sources_rsync.macports.org_macports_release_tarballs_ports_lang_php/php71/work/php-7.1.3/")
+include_directories("/opt/local/var/macports/build/_opt_local_var_macports_sources_rsync.macports.org_macports_release_tarballs_ports_lang_php/php72/work/php-7.2.4/")
 #include_directories("/opt/local/var/macports/build/_opt_local_var_macports_sources_rsync.macports.org_release_tarballs_ports_lang_php/php71/work/php-7.1.0RC3")
 #include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Libevent")
 include_directories("/opt/local/include")

@@ -8,7 +8,6 @@ class SequenceTest extends TestCase {
 
     /**
      * @memcheck
-     * @group dev
      */
     public function testCreate() {
         new Sequence();

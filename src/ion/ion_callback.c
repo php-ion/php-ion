@@ -288,6 +288,7 @@ static zend_always_inline zend_bool pion_verify_arg_type_user(pion_cb * cb, uint
 {
     zend_arg_info *cur_arg_info;
     zend_class_entry *ce;
+    zend_string * class_name;
     zend_function *zf = cb->fcc->function_handler;
 
     if (EXPECTED(arg_num <= zf->common.num_args)) {
@@ -298,27 +299,32 @@ static zend_always_inline zend_bool pion_verify_arg_type_user(pion_cb * cb, uint
         return true;
     }
 
-    if (cur_arg_info->type_hint) {
+    if (ZEND_TYPE_IS_SET(cur_arg_info->type)) {
         ZVAL_DEREF(arg);
-        if (EXPECTED(cur_arg_info->type_hint == Z_TYPE_P(arg))) {
-            if (cur_arg_info->class_name) {
-                ce = zend_fetch_class(cur_arg_info->class_name, (ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD));
-                if (!ce || !instanceof_function(Z_OBJCE_P(arg), ce)) {
-                    return false;
-                }
-            }
-        } else if (Z_TYPE_P(arg) != IS_NULL || !cur_arg_info->allow_null) {
-            if (cur_arg_info->class_name) {
+        if (ZEND_TYPE_IS_CLASS(cur_arg_info->type)) {
+            if (Z_TYPE_P(arg) != IS_OBJECT) {
                 return false;
-            } else if (cur_arg_info->type_hint == IS_CALLABLE) {
+            }
+            class_name = ZEND_TYPE_NAME(cur_arg_info->type);
+//            ce = ZEND_TYPE_CE(cur_arg_info->type);
+            ce = zend_fetch_class(class_name, (ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD));
+            if (!ce || !instanceof_function(Z_OBJCE_P(arg), ce)) {
+                return false;
+            }
+        } else if (EXPECTED(ZEND_TYPE_CODE(cur_arg_info->type) == Z_TYPE_P(arg))) {
+            /* pass */
+        } else if (Z_TYPE_P(arg) != IS_NULL || !ZEND_TYPE_ALLOW_NULL(cur_arg_info->type)) {
+            if (ZEND_TYPE_IS_CLASS(cur_arg_info->type)) {
+                return false;
+            } else if (ZEND_TYPE_CODE(cur_arg_info->type) == IS_CALLABLE) {
                 if (!zend_is_callable(arg, IS_CALLABLE_CHECK_SILENT, NULL)) {
                     return false;
                 }
-            } else if (cur_arg_info->type_hint == _IS_BOOL &&
+            } else if (ZEND_TYPE_CODE(cur_arg_info->type) == _IS_BOOL &&
                        EXPECTED(Z_TYPE_P(arg) == IS_FALSE || Z_TYPE_P(arg) == IS_TRUE)) {
                 /* pass */
             } else {
-                return pion_verify_scalar_type_hint(cur_arg_info->type_hint, arg, (zend_bool)pion_cb_uses_strict_types(cb));
+                return pion_verify_scalar_type_hint((zend_uchar)ZEND_TYPE_CODE(cur_arg_info->type), arg, (zend_bool)pion_cb_uses_strict_types(cb));
             }
         }
     }
@@ -326,9 +332,10 @@ static zend_always_inline zend_bool pion_verify_arg_type_user(pion_cb * cb, uint
 }
 
 static zend_always_inline zend_bool pion_verify_arg_type_internal(pion_cb * cb, uint32_t arg_num, zval * arg) {
-    zend_internal_arg_info *cur_arg_info;
-    zend_class_entry * ce;
-    zend_function *zf = cb->fcc->function_handler;
+    zend_internal_arg_info * cur_arg_info;
+    zend_class_entry       * ce;
+    zend_string            * class_name;
+    zend_function          * zf = cb->fcc->function_handler;
 
     if (EXPECTED(arg_num <= zf->internal_function.num_args)) {
         cur_arg_info = &zf->internal_function.arg_info[arg_num];
@@ -337,27 +344,31 @@ static zend_always_inline zend_bool pion_verify_arg_type_internal(pion_cb * cb, 
     } else {
         return true;
     }
-    if (cur_arg_info->type_hint) {
+    if (ZEND_TYPE_IS_SET(cur_arg_info->type)) {
         ZVAL_DEREF(arg);
-        if (EXPECTED(cur_arg_info->type_hint == Z_TYPE_P(arg))) {
-            if (cur_arg_info->class_name) {
-                ce = zend_fetch_class_ex(cur_arg_info->class_name, (ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD));
-                if (!ce || !instanceof_function(Z_OBJCE_P(arg), ce)) {
-                    return false;
-                }
-            }
-        } else if (Z_TYPE_P(arg) != IS_NULL || !cur_arg_info->allow_null) {
-            if (cur_arg_info->class_name) {
+        if (ZEND_TYPE_IS_CLASS(cur_arg_info->type)) {
+            if (Z_TYPE_P(arg) != IS_OBJECT) {
                 return false;
-            } else if (cur_arg_info->type_hint == IS_CALLABLE) {
+            }
+            class_name = ZEND_TYPE_NAME(cur_arg_info->type);
+            ce = zend_fetch_class(class_name, (ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD));
+            if (!ce || !instanceof_function(Z_OBJCE_P(arg), ce)) {
+                return false;
+            }
+        } else if (EXPECTED(ZEND_TYPE_CODE(cur_arg_info->type) == Z_TYPE_P(arg))) {
+            /* pass */
+        } else if (Z_TYPE_P(arg) != IS_NULL || !ZEND_TYPE_ALLOW_NULL(cur_arg_info->type)) {
+            if (ZEND_TYPE_IS_CLASS(cur_arg_info->type)) {
+                return false;
+            } else if (ZEND_TYPE_CODE(cur_arg_info->type) == IS_CALLABLE) {
                 if (!zend_is_callable(arg, IS_CALLABLE_CHECK_SILENT, NULL)) {
                     return false;
                 }
-            } else if (cur_arg_info->type_hint == _IS_BOOL &&
+            } else if (ZEND_TYPE_CODE(cur_arg_info->type) == _IS_BOOL &&
                        EXPECTED(Z_TYPE_P(arg) == IS_FALSE || Z_TYPE_P(arg) == IS_TRUE)) {
                 /* pass */
             } else {
-                return pion_verify_scalar_type_hint(cur_arg_info->type_hint, arg, (zend_bool)ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data)));
+                return pion_verify_scalar_type_hint((zend_uchar)ZEND_TYPE_CODE(cur_arg_info->type), arg, (zend_bool)ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data)));
             }
         }
     }
