@@ -27,6 +27,7 @@ env:
 
 # Build extenstion and load phpunit + another deps
 before_script:
+  - composer install
   - gem install coveralls-lcov
   - vendor/bin/ion info
 #  - bin/ionizer.php --system --prepare --make --coverage --debug
