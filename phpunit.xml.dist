@@ -8,7 +8,6 @@
          convertWarningsToExceptions="true"
          processIsolation="false"
          stopOnFailure="false"
-         syntaxCheck="false"
          bootstrap="tests/bootstrap.php"
          printerClass="ION\Test\Printer"
          beStrictAboutTestsThatDoNotTestAnything="false"
@@ -21,9 +20,8 @@
         <const name="ION_TEST_SERVER_IPV6" value="[::1]:8976" />
         <const name="ION_TEST_SERVER_UNIX" value="/tmp/test.sock" />
     </php>
-
     <testsuites>
-        <testsuite>
+        <testsuite name="ext">
             <directory>./tests/cases</directory>
         </testsuite>
     </testsuites>

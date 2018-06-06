@@ -29,14 +29,14 @@ env:
 before_script:
   - composer global install phpion/ionizer
   - gem install coveralls-lcov
-  - ion info
+  - vendor/bin/ion info
 #  - bin/ionizer.php --system --prepare --make --coverage --debug
-  - ion build ./ --prepare --make --coverage --debug
-  - ion show ./
+  - vendor/bin/ion build . --prepare --make --coverage --debug
+  - vendor/bin/ion desc .
   - composer install --quiet
 
 # Run tests
-script: ion --debug test ./
+script: vendor/bin/ion --debug test .
 #script: bin/ionizer.php --test --gdb
 
 # Send code coverage

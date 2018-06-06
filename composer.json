@@ -15,7 +15,8 @@
     "ext-posix": "*",
     "ext-pcntl": "*",
     "ext-openssl": "*",
-    "phpunit/phpunit": "*"
+    "phpunit/phpunit": "*",
+    "phpion/ionizer": "dev-master"
   },
   "autoload": {
     "classmap": ["tests/lib", "tests/cases"]
