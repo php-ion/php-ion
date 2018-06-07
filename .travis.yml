@@ -25,14 +25,14 @@ env:
     - USE_ZEND_ALLOC=0
     - USE_ZEND_ALLOC=1
 
-# Build extenstion and load phpunit + another deps
+# Build extension and load phpunit
 before_script:
-  - composer install --quiet
+  - composer update --quiet
   - gem install coveralls-lcov
   - vendor/bin/ion info .
 #  - bin/ionizer.php --system --prepare --make --coverage --debug
   - vendor/bin/ion build . --prepare --make --coverage --debug
-  - vendor/bin/ion desc .
+  - vendor/bin/ion --debug desc .
 
 # Run tests
 script: vendor/bin/ion --debug test .
