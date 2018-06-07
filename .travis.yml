@@ -27,13 +27,12 @@ env:
 
 # Build extenstion and load phpunit + another deps
 before_script:
-  - composer install
+  - composer install --quiet
   - gem install coveralls-lcov
-  - vendor/bin/ion info
+  - vendor/bin/ion info .
 #  - bin/ionizer.php --system --prepare --make --coverage --debug
   - vendor/bin/ion build . --prepare --make --coverage --debug
   - vendor/bin/ion desc .
-  - composer install --quiet
 
 # Run tests
 script: vendor/bin/ion --debug test .

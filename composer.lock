@@ -419,12 +419,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-ion/ionizer.git",
-                "reference": "f18d783de29dcd3e59199bf1289bb06527b08fc1"
+                "reference": "c667fb9d25f03532b2bfc2fa64f997b14c0e816e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-ion/ionizer/zipball/f18d783de29dcd3e59199bf1289bb06527b08fc1",
-                "reference": "f18d783de29dcd3e59199bf1289bb06527b08fc1",
+                "url": "https://api.github.com/repos/php-ion/ionizer/zipball/c667fb9d25f03532b2bfc2fa64f997b14c0e816e",
+                "reference": "c667fb9d25f03532b2bfc2fa64f997b14c0e816e",
                 "shasum": ""
             },
             "require": {
@@ -451,7 +451,7 @@
                 }
             ],
             "description": "Ionize your PHP code! PHP wrapper for php-ion extension",
-            "time": "2018-06-04T20:17:10+00:00"
+            "time": "2018-06-07T14:36:28+00:00"
         },
         {
             "name": "phpspec/prophecy",
