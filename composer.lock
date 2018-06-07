@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "e581b0989845925d873b256ea998d7f7",
+    "content-hash": "1510807155838aca43bf5754902c94eb",
     "packages": [],
     "packages-dev": [
         {
@@ -419,12 +419,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-ion/ionizer.git",
-                "reference": "c667fb9d25f03532b2bfc2fa64f997b14c0e816e"
+                "reference": "9c64364443e6b74b8a73a4acf57fd1c8061249e6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-ion/ionizer/zipball/c667fb9d25f03532b2bfc2fa64f997b14c0e816e",
-                "reference": "c667fb9d25f03532b2bfc2fa64f997b14c0e816e",
+                "url": "https://api.github.com/repos/php-ion/ionizer/zipball/9c64364443e6b74b8a73a4acf57fd1c8061249e6",
+                "reference": "9c64364443e6b74b8a73a4acf57fd1c8061249e6",
                 "shasum": ""
             },
             "require": {
@@ -451,7 +451,7 @@
                 }
             ],
             "description": "Ionize your PHP code! PHP wrapper for php-ion extension",
-            "time": "2018-06-07T14:36:28+00:00"
+            "time": "2018-06-07T14:39:35+00:00"
         },
         {
             "name": "phpspec/prophecy",
@@ -1511,11 +1511,11 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=7.0"
+        "php": ">=7.0",
+        "ext-pcntl": "*"
     },
     "platform-dev": {
         "ext-posix": "*",
-        "ext-pcntl": "*",
         "ext-openssl": "*"
     }
 }

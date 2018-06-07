@@ -9,11 +9,11 @@
     }
   ],
   "require": {
-    "php": ">=7.0"
+    "php": ">=7.0",
+    "ext-pcntl": "*"
   },
   "require-dev": {
     "ext-posix": "*",
-    "ext-pcntl": "*",
     "ext-openssl": "*",
     "phpunit/phpunit": "*",
     "phpion/ionizer": "dev-master"
