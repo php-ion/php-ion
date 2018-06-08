@@ -299,32 +299,32 @@ static zend_always_inline zend_bool pion_verify_arg_type_user(pion_cb * cb, uint
         return true;
     }
 
-    if (ZEND_TYPE_IS_SET(cur_arg_info->type)) {
+    if (ION_TYPE_IS_SET(cur_arg_info)) {
         ZVAL_DEREF(arg);
-        if (ZEND_TYPE_IS_CLASS(cur_arg_info->type)) {
+        if (ION_TYPE_IS_CLASS(cur_arg_info)) {
             if (Z_TYPE_P(arg) != IS_OBJECT) {
                 return false;
             }
-            class_name = ZEND_TYPE_NAME(cur_arg_info->type);
+            class_name = ION_TYPE_NAME(cur_arg_info);
 //            ce = ZEND_TYPE_CE(cur_arg_info->type);
             ce = zend_fetch_class(class_name, (ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD));
             if (!ce || !instanceof_function(Z_OBJCE_P(arg), ce)) {
                 return false;
             }
-        } else if (EXPECTED(ZEND_TYPE_CODE(cur_arg_info->type) == Z_TYPE_P(arg))) {
+        } else if (EXPECTED(ION_TYPE_CODE(cur_arg_info) == Z_TYPE_P(arg))) {
             /* pass */
-        } else if (Z_TYPE_P(arg) != IS_NULL || !ZEND_TYPE_ALLOW_NULL(cur_arg_info->type)) {
-            if (ZEND_TYPE_IS_CLASS(cur_arg_info->type)) {
+        } else if (Z_TYPE_P(arg) != IS_NULL || !ION_TYPE_ALLOW_NULL(cur_arg_info)) {
+            if (ION_TYPE_IS_CLASS(cur_arg_info)) {
                 return false;
-            } else if (ZEND_TYPE_CODE(cur_arg_info->type) == IS_CALLABLE) {
+            } else if (ION_TYPE_CODE(cur_arg_info) == IS_CALLABLE) {
                 if (!zend_is_callable(arg, IS_CALLABLE_CHECK_SILENT, NULL)) {
                     return false;
                 }
-            } else if (ZEND_TYPE_CODE(cur_arg_info->type) == _IS_BOOL &&
+            } else if (ION_TYPE_CODE(cur_arg_info) == _IS_BOOL &&
                        EXPECTED(Z_TYPE_P(arg) == IS_FALSE || Z_TYPE_P(arg) == IS_TRUE)) {
                 /* pass */
             } else {
-                return pion_verify_scalar_type_hint((zend_uchar)ZEND_TYPE_CODE(cur_arg_info->type), arg, (zend_bool)pion_cb_uses_strict_types(cb));
+                return pion_verify_scalar_type_hint((zend_uchar) ION_TYPE_CODE(cur_arg_info), arg, (zend_bool) pion_cb_uses_strict_types(cb));
             }
         }
     }
@@ -344,31 +344,31 @@ static zend_always_inline zend_bool pion_verify_arg_type_internal(pion_cb * cb, 
     } else {
         return true;
     }
-    if (ZEND_TYPE_IS_SET(cur_arg_info->type)) {
+    if (ION_TYPE_IS_SET(cur_arg_info)) {
         ZVAL_DEREF(arg);
-        if (ZEND_TYPE_IS_CLASS(cur_arg_info->type)) {
+        if (ION_TYPE_IS_CLASS(cur_arg_info)) {
             if (Z_TYPE_P(arg) != IS_OBJECT) {
                 return false;
             }
-            class_name = ZEND_TYPE_NAME(cur_arg_info->type);
+            class_name = ION_TYPE_NAME(cur_arg_info);
             ce = zend_fetch_class(class_name, (ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD));
             if (!ce || !instanceof_function(Z_OBJCE_P(arg), ce)) {
                 return false;
             }
-        } else if (EXPECTED(ZEND_TYPE_CODE(cur_arg_info->type) == Z_TYPE_P(arg))) {
+        } else if (EXPECTED(ION_TYPE_CODE(cur_arg_info) == Z_TYPE_P(arg))) {
             /* pass */
-        } else if (Z_TYPE_P(arg) != IS_NULL || !ZEND_TYPE_ALLOW_NULL(cur_arg_info->type)) {
+        } else if (Z_TYPE_P(arg) != IS_NULL || !ION_TYPE_ALLOW_NULL(cur_arg_info)) {
             if (ZEND_TYPE_IS_CLASS(cur_arg_info->type)) {
                 return false;
-            } else if (ZEND_TYPE_CODE(cur_arg_info->type) == IS_CALLABLE) {
+            } else if (ION_TYPE_CODE(cur_arg_info) == IS_CALLABLE) {
                 if (!zend_is_callable(arg, IS_CALLABLE_CHECK_SILENT, NULL)) {
                     return false;
                 }
-            } else if (ZEND_TYPE_CODE(cur_arg_info->type) == _IS_BOOL &&
+            } else if (ION_TYPE_CODE(cur_arg_info) == _IS_BOOL &&
                        EXPECTED(Z_TYPE_P(arg) == IS_FALSE || Z_TYPE_P(arg) == IS_TRUE)) {
                 /* pass */
             } else {
-                return pion_verify_scalar_type_hint((zend_uchar)ZEND_TYPE_CODE(cur_arg_info->type), arg, (zend_bool)ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data)));
+                return pion_verify_scalar_type_hint((zend_uchar) ION_TYPE_CODE(cur_arg_info), arg, (zend_bool) ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data)));
             }
         }
     }
