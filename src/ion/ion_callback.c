@@ -334,7 +334,6 @@ static zend_always_inline zend_bool pion_verify_arg_type_user(pion_cb * cb, uint
 static zend_always_inline zend_bool pion_verify_arg_type_internal(pion_cb * cb, uint32_t arg_num, zval * arg) {
     zend_internal_arg_info * cur_arg_info;
     zend_class_entry       * ce;
-    zend_string            * class_name;
     zend_function          * zf = cb->fcc->function_handler;
 
     if (EXPECTED(arg_num <= zf->internal_function.num_args)) {
@@ -350,15 +349,18 @@ static zend_always_inline zend_bool pion_verify_arg_type_internal(pion_cb * cb, 
             if (Z_TYPE_P(arg) != IS_OBJECT) {
                 return false;
             }
-            class_name = ION_TYPE_NAME(cur_arg_info);
-            ce = zend_fetch_class(class_name, (ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD));
+#ifdef IS_PHP71
+            ce = zend_fetch_class_ex(ION_TYPE_NAME(cur_arg_info), (ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD));
+#else
+            ce = zend_fetch_class(ION_TYPE_NAME(cur_arg_info), (ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD));
+#endif
             if (!ce || !instanceof_function(Z_OBJCE_P(arg), ce)) {
                 return false;
             }
         } else if (EXPECTED(ION_TYPE_CODE(cur_arg_info) == Z_TYPE_P(arg))) {
             /* pass */
         } else if (Z_TYPE_P(arg) != IS_NULL || !ION_TYPE_ALLOW_NULL(cur_arg_info)) {
-            if (ZEND_TYPE_IS_CLASS(cur_arg_info->type)) {
+            if (ION_TYPE_IS_CLASS(cur_arg_info)) {
                 return false;
             } else if (ION_TYPE_CODE(cur_arg_info) == IS_CALLABLE) {
                 if (!zend_is_callable(arg, IS_CALLABLE_CHECK_SILENT, NULL)) {
