@@ -86,8 +86,6 @@ ION_API void ion_register_class_ex(zend_class_entry ** ppce, zend_class_entry * 
 
 #ifdef IS_PHP71
 
-# define RETURN_UNUSED_ARG NULL,
-
 # define ARGUMENT(name, flags)  {                   \
       #name,                                        \
       NULL,                                         \
@@ -119,8 +117,6 @@ ION_API void ion_register_class_ex(zend_class_entry ** ppce, zend_class_entry * 
     ZEND_END_ARG_INFO()                      \
 
 #else
-
-# define RETURN_UNUSED_ARG
 
 # define ARGUMENT(name, flags)  {                   \
         #name,                                      \
@@ -177,18 +173,37 @@ ION_API void ion_register_class_ex(zend_class_entry ** ppce, zend_class_entry * 
     ZEND_BEGIN_ARG_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args)
 #define METHOD_ARGS_BEGIN_RETURN_VOID(class_name, method_name, required_num_args) \
     ZEND_BEGIN_ARG_INFO_EX(args ## class_name ## method_name, 0, 0, required_num_args)
+
+
+#ifdef IS_PHP71
 #define METHOD_ARGS_BEGIN_RETURN_INT(class_name, method_name, required_num_args) \
-    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_LONG, RETURN_UNUSED_ARG 0)
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_LONG, NULL, 0)
 #define METHOD_ARGS_BEGIN_RETURN_CALLABLE(class_name, method_name, required_num_args) \
-    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_CALLABLE, RETURN_UNUSED_ARG 0)
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_CALLABLE, NULL, 0)
 #define METHOD_ARGS_BEGIN_RETURN_STRING(class_name, method_name, required_num_args) \
-    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_STRING, RETURN_UNUSED_ARG 0)
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_STRING, NULL, 0)
 #define METHOD_ARGS_BEGIN_RETURN_BOOL(class_name, method_name, required_num_args) \
-    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, _IS_BOOL, RETURN_UNUSED_ARG 0)
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, _IS_BOOL, NULL, 0)
+#define METHOD_ARGS_BEGIN_RETURN_OBJECT(class_name, method_name, required_num_args, return_class_name, allow_null) \
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_OBJECT, return_class_name, allow_null)
+#define METHOD_ARGS_BEGIN_RETURN_ARRAY(class_name, method_name, required_num_args) \
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_ARRAY, NULL, 0)
+#else
+#define METHOD_ARGS_BEGIN_RETURN_INT(class_name, method_name, required_num_args) \
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_LONG, 0)
+#define METHOD_ARGS_BEGIN_RETURN_CALLABLE(class_name, method_name, required_num_args) \
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_CALLABLE, 0)
+#define METHOD_ARGS_BEGIN_RETURN_STRING(class_name, method_name, required_num_args) \
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_STRING, 0)
+#define METHOD_ARGS_BEGIN_RETURN_BOOL(class_name, method_name, required_num_args) \
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, _IS_BOOL, 0)
 #define METHOD_ARGS_BEGIN_RETURN_OBJECT(class_name, method_name, required_num_args, return_class_name, allow_null) \
     ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(args ## class_name ## method_name, 0, required_num_args, return_class_name, allow_null)
 #define METHOD_ARGS_BEGIN_RETURN_ARRAY(class_name, method_name, required_num_args) \
-    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_ARRAY, RETURN_UNUSED_ARG 0)
+    ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(args ## class_name ## method_name, 0, required_num_args, IS_ARRAY, 0)
+#endif
+
+
 
 /** End functions and methods **/
 
