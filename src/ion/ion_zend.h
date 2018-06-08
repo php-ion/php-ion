@@ -93,7 +93,6 @@ ION_API void ion_register_class_ex(zend_class_entry ** ppce, zend_class_entry * 
       ((flags) & ARG_IS_REF) ? 1 : 0,               \
       ((flags) & ARG_ALLOW_NULL) ? 1 : 0,           \
       ((flags) & ARG_IS_VARIADIC) ? 1 : 0           \
-      (((flags) & ARG_IS_VARIADIC) ? 1 : 0)         \
     },
 
 # define ARGUMENT_OBJECT(name, classname, flags)  { \
