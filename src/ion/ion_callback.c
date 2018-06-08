@@ -63,10 +63,6 @@ pion_cb * pion_cb_fetch_method_ce(zend_class_entry * ce, const char * method_nam
     *cb->fci = empty_fcall_info;
     *cb->fcc = empty_fcall_info_cache;
     cb->fci->size = sizeof(zend_fcall_info);
-#ifdef IS_PHP70
-    cb->fci->function_table = NULL;
-    cb->fci->symbol_table  = NULL;
-#endif
     ZVAL_UNDEF(&cb->fci->function_name);
     cb->fci->object        = NULL;
     cb->fci->retval        = NULL;

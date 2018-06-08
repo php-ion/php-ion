@@ -83,6 +83,11 @@ ION_API void ion_register_class_ex(zend_class_entry ** ppce, zend_class_entry * 
 #define RET_REF              ARG_IS_REF
 #define RET_NULL             ARG_ALLOW_NULL
 
+#ifndef GC_ADDREF
+# define GC_ADDREF(p) GC_REFCOUNT(p)++
+#endif
+
+#define zend_object_addref(obj) GC_ADDREF(obj)
 
 #ifdef IS_PHP71
 
@@ -230,8 +235,6 @@ ION_API zend_object * ion_init_object(zend_object * php_object, zend_class_entry
     RETVAL_OBJ(Z_OBJ_P(getThis()));            \
     Z_ADDREF_P(return_value); \
     return;
-
-#define zend_object_addref(obj) GC_REFCOUNT(obj)++
 
 /** End Objects **/
 
