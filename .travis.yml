@@ -12,6 +12,7 @@ addons:
 php:
   - 7.1
   - 7.2
+  - nightly
 
 notifications:
   email:
@@ -19,7 +20,7 @@ notifications:
 
 os:
   - linux
-  - osx
+#  - osx
 
 env:
   matrix:
