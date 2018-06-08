@@ -83,11 +83,6 @@ ION_API void ion_register_class_ex(zend_class_entry ** ppce, zend_class_entry * 
 #define RET_REF              ARG_IS_REF
 #define RET_NULL             ARG_ALLOW_NULL
 
-#ifndef GC_ADDREF
-# define GC_ADDREF(p) GC_REFCOUNT(p)++
-#endif
-
-#define zend_object_addref(obj) GC_ADDREF(obj)
 
 #ifdef IS_PHP71
 

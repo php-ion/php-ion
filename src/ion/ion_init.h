@@ -98,6 +98,22 @@ typedef struct _ion_http_body_parser ion_http_body_parser;
 # define ION_TYPE_ALLOW_NULL(arg_info) ZEND_TYPE_ALLOW_NULL((arg_info)->type)
 #endif
 
+// GC compatibilities
+#ifndef GC_ADDREF
+# define GC_ADDREF(p) GC_REFCOUNT(p)++
+#endif
+
+#ifndef GC_SET_REFCOUNT
+# define GC_SET_REFCOUNT(p, rc) GC_REFCOUNT(str) = rc
+#endif
+
+#ifndef GC_ADD_FLAGS
+# define GC_ADD_FLAGS(p, flags)  GC_FLAGS(p) |= flags;
+#endif
+
+#define zend_object_addref(obj) GC_ADDREF(obj)
+
+
 
 #define SET_TIMEVAL(tval, dval) SET_TIMEVAL_P(&tvalp, dval)
 
