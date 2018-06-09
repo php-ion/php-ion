@@ -85,16 +85,18 @@ typedef struct _ion_http_body_parser ion_http_body_parser;
 #if PHP_API_VERSION == 20160303
 # define IS_PHP71    1
 # define HAS_FCC_INITIALIZED 1
+#elif PHP_API_VERSION == 20170718
+# define IS_PHP72    1
+# define HAS_FCC_INITIALIZED 1
+#endif
 
+#ifndef ZEND_TYPE_CODE
 # define ION_TYPE_CODE(arg_info) ((arg_info)->type_hint)
 # define ION_TYPE_IS_SET(arg_info) ((arg_info)->type_hint != IS_UNDEF)
 # define ION_TYPE_IS_CLASS(arg_info) ((arg_info)->class_name)
 # define ION_TYPE_NAME(arg_info) ((arg_info)->class_name)
 # define ION_TYPE_ALLOW_NULL(arg_info) ((arg_info)->allow_null)
-#elif PHP_API_VERSION == 20170718
-# define IS_PHP72    1
-# define HAS_FCC_INITIALIZED 1
-
+#else
 # define ION_TYPE_CODE(arg_info) (ZEND_TYPE_CODE((arg_info)->type))
 # define ION_TYPE_IS_SET(arg_info) ZEND_TYPE_IS_SET((arg_info)->type)
 # define ION_TYPE_IS_CLASS(arg_info) ZEND_TYPE_IS_CLASS((arg_info)->type)
