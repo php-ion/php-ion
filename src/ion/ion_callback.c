@@ -126,9 +126,6 @@ pion_cb * pion_cb_dup(pion_cb * proto) {
     *cb->fcc = empty_fcall_info_cache;
 
     cb->fci->size = sizeof(zend_fcall_info);
-#ifdef IS_PHP70
-    cb->fci->function_table = proto->fci->function_table;
-#endif
     if(Z_ISUNDEF(proto->fci->function_name)) {
         ZVAL_UNDEF(&proto->fci->function_name);
     } else {
@@ -149,7 +146,9 @@ pion_cb * pion_cb_dup(pion_cb * proto) {
     }
 
     // fcc
+#ifdef HAS_FCC_INITIALIZED
     cb->fcc->initialized = proto->fcc->initialized;
+#endif
     cb->fcc->function_handler = proto->fcc->function_handler;
     cb->fcc->calling_scope = proto->fcc->calling_scope;
     cb->fcc->called_scope = proto->fcc->called_scope;
@@ -594,7 +593,9 @@ int pion_call_constructor(zend_class_entry * ce, zend_object * this_ptr, int arg
     fci.params = args;
     fci.no_separation = 1;
 
+#ifdef HAS_FCC_INITIALIZED
     fcc.initialized = 1;
+#endif
     fcc.function_handler = ce->constructor;
     fcc.called_scope = this_ptr->ce;
     fcc.object = this_ptr;
