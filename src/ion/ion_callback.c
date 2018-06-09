@@ -70,7 +70,9 @@ pion_cb * pion_cb_fetch_method_ce(zend_class_entry * ce, const char * method_nam
     cb->fci->params        = NULL;
     cb->fci->no_separation = 1;
 
+#ifdef HAS_FCC_INITIALIZED
     cb->fcc->initialized      = 1;
+#endif
     cb->fcc->function_handler = fptr;
     cb->fcc->calling_scope    = NULL;
     cb->fcc->called_scope     = ce;
