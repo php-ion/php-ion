@@ -18,6 +18,7 @@
 #include "ion/ion_stream.h"
 #include "ion/ion_crypto.h"
 #include "ion/ion_process.h"
+#include "ion/ion_event.h"
 #include "ion/ion_fs.h"
 #include "ion/ion_http.h"
 

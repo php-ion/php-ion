@@ -4,6 +4,7 @@ use ION\Deferred;
 use ION\Promise;
 use ION\RuntimeException;
 use ION\Sequence;
+use ION\TimerEvent;
 
 /**
  * @author Ivan Shalganov <a.cobest@gmail.com>
@@ -113,25 +114,12 @@ class ION {
      * @see   cancelInterval
      * @since 1.0
      *
-     * @param float $time  time in seconds. Minimal value is 1e-6
-     * @param string $name interval name
+     * @param float $time time in seconds. Minimal value is 1e-6
+     * @param bool $one_shot
      *
-     * @return Sequence
-     * @throws RuntimeException if error occurs
+     * @return TimerEvent
      */
-    public static function interval(float $time, string $name = null) : Sequence { }
-
-    /**
-     * Stop named interval
-     *
-     * @see   interval
-     * @since 1.0
-     *
-     * @param string $name
-     *
-     * @return bool
-     */
-    public static function cancelInterval(string $name) : bool { }
+    public static function interval(float $time, bool $one_shot = true) : TimerEvent { }
 
     /**
      * To promise anything

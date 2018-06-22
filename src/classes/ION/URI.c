@@ -743,14 +743,14 @@ METHODS_END;
 PHP_MINIT_FUNCTION(ION_URI) {
     ion_register_class(ion_ce_ION_URI, "ION\\URI", ion_uri_init, methods_ION_URI);
 
-    ion_class_declare_constant_bool(ion_ce_ION_URI, "SCHEME",    URI_SCHEME);
-    ion_class_declare_constant_bool(ion_ce_ION_URI, "USER_NAME", URI_USER_NAME);
-    ion_class_declare_constant_bool(ion_ce_ION_URI, "USER_PASS", URI_USER_PASS);
-    ion_class_declare_constant_bool(ion_ce_ION_URI, "HOST",      URI_HOST);
-    ion_class_declare_constant_bool(ion_ce_ION_URI, "PORT",      URI_PORT);
-    ion_class_declare_constant_bool(ion_ce_ION_URI, "PATH",      URI_PATH);
-    ion_class_declare_constant_bool(ion_ce_ION_URI, "QUERY",     URI_QUERY);
-    ion_class_declare_constant_bool(ion_ce_ION_URI, "FRAGMENT",  URI_FRAGMENT);
+    ion_class_declare_constant_long(ion_ce_ION_URI, "SCHEME",    URI_SCHEME);
+    ion_class_declare_constant_long(ion_ce_ION_URI, "USER_NAME", URI_USER_NAME);
+    ion_class_declare_constant_long(ion_ce_ION_URI, "USER_PASS", URI_USER_PASS);
+    ion_class_declare_constant_long(ion_ce_ION_URI, "HOST",      URI_HOST);
+    ion_class_declare_constant_long(ion_ce_ION_URI, "PORT",      URI_PORT);
+    ion_class_declare_constant_long(ion_ce_ION_URI, "PATH",      URI_PATH);
+    ion_class_declare_constant_long(ion_ce_ION_URI, "QUERY",     URI_QUERY);
+    ion_class_declare_constant_long(ion_ce_ION_URI, "FRAGMENT",  URI_FRAGMENT);
 
     ion_init_object_handlers(ion_oh_ION_URI);
     ion_oh_ION_URI.free_obj = ion_uri_free;

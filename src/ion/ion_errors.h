@@ -9,6 +9,10 @@
 #define ERR_ION_AWAIT_FAILED        "Unable to add event to queue"
 #define ERR_ION_REINIT_FAILED       "Some events could not be restarted"
 
+// class ION/EventAbstract
+#define ERR_ION_EVENT_NOT_READY     "This event doesn't initialized"
+#define ERR_ION_EVENT_ADD           "Unable to activate event"
+
 // class ION\Promise, ION\Deferred, ION\ResolvablePromise, ION\Sequence
 #define ERR_ION_PROMISE_ITSELF           "Can not promise itself"
 #define ERR_ION_PROMISE_CANT             "Can't promise"

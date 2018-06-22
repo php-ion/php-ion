@@ -52,7 +52,7 @@ ION_API void ion_register_class_ex(zend_class_entry ** ppce, zend_class_entry * 
 #define ion_class_declare_constant_bool(ce, const_name, value) \
     zend_declare_class_constant_bool(ce, const_name, sizeof(const_name)-1, value)
 #define ion_class_declare_constant_long(ce, const_name, value) \
-    zend_declare_class_constant_long(ce, const_name, sizeof(const_name)-1, (long)value)
+    zend_declare_class_constant_long(ce, const_name, sizeof(const_name)-1, (long)(value))
 #define ion_class_declare_constant_string(ce, const_name, value) \
     zend_declare_class_constant_string(ce, const_name, sizeof(const_name)-1, value)
 /** End Classes  **/
@@ -213,10 +213,10 @@ ION_API void ion_register_class_ex(zend_class_entry ** ppce, zend_class_entry * 
 /** End arguments **/
 
 /** Objects  **/
-#define ion_alloc_object(ce, struct_object) ecalloc(1, sizeof(struct_object) + zend_object_properties_size(ce))
 ION_API zend_object * ion_init_object(zend_object * php_object, zend_class_entry * ce, zend_object_handlers * php_object_h);
+#define ion_alloc_object(ce, struct_object) ecalloc(1, sizeof(struct_object) + zend_object_properties_size(ce))
 #define ION_ZOBJ_OBJECT(zobj, struct_object) ((struct_object *)((char *)zobj - XtOffsetOf(struct_object, php_object)))
-#define ION_OBJECT_ZOBJ(object) (&(object->php_object))
+#define ION_OBJECT_ZOBJ(object) (&((object)->php_object))
 #define ION_ZVAL_OBJECT_P(pzv, struct_object) ION_ZOBJ_OBJECT(Z_OBJ_P(pzv), struct_object)
 #define ION_ZVAL_OBJECT(zv, struct_object) ION_ZOBJ_OBJECT(Z_OBJ(zv), struct_object)
 #define ION_THIS_OBJECT(struct_object) ION_ZVAL_OBJECT_P(getThis(), struct_object)

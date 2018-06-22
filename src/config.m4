@@ -62,6 +62,7 @@ if test "$PHP_ION" != "no"; then
     ion/ion_callback.c
     ion/ion_zend.c
     ion/ion_promisor.c
+    ion/ion_event.c
     ion/ion_net.c
     ion/ion_stream.c
     ion/ion_deferred_queue.c
@@ -74,6 +75,8 @@ if test "$PHP_ION" != "no"; then
     classes/ION/Deferred.c
     classes/ION/Sequence.c
     classes/ION.c
+    classes/ION/EventAbstract.c
+    classes/ION/TimerEvent.c
     classes/ION/Crypto.c
     classes/ION/DNS.c
     classes/ION/FS.c

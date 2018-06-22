@@ -75,7 +75,7 @@ set(ION_SOURCE_FILES
     src/classes/ION/HTTP/Request.c
     src/classes/ION/HTTP/Response.c
     src/classes/ION/HTTP/WebSocketParser.c
-    src/classes/ION/HTTP/WebSocket/Frame.c)
+    src/classes/ION/HTTP/WebSocket/Frame.c src/classes/ION/EventAbstract.c src/classes/ION/TimerEvent.c src/ion/ion_event.c)
 
 add_library(ion ${ION_SOURCE_FILES})
 add_dependencies(ion external_ion)

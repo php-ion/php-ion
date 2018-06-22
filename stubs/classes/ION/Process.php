@@ -72,23 +72,16 @@ class Process {
      *
      * @return int
      */
-    public static function spawn(int $flags = 0, $ctx = null) : int {}
+//    public static function spawn(int $flags = 0, $ctx = null) : int {}
 
     /**
      * Set signal handler
      *
      * @param int $signo signal number or text name
      *
-     * @return Sequence
+     * @return SignalEvent
      */
-    public static function signal(int $signo) : Sequence { }
-
-    /**
-     * Remove signal(s) handlers
-     *
-     * @param int $signo if -1 remove all handlers from all signals
-     */
-    public static function clearSignal(int $signo = -1) { }
+    public static function signal(int $signo) : SignalEvent { }
 
     /**
      * Send a signal to a process

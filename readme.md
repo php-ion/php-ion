@@ -43,16 +43,15 @@ ION PHP Extension
 * Built-in HTTP 1.0 and 1.1 request/response parsers
 * Built-in WebSocket frame parser and  Multi-parted parser
 
-## [0.8]
+## [0.9]
 
-- [ ] Feedback
-- [ ] Optimizations
-- [ ] Refactory
-- [ ] DNS server (may be)
+[x] Supports PHP 7.2
+[ ] Supports PHP 7.3
+[ ] Add events classes: `ION\DescriptorEvent`, `ION\TimerEvent`, `ION\SignalEvent`, `ION\FS\INodeEvent`
 
 ## [1.0]
 
-- [ ] Stability
+- [ ] Stable ION
 
 # What can you do
 

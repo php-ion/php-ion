@@ -78,6 +78,8 @@ PHP_MINIT_FUNCTION(ion) {
     STARTUP_MODULE(ION_ResolvablePromise);
     STARTUP_MODULE(ION_Deferred);
     STARTUP_MODULE(ION_Sequence);
+    STARTUP_MODULE(ION_EventAbstract);
+    STARTUP_MODULE(ION_TimerEvent);
     STARTUP_MODULE(ION);
     STARTUP_MODULE(ION_Crypto);
     STARTUP_MODULE(ION_DNS);

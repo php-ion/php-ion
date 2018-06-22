@@ -60,6 +60,7 @@ typedef struct _ion_process_exec ion_process_exec;
 typedef struct _ion_process_child ion_process_child;
 typedef struct _ion_process_signal ion_process_signal;
 
+typedef struct _ion_php_event ion_php_event;
 typedef struct _ion_fs_watcher ion_fs_watcher;
 
 typedef struct _ion_dns_addr_request ion_dns_addr_request;
@@ -104,7 +105,7 @@ typedef struct _ion_http_body_parser ion_http_body_parser;
 # define ION_TYPE_ALLOW_NULL(arg_info) ZEND_TYPE_ALLOW_NULL((arg_info)->type)
 #endif
 
-// GC compatibilities
+// GC compatibilities (PHP71)
 #ifndef GC_ADDREF
 # define GC_ADDREF(p) GC_REFCOUNT(p)++
 #endif

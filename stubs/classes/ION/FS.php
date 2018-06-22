@@ -9,6 +9,8 @@
 namespace ION;
 
 
+use ION\FS\INodeEvent;
+
 class FS {
     const WATCH_MODIFY = 1;
 
@@ -20,6 +22,8 @@ class FS {
      * @param string $filename
      * @param int $offset the offset from which to read data
      * @param int $limit  how much data to read
+     *
+     * @note do stat() of file
      *
      * @return Deferred
      */
@@ -34,7 +38,5 @@ class FS {
      *
      * @return Sequence
      */
-    public static function watch(string $filename, int $events = 0) : Sequence { }
-
-    public static function unwatchAll() { }
+    public static function watch(string $filename, int $events = 0) : INodeEvent { }
 }
