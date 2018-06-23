@@ -26,7 +26,7 @@ CLASS_METHOD(ION_TimerEvent, __construct) {
 }
 
 METHOD_ARGS_BEGIN(ION_TimerEvent, __construct, 1)
-    ARGUMENT(time, IS_MIXED)
+    ARGUMENT(time, IS_DOUBLE)
     ARGUMENT(flags, IS_LONG)
 METHOD_ARGS_END();
 

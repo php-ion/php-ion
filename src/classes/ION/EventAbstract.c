@@ -23,16 +23,6 @@ void ion_php_event_free(zend_object * object) {
 
 }
 
-/** public static function ION\EventAbstract::__construct(mixed $somewhat, int $flags = 0) */
-CLASS_METHOD(ION_EventAbstract, __construct) {
-    // abstract method
-}
-
-METHOD_ARGS_BEGIN(ION_EventAbstract, __construct, 1)
-    ARGUMENT(somewhat, IS_MIXED)
-    ARGUMENT(flags, IS_LONG)
-METHOD_ARGS_END();
-
 /** public static function ION\EventAbstract::enable() */
 CLASS_METHOD(ION_EventAbstract, enable) {
     ion_php_event * php_event = ION_THIS_OBJECT(ion_php_event);
@@ -106,10 +96,10 @@ METHOD_ARGS_BEGIN(ION_EventAbstract, _occurred, 1)
 METHOD_ARGS_END();
 
 METHODS_START(methods_ION_EventAbstract)
-    METHOD(ION_EventAbstract, __construct,  ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
     METHOD(ION_EventAbstract, enable,       ZEND_ACC_PUBLIC)
     METHOD(ION_EventAbstract, disable,      ZEND_ACC_PUBLIC)
     METHOD(ION_EventAbstract, then,         ZEND_ACC_PUBLIC)
+    METHOD(ION_EventAbstract, setPriority,  ZEND_ACC_PUBLIC)
     METHOD(ION_EventAbstract, _occurred,    ZEND_ACC_PUBLIC | ZEND_ACC_PROTECTED)
 METHODS_END;
 
