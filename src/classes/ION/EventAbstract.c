@@ -47,15 +47,29 @@ METHOD_WITHOUT_ARGS(ION_EventAbstract, disable);
 
 /** public static function ION\EventAbstract::then() : ION\Sequence */
 CLASS_METHOD(ION_EventAbstract, then) {
+    ion_promisor  * handler   = NULL;
+    zval          * callback  = NULL;
     ion_php_event * php_event = ION_THIS_OBJECT(ion_php_event);
     if (!php_event->promise) {
         php_event->promise = ion_promisor_sequence_new(NULL);
     }
 
-    RETURN_ION_OBJ(php_event->promise);
+    ZEND_PARSE_PARAMETERS_START(0, 2)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_ZVAL_EX(callback, 1, 0)
+    ZEND_PARSE_PARAMETERS_END_EX(PION_ZPP_THROW);
+
+    if (callback) {
+        handler = ion_promisor_push_callbacks(php_event->promise, callback, NULL);
+        RETURN_ION_OBJ(handler);
+    } else {
+        RETURN_ION_OBJ(php_event->promise);
+    }
 }
 
-METHOD_WITHOUT_ARGS(ION_EventAbstract, then);
+METHOD_ARGS_BEGIN(ION_EventAbstract, then, 0)
+     ARGUMENT(callback, IS_MIXED | ARG_ALLOW_NULL)
+METHOD_ARGS_END();
 
 /** public static function ION\EventAbstract::setPriority(int $prio) */
 CLASS_METHOD(ION_EventAbstract, setPriority) {

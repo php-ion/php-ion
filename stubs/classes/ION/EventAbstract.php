@@ -13,7 +13,7 @@ abstract class EventAbstract implements EventInterface
 
     public function disable() { }
 
-    public function then(): Sequence { }
+    public function then(callable $cb = null): Sequence { }
 
     public function setPriority(int $prio) { }
 
