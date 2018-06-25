@@ -18,4 +18,6 @@ abstract class EventAbstract implements EventInterface
     public function setPriority(int $prio) { }
 
     public function getPriority(): int { }
+
+    public function getTarget() { }
 }

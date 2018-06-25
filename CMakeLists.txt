@@ -79,6 +79,7 @@ set(ION_SOURCE_FILES
     src/classes/ION/EventAbstract.c
     src/classes/ION/TimerEvent.c
     src/classes/ION/SignalEvent.c
+    src/classes/ION/DescriptorEvent.c
     src/ion/ion_event.c)
 
 add_library(ion ${ION_SOURCE_FILES})

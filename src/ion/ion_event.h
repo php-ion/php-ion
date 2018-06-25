@@ -8,10 +8,14 @@ zend_object * ion_php_event_init(zend_class_entry * ce);
 void ion_php_event_free(zend_object * object);
 
 void ion_php_event_callback(evutil_socket_t fd, short flags, void * arg);
-void ion_php_event_enable(ion_php_event * php_event, zend_bool internal);
+void ion_php_event_enable(ion_php_event * php_event, zend_bool promised);
 
-#define ION_PHP_EVENT_ENABLE  (1<<0)
-#define ION_PHP_EVENT_TIMER_ONCE  (1<<1)
+#define ION_PHP_EVENT_PERSIST  (1<<0)
+
+#define ION_PHP_EVENT_ENABLE  (1<<4)
+#define ION_PHP_EVENT_ONCE  (1<<5)
+#define ION_PHP_EVENT_READ  (1<<6)
+#define ION_PHP_EVENT_WRITE  (1<<7)
 
 typedef enum _ion_php_event_type {
     ION_DESCRIPTOR_EVENT = 1,
@@ -34,11 +38,5 @@ typedef struct _ion_php_event {
         zend_throw_exception(ion_ce_ION_RuntimeException, ERR_ION_EVENT_NOT_READY, 0);  \
         return;                                                                         \
     }
-
-#define ION_PHP_EVENT_ENSURE_ENABLE(php_event)      \
-    if (php_event->flags & ION_PHP_EVENT_ENABLE) {  \
-        ion_php_event_enable(php_event, true);      \
-    }
-
 
 #endif //ION_ION_EVENT_H

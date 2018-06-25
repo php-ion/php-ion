@@ -22,7 +22,7 @@ CLASS_METHOD(ION_TimerEvent, __construct) {
     ION_PHP_EVENT_CHECK(php_event->event);
 
     php_event->event = event_new(GION(base), -1, EV_TIMEOUT, ion_php_event_callback, php_event);
-    ION_PHP_EVENT_ENSURE_ENABLE(php_event);
+    ion_php_event_enable(php_event, true);
 }
 
 METHOD_ARGS_BEGIN(ION_TimerEvent, __construct, 1)

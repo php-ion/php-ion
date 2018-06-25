@@ -11,17 +11,23 @@ void ion_php_event_callback(evutil_socket_t fd, short flags, void * arg) {
     ION_CB_END();
 }
 
-void ion_php_event_enable(ion_php_event * php_event, zend_bool internal) {
+void ion_php_event_enable(ion_php_event * php_event, zend_bool promised) {
     struct timeval * ptv = NULL;
     struct timeval   tv;
 
+    if (php_event->flags & ION_PHP_EVENT_PERSIST) {
+        return;
+    }
+    if (php_event->flags & ION_PHP_EVENT_ENABLE) {
+        return;
+    }
     if (php_event->type == ION_TIMER_EVENT) {
         tv.tv_usec = ((int)(Z_DVAL(php_event->context)*1000000) % 1000000);
         tv.tv_sec  = (int)Z_DVAL(php_event->context);
         ptv = &tv;
     }
     if(event_add(php_event->event, ptv) == FAILURE) {
-        if (internal) {
+        if (promised) {
             if (php_event->promise) {
                 ion_promisor_throw(php_event->promise, ion_ce_ION_RuntimeException, ERR_ION_EVENT_ADD, 0);
             }

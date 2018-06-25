@@ -107,6 +107,9 @@ PHP_MINIT_FUNCTION(ION_EventAbstract) {
     ion_register_class(ion_ce_ION_EventAbstract, "ION\\EventAbstract", ion_php_event_init, methods_ION_EventAbstract);
     ion_ce_ION_EventAbstract->ce_flags |= ZEND_ACC_ABSTRACT;
 
+    ion_class_declare_constant_long(ion_ce_ION_EventAbstract, "ENABLE",   ION_PHP_EVENT_ENABLE);
+    ion_class_declare_constant_long(ion_ce_ION_EventAbstract, "ONCE",     ION_PHP_EVENT_ONCE);
+
     ion_init_object_handlers(ion_oh_ION_EventAbstract);
     ion_oh_ION_EventAbstract.free_obj = ion_php_event_free;
 //    ion_oh_ION_URI.clone_obj = ion_uri_clone_handler;

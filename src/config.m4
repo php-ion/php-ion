@@ -78,6 +78,7 @@ if test "$PHP_ION" != "no"; then
     classes/ION/EventAbstract.c
     classes/ION/TimerEvent.c
     classes/ION/SignalEvent.c
+    classes/ION/DescriptorEvent.c
     classes/ION/Crypto.c
     classes/ION/DNS.c
     classes/ION/FS.c
