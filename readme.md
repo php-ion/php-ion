@@ -45,9 +45,9 @@ ION PHP Extension
 
 ## [0.9]
 
-[x] Supports PHP 7.2
-[ ] Supports PHP 7.3
-[ ] Add events classes: `ION\DescriptorEvent`, `ION\TimerEvent`, `ION\SignalEvent`, `ION\FS\INodeEvent`
+- [x] Supports PHP 7.2
+- [ ] Supports PHP 7.3
+- [ ] Add events classes: `ION\DescriptorEvent`, `ION\TimerEvent`, `ION\SignalEvent`, `ION\FS\INodeEvent`
 
 ## [1.0]
 
